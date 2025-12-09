@@ -6507,12 +6507,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "273";
+	app.meta.h["build"] = "280";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "1.6.3.13-minor.2";
+	app.meta.h["version"] = "1.6.3.14";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -61407,6 +61407,9 @@ var PlayState = function(TransIn,TransOut) {
 	this.trainMoving = false;
 	this.fastCarCanDrive = true;
 	this.strumsBlocked = [];
+	this.numRatingTween = [];
+	this.comboTween = null;
+	this.ratingTween = null;
 	this.showRating = true;
 	this.showComboNum = true;
 	this.showCombo = false;
@@ -61509,6 +61512,7 @@ var PlayState = function(TransIn,TransOut) {
 	this.DAD_X = 100;
 	this.BF_Y = 100;
 	this.BF_X = 770;
+	this.cacheRating = new haxe_ds_StringMap();
 	this.customCameraMap = new haxe_ds_StringMap();
 	this.noteSplashGroupMap = new haxe_ds_StringMap();
 	this.notesGroupMap = new haxe_ds_StringMap();
@@ -61559,6 +61563,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,notesGroupMap: null
 	,noteSplashGroupMap: null
 	,customCameraMap: null
+	,cacheRating: null
+	,ratingGroup: null
+	,comboGroup: null
+	,numRatingGroup: null
 	,BF_X: null
 	,BF_Y: null
 	,DAD_X: null
@@ -62442,6 +62450,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.scoreTxt.set_color(-256);
 		}
 		this.add(this.scoreTxt);
+		this.ratingGroup = new flixel_group_FlxTypedGroup();
+		this.comboGroup = new flixel_group_FlxTypedGroup();
+		this.numRatingGroup = new flixel_group_FlxTypedGroup();
+		this.add(this.ratingGroup);
+		this.add(this.comboGroup);
+		this.add(this.numRatingGroup);
 		this.botplayTxt = new flixel_text_FlxText(400,this.timeBarBG.y + 55,flixel_FlxG.width - 800,ClientPrefs.dragonW ? "AUTO FLIGHT" : "BOTPLAY",32);
 		this.botplayTxt.setFormat("assets/fonts/" + "vcr.ttf",32,-1,"center",flixel_text_FlxTextBorderStyle.OUTLINE,-16777216);
 		this.botplayTxt.scrollFactor.set();
@@ -62643,7 +62657,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.playbackRate = value;
 		flixel_animation_FlxAnimationController.globalSpeed = value;
-		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1632, className : "PlayState", methodName : "set_playbackRate"});
+		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1645, className : "PlayState", methodName : "set_playbackRate"});
 		Conductor.safeZoneOffset = ClientPrefs.safeFrames / 60 * 1000 * value;
 		this.setOnLuas("playbackRate",this.playbackRate);
 		return value;
@@ -64478,7 +64492,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3563, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3576, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var _g = 0;
@@ -65850,12 +65864,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4624, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4637, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4625, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4638, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -65886,7 +65900,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4661, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4674, className : "PlayState", methodName : "endSong"});
 				WeekData.loadTheFirstEnabledMod();
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
@@ -65910,7 +65924,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4685, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4698, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -65942,52 +65956,71 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			pixelShitPart1 = "pixelUI/";
 			pixelShitPart2 = "-pixel";
 		}
-		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "sick" + pixelShitPart2,null);
-		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "good" + pixelShitPart2,null);
-		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "bad" + pixelShitPart2,null);
-		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "shit" + pixelShitPart2,null);
-		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "combo" + pixelShitPart2,null);
+		var ratingTOCache = ["sick","good","bad","shit","combo"];
+		var _g = 0;
+		while(_g < ratingTOCache.length) {
+			var i = ratingTOCache[_g];
+			++_g;
+			var this1 = this.cacheRating;
+			var returnAsset = Paths.returnGraphic(pixelShitPart1 + i + pixelShitPart2,null);
+			this1.h[i] = returnAsset;
+		}
+		var this1 = this.cacheRating;
 		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 0 + pixelShitPart2,null);
+		this1.h["" + 0] = returnAsset;
+		var this1 = this.cacheRating;
 		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 1 + pixelShitPart2,null);
+		this1.h["" + 1] = returnAsset;
+		var this1 = this.cacheRating;
 		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 2 + pixelShitPart2,null);
+		this1.h["" + 2] = returnAsset;
+		var this1 = this.cacheRating;
 		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 3 + pixelShitPart2,null);
+		this1.h["" + 3] = returnAsset;
+		var this1 = this.cacheRating;
 		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 4 + pixelShitPart2,null);
+		this1.h["" + 4] = returnAsset;
+		var this1 = this.cacheRating;
 		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 5 + pixelShitPart2,null);
+		this1.h["" + 5] = returnAsset;
+		var this1 = this.cacheRating;
 		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 6 + pixelShitPart2,null);
+		this1.h["" + 6] = returnAsset;
+		var this1 = this.cacheRating;
 		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 7 + pixelShitPart2,null);
+		this1.h["" + 7] = returnAsset;
+		var this1 = this.cacheRating;
 		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 8 + pixelShitPart2,null);
+		this1.h["" + 8] = returnAsset;
+		var this1 = this.cacheRating;
 		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 9 + pixelShitPart2,null);
+		this1.h["" + 9] = returnAsset;
 	}
+	,ratingTween: null
+	,comboTween: null
+	,numRatingTween: null
 	,popUpScore: function(note) {
 		var noteDiff = Math.abs(note.strumTime + note.offsetStrumTime - Conductor.songPosition + ClientPrefs.ratingOffset);
 		this.vocals.set_volume(1);
 		var placement = Std.string(this.combo);
-		var coolText = new flixel_text_FlxText(0,0,0,placement,32);
-		var axes = flixel_util_FlxAxes.XY;
-		var tmp;
-		switch(axes._hx_index) {
-		case 0:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
+		var coolTextX = flixel_FlxG.width * 0.35;
+		if(!ClientPrefs.comboStacking) {
+			var _g = 0;
+			var _g1 = this.ratingGroup.members;
+			while(_g < _g1.length) {
+				var i = _g1[_g];
+				++_g;
+				if(i != null) {
+					i.kill();
+				}
+			}
+			if(this.ratingTween != null) {
+				this.ratingTween.cancel();
+			}
 		}
-		if(tmp) {
-			coolText.set_x((flixel_FlxG.width - coolText.get_width()) / 2);
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 1:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			coolText.set_y((flixel_FlxG.height - coolText.get_height()) / 2);
-		}
-		coolText.set_x(flixel_FlxG.width * 0.35);
-		var rating = new flixel_FlxSprite();
+		var rating = this.ratingGroup.recycle(flixel_FlxSprite);
+		rating.reset(0,0);
+		rating.set_alpha(1);
 		var score = 350;
 		var daRating = Conductor.judgeNote(note,noteDiff / this.playbackRate);
 		if(!this.practiceMode && !this.cpuControlled && !note.autoPress && !note.customField) {
@@ -66016,9 +66049,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			pixelShitPart1 = "pixelUI/";
 			pixelShitPart2 = "-pixel";
 		}
-		var rating1 = rating;
-		var returnAsset = Paths.returnGraphic(pixelShitPart1 + daRating.image + pixelShitPart2,null);
-		rating1.loadGraphic(returnAsset);
+		rating.loadGraphic(this.cacheRating.h[daRating.image]);
 		rating.set_cameras([this.camHUD]);
 		var axes = flixel_util_FlxAxes.XY;
 		var tmp;
@@ -66043,8 +66074,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(tmp) {
 			rating.set_y((flixel_FlxG.height - rating.get_height()) / 2);
 		}
-		rating.set_x(coolText.x - 40);
+		rating.set_x(coolTextX - 40);
 		rating.set_y(rating.y - 60);
+		rating.velocity.set_x(0);
+		rating.velocity.set_y(0);
 		rating.acceleration.set_y(550 * this.playbackRate * this.playbackRate);
 		var fh = rating.velocity;
 		fh.set_y(fh.y - flixel_FlxG.random.int(140,175) * this.playbackRate);
@@ -66053,93 +66086,44 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		rating.set_visible(!ClientPrefs.hideHud && this.showRating);
 		rating.set_x(rating.x + ClientPrefs.comboOffset[0]);
 		rating.set_y(rating.y - ClientPrefs.comboOffset[1]);
-		var comboSpr = new flixel_FlxSprite();
-		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "combo" + pixelShitPart2,null);
-		var comboSpr1 = comboSpr.loadGraphic(returnAsset);
-		comboSpr1.set_cameras([this.camHUD]);
-		var axes = flixel_util_FlxAxes.XY;
-		var tmp;
-		switch(axes._hx_index) {
-		case 0:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			comboSpr1.set_x((flixel_FlxG.width - comboSpr1.get_width()) / 2);
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 1:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			comboSpr1.set_y((flixel_FlxG.height - comboSpr1.get_height()) / 2);
-		}
-		comboSpr1.set_x(coolText.x);
-		comboSpr1.acceleration.set_y(flixel_FlxG.random.int(200,300) * this.playbackRate * this.playbackRate);
-		var fh = comboSpr1.velocity;
-		fh.set_y(fh.y - flixel_FlxG.random.int(140,160) * this.playbackRate);
-		comboSpr1.set_visible(!ClientPrefs.hideHud && this.showCombo);
-		comboSpr1.set_x(comboSpr1.x + ClientPrefs.comboOffset[0]);
-		comboSpr1.set_y(comboSpr1.y - ClientPrefs.comboOffset[1]);
-		comboSpr1.set_y(comboSpr1.y + 60);
-		var fh = comboSpr1.velocity;
-		fh.set_x(fh.x + flixel_FlxG.random.int(1,10) * this.playbackRate);
-		this.insert(this.members.indexOf(this.playerStrums),rating);
-		if(!ClientPrefs.comboStacking) {
-			if(PlayState.lastRating != null) {
-				PlayState.lastRating.kill();
-			}
-			PlayState.lastRating = rating;
-		}
+		this.ratingGroup.add(rating);
 		if(!PlayState.isPixelStage) {
 			rating.setGraphicSize(rating.get_width() * 0.7 | 0);
 			rating.set_antialiasing(ClientPrefs.globalAntialiasing);
-			comboSpr1.setGraphicSize(comboSpr1.get_width() * 0.7 | 0);
-			comboSpr1.set_antialiasing(ClientPrefs.globalAntialiasing);
 		} else {
 			rating.setGraphicSize(rating.get_width() * PlayState.daPixelZoom * 0.85 | 0);
-			comboSpr1.setGraphicSize(comboSpr1.get_width() * PlayState.daPixelZoom * 0.85 | 0);
 		}
-		comboSpr1.updateHitbox();
 		rating.updateHitbox();
-		var seperatedScore = [];
-		if(this.combo >= 1000) {
-			seperatedScore.push(Math.floor(this.combo / 1000) % 10);
+		if(!ClientPrefs.comboStacking) {
+			this.ratingTween = flixel_tweens_FlxTween.tween(rating,{ alpha : 0},0.2 / this.playbackRate,{ onComplete : function(tween) {
+				rating.kill();
+			}, startDelay : Conductor.crochet * 0.001 / this.playbackRate});
+		} else {
+			flixel_tweens_FlxTween.tween(rating,{ alpha : 0},0.2 / this.playbackRate,{ onComplete : function(tween) {
+				rating.kill();
+			}, startDelay : Conductor.crochet * 0.001 / this.playbackRate});
 		}
-		seperatedScore.push(Math.floor(this.combo / 100) % 10);
-		seperatedScore.push(Math.floor(this.combo / 10) % 10);
-		seperatedScore.push(this.combo % 10);
-		var daLoop = 0;
 		var xThing = 0;
 		if(this.showCombo) {
-			this.insert(this.members.indexOf(this.playerStrums),comboSpr1);
-		}
-		if(!ClientPrefs.comboStacking) {
-			if(PlayState.lastCombo != null) {
-				PlayState.lastCombo.kill();
+			if(!ClientPrefs.comboStacking) {
+				var _g = 0;
+				var _g1 = this.comboGroup.members;
+				while(_g < _g1.length) {
+					var i = _g1[_g];
+					++_g;
+					if(i != null) {
+						i.kill();
+					}
+				}
+				if(this.comboTween != null) {
+					this.comboTween.cancel();
+				}
 			}
-			PlayState.lastCombo = comboSpr1;
-		}
-		if(PlayState.lastScore != null) {
-			while(PlayState.lastScore.length > 0) {
-				PlayState.lastScore[0].kill();
-				HxOverrides.remove(PlayState.lastScore,PlayState.lastScore[0]);
-			}
-		}
-		var _g = 0;
-		while(_g < seperatedScore.length) {
-			var i = seperatedScore[_g];
-			++_g;
-			var numScore = new flixel_FlxSprite();
-			var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + (i | 0) + pixelShitPart2,null);
-			var numScore1 = [numScore.loadGraphic(returnAsset)];
-			numScore1[0].set_cameras([this.camHUD]);
+			var comboSpr = this.comboGroup.recycle(flixel_FlxSprite);
+			comboSpr.reset(0,0);
+			comboSpr.set_alpha(1);
+			comboSpr.loadGraphic(this.cacheRating.h["combo"]);
+			comboSpr.set_cameras([this.camHUD]);
 			var axes = flixel_util_FlxAxes.XY;
 			var tmp;
 			switch(axes._hx_index) {
@@ -66150,60 +66134,150 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				tmp = false;
 			}
 			if(tmp) {
-				numScore1[0].set_x((flixel_FlxG.width - numScore1[0].get_width()) / 2);
+				comboSpr.set_x((flixel_FlxG.width - comboSpr.get_width()) / 2);
 			}
-			var tmp1;
+			var tmp;
 			switch(axes._hx_index) {
 			case 1:case 2:
-				tmp1 = true;
+				tmp = true;
 				break;
 			default:
-				tmp1 = false;
+				tmp = false;
 			}
-			if(tmp1) {
-				numScore1[0].set_y((flixel_FlxG.height - numScore1[0].get_height()) / 2);
+			if(tmp) {
+				comboSpr.set_y((flixel_FlxG.height - comboSpr.get_height()) / 2);
 			}
-			numScore1[0].set_x(coolText.x + 43 * daLoop - 90);
-			numScore1[0].set_y(numScore1[0].y + 80);
-			numScore1[0].set_x(numScore1[0].x + ClientPrefs.comboOffset[2]);
-			numScore1[0].set_y(numScore1[0].y - ClientPrefs.comboOffset[3]);
-			if(!ClientPrefs.comboStacking) {
-				PlayState.lastScore.push(numScore1[0]);
-			}
-			if(!PlayState.isPixelStage) {
-				numScore1[0].set_antialiasing(ClientPrefs.globalAntialiasing);
-				numScore1[0].setGraphicSize(numScore1[0].get_width() * 0.5 | 0);
-			} else {
-				numScore1[0].setGraphicSize(numScore1[0].get_width() * PlayState.daPixelZoom | 0);
-			}
-			numScore1[0].updateHitbox();
-			numScore1[0].acceleration.set_y(flixel_FlxG.random.int(200,300) * this.playbackRate * this.playbackRate);
-			var fh = numScore1[0].velocity;
+			comboSpr.set_x(coolTextX);
+			comboSpr.acceleration.set_y(flixel_FlxG.random.int(200,300) * this.playbackRate * this.playbackRate);
+			var fh = comboSpr.velocity;
 			fh.set_y(fh.y - flixel_FlxG.random.int(140,160) * this.playbackRate);
-			numScore1[0].velocity.set_x(flixel_FlxG.random.float(-5,5) * this.playbackRate);
-			numScore1[0].set_visible(!ClientPrefs.hideHud);
-			if(this.showComboNum) {
-				this.insert(this.members.indexOf(this.playerStrums),numScore1[0]);
+			if(!PlayState.isPixelStage) {
+				comboSpr.setGraphicSize(comboSpr.get_width() * 0.7 | 0);
+				comboSpr.set_antialiasing(ClientPrefs.globalAntialiasing);
+			} else {
+				comboSpr.setGraphicSize(comboSpr.get_width() * PlayState.daPixelZoom * 0.85 | 0);
 			}
-			var tmp2 = Conductor.crochet * 0.002;
-			flixel_tweens_FlxTween.tween(numScore1[0],{ alpha : 0},0.2 / this.playbackRate,{ onComplete : (function(numScore) {
-				return function(tween) {
-					numScore[0].destroy();
-				};
-			})(numScore1), startDelay : tmp2 / this.playbackRate});
-			++daLoop;
-			if(numScore1[0].x > xThing) {
-				xThing = numScore1[0].x;
+			comboSpr.set_visible(!ClientPrefs.hideHud && this.showCombo);
+			comboSpr.set_x(comboSpr.x + ClientPrefs.comboOffset[0]);
+			comboSpr.set_y(comboSpr.y - ClientPrefs.comboOffset[1]);
+			comboSpr.set_y(comboSpr.y + 60);
+			var fh = comboSpr.velocity;
+			fh.set_x(fh.x + flixel_FlxG.random.int(1,10) * this.playbackRate);
+			this.comboGroup.add(comboSpr);
+			comboSpr.updateHitbox();
+			comboSpr.set_x(xThing + 50);
+			if(!ClientPrefs.comboStacking) {
+				this.comboTween = flixel_tweens_FlxTween.tween(comboSpr,{ alpha : 0},0.2 / this.playbackRate,{ onComplete : function(tween) {
+					comboSpr.kill();
+				}, startDelay : Conductor.crochet * 0.002 / this.playbackRate});
+			} else {
+				flixel_tweens_FlxTween.tween(comboSpr,{ alpha : 0},0.2 / this.playbackRate,{ onComplete : function(tween) {
+					comboSpr.kill();
+				}, startDelay : Conductor.crochet * 0.002 / this.playbackRate});
 			}
 		}
-		comboSpr1.set_x(xThing + 50);
-		coolText.set_text(Std.string(seperatedScore));
-		flixel_tweens_FlxTween.tween(rating,{ alpha : 0},0.2 / this.playbackRate,{ startDelay : Conductor.crochet * 0.001 / this.playbackRate});
-		flixel_tweens_FlxTween.tween(comboSpr1,{ alpha : 0},0.2 / this.playbackRate,{ onComplete : function(tween) {
-			coolText.destroy();
-			comboSpr1.destroy();
-			rating.destroy();
-		}, startDelay : Conductor.crochet * 0.002 / this.playbackRate});
+		var seperatedScore = [];
+		if(this.combo >= 1000) {
+			seperatedScore.push(Math.floor(this.combo / 1000) % 10);
+		}
+		seperatedScore.push(Math.floor(this.combo / 100) % 10);
+		seperatedScore.push(Math.floor(this.combo / 10) % 10);
+		seperatedScore.push(this.combo % 10);
+		var daLoop = 0;
+		if(!ClientPrefs.comboStacking) {
+			var _g = 0;
+			var _g1 = this.numRatingGroup.members;
+			while(_g < _g1.length) {
+				var i = _g1[_g];
+				++_g;
+				if(i != null) {
+					i.kill();
+				}
+			}
+			var _g = 0;
+			var _g1 = this.numRatingTween;
+			while(_g < _g1.length) {
+				var i = _g1[_g];
+				++_g;
+				if(i != null) {
+					i.cancel();
+				}
+			}
+		}
+		if(this.showComboNum) {
+			var _g = 0;
+			while(_g < seperatedScore.length) {
+				var i = seperatedScore[_g];
+				++_g;
+				var numScore = [this.numRatingGroup.recycle(flixel_FlxSprite)];
+				numScore[0].reset(0,0);
+				numScore[0].set_alpha(1);
+				numScore[0].loadGraphic(this.cacheRating.h[i == null ? "null" : "" + i]);
+				numScore[0].set_cameras([this.camHUD]);
+				var axes = flixel_util_FlxAxes.XY;
+				var tmp;
+				switch(axes._hx_index) {
+				case 0:case 2:
+					tmp = true;
+					break;
+				default:
+					tmp = false;
+				}
+				if(tmp) {
+					numScore[0].set_x((flixel_FlxG.width - numScore[0].get_width()) / 2);
+				}
+				var tmp1;
+				switch(axes._hx_index) {
+				case 1:case 2:
+					tmp1 = true;
+					break;
+				default:
+					tmp1 = false;
+				}
+				if(tmp1) {
+					numScore[0].set_y((flixel_FlxG.height - numScore[0].get_height()) / 2);
+				}
+				numScore[0].set_x(coolTextX + 43 * daLoop - 90);
+				numScore[0].set_y(numScore[0].y + 80);
+				numScore[0].set_x(numScore[0].x + ClientPrefs.comboOffset[2]);
+				numScore[0].set_y(numScore[0].y - ClientPrefs.comboOffset[3]);
+				if(!ClientPrefs.comboStacking) {
+					PlayState.lastScore.push(numScore[0]);
+				}
+				if(!PlayState.isPixelStage) {
+					numScore[0].set_antialiasing(ClientPrefs.globalAntialiasing);
+					numScore[0].setGraphicSize(numScore[0].get_width() * 0.5 | 0);
+				} else {
+					numScore[0].setGraphicSize(numScore[0].get_width() * PlayState.daPixelZoom | 0);
+				}
+				numScore[0].updateHitbox();
+				numScore[0].acceleration.set_y(flixel_FlxG.random.int(200,300) * this.playbackRate * this.playbackRate);
+				var fh = numScore[0].velocity;
+				fh.set_y(fh.y - flixel_FlxG.random.int(140,160) * this.playbackRate);
+				numScore[0].velocity.set_x(flixel_FlxG.random.float(-5,5) * this.playbackRate);
+				numScore[0].set_visible(!ClientPrefs.hideHud);
+				this.numRatingGroup.add(numScore[0]);
+				if(!ClientPrefs.comboStacking) {
+					var tmp2 = Conductor.crochet * 0.002;
+					this.numRatingTween.push(flixel_tweens_FlxTween.tween(numScore[0],{ alpha : 0},0.2 / this.playbackRate,{ onComplete : (function(numScore) {
+						return function(tween) {
+							numScore[0].kill();
+						};
+					})(numScore), startDelay : tmp2 / this.playbackRate}));
+				} else {
+					var tmp3 = Conductor.crochet * 0.002;
+					flixel_tweens_FlxTween.tween(numScore[0],{ alpha : 0},0.2 / this.playbackRate,{ onComplete : (function(numScore) {
+						return function(tween) {
+							numScore[0].kill();
+						};
+					})(numScore), startDelay : tmp3 / this.playbackRate});
+				}
+				++daLoop;
+				if(numScore[0].x > xThing) {
+					xThing = numScore[0].x;
+				}
+			}
+		}
 	}
 	,strumsBlocked: null
 	,onKeyPress: function(event) {
@@ -67585,7 +67659,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.variables.h["camera:" + name] = isTemp;
 			this.customCameraMap.h[name] = isTemp;
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6569, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6638, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -67605,7 +67679,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6579, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6648, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,__class__: PlayState
@@ -78492,6 +78566,7 @@ var editors_EditorPlayState = function(startPos) {
 	this.songHits = 0;
 	this.noteTypeMap = new haxe_ds_StringMap();
 	this.timerToStart = 0;
+	this.cacheRating = new haxe_ds_StringMap();
 	this.startPos = 0;
 	this.startOffset = 0;
 	this.generatedMusic = false;
@@ -78526,6 +78601,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 	,startPos: null
 	,hitbox: null
 	,hitboxCam: null
+	,cacheRating: null
 	,scoreTxt: null
 	,stepTxt: null
 	,beatTxt: null
@@ -78615,6 +78691,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.hitboxCam.bgColor |= 0;
 		flixel_FlxG.cameras.add(this.hitboxCam,false);
 		MusicBeatState.prototype.create.call(this);
+		this.cachePopUpScore();
 	}
 	,sayGo: function() {
 		var go = new flixel_FlxSprite();
@@ -79194,6 +79271,53 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,COMBO_X: null
 	,COMBO_Y: null
+	,cachePopUpScore: function() {
+		var pixelShitPart1 = "";
+		var pixelShitPart2 = "";
+		if(PlayState.isPixelStage) {
+			pixelShitPart1 = "pixelUI/";
+			pixelShitPart2 = "-pixel";
+		}
+		var ratingTOCache = ["sick","good","bad","shit","combo"];
+		var _g = 0;
+		while(_g < ratingTOCache.length) {
+			var i = ratingTOCache[_g];
+			++_g;
+			var this1 = this.cacheRating;
+			var returnAsset = Paths.returnGraphic(pixelShitPart1 + i + pixelShitPart2,null);
+			this1.h[i] = returnAsset;
+		}
+		var this1 = this.cacheRating;
+		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 0 + pixelShitPart2,null);
+		this1.h["" + 0] = returnAsset;
+		var this1 = this.cacheRating;
+		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 1 + pixelShitPart2,null);
+		this1.h["" + 1] = returnAsset;
+		var this1 = this.cacheRating;
+		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 2 + pixelShitPart2,null);
+		this1.h["" + 2] = returnAsset;
+		var this1 = this.cacheRating;
+		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 3 + pixelShitPart2,null);
+		this1.h["" + 3] = returnAsset;
+		var this1 = this.cacheRating;
+		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 4 + pixelShitPart2,null);
+		this1.h["" + 4] = returnAsset;
+		var this1 = this.cacheRating;
+		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 5 + pixelShitPart2,null);
+		this1.h["" + 5] = returnAsset;
+		var this1 = this.cacheRating;
+		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 6 + pixelShitPart2,null);
+		this1.h["" + 6] = returnAsset;
+		var this1 = this.cacheRating;
+		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 7 + pixelShitPart2,null);
+		this1.h["" + 7] = returnAsset;
+		var this1 = this.cacheRating;
+		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 8 + pixelShitPart2,null);
+		this1.h["" + 8] = returnAsset;
+		var this1 = this.cacheRating;
+		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + 9 + pixelShitPart2,null);
+		this1.h["" + 9] = returnAsset;
+	}
 	,popUpScore: function(note) {
 		var noteDiff = Math.abs(note.strumTime + note.offsetStrumTime - Conductor.songPosition + ClientPrefs.ratingOffset);
 		this.vocals.set_volume(1);
@@ -79213,15 +79337,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(daRating == "sick" && !note.noteSplashDisabled && !ClientPrefs.clsstrum) {
 			this.spawnNoteSplashOnNote(note,note.mustPress);
 		}
-		var pixelShitPart1 = "";
-		var pixelShitPart2 = "";
-		if(PlayState.isPixelStage) {
-			pixelShitPart1 = "pixelUI/";
-			pixelShitPart2 = "-pixel";
-		}
-		var rating1 = rating;
-		var returnAsset = Paths.returnGraphic(pixelShitPart1 + daRating + pixelShitPart2,null);
-		rating1.loadGraphic(returnAsset);
+		rating.loadGraphic(this.cacheRating.h[daRating]);
 		var axes = flixel_util_FlxAxes.XY;
 		var tmp;
 		switch(axes._hx_index) {
@@ -79255,9 +79371,8 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 		rating.set_visible(!ClientPrefs.hideHud);
 		rating.set_x(rating.x + ClientPrefs.comboOffset[0]);
 		rating.set_y(rating.y - ClientPrefs.comboOffset[1]);
-		var comboSpr = new flixel_FlxSprite();
-		var returnAsset = Paths.returnGraphic(pixelShitPart1 + "combo" + pixelShitPart2,null);
-		var comboSpr1 = comboSpr.loadGraphic(returnAsset);
+		var comboSpr = this.cacheRating.h["combo"];
+		var comboSpr1 = new flixel_FlxSprite().loadGraphic(comboSpr);
 		var axes = flixel_util_FlxAxes.XY;
 		var tmp;
 		switch(axes._hx_index) {
@@ -79314,9 +79429,8 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 		while(_g < seperatedScore.length) {
 			var i = seperatedScore[_g];
 			++_g;
-			var numScore = new flixel_FlxSprite();
-			var returnAsset = Paths.returnGraphic(pixelShitPart1 + "num" + (i | 0) + pixelShitPart2,null);
-			var numScore1 = [numScore.loadGraphic(returnAsset)];
+			var numScore = this.cacheRating.h[i == null ? "null" : "" + i];
+			var numScore1 = [new flixel_FlxSprite().loadGraphic(numScore)];
 			var axes = flixel_util_FlxAxes.XY;
 			var tmp;
 			switch(axes._hx_index) {
@@ -160832,7 +160946,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 441301;
+	this.version = 823800;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
