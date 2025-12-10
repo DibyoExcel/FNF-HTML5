@@ -6507,12 +6507,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "281";
+	app.meta.h["build"] = "283";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "1.6.3.15";
+	app.meta.h["version"] = "1.6.3.15-minor.1";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -63319,7 +63319,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
 					}
 					_gthis.countdownReady.set_antialiasing(antialias);
-					_gthis.insert(_gthis.members.indexOf(_gthis.notes),_gthis.countdownReady);
+					_gthis.insert(_gthis.members.indexOf(_gthis.ratingGroup),_gthis.countdownReady);
 					flixel_tweens_FlxTween.tween(_gthis.countdownReady,{ alpha : 0},Conductor.crochet / 1000,{ ease : flixel_tweens_FlxEase.cubeInOut, onComplete : function(twn) {
 						_gthis.remove(_gthis.countdownReady);
 						_gthis.countdownReady.destroy();
@@ -63360,7 +63360,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
 					}
 					_gthis.countdownSet.set_antialiasing(antialias);
-					_gthis.insert(_gthis.members.indexOf(_gthis.notes),_gthis.countdownSet);
+					_gthis.insert(_gthis.members.indexOf(_gthis.ratingGroup),_gthis.countdownSet);
 					flixel_tweens_FlxTween.tween(_gthis.countdownSet,{ alpha : 0},Conductor.crochet / 1000,{ ease : flixel_tweens_FlxEase.cubeInOut, onComplete : function(twn) {
 						_gthis.remove(_gthis.countdownSet);
 						_gthis.countdownSet.destroy();
@@ -63402,7 +63402,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
 					}
 					_gthis.countdownGo.set_antialiasing(antialias);
-					_gthis.insert(_gthis.members.indexOf(_gthis.notes),_gthis.countdownGo);
+					_gthis.insert(_gthis.members.indexOf(_gthis.ratingGroup),_gthis.countdownGo);
 					flixel_tweens_FlxTween.tween(_gthis.countdownGo,{ alpha : 0},Conductor.crochet / 1000,{ ease : flixel_tweens_FlxEase.cubeInOut, onComplete : function(twn) {
 						_gthis.remove(_gthis.countdownGo);
 						_gthis.countdownGo.destroy();
@@ -161105,7 +161105,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 631554;
+	this.version = 355446;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
