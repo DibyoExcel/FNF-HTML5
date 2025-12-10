@@ -6507,12 +6507,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "280";
+	app.meta.h["build"] = "281";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "1.6.3.14";
+	app.meta.h["version"] = "1.6.3.15";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -9803,6 +9803,8 @@ ClientPrefs.loadDefaultKeys = function() {
 	ClientPrefs.defaultKeys = haxe_ds_StringMap.createCopy(ClientPrefs.keyBinds.h);
 };
 ClientPrefs.saveSettings = function() {
+	flixel_FlxG.save.data.invertYSwipe = ClientPrefs.invertYSwipe;
+	flixel_FlxG.save.data.invertScroll = ClientPrefs.invertScroll;
 	flixel_FlxG.save.data.minEditorJson = ClientPrefs.minEditorJson;
 	flixel_FlxG.save.data.hitboxBlend = ClientPrefs.hitboxBlend;
 	flixel_FlxG.save.data.spaceKeyPosition = ClientPrefs.spaceKeyPosition;
@@ -52835,7 +52837,7 @@ FunkinLua.prototype = {
 	,closed: null
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3391, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3398, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -62593,13 +62595,13 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.hitboxCam.bgColor &= 16777215;
 		this.hitboxCam.bgColor |= 0;
 		flixel_FlxG.cameras.add(this.hitboxCam,false);
+		this.cachePopUpScore();
+		this.cacheCountdown();
 		this.callOnLuas("onCreatePost",[]);
 		MusicBeatState.prototype.create.call(this);
 		if(ClientPrefs.startPause) {
 			this.openPauseMenu();
 		}
-		this.cacheCountdown();
-		this.cachePopUpScore();
 		var h = this.precacheList.h;
 		var _g6_h = h;
 		var _g6_keys = Object.keys(h);
@@ -62657,7 +62659,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.playbackRate = value;
 		flixel_animation_FlxAnimationController.globalSpeed = value;
-		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1645, className : "PlayState", methodName : "set_playbackRate"});
+		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1644, className : "PlayState", methodName : "set_playbackRate"});
 		Conductor.safeZoneOffset = ClientPrefs.safeFrames / 60 * 1000 * value;
 		this.setOnLuas("playbackRate",this.playbackRate);
 		return value;
@@ -63442,6 +63444,27 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				daNote.set_visible(false);
 				daNote.ignoreNote = true;
 				daNote.kill();
+				var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
+				var _g = 0;
+				while(_g < specialGroup.length) {
+					var group = specialGroup[_g];
+					++_g;
+					if(group.members.indexOf(daNote) != -1) {
+						group.remove(daNote,true);
+					}
+				}
+				var h = this.notesGroupMap.h;
+				var i_h = h;
+				var i_keys = Object.keys(h);
+				var i_length = i_keys.length;
+				var i_current = 0;
+				while(i_current < i_length) {
+					var i1 = i_keys[i_current++];
+					var obj = this.notesGroupMap.h[i1];
+					if(obj.members.indexOf(daNote) != -1) {
+						obj.remove(daNote,true);
+					}
+				}
 				HxOverrides.remove(this.unspawnNotes,daNote);
 				daNote.destroy();
 			}
@@ -63455,6 +63478,27 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				daNote.set_visible(false);
 				daNote.ignoreNote = true;
 				daNote.kill();
+				var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
+				var _g = 0;
+				while(_g < specialGroup.length) {
+					var group = specialGroup[_g];
+					++_g;
+					if(group.members.indexOf(daNote) != -1) {
+						group.remove(daNote,true);
+					}
+				}
+				var h = this.notesGroupMap.h;
+				var i_h = h;
+				var i_keys = Object.keys(h);
+				var i_length = i_keys.length;
+				var i_current = 0;
+				while(i_current < i_length) {
+					var i1 = i_keys[i_current++];
+					var obj = this.notesGroupMap.h[i1];
+					if(obj.members.indexOf(daNote) != -1) {
+						obj.remove(daNote,true);
+					}
+				}
 				this.notes.remove(daNote,true);
 				daNote.destroy();
 			}
@@ -64492,7 +64536,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3576, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3600, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var _g = 0;
@@ -64655,14 +64699,14 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 					if(daNote != null) {
 						if(daNote.customField && Object.prototype.hasOwnProperty.call(_gthis.notesGroupMap.h,daNote.fieldTarget)) {
-							if(_gthis.opponentNotes.members.indexOf(daNote) != -1) {
-								_gthis.opponentNotes.remove(daNote,true);
-							}
-							if(_gthis.playerNotes.members.indexOf(daNote) != -1) {
-								_gthis.playerNotes.remove(daNote,true);
-							}
-							if(_gthis.gfNotes.members.indexOf(daNote) != -1) {
-								_gthis.gfNotes.remove(daNote,true);
+							var specialGroup = [_gthis.opponentNotes,_gthis.playerNotes,_gthis.gfNotes];
+							var _g = 0;
+							while(_g < specialGroup.length) {
+								var group = specialGroup[_g];
+								++_g;
+								if(group.members.indexOf(daNote) != -1) {
+									group.remove(daNote,true);
+								}
 							}
 							var h = _gthis.notesGroupMap.h;
 							var i_h = h;
@@ -64694,34 +64738,14 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 								}
 							}
 							if(daNote.gfNote) {
-								if(_gthis.opponentNotes.members.indexOf(daNote) != -1) {
-									_gthis.opponentNotes.remove(daNote,true);
-								}
-								if(_gthis.playerNotes.members.indexOf(daNote) != -1) {
-									_gthis.playerNotes.remove(daNote,true);
-								}
-								if(_gthis.gfNotes.members.indexOf(daNote) == -1) {
-									_gthis.gfNotes.insert(0,daNote);
-								}
+								_gthis.moveNote(daNote,_gthis.opponentNotes,_gthis.gfNotes);
+								_gthis.moveNote(daNote,_gthis.playerNotes,_gthis.gfNotes);
+							} else if(daNote.mustPress) {
+								_gthis.moveNote(daNote,_gthis.gfNotes,_gthis.playerNotes);
+								_gthis.moveNote(daNote,_gthis.opponentNotes,_gthis.playerNotes);
 							} else {
-								if(_gthis.gfNotes.members.indexOf(daNote) != -1) {
-									_gthis.gfNotes.remove(daNote,true);
-								}
-								if(daNote.mustPress) {
-									if(_gthis.opponentNotes.members.indexOf(daNote) != -1) {
-										_gthis.opponentNotes.remove(daNote,true);
-									}
-									if(_gthis.playerNotes.members.indexOf(daNote) == -1) {
-										_gthis.playerNotes.insert(0,daNote);
-									}
-								} else {
-									if(_gthis.playerNotes.members.indexOf(daNote) != -1) {
-										_gthis.playerNotes.remove(daNote,true);
-									}
-									if(_gthis.opponentNotes.members.indexOf(daNote) == -1) {
-										_gthis.opponentNotes.insert(0,daNote);
-									}
-								}
+								_gthis.moveNote(daNote,_gthis.gfNotes,_gthis.opponentNotes);
+								_gthis.moveNote(daNote,_gthis.playerNotes,_gthis.opponentNotes);
 							}
 						}
 					}
@@ -64756,14 +64780,14 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						daNote.set_active(false);
 						daNote.set_visible(false);
 						daNote.kill();
-						if(_gthis.playerNotes.members.indexOf(daNote) != -1) {
-							_gthis.playerNotes.remove(daNote,true);
-						}
-						if(_gthis.opponentNotes.members.indexOf(daNote) != -1) {
-							_gthis.opponentNotes.remove(daNote,true);
-						}
-						if(_gthis.gfNotes.members.indexOf(daNote) != -1) {
-							_gthis.gfNotes.remove(daNote,true);
+						var specialGroup = [_gthis.opponentNotes,_gthis.playerNotes,_gthis.gfNotes];
+						var _g = 0;
+						while(_g < specialGroup.length) {
+							var group = specialGroup[_g];
+							++_g;
+							if(group.members.indexOf(daNote) != -1) {
+								group.remove(daNote,true);
+							}
 						}
 						var h = _gthis.notesGroupMap.h;
 						var i_h = h;
@@ -64793,6 +64817,17 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.setOnLuas("cameraY",this.camFollowPos.y);
 		this.setOnLuas("botPlay",this.cpuControlled);
 		this.callOnLuas("onUpdatePost",[elapsed]);
+	}
+	,moveNote: function(obj,from,to,splice) {
+		if(splice == null) {
+			splice = true;
+		}
+		if(from.members.indexOf(obj) != -1) {
+			from.remove(obj,splice);
+		}
+		if(to.members.indexOf(obj) == -1) {
+			to.insert(0,obj);
+		}
 	}
 	,openPauseMenu: function() {
 		this.persistentUpdate = false;
@@ -65864,12 +65899,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4637, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4646, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4638, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4647, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -65900,7 +65935,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4674, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4683, className : "PlayState", methodName : "endSong"});
 				WeekData.loadTheFirstEnabledMod();
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
@@ -65924,7 +65959,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4698, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4707, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -65938,6 +65973,27 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			daNote.set_active(false);
 			daNote.set_visible(false);
 			daNote.kill();
+			var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
+			var _g = 0;
+			while(_g < specialGroup.length) {
+				var group = specialGroup[_g];
+				++_g;
+				if(group.members.indexOf(daNote) != -1) {
+					group.remove(daNote,true);
+				}
+			}
+			var h = this.notesGroupMap.h;
+			var i_h = h;
+			var i_keys = Object.keys(h);
+			var i_length = i_keys.length;
+			var i_current = 0;
+			while(i_current < i_length) {
+				var i = i_keys[i_current++];
+				var obj = this.notesGroupMap.h[i];
+				if(obj.members.indexOf(daNote) != -1) {
+					obj.remove(daNote,true);
+				}
+			}
 			this.notes.remove(daNote,true);
 			daNote.destroy();
 		}
@@ -66194,13 +66250,11 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					i.kill();
 				}
 			}
-			var _g = 0;
-			var _g1 = this.numRatingTween;
-			while(_g < _g1.length) {
-				var i = _g1[_g];
-				++_g;
-				if(i != null) {
-					i.cancel();
+			while(this.numRatingTween.length > 0) {
+				var tween = this.numRatingTween[0];
+				if(tween != null) {
+					tween.cancel();
+					HxOverrides.remove(this.numRatingTween,tween);
 				}
 			}
 		}
@@ -66321,6 +66375,27 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							++_g1;
 							if(Math.abs(doubleNote.strumTime + doubleNote.offsetStrumTime - (epicNote.strumTime + epicNote.offsetStrumTime)) < 1) {
 								doubleNote.kill();
+								var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
+								var _g2 = 0;
+								while(_g2 < specialGroup.length) {
+									var group = specialGroup[_g2];
+									++_g2;
+									if(group.members.indexOf(doubleNote) != -1) {
+										group.remove(doubleNote,true);
+									}
+								}
+								var h = this.notesGroupMap.h;
+								var i_h = h;
+								var i_keys = Object.keys(h);
+								var i_length = i_keys.length;
+								var i_current = 0;
+								while(i_current < i_length) {
+									var i = i_keys[i_current++];
+									var obj = this.notesGroupMap.h[i];
+									if(obj.members.indexOf(doubleNote) != -1) {
+										obj.remove(doubleNote,true);
+									}
+								}
 								this.notes.remove(doubleNote,true);
 								doubleNote.destroy();
 							} else {
@@ -66471,6 +66546,27 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.notes.forEachAlive(function(note) {
 			if(daNote != note && (_gthis.gamemode != "opponent" ? _gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress : !daNote.mustPress) && daNote.noteData == note.noteData && daNote.isSustainNote == note.isSustainNote && Math.abs(daNote.strumTime + daNote.offsetStrumTime - (note.strumTime + note.offsetStrumTime)) < 1) {
 				note.kill();
+				var specialGroup = [_gthis.opponentNotes,_gthis.playerNotes,_gthis.gfNotes];
+				var _g = 0;
+				while(_g < specialGroup.length) {
+					var group = specialGroup[_g];
+					++_g;
+					if(group.members.indexOf(note) != -1) {
+						group.remove(note,true);
+					}
+				}
+				var h = _gthis.notesGroupMap.h;
+				var i_h = h;
+				var i_keys = Object.keys(h);
+				var i_length = i_keys.length;
+				var i_current = 0;
+				while(i_current < i_length) {
+					var i = i_keys[i_current++];
+					var obj = _gthis.notesGroupMap.h[i];
+					if(obj.members.indexOf(note) != -1) {
+						obj.remove(note,true);
+					}
+				}
 				_gthis.notes.remove(note,true);
 				note.destroy();
 			}
@@ -66595,6 +66691,27 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.callOnLuas(note.mustPress ? "goodNoteHit" : "opponentNoteHit",[this.notes.members.indexOf(note),Math.abs(note.noteData),note.noteType,note.isSustainNote]);
 		if(!note.isSustainNote && !note.fakeNoHit) {
 			note.kill();
+			var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
+			var _g = 0;
+			while(_g < specialGroup.length) {
+				var group = specialGroup[_g];
+				++_g;
+				if(group.members.indexOf(note) != -1) {
+					group.remove(note,true);
+				}
+			}
+			var h = this.notesGroupMap.h;
+			var i_h = h;
+			var i_keys = Object.keys(h);
+			var i_length = i_keys.length;
+			var i_current = 0;
+			while(i_current < i_length) {
+				var i = i_keys[i_current++];
+				var obj = this.notesGroupMap.h[i];
+				if(obj.members.indexOf(note) != -1) {
+					obj.remove(note,true);
+				}
+			}
 			this.notes.remove(note,true);
 			note.destroy();
 		}
@@ -66636,6 +66753,27 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				note.wasGoodHit = true;
 				if(!note.isSustainNote && !note.fakeNoHit) {
 					note.kill();
+					var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
+					var _g = 0;
+					while(_g < specialGroup.length) {
+						var group = specialGroup[_g];
+						++_g;
+						if(group.members.indexOf(note) != -1) {
+							group.remove(note,true);
+						}
+					}
+					var h = this.notesGroupMap.h;
+					var i_h = h;
+					var i_keys = Object.keys(h);
+					var i_length = i_keys.length;
+					var i_current = 0;
+					while(i_current < i_length) {
+						var i = i_keys[i_current++];
+						var obj = this.notesGroupMap.h[i];
+						if(obj.members.indexOf(note) != -1) {
+							obj.remove(note,true);
+						}
+					}
 					this.notes.remove(note,true);
 					note.destroy();
 				}
@@ -66737,6 +66875,27 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.callOnLuas(!note.mustPress || note.isDad ? "opponentNoteHit" : "goodNoteHit",[this.notes.members.indexOf(note),leData,leType,isSus]);
 			if(!note.isSustainNote && !note.fakeNoHit) {
 				note.kill();
+				var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
+				var _g = 0;
+				while(_g < specialGroup.length) {
+					var group = specialGroup[_g];
+					++_g;
+					if(group.members.indexOf(note) != -1) {
+						group.remove(note,true);
+					}
+				}
+				var h = this.notesGroupMap.h;
+				var i_h = h;
+				var i_keys = Object.keys(h);
+				var i_length = i_keys.length;
+				var i_current = 0;
+				while(i_current < i_length) {
+					var i = i_keys[i_current++];
+					var obj = this.notesGroupMap.h[i];
+					if(obj.members.indexOf(note) != -1) {
+						obj.remove(note,true);
+					}
+				}
 				this.notes.remove(note,true);
 				note.destroy();
 			}
@@ -67659,7 +67818,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.variables.h["camera:" + name] = isTemp;
 			this.customCameraMap.h[name] = isTemp;
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6638, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6721, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -67679,7 +67838,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6648, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6731, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,__class__: PlayState
@@ -160946,7 +161105,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 823800;
+	this.version = 631554;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -214789,6 +214948,8 @@ ClientPrefs.swipeRange = 100;
 ClientPrefs.spaceKeyPosition = "bottom";
 ClientPrefs.spaceKey = false;
 ClientPrefs.hitboxBlend = "normal";
+ClientPrefs.invertYSwipe = false;
+ClientPrefs.invertScroll = false;
 ClientPrefs.downScroll = false;
 ClientPrefs.middleScroll = false;
 ClientPrefs.opponentStrums = true;
