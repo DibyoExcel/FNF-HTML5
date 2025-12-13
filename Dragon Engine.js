@@ -6507,12 +6507,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "283";
+	app.meta.h["build"] = "284";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "1.6.3.15-minor.1";
+	app.meta.h["version"] = "1.6.3.16";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -9723,6 +9723,9 @@ Boyfriend.prototype = $extend(Character.prototype,{
 	}
 	,__class__: Boyfriend
 });
+var CacheTools = function() { };
+$hxClasses["CacheTools"] = CacheTools;
+CacheTools.__name__ = "CacheTools";
 var CheckboxThingie = function(x,y,checked) {
 	if(checked == null) {
 		checked = false;
@@ -9803,6 +9806,7 @@ ClientPrefs.loadDefaultKeys = function() {
 	ClientPrefs.defaultKeys = haxe_ds_StringMap.createCopy(ClientPrefs.keyBinds.h);
 };
 ClientPrefs.saveSettings = function() {
+	flixel_FlxG.save.data.pauseUnFocus = ClientPrefs.pauseUnFocus;
 	flixel_FlxG.save.data.invertYSwipe = ClientPrefs.invertYSwipe;
 	flixel_FlxG.save.data.invertScroll = ClientPrefs.invertScroll;
 	flixel_FlxG.save.data.minEditorJson = ClientPrefs.minEditorJson;
@@ -9873,6 +9877,9 @@ ClientPrefs.saveSettings = function() {
 ClientPrefs.loadPrefs = function() {
 	if(flixel_FlxG.save.data.downScroll != null) {
 		ClientPrefs.downScroll = flixel_FlxG.save.data.downScroll;
+	}
+	if(flixel_FlxG.save.data.pauseUnFocus != null) {
+		ClientPrefs.pauseUnFocus = flixel_FlxG.save.data.pauseUnFocus;
 	}
 	if(flixel_FlxG.save.data.minEditorJson != null) {
 		ClientPrefs.minEditorJson = flixel_FlxG.save.data.minEditorJson;
@@ -60131,28 +60138,39 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		var blahblah = arraySkin.join("/");
 		if(PlayState.isPixelStage) {
 			if(this.isSustainNote) {
-				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah + "ENDS",null);
-				this.loadGraphic(returnAsset);
+				if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNote.h,blahblah + "ENDS")) {
+					var this1 = CacheTools.cacheNote;
+					var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah + "ENDS",null);
+					this1.h[blahblah + "ENDS"] = returnAsset;
+				}
+				this.loadGraphic(CacheTools.cacheNote.h[blahblah + "ENDS"]);
 				this.set_width(this.get_width() / 4);
 				this.set_height(this.get_height() / 2);
 				this.originalHeightForCalcs = this.get_height();
-				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah + "ENDS",null);
-				this.loadGraphic(returnAsset,true,Math.floor(this.get_width()),Math.floor(this.get_height()));
+				this.loadGraphic(CacheTools.cacheNote.h[blahblah + "ENDS"],true,Math.floor(this.get_width()),Math.floor(this.get_height()));
 			} else {
-				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah,null);
-				this.loadGraphic(returnAsset);
+				if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNote.h,blahblah)) {
+					var this1 = CacheTools.cacheNote;
+					var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah,null);
+					this1.h[blahblah] = returnAsset;
+				}
+				this.loadGraphic(CacheTools.cacheNote.h[blahblah]);
 				this.set_width(this.get_width() / 4);
 				this.set_height(this.get_height() / 5);
-				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah,null);
-				this.loadGraphic(returnAsset,true,Math.floor(this.get_width()),Math.floor(this.get_height()));
+				this.loadGraphic(CacheTools.cacheNote.h[blahblah],true,Math.floor(this.get_width()),Math.floor(this.get_height()));
 			}
 			this.setGraphicSize(this.get_width() * PlayState.daPixelZoom | 0);
 			this.loadPixelNoteAnims();
 			this.set_antialiasing(false);
 		} else {
-			var library = null;
-			var returnAsset = Paths.returnGraphic(blahblah,library);
-			this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + blahblah + ".xml","TEXT",library)));
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNoteAtlas.h,blahblah)) {
+				var this1 = CacheTools.cacheNoteAtlas;
+				var library = null;
+				var returnAsset = Paths.returnGraphic(blahblah,library);
+				var value = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + blahblah + ".xml","TEXT",library));
+				this1.h[blahblah] = value;
+			}
+			this.set_frames(CacheTools.cacheNoteAtlas.h[blahblah]);
 			this.loadNoteAnims();
 			this.setGraphicSize(this.get_width() * ClientPrefs.strumsize | 0);
 			this.set_antialiasing(ClientPrefs.globalAntialiasing);
@@ -60473,9 +60491,14 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 	}
 	,loadAnims: function(skin) {
-		var library = null;
-		var returnAsset = Paths.returnGraphic(skin,library);
-		this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + skin + ".xml","TEXT",library)));
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNoteSplash.h,skin)) {
+			var this1 = CacheTools.cacheNoteSplash;
+			var library = null;
+			var returnAsset = Paths.returnGraphic(skin,library);
+			var value = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + skin + ".xml","TEXT",library));
+			this1.h[skin] = value;
+		}
+		this.set_frames(CacheTools.cacheNoteSplash.h[skin]);
 		this.animation.addByPrefix("note1-" + 1,"note splash blue " + 1,ClientPrefs.fpsStrumAnim,false);
 		this.animation.addByPrefix("note2-" + 1,"note splash green " + 1,ClientPrefs.fpsStrumAnim,false);
 		this.animation.addByPrefix("note0-" + 1,"note splash purple " + 1,ClientPrefs.fpsStrumAnim,false);
@@ -60495,9 +60518,6 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 	}
 	,__class__: NoteSplash
 });
-var NoteTypeManager = function() { };
-$hxClasses["NoteTypeManager"] = NoteTypeManager;
-NoteTypeManager.__name__ = "NoteTypeManager";
 var OutdatedState = function(TransIn,TransOut) {
 	MusicBeatState.call(this,TransIn,TransOut);
 };
@@ -60812,7 +60832,7 @@ Paths.returnSound = function(path,key,library) {
 	Paths.localTrackedAssets.push(gottenPath);
 	return Paths.currentTrackedSounds.h[gottenPath];
 };
-var PauseSubState = function(x,y) {
+var PauseSubState = function() {
 	this.cantUnpause = 0.1;
 	this.holdTime = 0;
 	this.curTime = Math.max(0,Conductor.songPosition);
@@ -60849,7 +60869,7 @@ var PauseSubState = function(x,y) {
 	}
 	this.difficultyChoices.push("BACK");
 	this.pauseMusic = new flixel_system_FlxSound();
-	if(PauseSubState.songName != null && PauseSubState.songName != "None") {
+	if(PauseSubState.songName != null && PauseSubState.songName.toLowerCase() != "none") {
 		var tmp = this.pauseMusic;
 		var path = ClientPrefs.pauseMusic;
 		var invalidChars = new EReg("[~&\\\\;:<>#]","");
@@ -61443,6 +61463,7 @@ var PlayState = function(TransIn,TransOut) {
 	this.boyfriendIdled = false;
 	this.boyfriendIdleTime = 0.0;
 	this.keysPressed = [];
+	this.cacheRating = new haxe_ds_StringMap();
 	this.keyCount = 4;
 	this.fieldNameAsPlayer = "";
 	this.oldTransitionNotes = false;
@@ -61514,7 +61535,6 @@ var PlayState = function(TransIn,TransOut) {
 	this.DAD_X = 100;
 	this.BF_Y = 100;
 	this.BF_X = 770;
-	this.cacheRating = new haxe_ds_StringMap();
 	this.customCameraMap = new haxe_ds_StringMap();
 	this.noteSplashGroupMap = new haxe_ds_StringMap();
 	this.notesGroupMap = new haxe_ds_StringMap();
@@ -61565,7 +61585,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,notesGroupMap: null
 	,noteSplashGroupMap: null
 	,customCameraMap: null
-	,cacheRating: null
 	,ratingGroup: null
 	,comboGroup: null
 	,numRatingGroup: null
@@ -61711,6 +61730,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,hitboxCam: null
 	,hitbox: null
 	,hitboxSpace: null
+	,cacheRating: null
 	,keysPressed: null
 	,boyfriendIdleTime: null
 	,boyfriendIdled: null
@@ -62319,24 +62339,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			var fh = this.timeTxt;
 			fh.set_y(fh.y + 3);
 		}
-		this.playerStrums = new flixel_group_FlxTypedGroup();
-		this.opponentStrums = new flixel_group_FlxTypedGroup();
-		this.gfStrums = new flixel_group_FlxTypedGroup();
-		this.add(this.opponentStrums);
-		this.add(this.gfStrums);
-		this.add(this.playerStrums);
-		this.add(this.grpNoteSplashesOpt);
-		this.add(this.grpNoteSplashesGf);
-		this.add(this.grpNoteSplashes);
-		var splash = new NoteSplash(100,100,0);
-		this.grpNoteSplashes.add(splash);
-		var splashOpt = new NoteSplash(100,100,0,"opt");
-		var splashGf = new NoteSplash(100,100,0,"gf");
-		this.grpNoteSplashesOpt.add(splashOpt);
-		this.grpNoteSplashesGf.add(splashGf);
-		splash.set_alpha(0.0);
-		splashOpt.set_alpha(0.0);
-		splashGf.set_alpha(0.0);
 		this.generateSong(PlayState.SONG.song);
 		this.camFollow = new flixel_math_FlxPoint();
 		this.camFollowPos = new flixel_FlxObject(0,0,1,1);
@@ -62452,6 +62454,31 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.scoreTxt.set_color(-256);
 		}
 		this.add(this.scoreTxt);
+		this.playerStrums = new flixel_group_FlxTypedGroup();
+		this.opponentStrums = new flixel_group_FlxTypedGroup();
+		this.gfStrums = new flixel_group_FlxTypedGroup();
+		this.add(this.opponentStrums);
+		this.add(this.gfStrums);
+		this.add(this.playerStrums);
+		this.add(this.grpNoteSplashesOpt);
+		this.add(this.grpNoteSplashesGf);
+		this.add(this.grpNoteSplashes);
+		var splash = new NoteSplash(100,100,0);
+		this.grpNoteSplashes.add(splash);
+		var splashOpt = new NoteSplash(100,100,0,"opt");
+		var splashGf = new NoteSplash(100,100,0,"gf");
+		this.grpNoteSplashesOpt.add(splashOpt);
+		this.grpNoteSplashesGf.add(splashGf);
+		splash.set_alpha(0.0);
+		splashOpt.set_alpha(0.0);
+		splashGf.set_alpha(0.0);
+		this.notes = new flixel_group_FlxTypedGroup();
+		this.playerNotes = new flixel_group_FlxTypedGroup();
+		this.opponentNotes = new flixel_group_FlxTypedGroup();
+		this.gfNotes = new flixel_group_FlxTypedGroup();
+		this.add(this.opponentNotes);
+		this.add(this.playerNotes);
+		this.add(this.gfNotes);
 		this.ratingGroup = new flixel_group_FlxTypedGroup();
 		this.comboGroup = new flixel_group_FlxTypedGroup();
 		this.numRatingGroup = new flixel_group_FlxTypedGroup();
@@ -62577,17 +62604,17 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			openfl_Lib.get_current().stage.addEventListener("keyDown",$bind(this,this.onKeyPress));
 			openfl_Lib.get_current().stage.addEventListener("keyUp",$bind(this,this.onKeyRelease));
 		}
+		this.keyPressUI = new flixel_group_FlxTypedGroup();
+		this.add(this.keyPressUI);
 		if(ClientPrefs.extUI) {
-			this.keyPressUI = new flixel_group_FlxTypedGroup();
 			var _g = 0;
 			var _g1 = this.keysArray.length;
 			while(_g < _g1) {
 				var i = _g++;
-				var notePressUISpr = new addition_Keypress(50 + i % 4 * 50,flixel_FlxG.height / 2 + 50 * Math.floor(i / 4),this.colorOrder[i % this.colorOrder.length]);
+				var notePressUISpr = new dge_obj_Keypress(50 + i % 4 * 50,flixel_FlxG.height / 2 + 50 * Math.floor(i / 4),this.colorOrder[i % this.colorOrder.length]);
 				notePressUISpr.set_cameras([this.camHUD]);
 				this.keyPressUI.add(notePressUISpr);
 			}
-			this.add(this.keyPressUI);
 		}
 		this.hitbox = new flixel_group_FlxTypedGroup();
 		this.add(this.hitbox);
@@ -62659,7 +62686,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.playbackRate = value;
 		flixel_animation_FlxAnimationController.globalSpeed = value;
-		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1644, className : "PlayState", methodName : "set_playbackRate"});
+		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1653, className : "PlayState", methodName : "set_playbackRate"});
 		Conductor.safeZoneOffset = ClientPrefs.safeFrames / 60 * 1000 * value;
 		this.setOnLuas("playbackRate",this.playbackRate);
 		return value;
@@ -63630,13 +63657,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		var songKey = "" + hideChars.split(path).join("").toLowerCase() + "/Inst";
 		var inst = Paths.returnSound("songs",songKey);
 		tmp.add(tmp1.loadEmbedded(inst));
-		this.notes = new flixel_group_FlxTypedGroup();
-		this.playerNotes = new flixel_group_FlxTypedGroup();
-		this.opponentNotes = new flixel_group_FlxTypedGroup();
-		this.gfNotes = new flixel_group_FlxTypedGroup();
-		this.add(this.opponentNotes);
-		this.add(this.playerNotes);
-		this.add(this.gfNotes);
 		var noteData = songData.notes;
 		var playerCounter = 0;
 		var daBeats = 0;
@@ -64198,6 +64218,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		MusicBeatState.prototype.onFocus.call(this);
 	}
 	,onFocusLost: function() {
+		if(ClientPrefs.pauseUnFocus && this.startedCountdown && this.canPause && !this.paused) {
+			this.openPauseMenu();
+		}
 		MusicBeatState.prototype.onFocusLost.call(this);
 	}
 	,resyncVocals: function() {
@@ -64536,23 +64559,21 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3600, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3605, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
-		var _g = 0;
-		var _g1 = this.unspawnNotes.length;
-		while(_g < _g1) {
-			var i = _g++;
-			if(this.unspawnNotes[i] != null) {
+		var noteCount = this.unspawnNotes.length;
+		while(noteCount >= 0) {
+			if(this.unspawnNotes[noteCount] != null) {
 				var time = this.spawnTime;
 				if(Math.abs(this.songSpeed) < 1) {
 					time /= Math.max(0.25,Math.abs(this.songSpeed));
 				}
-				if(this.unspawnNotes[i].multSpeed < 1) {
-					time /= this.unspawnNotes[i].multSpeed;
+				if(this.unspawnNotes[noteCount].multSpeed < 1) {
+					time /= this.unspawnNotes[noteCount].multSpeed;
 				}
-				if(this.unspawnNotes.length > 0 && this.unspawnNotes[i].strumTime + this.unspawnNotes[i].offsetStrumTime - Conductor.songPosition < time && (ClientPrefs.limitSpawn ? this.notes.length < ClientPrefs.limitSpawnNotes : true)) {
-					var dunceNote = this.unspawnNotes[i];
+				if(this.unspawnNotes.length > 0 && this.unspawnNotes[noteCount].strumTime + this.unspawnNotes[noteCount].offsetStrumTime - Conductor.songPosition < time && (ClientPrefs.limitSpawn ? this.notes.length < ClientPrefs.limitSpawnNotes : true)) {
+					var dunceNote = this.unspawnNotes[noteCount];
 					this.notes.insert(0,dunceNote);
 					dunceNote.spawned = true;
 					this.callOnLuas("onSpawnNote",[this.notes.members.indexOf(dunceNote),dunceNote.noteData,dunceNote.noteType,dunceNote.isSustainNote]);
@@ -64560,6 +64581,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					this.unspawnNotes.splice(index,1);
 				}
 			}
+			--noteCount;
 		}
 		if(this.generatedMusic && !this.inCutscene) {
 			if(this.gf != null && this.gf.animation._curAnim != null && this.gf.holdTimer > Conductor.stepCrochet * (0.0011 / flixel_FlxG.sound.music._pitch) * this.gf.singDuration && StringTools.startsWith(this.gf.animation._curAnim.name,"sing")) {
@@ -64837,7 +64859,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			flixel_FlxG.sound.music.pause();
 			this.vocals.pause();
 		}
-		this.openSubState(new PauseSubState(this.boyfriend.getScreenPosition().x,this.boyfriend.getScreenPosition().y));
+		this.openSubState(new PauseSubState());
 	}
 	,openChartEditor: function() {
 		this.persistentUpdate = false;
@@ -65877,17 +65899,24 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			if(PlayState.isStoryMode) {
 				PlayState.campaignScore += this.songScore;
 				PlayState.campaignMisses += this.songMisses;
+				PlayState.campaignPercent += this.ratingPercent;
 				HxOverrides.remove(PlayState.storyPlaylist,PlayState.storyPlaylist[0]);
 				if(PlayState.storyPlaylist.length <= 0) {
 					WeekData.loadTheFirstEnabledMod();
-					var tmp = flixel_FlxG.sound;
-					var file = Paths.returnSound("music","freakyMenu",null);
-					tmp.playMusic(file);
 					PlayState.cancelMusicFadeTween();
 					if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 						CustomFadeTransition.nextCamera = null;
 					}
-					MusicBeatState.switchState(new StoryMenuState());
+					if(!this.cpuControlled && ClientPrefs.useResultScr) {
+						var actualState = new dge_states_ResultScreen(PlayState.campaignScore,PlayState.campaignMisses,null,PlayState.campaignPercent / StoryMenuState.songListLength);
+						actualState.toStoryMode = true;
+						MusicBeatState.switchState(actualState);
+					} else {
+						MusicBeatState.switchState(new StoryMenuState());
+						var tmp = flixel_FlxG.sound;
+						var file = Paths.returnSound("music","freakyMenu",null);
+						tmp.playMusic(file);
+					}
 					if(!(Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"practice") && ClientPrefs.gameplaySettings.h["practice"]) && !(Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"botplay") && ClientPrefs.gameplaySettings.h["botplay"])) {
 						StoryMenuState.weekCompleted.h[WeekData.weeksList[PlayState.storyWeek]] = true;
 						if(PlayState.SONG.validScore) {
@@ -65899,12 +65928,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4646, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4659, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4647, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4660, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -65935,14 +65964,14 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4683, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4696, className : "PlayState", methodName : "endSong"});
 				WeekData.loadTheFirstEnabledMod();
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 					CustomFadeTransition.nextCamera = null;
 				}
 				if(!this.cpuControlled && ClientPrefs.useResultScr) {
-					MusicBeatState.switchState(new addition_ResultScreen(this.songScore,this.songMisses,this.ratingName,this.ratingPercent));
+					MusicBeatState.switchState(new dge_states_ResultScreen(this.songScore,this.songMisses,this.ratingName,this.ratingPercent));
 				} else {
 					var tmp = flixel_FlxG.sound;
 					var file = Paths.returnSound("music","freakyMenu",null);
@@ -65959,7 +65988,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4707, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4720, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -66057,6 +66086,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,numRatingTween: null
 	,popUpScore: function(note) {
 		var noteDiff = Math.abs(note.strumTime + note.offsetStrumTime - Conductor.songPosition + ClientPrefs.ratingOffset);
+		var noteIdx = this.notes.members.indexOf(note);
 		this.vocals.set_volume(1);
 		var placement = Std.string(this.combo);
 		var coolTextX = flixel_FlxG.width * 0.35;
@@ -66142,6 +66172,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		rating.set_visible(!ClientPrefs.hideHud && this.showRating);
 		rating.set_x(rating.x + ClientPrefs.comboOffset[0]);
 		rating.set_y(rating.y - ClientPrefs.comboOffset[1]);
+		this.ratingGroup.remove(rating,true);
 		this.ratingGroup.add(rating);
 		if(!PlayState.isPixelStage) {
 			rating.setGraphicSize(rating.get_width() * 0.7 | 0);
@@ -66159,6 +66190,8 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				rating.kill();
 			}, startDelay : Conductor.crochet * 0.001 / this.playbackRate});
 		}
+		var ratingSprOrder = this.ratingGroup.members.indexOf(rating);
+		this.callOnLuas("onRatingPopUp",[noteIdx,ratingSprOrder,note.noteData,note.noteType]);
 		var xThing = 0;
 		if(this.showCombo) {
 			if(!ClientPrefs.comboStacking) {
@@ -66219,6 +66252,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			comboSpr.set_y(comboSpr.y + 60);
 			var fh = comboSpr.velocity;
 			fh.set_x(fh.x + flixel_FlxG.random.int(1,10) * this.playbackRate);
+			this.comboGroup.remove(comboSpr,true);
 			this.comboGroup.add(comboSpr);
 			comboSpr.updateHitbox();
 			comboSpr.set_x(xThing + 50);
@@ -66231,6 +66265,8 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					comboSpr.kill();
 				}, startDelay : Conductor.crochet * 0.002 / this.playbackRate});
 			}
+			var comboSprOrder = this.comboGroup.members.indexOf(comboSpr);
+			this.callOnLuas("onComboPopUp",[noteIdx,comboSprOrder,note.noteData,note.noteType]);
 		}
 		var seperatedScore = [];
 		if(this.combo >= 1000) {
@@ -66310,6 +66346,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				fh.set_y(fh.y - flixel_FlxG.random.int(140,160) * this.playbackRate);
 				numScore[0].velocity.set_x(flixel_FlxG.random.float(-5,5) * this.playbackRate);
 				numScore[0].set_visible(!ClientPrefs.hideHud);
+				this.numRatingGroup.remove(numScore[0],true);
 				this.numRatingGroup.add(numScore[0]);
 				if(!ClientPrefs.comboStacking) {
 					var tmp2 = Conductor.crochet * 0.002;
@@ -66330,6 +66367,8 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				if(numScore[0].x > xThing) {
 					xThing = numScore[0].x;
 				}
+				var numSprOrder = this.numRatingGroup.members.indexOf(numScore[0]);
+				this.callOnLuas("onNumPopUp",[noteIdx,numSprOrder,note.noteData,note.noteType]);
 			}
 		}
 	}
@@ -66946,6 +66985,14 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		var splash = groupTarget.recycle(NoteSplash);
 		splash.setupNoteSplash(x,y,data,skin,hue,sat,brt,note.noteSplashCam,note.noteSplashScale,note.noteSplashScrollFactor[0],note.noteSplashScrollFactor[1],note);
 		groupTarget.add(splash);
+		splash.set_color(-1);
+		var splashIndex = groupTarget.members.indexOf(splash);
+		if(note != null) {
+			var noteIndex = this.notes.members.indexOf(note);
+			this.callOnLuas("onSpawnNoteSplashes",[noteIndex,splashIndex,note.noteData,note.noteType]);
+		} else {
+			this.callOnLuas("onSpawnNoteSplashes",[0,splashIndex,0,""]);
+		}
 	}
 	,spawnNoteSplashOpt: function(x,y,data,note) {
 		var skin = "noteSplashes";
@@ -66975,6 +67022,14 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		var splashOpt = groupTarget.recycle(NoteSplash);
 		splashOpt.setupNoteSplash(x,y,data,skin,hue,sat,brt,note.noteSplashCam,note.noteSplashScale,note.noteSplashScrollFactor[0],note.noteSplashScrollFactor[1],note);
 		groupTarget.add(splashOpt);
+		splashOpt.set_color(-1);
+		var splashIndex = groupTarget.members.indexOf(splashOpt);
+		if(note != null) {
+			var noteIndex = this.notes.members.indexOf(note);
+			this.callOnLuas("onSpawnNoteSplashes",[noteIndex,splashIndex,note.noteData,note.noteType]);
+		} else {
+			this.callOnLuas("onSpawnNoteSplashes",[0,splashIndex,0,""]);
+		}
 	}
 	,fastCarCanDrive: null
 	,resetFastCar: function() {
@@ -67118,8 +67173,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,destroy: function() {
 		PlayState.SONG.secOpt = this.tempSecOpt;
-		NoteTypeManager.jsonParse.h = Object.create(null);
-		NoteTypeManager.jsonRaw.h = Object.create(null);
+		CacheTools.jsonParse.h = Object.create(null);
+		CacheTools.cacheNoteSplash.h = Object.create(null);
+		CacheTools.cacheNote.h = Object.create(null);
+		CacheTools.cacheNoteAtlas.h = Object.create(null);
 		var _g = 0;
 		var _g1 = this.luaArray;
 		while(_g < _g1.length) {
@@ -67162,16 +67219,39 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			return;
 		}
 		if(this.generatedMusic) {
-			var Order = ClientPrefs.downScroll ? -1 : 1;
-			if(Order == null) {
-				Order = -1;
+			var groupToSort = [this.playerNotes,this.gfNotes,this.opponentNotes];
+			var _g = 0;
+			while(_g < groupToSort.length) {
+				var group = groupToSort[_g];
+				++_g;
+				var Order = ClientPrefs.downScroll ? -1 : 1;
+				if(Order == null) {
+					Order = -1;
+				}
+				group.members.sort((function(a1,_g) {
+					return function(a2,a3) {
+						return _g[0](a1[0],a2,a3);
+					};
+				})([Order],[flixel_util_FlxSort.byY]));
 			}
-			var _g = flixel_util_FlxSort.byY;
-			var a1 = Order;
-			var tmp = function(a2,a3) {
-				return _g(a1,a2,a3);
-			};
-			this.notes.members.sort(tmp);
+			var h = this.notesGroupMap.h;
+			var i_h = h;
+			var i_keys = Object.keys(h);
+			var i_length = i_keys.length;
+			var i_current = 0;
+			while(i_current < i_length) {
+				var i = i_keys[i_current++];
+				var group = this.notesGroupMap.h[i];
+				var Order = ClientPrefs.downScroll ? -1 : 1;
+				if(Order == null) {
+					Order = -1;
+				}
+				group.members.sort((function(a1,_g) {
+					return function(a2,a3) {
+						return _g[0](a1[0],a2,a3);
+					};
+				})([Order],[flixel_util_FlxSort.byY]));
+			}
 		}
 		this.iconP1.scale.set(1.2,1.2);
 		this.iconP2.scale.set(1.2,1.2);
@@ -67582,7 +67662,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						var _g1 = this.keysArray.length;
 						while(_g < _g1) {
 							var i = _g++;
-							var notePressUISpr = new addition_Keypress(50 + i % 4 * 50,flixel_FlxG.height / 2 + 50 * Math.floor(i / 4),this.colorOrder[i % this.colorOrder.length]);
+							var notePressUISpr = new dge_obj_Keypress(50 + i % 4 * 50,flixel_FlxG.height / 2 + 50 * Math.floor(i / 4),this.colorOrder[i % this.colorOrder.length]);
 							notePressUISpr.set_cameras([this.camHUD]);
 							this.keyPressUI.add(notePressUISpr);
 						}
@@ -67678,7 +67758,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var _g1 = this.keysArray.length;
 				while(_g < _g1) {
 					var i = _g++;
-					var notePressUISpr = new addition_Keypress(50 + i % 4 * 50,flixel_FlxG.height / 2 + 50 * Math.floor(i / 4),this.colorOrder[i % this.colorOrder.length]);
+					var notePressUISpr = new dge_obj_Keypress(50 + i % 4 * 50,flixel_FlxG.height / 2 + 50 * Math.floor(i / 4),this.colorOrder[i % this.colorOrder.length]);
 					notePressUISpr.set_cameras([this.camHUD]);
 					this.keyPressUI.add(notePressUISpr);
 				}
@@ -67818,7 +67898,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.variables.h["camera:" + name] = isTemp;
 			this.customCameraMap.h[name] = isTemp;
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6721, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6769, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -67838,7 +67918,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6731, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6779, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,__class__: PlayState
@@ -69055,6 +69135,7 @@ StoryMenuState.prototype = $extend(MusicBeatState.prototype,{
 				songArray.push(leWeek[i][0]);
 			}
 			PlayState.storyPlaylist = songArray;
+			StoryMenuState.songListLength = songArray.length;
 			PlayState.isStoryMode = true;
 			this.selectedWeek = true;
 			var diffic = CoolUtil.getDifficultyFilePath(this.curDifficulty);
@@ -69064,6 +69145,7 @@ StoryMenuState.prototype = $extend(MusicBeatState.prototype,{
 			PlayState.storyDifficulty = this.curDifficulty;
 			PlayState.SONG = Song.loadFromJson(PlayState.storyPlaylist[0].toLowerCase() + diffic,PlayState.storyPlaylist[0].toLowerCase());
 			PlayState.campaignScore = 0;
+			PlayState.campaignPercent = 0;
 			PlayState.campaignMisses = 0;
 			new flixel_util_FlxTimer().start(1,function(tmr) {
 				var target = new PlayState();
@@ -69491,12 +69573,15 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			lastAnim = this.animation._curAnim.name;
 		}
 		if(PlayState.isPixelStage) {
-			var returnAsset = Paths.returnGraphic("pixelUI/" + image,null);
-			this.loadGraphic(returnAsset);
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNote.h,image)) {
+				var this1 = CacheTools.cacheNote;
+				var returnAsset = Paths.returnGraphic("pixelUI/" + image,null);
+				this1.h[image] = returnAsset;
+			}
+			this.loadGraphic(CacheTools.cacheNote.h[image]);
 			this.set_width(this.get_width() / 4);
 			this.set_height(this.get_height() / 5);
-			var returnAsset = Paths.returnGraphic("pixelUI/" + image,null);
-			this.loadGraphic(returnAsset,true,Math.floor(this.get_width()),Math.floor(this.get_height()));
+			this.loadGraphic(CacheTools.cacheNote.h[image],true,Math.floor(this.get_width()),Math.floor(this.get_height()));
 			this.set_antialiasing(false);
 			this.setGraphicSize(this.get_width() * PlayState.daPixelZoom | 0);
 			this.animation.add("green",[6]);
@@ -69530,9 +69615,14 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 				break;
 			}
 		} else {
-			var library = null;
-			var returnAsset = Paths.returnGraphic(image,library);
-			this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + image + ".xml","TEXT",library)));
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNoteAtlas.h,image)) {
+				var this1 = CacheTools.cacheNoteAtlas;
+				var library = null;
+				var returnAsset = Paths.returnGraphic(image,library);
+				var value = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + image + ".xml","TEXT",library));
+				this1.h[image] = value;
+			}
+			this.set_frames(CacheTools.cacheNoteAtlas.h[image]);
 			this.animation.addByPrefix("green","arrowUP");
 			this.animation.addByPrefix("blue","arrowDOWN");
 			this.animation.addByPrefix("purple","arrowLEFT");
@@ -71140,167 +71230,6 @@ Xml.prototype = {
 	}
 	,__class__: Xml
 };
-var addition_Keypress = function(x,y,color) {
-	this.alphaKeyPress = ClientPrefs.keyStrokeAlpha;
-	this.alphaKey = ClientPrefs.keyStrokeAlpha;
-	this.snapAlpha = 0;
-	this.snapAngle = 0;
-	this.snapY = 0;
-	this.snapX = 0;
-	this.colorKeyPress = -1;
-	this.colorKey = -65536;
-	this.isPress = false;
-	flixel_FlxSprite.call(this,x,y);
-	this.makeGraphic(50,50);
-	this.set_colorKey(color);
-	this.set_color(color);
-	this.set_shaderType("swap");
-	this.set_alpha(this.alphaKey);
-};
-$hxClasses["addition.Keypress"] = addition_Keypress;
-addition_Keypress.__name__ = "addition.Keypress";
-addition_Keypress.__super__ = flixel_FlxSprite;
-addition_Keypress.prototype = $extend(flixel_FlxSprite.prototype,{
-	isPress: null
-	,colorKey: null
-	,colorKeyPress: null
-	,snapX: null
-	,snapY: null
-	,snapAngle: null
-	,snapAlpha: null
-	,alphaKey: null
-	,alphaKeyPress: null
-	,onKey: function(press) {
-		if(press == null) {
-			press = false;
-		}
-		this.isPress = press;
-		if(press) {
-			this.set_color(this.colorKeyPress);
-			this.set_alpha(this.alphaKeyPress);
-		} else {
-			this.set_color(this.colorKey);
-			this.set_alpha(this.alphaKey);
-		}
-	}
-	,set_colorKeyPress: function(value) {
-		if(this.color != value) {
-			this.colorKeyPress = value;
-			if(this.isPress) {
-				this.set_color(value);
-			}
-		}
-		return value;
-	}
-	,set_colorKey: function(value) {
-		if(this.color != value) {
-			this.colorKey = value;
-			if(!this.isPress) {
-				this.set_color(value);
-			}
-		}
-		return value;
-	}
-	,set_y: function(value) {
-		if(this.snapY > 0) {
-			var dist = value - this.y;
-			var snapped = Math.round(dist / this.snapY) * this.snapY;
-			return flixel_FlxSprite.prototype.set_y.call(this,this.y + snapped);
-		}
-		return flixel_FlxSprite.prototype.set_y.call(this,value);
-	}
-	,set_x: function(value) {
-		if(this.snapX > 0) {
-			var dist = value - this.x;
-			var snapped = Math.round(dist / this.snapX) * this.snapX;
-			return flixel_FlxSprite.prototype.set_x.call(this,this.x + snapped);
-		}
-		return flixel_FlxSprite.prototype.set_x.call(this,value);
-	}
-	,set_angle: function(value) {
-		if(this.snapAngle > 0) {
-			var dist = value - this.angle;
-			var snapped = Math.round(dist / this.snapAngle) * this.snapAngle;
-			return flixel_FlxSprite.prototype.set_angle.call(this,this.angle + snapped);
-		}
-		return flixel_FlxSprite.prototype.set_angle.call(this,value);
-	}
-	,set_alpha: function(value) {
-		if(this.snapAlpha > 0) {
-			var dist = value - this.alpha;
-			var snapped = Math.round(dist / this.snapAlpha) * this.snapAlpha;
-			return flixel_FlxSprite.prototype.set_alpha.call(this,this.alpha + snapped);
-		}
-		return flixel_FlxSprite.prototype.set_alpha.call(this,value);
-	}
-	,set_alphaKey: function(value) {
-		if(this.alphaKey != value) {
-			this.alphaKey = value;
-			if(!this.isPress) {
-				this.set_alpha(this.alphaKey);
-			}
-		}
-		return value;
-	}
-	,set_alphaKeyPress: function(value) {
-		if(this.alphaKeyPress != value) {
-			this.alphaKeyPress = value;
-			if(this.isPress) {
-				this.set_alpha(this.alphaKeyPress);
-			}
-		}
-		return value;
-	}
-	,__class__: addition_Keypress
-	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_alphaKeyPress:"set_alphaKeyPress",set_alphaKey:"set_alphaKey",set_colorKeyPress:"set_colorKeyPress",set_colorKey:"set_colorKey"})
-});
-var addition_ResultScreen = function(score,miss,rating,percent) {
-	var _gthis = this;
-	MusicBeatState.call(this);
-	var bg = new flixel_FlxSprite();
-	var returnAsset = Paths.returnGraphic(ClientPrefs.darkmode ? "menuDesatDark" : "menuDesat",null);
-	var bg1 = bg.loadGraphic(returnAsset);
-	this.add(bg1);
-	var aaaa = new Alphabet(0,flixel_FlxG.height / 2 - 125,(ClientPrefs.dragonW ? "Coins: " : "Score: ") + score,false);
-	this.add(aaaa);
-	var aaaa = new Alphabet(0,flixel_FlxG.height / 2 - 50,(ClientPrefs.dragonW ? "Slay: " : "Misses: ") + miss,false);
-	this.add(aaaa);
-	var aaaa = new Alphabet(0,flixel_FlxG.height / 2 + 25,(ClientPrefs.dragonW ? "Fang: " : "Rating: ") + rating,false);
-	this.add(aaaa);
-	var aaaa = new Alphabet(0,flixel_FlxG.height / 2 + 100,"Percent: " + Highscore.floorDecimal(percent * 100,2) + "%",false);
-	this.add(aaaa);
-	var tips = new Alphabet(0,flixel_FlxG.height - 75,"Press Enter To FreePlay");
-	this.add(tips);
-	this.ForceFreePlay = new haxe_Timer(60000);
-	this.ForceFreePlay.run = function() {
-		MusicBeatState.switchState(new FreeplayState());
-		var tmp = flixel_FlxG.sound;
-		var file = Paths.returnSound("music","freakyMenu",null);
-		tmp.playMusic(file);
-		if(_gthis.ForceFreePlay != null) {
-			_gthis.ForceFreePlay.stop();
-		}
-	};
-};
-$hxClasses["addition.ResultScreen"] = addition_ResultScreen;
-addition_ResultScreen.__name__ = "addition.ResultScreen";
-addition_ResultScreen.__super__ = MusicBeatState;
-addition_ResultScreen.prototype = $extend(MusicBeatState.prototype,{
-	ForceFreePlay: null
-	,enterButton: null
-	,update: function(elapsed) {
-		if(PlayerSettings.player1.controls._accept.check()) {
-			MusicBeatState.switchState(new FreeplayState());
-			var tmp = flixel_FlxG.sound;
-			var file = Paths.returnSound("music","freakyMenu",null);
-			tmp.playMusic(file);
-			if(this.ForceFreePlay != null) {
-				this.ForceFreePlay.stop();
-			}
-		}
-	}
-	,__class__: addition_ResultScreen
-});
 var flixel_graphics_frames_FlxFramesCollection = function(parent,type,border) {
 	this.parent = parent;
 	this.type = type;
@@ -72996,6 +72925,179 @@ animateatlas_displayobject_SpriteSymbol.prototype = $extend(openfl_display_Sprit
 	}
 	,__class__: animateatlas_displayobject_SpriteSymbol
 	,__properties__: $extend(openfl_display_Sprite.prototype.__properties__,{get_numFrames:"get_numFrames",get_numLayers:"get_numLayers",get_symbolName:"get_symbolName",set_loopMode:"set_loopMode",get_loopMode:"get_loopMode",set_type:"set_type",get_type:"get_type",set_currentFrame:"set_currentFrame",get_currentFrame:"get_currentFrame",get_currentLabel:"get_currentLabel"})
+});
+var dge_obj_Keypress = function(x,y,color) {
+	this.alphaKeyPress = ClientPrefs.keyStrokeAlpha;
+	this.alphaKey = ClientPrefs.keyStrokeAlpha;
+	this.snapAlpha = 0;
+	this.snapAngle = 0;
+	this.snapY = 0;
+	this.snapX = 0;
+	this.colorKeyPress = -1;
+	this.colorKey = -65536;
+	this.isPress = false;
+	flixel_FlxSprite.call(this,x,y);
+	this.makeGraphic(50,50);
+	this.set_colorKey(color);
+	this.set_color(color);
+	this.set_shaderType("swap");
+	this.set_alpha(this.alphaKey);
+};
+$hxClasses["dge.obj.Keypress"] = dge_obj_Keypress;
+dge_obj_Keypress.__name__ = "dge.obj.Keypress";
+dge_obj_Keypress.__super__ = flixel_FlxSprite;
+dge_obj_Keypress.prototype = $extend(flixel_FlxSprite.prototype,{
+	isPress: null
+	,colorKey: null
+	,colorKeyPress: null
+	,snapX: null
+	,snapY: null
+	,snapAngle: null
+	,snapAlpha: null
+	,alphaKey: null
+	,alphaKeyPress: null
+	,onKey: function(press) {
+		if(press == null) {
+			press = false;
+		}
+		this.isPress = press;
+		if(press) {
+			this.set_color(this.colorKeyPress);
+			this.set_alpha(this.alphaKeyPress);
+		} else {
+			this.set_color(this.colorKey);
+			this.set_alpha(this.alphaKey);
+		}
+	}
+	,set_colorKeyPress: function(value) {
+		if(this.color != value) {
+			this.colorKeyPress = value;
+			if(this.isPress) {
+				this.set_color(value);
+			}
+		}
+		return value;
+	}
+	,set_colorKey: function(value) {
+		if(this.color != value) {
+			this.colorKey = value;
+			if(!this.isPress) {
+				this.set_color(value);
+			}
+		}
+		return value;
+	}
+	,set_y: function(value) {
+		if(this.snapY > 0) {
+			var dist = value - this.y;
+			var snapped = Math.round(dist / this.snapY) * this.snapY;
+			return flixel_FlxSprite.prototype.set_y.call(this,this.y + snapped);
+		}
+		return flixel_FlxSprite.prototype.set_y.call(this,value);
+	}
+	,set_x: function(value) {
+		if(this.snapX > 0) {
+			var dist = value - this.x;
+			var snapped = Math.round(dist / this.snapX) * this.snapX;
+			return flixel_FlxSprite.prototype.set_x.call(this,this.x + snapped);
+		}
+		return flixel_FlxSprite.prototype.set_x.call(this,value);
+	}
+	,set_angle: function(value) {
+		if(this.snapAngle > 0) {
+			var dist = value - this.angle;
+			var snapped = Math.round(dist / this.snapAngle) * this.snapAngle;
+			return flixel_FlxSprite.prototype.set_angle.call(this,this.angle + snapped);
+		}
+		return flixel_FlxSprite.prototype.set_angle.call(this,value);
+	}
+	,set_alpha: function(value) {
+		if(this.snapAlpha > 0) {
+			var dist = value - this.alpha;
+			var snapped = Math.round(dist / this.snapAlpha) * this.snapAlpha;
+			return flixel_FlxSprite.prototype.set_alpha.call(this,this.alpha + snapped);
+		}
+		return flixel_FlxSprite.prototype.set_alpha.call(this,value);
+	}
+	,set_alphaKey: function(value) {
+		if(this.alphaKey != value) {
+			this.alphaKey = value;
+			if(!this.isPress) {
+				this.set_alpha(this.alphaKey);
+			}
+		}
+		return value;
+	}
+	,set_alphaKeyPress: function(value) {
+		if(this.alphaKeyPress != value) {
+			this.alphaKeyPress = value;
+			if(this.isPress) {
+				this.set_alpha(this.alphaKeyPress);
+			}
+		}
+		return value;
+	}
+	,__class__: dge_obj_Keypress
+	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_alphaKeyPress:"set_alphaKeyPress",set_alphaKey:"set_alphaKey",set_colorKeyPress:"set_colorKeyPress",set_colorKey:"set_colorKey"})
+});
+var dge_states_ResultScreen = function(score,miss,rating,percent) {
+	this.toStoryMode = false;
+	var _gthis = this;
+	MusicBeatState.call(this);
+	var bg = new flixel_FlxSprite();
+	var returnAsset = Paths.returnGraphic(ClientPrefs.darkmode ? "menuDesatDark" : "menuDesat",null);
+	var bg1 = bg.loadGraphic(returnAsset);
+	this.add(bg1);
+	var aaaa = new Alphabet(0,flixel_FlxG.height / 2 - 125,(ClientPrefs.dragonW ? "Coins: " : "Score: ") + score,false);
+	this.add(aaaa);
+	var aaaa = new Alphabet(0,flixel_FlxG.height / 2 - 50,(ClientPrefs.dragonW ? "Slay: " : "Misses: ") + miss,false);
+	this.add(aaaa);
+	if(rating != null) {
+		var aaaa1 = new Alphabet(0,flixel_FlxG.height / 2 + 25,(ClientPrefs.dragonW ? "Fang: " : "Rating: ") + rating,false);
+	}
+	this.add(aaaa);
+	var aaaa = new Alphabet(0,flixel_FlxG.height / 2 + 100,"Percent: " + Highscore.floorDecimal(percent * 100,2) + "%",false);
+	this.add(aaaa);
+	var tips = new Alphabet(0,flixel_FlxG.height - 75,"Press Enter To FreePlay");
+	this.add(tips);
+	this.ForceFreePlay = new haxe_Timer(60000);
+	this.ForceFreePlay.run = function() {
+		if(_gthis.toStoryMode) {
+			MusicBeatState.switchState(new StoryMenuState());
+		} else {
+			MusicBeatState.switchState(new FreeplayState());
+		}
+		var tmp = flixel_FlxG.sound;
+		var file = Paths.returnSound("music","freakyMenu",null);
+		tmp.playMusic(file);
+		if(_gthis.ForceFreePlay != null) {
+			_gthis.ForceFreePlay.stop();
+		}
+	};
+};
+$hxClasses["dge.states.ResultScreen"] = dge_states_ResultScreen;
+dge_states_ResultScreen.__name__ = "dge.states.ResultScreen";
+dge_states_ResultScreen.__super__ = MusicBeatState;
+dge_states_ResultScreen.prototype = $extend(MusicBeatState.prototype,{
+	toStoryMode: null
+	,ForceFreePlay: null
+	,enterButton: null
+	,update: function(elapsed) {
+		if(PlayerSettings.player1.controls._accept.check()) {
+			if(this.toStoryMode) {
+				MusicBeatState.switchState(new StoryMenuState());
+			} else {
+				MusicBeatState.switchState(new FreeplayState());
+			}
+			var tmp = flixel_FlxG.sound;
+			var file = Paths.returnSound("music","freakyMenu",null);
+			tmp.playMusic(file);
+			if(this.ForceFreePlay != null) {
+				this.ForceFreePlay.stop();
+			}
+		}
+	}
+	,__class__: dge_states_ResultScreen
 });
 var editors_CharacterEditorState = function(daAnim,goToPlayState) {
 	if(goToPlayState == null) {
@@ -76484,76 +76586,55 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 	}
 	,updateGrid: function() {
-		var _g = 0;
-		var _g1 = this.prevRenderedNotes.members;
-		while(_g < _g1.length) {
-			var member = _g1[_g];
-			++_g;
+		while(this.prevRenderedNotes.length > 0) {
+			var member = this.prevRenderedNotes.members[0];
 			if(member != null) {
+				this.prevRenderedNotes.remove(member,true);
 				member.destroy();
 			}
 		}
-		this.prevRenderedNotes.clear();
-		var _g = 0;
-		var _g1 = this.prevRenderedSustains.members;
-		while(_g < _g1.length) {
-			var member = _g1[_g];
-			++_g;
+		while(this.prevRenderedSustains.length > 0) {
+			var member = this.prevRenderedSustains.members[0];
 			if(member != null) {
+				this.prevRenderedSustains.remove(member,true);
 				member.destroy();
 			}
 		}
-		this.prevRenderedSustains.clear();
-		var _g = 0;
-		var _g1 = this.curRenderedNotes.members;
-		while(_g < _g1.length) {
-			var member = _g1[_g];
-			++_g;
+		while(this.curRenderedNotes.length > 0) {
+			var member = this.curRenderedNotes.members[0];
 			if(member != null) {
+				this.curRenderedNotes.remove(member,true);
 				member.destroy();
 			}
 		}
-		this.curRenderedNotes.clear();
-		var _g = 0;
-		var _g1 = this.curRenderedSustains.members;
-		while(_g < _g1.length) {
-			var member = _g1[_g];
-			++_g;
+		while(this.curRenderedSustains.length > 0) {
+			var member = this.curRenderedSustains.members[0];
 			if(member != null) {
+				this.curRenderedSustains.remove(member,true);
 				member.destroy();
 			}
 		}
-		this.curRenderedSustains.clear();
-		var _g = 0;
-		var _g1 = this.curRenderedNoteType.members;
-		while(_g < _g1.length) {
-			var member = _g1[_g];
-			++_g;
+		while(this.curRenderedNoteType.length > 0) {
+			var member = this.curRenderedNoteType.members[0];
 			if(member != null) {
+				this.curRenderedNoteType.remove(member,true);
 				member.destroy();
 			}
 		}
-		this.curRenderedNoteType.clear();
-		var _g = 0;
-		var _g1 = this.nextRenderedNotes.members;
-		while(_g < _g1.length) {
-			var member = _g1[_g];
-			++_g;
+		while(this.nextRenderedNotes.length > 0) {
+			var member = this.nextRenderedNotes.members[0];
 			if(member != null) {
+				this.nextRenderedNotes.remove(member,true);
 				member.destroy();
 			}
 		}
-		this.nextRenderedNotes.clear();
-		var _g = 0;
-		var _g1 = this.nextRenderedSustains.members;
-		while(_g < _g1.length) {
-			var member = _g1[_g];
-			++_g;
+		while(this.nextRenderedSustains.length > 0) {
+			var member = this.nextRenderedSustains.members[0];
 			if(member != null) {
+				this.nextRenderedSustains.remove(member,true);
 				member.destroy();
 			}
 		}
-		this.nextRenderedSustains.clear();
 		if(this._song.notes[editors_ChartingState.curSec].changeBPM && this._song.notes[editors_ChartingState.curSec].bpm > 0) {
 			Conductor.changeBPM(this._song.notes[editors_ChartingState.curSec].bpm);
 		} else {
@@ -76711,8 +76792,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			note.sustainLength = daSus;
 			note.set_noteType(i[3]);
 		} else {
-			var returnAsset = Paths.returnGraphic("eventArrow",null);
-			note.loadGraphic(returnAsset);
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNote.h,"evenArrow")) {
+				var this1 = CacheTools.cacheNote;
+				var returnAsset = Paths.returnGraphic("eventArrow",null);
+				this1.h["eventArrow"] = returnAsset;
+			}
+			note.loadGraphic(CacheTools.cacheNote.h["eventArrow"]);
 			note.eventName = this.getEventName(i[1]);
 			note.eventLength = i[1].length;
 			if(i[1].length < 2) {
@@ -76862,7 +76947,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 	,deleteNote: function(note) {
 		var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
 		var noteDataToCheck = actualNoteData;
-		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3320, className : "editors.ChartingState", methodName : "deleteNote"});
+		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3344, className : "editors.ChartingState", methodName : "deleteNote"});
 		if(note.noteData > -1) {
 			var _g = 0;
 			var _g1 = this._song.notes[editors_ChartingState.curSec].sectionNotes;
@@ -76927,7 +77012,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var noteStrum = this.getStrumTime(this.dummyArrow.y * (this.getSectionBeats() / 4),false) + this.sectionStartTime();
 		var noteData = Math.floor((pos - editors_ChartingState.GRID_SIZE) / editors_ChartingState.GRID_SIZE);
-		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3392, className : "editors.ChartingState", methodName : "addNote"});
+		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3416, className : "editors.ChartingState", methodName : "addNote"});
 		var noteSus = 0;
 		var daAlt = false;
 		var daType = this.currentType;
@@ -77251,8 +77336,9 @@ editors_AttachedFlxText.prototype = $extend(flixel_text_FlxText.prototype,{
 		}
 	}
 	,destroy: function() {
-		NoteTypeManager.jsonParse.h = Object.create(null);
-		NoteTypeManager.jsonRaw.h = Object.create(null);
+		CacheTools.jsonParse.h = Object.create(null);
+		CacheTools.cacheNote.h = Object.create(null);
+		CacheTools.cacheNoteAtlas.h = Object.create(null);
 		flixel_text_FlxText.prototype.destroy.call(this);
 	}
 	,__class__: editors_AttachedFlxText
@@ -79767,8 +79853,10 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 			openfl_Lib.get_current().stage.removeEventListener("keyDown",$bind(this,this.onKeyPress));
 			openfl_Lib.get_current().stage.removeEventListener("keyUp",$bind(this,this.onKeyRelease));
 		}
-		NoteTypeManager.jsonParse.h = Object.create(null);
-		NoteTypeManager.jsonRaw.h = Object.create(null);
+		CacheTools.jsonParse.h = Object.create(null);
+		CacheTools.cacheNoteSplash.h = Object.create(null);
+		CacheTools.cacheNote.h = Object.create(null);
+		CacheTools.cacheNoteAtlas.h = Object.create(null);
 		MusicBeatState.prototype.destroy.call(this);
 	}
 	,__class__: editors_EditorPlayState
@@ -161105,7 +161193,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 355446;
+	this.version = 884132;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -214082,7 +214170,7 @@ var options_dge_MiscSubState = function() {
 	option.minValue = 5;
 	option.scrollSpeed = 20;
 	this.addOption(option);
-	var option = new options_Option("Result Screen","If Checked The Result screen will show after end song(Free Play).","useResultScr","bool",false);
+	var option = new options_Option("Result Screen","If Checked The Result screen will show after end song.","useResultScr","bool",false);
 	this.addOption(option);
 	options_BaseOptionsMenu.call(this);
 	this.changeBGColor(-65536);
@@ -214099,7 +214187,7 @@ options_dge_MiscSubState.prototype = $extend(options_BaseOptionsMenu.prototype,{
 		flixel_FlxG.autoPause = ClientPrefs.autopause;
 	}
 	,onChangeNoteSkin: function() {
-		haxe_Log.trace("'" + ClientPrefs.dflnoteskin + "'",{ fileName : "source/options/dge/MiscSubState.hx", lineNumber : 121, className : "options.dge.MiscSubState", methodName : "onChangeNoteSkin"});
+		haxe_Log.trace("'" + ClientPrefs.dflnoteskin + "'",{ fileName : "source/options/dge/MiscSubState.hx", lineNumber : 129, className : "options.dge.MiscSubState", methodName : "onChangeNoteSkin"});
 		var _g = 0;
 		var _g1 = this.spriteNote.length;
 		while(_g < _g1) {
@@ -214922,6 +215010,11 @@ openfl_display_DisplayObject.__tempStack = new lime_utils_ObjectPool(function() 
 	stack.set_length(0);
 });
 Character.DEFAULT_CHARACTER = "bf";
+CacheTools.jsonParse = new haxe_ds_StringMap();
+CacheTools.cacheNoteSplash = new haxe_ds_StringMap();
+CacheTools.cacheNoteAtlas = new haxe_ds_StringMap();
+CacheTools.cacheNote = new haxe_ds_StringMap();
+ClientPrefs.pauseUnFocus = false;
 ClientPrefs.minEditorJson = false;
 ClientPrefs.useResultScr = false;
 ClientPrefs.limitSpawn = false;
@@ -215092,8 +215185,6 @@ openfl_text_Font.__fontByName = new haxe_ds_StringMap();
 openfl_text_Font.__registeredFonts = [];
 MenuCharacter.DEFAULT_CHARACTER = "bf";
 Note.swagWidth = 112.;
-NoteTypeManager.jsonRaw = new haxe_ds_StringMap();
-NoteTypeManager.jsonParse = new haxe_ds_StringMap();
 OutdatedState.leftState = false;
 Paths.SOUND_EXT = "mp3";
 Paths.VIDEO_EXT = "mp4";
@@ -215117,6 +215208,8 @@ PlayState.storyDifficulty = 1;
 PlayState.changedDifficulty = false;
 PlayState.chartingMode = false;
 PlayState.campaignScore = 0;
+PlayState.campaignPercent = 0;
+PlayState.storyLength = 0;
 PlayState.campaignMisses = 0;
 PlayState.seenCutscene = false;
 PlayState.deathCounter = 0;
@@ -215132,6 +215225,7 @@ StageData.forceNextDirectory = null;
 StoryMenuState.weekCompleted = new haxe_ds_StringMap();
 StoryMenuState.lastDifficultyName = "";
 StoryMenuState.curWeek = 0;
+StoryMenuState.songListLength = 0;
 TankmenBG.animationNotes = [];
 TitleState.muteKeys = [48];
 TitleState.volumeDownKeys = [109,189];
