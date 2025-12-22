@@ -5602,8 +5602,16 @@ AlphaCharacter.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 		this.image = name;
 		var library = null;
-		var returnAsset = Paths.returnGraphic(name,library);
-		this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + name + ".xml","TEXT",library)));
+		var tmp;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,name)) {
+			var returnAsset = Paths.returnGraphic(name,library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + name + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h[name] = atlas;
+			tmp = atlas;
+		} else {
+			tmp = CacheTools.cacheAtlas.h[name];
+		}
+		this.set_frames(tmp);
 		this.scale.set_x(this.parent.scaleX);
 		this.scale.set_y(this.parent.scaleY);
 		this.alignOffset = 0;
@@ -6535,12 +6543,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "298";
+	app.meta.h["build"] = "299";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "1.6.3.16-minor.2";
+	app.meta.h["version"] = "1.6.3.17";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -9194,8 +9202,16 @@ var AttachedSprite = function(file,anim,library,loop) {
 	this.xAdd = 0;
 	flixel_FlxSprite.call(this);
 	if(anim != null) {
-		var returnAsset = Paths.returnGraphic(file,library);
-		this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + file + ".xml","TEXT",library)));
+		var tmp;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,file)) {
+			var returnAsset = Paths.returnGraphic(file,library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + file + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h[file] = atlas;
+			tmp = atlas;
+		} else {
+			tmp = CacheTools.cacheAtlas.h[file];
+		}
+		this.set_frames(tmp);
 		this.animation.addByPrefix("idle",anim,24,loop);
 		this.animation.play("idle");
 	} else if(file != null) {
@@ -9304,8 +9320,16 @@ var BGSprite = function(image,x,y,scrollX,scrollY,animArray,loop) {
 	flixel_FlxSprite.call(this,x,y);
 	if(animArray != null) {
 		var library = null;
-		var returnAsset = Paths.returnGraphic(image,library);
-		this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + image + ".xml","TEXT",library)));
+		var tmp;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,image)) {
+			var returnAsset = Paths.returnGraphic(image,library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + image + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h[image] = atlas;
+			tmp = atlas;
+		} else {
+			tmp = CacheTools.cacheAtlas.h[image];
+		}
+		this.set_frames(tmp);
 		var _g = 0;
 		var _g1 = animArray.length;
 		while(_g < _g1) {
@@ -9346,8 +9370,16 @@ var BackgroundDancer = function(x,y) {
 	this.danceDir = false;
 	flixel_FlxSprite.call(this,x,y);
 	var library = null;
-	var returnAsset = Paths.returnGraphic("limo/limoDancer",library);
-	this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "limo/limoDancer" + ".xml","TEXT",library)));
+	var tmp;
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"limo/limoDancer")) {
+		var returnAsset = Paths.returnGraphic("limo/limoDancer",library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "limo/limoDancer" + ".xml","TEXT",library));
+		CacheTools.cacheAtlas.h["limo/limoDancer"] = atlas;
+		tmp = atlas;
+	} else {
+		tmp = CacheTools.cacheAtlas.h["limo/limoDancer"];
+	}
+	this.set_frames(tmp);
 	this.animation.addByIndices("danceLeft","bg dancer sketch PINK",[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14],"",24,false);
 	this.animation.addByIndices("danceRight","bg dancer sketch PINK",[15,16,17,18,19,20,21,22,23,24,25,26,27,28,29],"",24,false);
 	this.animation.play("danceLeft");
@@ -9373,8 +9405,16 @@ var BackgroundGirls = function(x,y) {
 	this.isPissed = true;
 	flixel_FlxSprite.call(this,x,y);
 	var library = null;
-	var returnAsset = Paths.returnGraphic("weeb/bgFreaks",library);
-	this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/bgFreaks" + ".xml","TEXT",library)));
+	var tmp;
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"weeb/bgFreaks")) {
+		var returnAsset = Paths.returnGraphic("weeb/bgFreaks",library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/bgFreaks" + ".xml","TEXT",library));
+		CacheTools.cacheAtlas.h["weeb/bgFreaks"] = atlas;
+		tmp = atlas;
+	} else {
+		tmp = CacheTools.cacheAtlas.h["weeb/bgFreaks"];
+	}
+	this.set_frames(tmp);
 	this.swapDanceType();
 	this.animation.play("danceLeft");
 };
@@ -9470,14 +9510,30 @@ var Character = function(x,y,character,isPlayer) {
 	case "packer":
 		var key = json.image;
 		var library = null;
-		var returnAsset = Paths.returnGraphic(key,library);
-		this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + key + ".txt","TEXT",library)));
+		var tmp;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+			var returnAsset = Paths.returnGraphic(key,library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + key + ".txt","TEXT",library));
+			CacheTools.cacheAtlas.h[key] = atlas;
+			tmp = atlas;
+		} else {
+			tmp = CacheTools.cacheAtlas.h[key];
+		}
+		this.set_frames(tmp);
 		break;
 	case "sparrow":
 		var key = json.image;
 		var library = null;
-		var returnAsset = Paths.returnGraphic(key,library);
-		this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+		var tmp;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+			var returnAsset = Paths.returnGraphic(key,library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h[key] = atlas;
+			tmp = atlas;
+		} else {
+			tmp = CacheTools.cacheAtlas.h[key];
+		}
+		this.set_frames(tmp);
 		break;
 	case "texture":
 		this.set_frames(animateatlas_AtlasFrameMaker.construct(json.image));
@@ -9754,6 +9810,12 @@ Boyfriend.prototype = $extend(Character.prototype,{
 var CacheTools = function() { };
 $hxClasses["CacheTools"] = CacheTools;
 CacheTools.__name__ = "CacheTools";
+CacheTools.clearCache = function() {
+	CacheTools.jsonParse = new haxe_ds_StringMap();
+	CacheTools.cacheSound = new haxe_ds_StringMap();
+	CacheTools.cacheImage = new haxe_ds_StringMap();
+	CacheTools.cacheAtlas = new haxe_ds_StringMap();
+};
 var CheckboxThingie = function(x,y,checked) {
 	if(checked == null) {
 		checked = false;
@@ -9769,8 +9831,16 @@ var CheckboxThingie = function(x,y,checked) {
 	this.copyAlpha = true;
 	flixel_FlxSprite.call(this,x,y);
 	var library = null;
-	var returnAsset = Paths.returnGraphic("checkboxanim",library);
-	this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "checkboxanim" + ".xml","TEXT",library)));
+	var tmp;
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"checkboxanim")) {
+		var returnAsset = Paths.returnGraphic("checkboxanim",library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "checkboxanim" + ".xml","TEXT",library));
+		CacheTools.cacheAtlas.h["checkboxanim"] = atlas;
+		tmp = atlas;
+	} else {
+		tmp = CacheTools.cacheAtlas.h["checkboxanim"];
+	}
+	this.set_frames(tmp);
 	this.animation.addByPrefix("unchecked","checkbox0",24,false);
 	this.animation.addByPrefix("unchecking","checkbox anim reverse",24,false);
 	this.animation.addByPrefix("checking","checkbox anim0",24,false);
@@ -49915,8 +49985,16 @@ var DialogueBox = function(talkingRight,dialogueList) {
 		flixel_FlxG.sound.play(Paths.sound("ANGRY_TEXT_BOX"));
 		var tmp = this.box;
 		var library = null;
-		var returnAsset = Paths.returnGraphic("weeb/pixelUI/dialogueBox-senpaiMad",library);
-		tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/pixelUI/dialogueBox-senpaiMad" + ".xml","TEXT",library)));
+		var tmp1;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"weeb/pixelUI/dialogueBox-senpaiMad")) {
+			var returnAsset = Paths.returnGraphic("weeb/pixelUI/dialogueBox-senpaiMad",library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/pixelUI/dialogueBox-senpaiMad" + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h["weeb/pixelUI/dialogueBox-senpaiMad"] = atlas;
+			tmp1 = atlas;
+		} else {
+			tmp1 = CacheTools.cacheAtlas.h["weeb/pixelUI/dialogueBox-senpaiMad"];
+		}
+		tmp.set_frames(tmp1);
 		this.box.animation.addByPrefix("normalOpen","SENPAI ANGRY IMPACT SPEECH",24,false);
 		this.box.animation.addByIndices("normal","SENPAI ANGRY IMPACT SPEECH instance 1",[4],"",24);
 		break;
@@ -49924,8 +50002,16 @@ var DialogueBox = function(talkingRight,dialogueList) {
 		hasDialog = true;
 		var tmp = this.box;
 		var library = null;
-		var returnAsset = Paths.returnGraphic("weeb/pixelUI/dialogueBox-pixel",library);
-		tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/pixelUI/dialogueBox-pixel" + ".xml","TEXT",library)));
+		var tmp1;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"weeb/pixelUI/dialogueBox-pixel")) {
+			var returnAsset = Paths.returnGraphic("weeb/pixelUI/dialogueBox-pixel",library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/pixelUI/dialogueBox-pixel" + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h["weeb/pixelUI/dialogueBox-pixel"] = atlas;
+			tmp1 = atlas;
+		} else {
+			tmp1 = CacheTools.cacheAtlas.h["weeb/pixelUI/dialogueBox-pixel"];
+		}
+		tmp.set_frames(tmp1);
 		this.box.animation.addByPrefix("normalOpen","Text Box Appear",24,false);
 		this.box.animation.addByIndices("normal","Text Box Appear instance 1",[4],"",24);
 		break;
@@ -49933,8 +50019,16 @@ var DialogueBox = function(talkingRight,dialogueList) {
 		hasDialog = true;
 		var tmp = this.box;
 		var library = null;
-		var returnAsset = Paths.returnGraphic("weeb/pixelUI/dialogueBox-evil",library);
-		tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/pixelUI/dialogueBox-evil" + ".xml","TEXT",library)));
+		var tmp1;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"weeb/pixelUI/dialogueBox-evil")) {
+			var returnAsset = Paths.returnGraphic("weeb/pixelUI/dialogueBox-evil",library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/pixelUI/dialogueBox-evil" + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h["weeb/pixelUI/dialogueBox-evil"] = atlas;
+			tmp1 = atlas;
+		} else {
+			tmp1 = CacheTools.cacheAtlas.h["weeb/pixelUI/dialogueBox-evil"];
+		}
+		tmp.set_frames(tmp1);
 		this.box.animation.addByPrefix("normalOpen","Spirit Textbox spawn",24,false);
 		this.box.animation.addByIndices("normal","Spirit Textbox spawn instance 1",[11],"",24);
 		var face = new flixel_FlxSprite(320,170);
@@ -49951,8 +50045,16 @@ var DialogueBox = function(talkingRight,dialogueList) {
 	this.portraitLeft = new flixel_FlxSprite(-20,40);
 	var tmp = this.portraitLeft;
 	var library = null;
-	var returnAsset = Paths.returnGraphic("weeb/senpaiPortrait",library);
-	tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/senpaiPortrait" + ".xml","TEXT",library)));
+	var tmp1;
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"weeb/senpaiPortrait")) {
+		var returnAsset = Paths.returnGraphic("weeb/senpaiPortrait",library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/senpaiPortrait" + ".xml","TEXT",library));
+		CacheTools.cacheAtlas.h["weeb/senpaiPortrait"] = atlas;
+		tmp1 = atlas;
+	} else {
+		tmp1 = CacheTools.cacheAtlas.h["weeb/senpaiPortrait"];
+	}
+	tmp.set_frames(tmp1);
 	this.portraitLeft.animation.addByPrefix("enter","Senpai Portrait Enter",24,false);
 	this.portraitLeft.setGraphicSize(this.portraitLeft.get_width() * PlayState.daPixelZoom * 0.9 | 0);
 	this.portraitLeft.updateHitbox();
@@ -49962,8 +50064,16 @@ var DialogueBox = function(talkingRight,dialogueList) {
 	this.portraitRight = new flixel_FlxSprite(0,40);
 	var tmp = this.portraitRight;
 	var library = null;
-	var returnAsset = Paths.returnGraphic("weeb/bfPortrait",library);
-	tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/bfPortrait" + ".xml","TEXT",library)));
+	var tmp1;
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"weeb/bfPortrait")) {
+		var returnAsset = Paths.returnGraphic("weeb/bfPortrait",library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/bfPortrait" + ".xml","TEXT",library));
+		CacheTools.cacheAtlas.h["weeb/bfPortrait"] = atlas;
+		tmp1 = atlas;
+	} else {
+		tmp1 = CacheTools.cacheAtlas.h["weeb/bfPortrait"];
+	}
+	tmp.set_frames(tmp1);
 	this.portraitRight.animation.addByPrefix("enter","Boyfriend portrait enter",24,false);
 	this.portraitRight.setGraphicSize(this.portraitRight.get_width() * PlayState.daPixelZoom * 0.9 | 0);
 	this.portraitRight.updateHitbox();
@@ -50204,8 +50314,16 @@ var DialogueCharacter = function(x,y,character) {
 	this.reloadCharacterJson(character);
 	var key = "dialogue/" + this.jsonFile.image;
 	var library = null;
-	var returnAsset = Paths.returnGraphic(key,library);
-	this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+	var tmp;
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+		var returnAsset = Paths.returnGraphic(key,library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+		CacheTools.cacheAtlas.h[key] = atlas;
+		tmp = atlas;
+	} else {
+		tmp = CacheTools.cacheAtlas.h[key];
+	}
+	this.set_frames(tmp);
 	this.reloadAnimations();
 	this.set_antialiasing(ClientPrefs.globalAntialiasing);
 	if(this.jsonFile.no_antialiasing == true) {
@@ -50348,8 +50466,16 @@ var DialogueBoxPsych = function(dialogueList,song) {
 	this.box = new flixel_FlxSprite(70 + (flixel_FlxG.width - 1280) / 2,370);
 	var tmp = this.box;
 	var library = null;
-	var returnAsset = Paths.returnGraphic("speech_bubble",library);
-	tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "speech_bubble" + ".xml","TEXT",library)));
+	var tmp1;
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"speech_bubble")) {
+		var returnAsset = Paths.returnGraphic("speech_bubble",library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "speech_bubble" + ".xml","TEXT",library));
+		CacheTools.cacheAtlas.h["speech_bubble"] = atlas;
+		tmp1 = atlas;
+	} else {
+		tmp1 = CacheTools.cacheAtlas.h["speech_bubble"];
+	}
+	tmp.set_frames(tmp1);
 	this.box.scrollFactor.set();
 	this.box.set_antialiasing(ClientPrefs.globalAntialiasing);
 	this.box.animation.addByPrefix("normal","speech bubble normal",24);
@@ -53111,7 +53237,7 @@ FunkinLua.prototype = {
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3577, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3576, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -53163,8 +53289,16 @@ FunkinLua.prototype = {
 		switch(StringTools.trim(spriteType.toLowerCase())) {
 		case "pac":case "packer":case "packeratlas":
 			var library = null;
-			var returnAsset = Paths.returnGraphic(image,library);
-			spr.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + image + ".txt","TEXT",library)));
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,image)) {
+				var returnAsset = Paths.returnGraphic(image,library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + image + ".txt","TEXT",library));
+				CacheTools.cacheAtlas.h[image] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = CacheTools.cacheAtlas.h[image];
+			}
+			spr.set_frames(tmp);
 			break;
 		case "tex":case "texture":case "textureatlas":
 			spr.set_frames(animateatlas_AtlasFrameMaker.construct(image));
@@ -53174,8 +53308,16 @@ FunkinLua.prototype = {
 			break;
 		default:
 			var library = null;
-			var returnAsset = Paths.returnGraphic(image,library);
-			spr.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + image + ".xml","TEXT",library)));
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,image)) {
+				var returnAsset = Paths.returnGraphic(image,library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + image + ".xml","TEXT",library));
+				CacheTools.cacheAtlas.h[image] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = CacheTools.cacheAtlas.h[image];
+			}
+			spr.set_frames(tmp);
 		}
 	}
 	,setGroupStuff: function(leArray,variable,value) {
@@ -59107,8 +59249,16 @@ MainMenuState.prototype = $extend(MusicBeatState.prototype,{
 			menuItem.scale.set_y(scale);
 			var key = "mainmenu/menu_" + this.optionShit[i];
 			var library = null;
-			var returnAsset = Paths.returnGraphic(key,library);
-			menuItem.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+				var returnAsset = Paths.returnGraphic(key,library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+				CacheTools.cacheAtlas.h[key] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = CacheTools.cacheAtlas.h[key];
+			}
+			menuItem.set_frames(tmp);
 			menuItem.animation.addByPrefix("idle",this.optionShit[i] + " basic",24);
 			menuItem.animation.addByPrefix("selected",this.optionShit[i] + " white",24);
 			menuItem.animation.play("idle");
@@ -59117,26 +59267,26 @@ MainMenuState.prototype = $extend(MusicBeatState.prototype,{
 			if(axes == null) {
 				axes = flixel_util_FlxAxes.XY;
 			}
-			var tmp;
-			switch(axes._hx_index) {
-			case 0:case 2:
-				tmp = true;
-				break;
-			default:
-				tmp = false;
-			}
-			if(tmp) {
-				menuItem.set_x((flixel_FlxG.width - menuItem.get_width()) / 2);
-			}
 			var tmp1;
 			switch(axes._hx_index) {
-			case 1:case 2:
+			case 0:case 2:
 				tmp1 = true;
 				break;
 			default:
 				tmp1 = false;
 			}
 			if(tmp1) {
+				menuItem.set_x((flixel_FlxG.width - menuItem.get_width()) / 2);
+			}
+			var tmp2;
+			switch(axes._hx_index) {
+			case 1:case 2:
+				tmp2 = true;
+				break;
+			default:
+				tmp2 = false;
+			}
+			if(tmp2) {
 				menuItem.set_y((flixel_FlxG.height - menuItem.get_height()) / 2);
 			}
 			this.menuItems.add(menuItem);
@@ -59803,8 +59953,16 @@ MenuCharacter.prototype = $extend(flixel_FlxSprite.prototype,{
 			var charFile = JSON.parse(rawJson);
 			var key = "menucharacters/" + charFile.image;
 			var library = null;
-			var returnAsset = Paths.returnGraphic(key,library);
-			this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+				var returnAsset = Paths.returnGraphic(key,library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+				CacheTools.cacheAtlas.h[key] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = CacheTools.cacheAtlas.h[key];
+			}
+			this.set_frames(tmp);
 			this.animation.addByPrefix("idle",charFile.idle_anim,24);
 			var confirmAnim = charFile.confirm_anim;
 			if(confirmAnim != null && confirmAnim.length > 0 && confirmAnim != charFile.idle_anim) {
@@ -59842,8 +60000,16 @@ MenuCharacter.prototype = $extend(flixel_FlxSprite.prototype,{
 			var charFile = JSON.parse(rawJson);
 			var key = "menucharacters/" + charFile.image;
 			var library = null;
-			var returnAsset = Paths.returnGraphic(key,library);
-			this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+				var returnAsset = Paths.returnGraphic(key,library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+				CacheTools.cacheAtlas.h[key] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = CacheTools.cacheAtlas.h[key];
+			}
+			this.set_frames(tmp);
 			this.animation.addByPrefix("idle",charFile.idle_anim,24);
 			var confirmAnim = charFile.confirm_anim;
 			if(confirmAnim != null && confirmAnim.length > 0 && confirmAnim != charFile.idle_anim) {
@@ -59923,6 +60089,9 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	}
 	this.originalHeightForCalcs = 6;
 	this.lastNoteScaleToo = 1;
+	this.forceNoteSplash = false;
+	this.forceHitsound = false;
+	this.hitsound = null;
 	this.ignoreTextureChange = false;
 	this.alignSustainNote = "center";
 	this.snapAlpha = 0;
@@ -60089,6 +60258,8 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	if(!inEditor) {
 		this.scrollFactor.set(this.scrollFactorCam[0],this.scrollFactorCam[1]);
 	}
+	this.set_camTarget("hud");
+	this.set_hitsound("hitsound");
 	this.set_gfNote(gfSec);
 	this.set_noteType(noteType);
 	if(skin == null || skin.length < 1) {
@@ -60116,7 +60287,6 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 		this.set_noteScale(0.75);
 		this.noteSplashScale = 0.75;
 	}
-	this.set_camTarget("hud");
 };
 $hxClasses["Note"] = Note;
 Note.__name__ = "Note";
@@ -60218,6 +60388,9 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	,snapAlpha: null
 	,alignSustainNote: null
 	,ignoreTextureChange: null
+	,hitsound: null
+	,forceHitsound: null
+	,forceNoteSplash: null
 	,set_y: function(value) {
 		if(!this.inEditor && this.snapY > 0) {
 			var dist = value - this.y;
@@ -60406,39 +60579,36 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		var blahblah = arraySkin.join("/");
 		if(PlayState.isPixelStage) {
 			if(this.isSustainNote) {
-				if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNote.h,blahblah + "ENDS")) {
-					var this1 = CacheTools.cacheNote;
-					var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah + "ENDS",null);
-					this1.h[blahblah + "ENDS"] = returnAsset;
-				}
-				this.loadGraphic(CacheTools.cacheNote.h[blahblah + "ENDS"]);
+				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah + "ENDS",null);
+				this.loadGraphic(returnAsset);
 				this.set_width(this.get_width() / 4);
 				this.set_height(this.get_height() / 2);
 				this.originalHeightForCalcs = this.get_height();
-				this.loadGraphic(CacheTools.cacheNote.h[blahblah + "ENDS"],true,Math.floor(this.get_width()),Math.floor(this.get_height()));
+				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah + "ENDS",null);
+				this.loadGraphic(returnAsset,true,Math.floor(this.get_width()),Math.floor(this.get_height()));
 			} else {
-				if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNote.h,blahblah)) {
-					var this1 = CacheTools.cacheNote;
-					var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah,null);
-					this1.h[blahblah] = returnAsset;
-				}
-				this.loadGraphic(CacheTools.cacheNote.h[blahblah]);
+				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah,null);
+				this.loadGraphic(returnAsset);
 				this.set_width(this.get_width() / 4);
 				this.set_height(this.get_height() / 5);
-				this.loadGraphic(CacheTools.cacheNote.h[blahblah],true,Math.floor(this.get_width()),Math.floor(this.get_height()));
+				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah,null);
+				this.loadGraphic(returnAsset,true,Math.floor(this.get_width()),Math.floor(this.get_height()));
 			}
 			this.setGraphicSize(this.get_width() * PlayState.daPixelZoom | 0);
 			this.loadPixelNoteAnims();
 			this.set_antialiasing(false);
 		} else {
-			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNoteAtlas.h,blahblah)) {
-				var this1 = CacheTools.cacheNoteAtlas;
-				var library = null;
+			var library = null;
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,blahblah)) {
 				var returnAsset = Paths.returnGraphic(blahblah,library);
-				var value = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + blahblah + ".xml","TEXT",library));
-				this1.h[blahblah] = value;
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + blahblah + ".xml","TEXT",library));
+				CacheTools.cacheAtlas.h[blahblah] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = CacheTools.cacheAtlas.h[blahblah];
 			}
-			this.set_frames(CacheTools.cacheNoteAtlas.h[blahblah]);
+			this.set_frames(tmp);
 			this.loadNoteAnims();
 			this.setGraphicSize(this.get_width() * ClientPrefs.strumsize | 0);
 			this.set_antialiasing(ClientPrefs.globalAntialiasing);
@@ -60640,8 +60810,23 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 		return rect;
 	}
+	,set_hitsound: function(value) {
+		if(this.hitsound != value) {
+			if(value.length < 1) {
+				value = "hitsound";
+			}
+			this.hitsound = value;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheSound.h,this.hitsound)) {
+				var this1 = CacheTools.cacheSound;
+				var key = this.hitsound;
+				var value1 = Paths.sound(this.hitsound);
+				this1.h[key] = value1;
+			}
+		}
+		return value;
+	}
 	,__class__: Note
-	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_alignSustainNote:"set_alignSustainNote",set_scrollFactorCam:"set_scrollFactorCam",set_camTarget:"set_camTarget",set_noteScale:"set_noteScale",set_flipScroll:"set_flipScroll",set_texture:"set_texture",set_multSpeed:"set_multSpeed",set_gfNote:"set_gfNote",set_noteType:"set_noteType"})
+	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_hitsound:"set_hitsound",set_alignSustainNote:"set_alignSustainNote",set_scrollFactorCam:"set_scrollFactorCam",set_camTarget:"set_camTarget",set_noteScale:"set_noteScale",set_flipScroll:"set_flipScroll",set_texture:"set_texture",set_multSpeed:"set_multSpeed",set_gfNote:"set_gfNote",set_noteType:"set_noteType"})
 });
 var NoteSplash = function(x,y,note,type) {
 	if(type == null) {
@@ -60757,16 +60942,20 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 		if(this.animation._curAnim != null) {
 			this.animation._curAnim.set_frameRate(ClientPrefs.fpsStrumAnim + flixel_FlxG.random.int(-2,2));
 		}
+		this.origin.set(this.frameWidth * 0.5,this.frameHeight * 0.5);
 	}
 	,loadAnims: function(skin) {
-		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNoteSplash.h,skin)) {
-			var this1 = CacheTools.cacheNoteSplash;
-			var library = null;
+		var library = null;
+		var tmp;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,skin)) {
 			var returnAsset = Paths.returnGraphic(skin,library);
-			var value = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + skin + ".xml","TEXT",library));
-			this1.h[skin] = value;
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + skin + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h[skin] = atlas;
+			tmp = atlas;
+		} else {
+			tmp = CacheTools.cacheAtlas.h[skin];
 		}
-		this.set_frames(CacheTools.cacheNoteSplash.h[skin]);
+		this.set_frames(tmp);
 		this.animation.addByPrefix("note1-" + 1,"note splash blue " + 1,ClientPrefs.fpsStrumAnim,false);
 		this.animation.addByPrefix("note2-" + 1,"note splash green " + 1,ClientPrefs.fpsStrumAnim,false);
 		this.animation.addByPrefix("note0-" + 1,"note splash purple " + 1,ClientPrefs.fpsStrumAnim,false);
@@ -60892,6 +61081,7 @@ Paths.clearStoredMemory = function(cleanUnused) {
 	if(cleanUnused == null) {
 		cleanUnused = false;
 	}
+	CacheTools.clearCache();
 	var h = flixel_FlxG.bitmap._cache.h;
 	var key_h = h;
 	var key_keys = Object.keys(h);
@@ -61059,12 +61249,22 @@ Paths.fileExists = function(key,type,ignoreMods,library) {
 	return false;
 };
 Paths.getSparrowAtlas = function(key,library) {
-	var returnAsset = Paths.returnGraphic(key,library);
-	return flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+		var returnAsset = Paths.returnGraphic(key,library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+		CacheTools.cacheAtlas.h[key] = atlas;
+		return atlas;
+	}
+	return CacheTools.cacheAtlas.h[key];
 };
 Paths.getPackerAtlas = function(key,library) {
-	var returnAsset = Paths.returnGraphic(key,library);
-	return flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + key + ".txt","TEXT",library));
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+		var returnAsset = Paths.returnGraphic(key,library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + key + ".txt","TEXT",library));
+		CacheTools.cacheAtlas.h[key] = atlas;
+		return atlas;
+	}
+	return CacheTools.cacheAtlas.h[key];
 };
 Paths.formatToSongPath = function(path) {
 	var invalidChars = new EReg("[~&\\\\;:<>#]","");
@@ -61073,33 +61273,42 @@ Paths.formatToSongPath = function(path) {
 	return hideChars.split(path1).join("").toLowerCase();
 };
 Paths.returnGraphic = function(key,library) {
-	var path = Paths.getPath("images/" + key + ".png","IMAGE",library);
-	if(openfl_utils_Assets.exists(path,"IMAGE")) {
-		if(!Object.prototype.hasOwnProperty.call(Paths.currentTrackedAssets.h,path)) {
-			var newGraphic = flixel_FlxG.bitmap.add(path,false,path);
-			newGraphic.persist = true;
-			Paths.currentTrackedAssets.h[path] = newGraphic;
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheImage.h,key)) {
+		var path = Paths.getPath("images/" + key + ".png","IMAGE",library);
+		if(openfl_utils_Assets.exists(path,"IMAGE")) {
+			if(!Object.prototype.hasOwnProperty.call(Paths.currentTrackedAssets.h,path)) {
+				var newGraphic = flixel_FlxG.bitmap.add(path,false,path);
+				newGraphic.persist = true;
+				Paths.currentTrackedAssets.h[path] = newGraphic;
+			}
+			Paths.localTrackedAssets.push(path);
+			CacheTools.cacheImage.h[key] = Paths.currentTrackedAssets.h[path];
+			return Paths.currentTrackedAssets.h[path];
 		}
-		Paths.localTrackedAssets.push(path);
-		return Paths.currentTrackedAssets.h[path];
+		haxe_Log.trace("oh no its returning null NOOOO",{ fileName : "source/Paths.hx", lineNumber : 378, className : "Paths", methodName : "returnGraphic"});
+		CacheTools.cacheImage.h[key] = null;
+		return null;
 	}
-	haxe_Log.trace("oh no its returning null NOOOO",{ fileName : "source/Paths.hx", lineNumber : 362, className : "Paths", methodName : "returnGraphic"});
-	return null;
+	return CacheTools.cacheImage.h[key];
 };
 Paths.returnSound = function(path,key,library) {
-	var gottenPath = Paths.getPath("" + path + "/" + key + "." + "mp3","SOUND",library);
-	gottenPath = gottenPath.substring(gottenPath.indexOf(":") + 1,gottenPath.length);
-	if(!Object.prototype.hasOwnProperty.call(Paths.currentTrackedSounds.h,gottenPath)) {
-		var folder = "";
-		if(path == "songs") {
-			folder = "songs:";
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheSound.h,"" + path + "/" + key)) {
+		var gottenPath = Paths.getPath("" + path + "/" + key + "." + "mp3","SOUND",library);
+		gottenPath = gottenPath.substring(gottenPath.indexOf(":") + 1,gottenPath.length);
+		if(!Object.prototype.hasOwnProperty.call(Paths.currentTrackedSounds.h,gottenPath)) {
+			var folder = "";
+			if(path == "songs") {
+				folder = "songs:";
+			}
+			var this1 = Paths.currentTrackedSounds;
+			var value = openfl_utils_Assets.getSound(folder + Paths.getPath("" + path + "/" + key + "." + "mp3","SOUND",library));
+			this1.h[gottenPath] = value;
 		}
-		var this1 = Paths.currentTrackedSounds;
-		var value = openfl_utils_Assets.getSound(folder + Paths.getPath("" + path + "/" + key + "." + "mp3","SOUND",library));
-		this1.h[gottenPath] = value;
+		Paths.localTrackedAssets.push(gottenPath);
+		CacheTools.cacheSound.h["" + path + "/" + key] = Paths.currentTrackedSounds.h[gottenPath];
+		return Paths.currentTrackedSounds.h[gottenPath];
 	}
-	Paths.localTrackedAssets.push(gottenPath);
-	return Paths.currentTrackedSounds.h[gottenPath];
+	return CacheTools.cacheSound.h["" + path + "/" + key];
 };
 var PauseSubState = function() {
 	this.cantUnpause = 0.1;
@@ -62017,6 +62226,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,tempSecOpt: null
 	,create: function() {
 		var _gthis = this;
+		CacheTools.clearCache();
 		Paths.clearStoredMemory();
 		PlayState.instance = this;
 		this.debugKeysChart = ClientPrefs.copyKey(ClientPrefs.keyBinds.h["debug_1"]);
@@ -62290,8 +62500,16 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			}
 			var bgTrees = new flixel_FlxSprite(repositionShit - 380,-800);
 			var library = null;
-			var returnAsset = Paths.returnGraphic("weeb/weebTrees",library);
-			bgTrees.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + "weeb/weebTrees" + ".txt","TEXT",library)));
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"weeb/weebTrees")) {
+				var returnAsset = Paths.returnGraphic("weeb/weebTrees",library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + "weeb/weebTrees" + ".txt","TEXT",library));
+				CacheTools.cacheAtlas.h["weeb/weebTrees"] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = CacheTools.cacheAtlas.h["weeb/weebTrees"];
+			}
+			bgTrees.set_frames(tmp);
 			bgTrees.animation.add("treeLoop",[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],12);
 			bgTrees.animation.play("treeLoop");
 			bgTrees.scrollFactor.set(0.85,0.85);
@@ -62964,9 +63182,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.startCountdown();
 		}
 		this.RecalculateRating();
-		if(ClientPrefs.hitsoundVolume > 0) {
-			this.precacheList.h["hitsound"] = "sound";
-		}
 		this.precacheList.h["missnote1"] = "sound";
 		this.precacheList.h["missnote2"] = "sound";
 		this.precacheList.h["missnote3"] = "sound";
@@ -63242,8 +63457,16 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		var senpaiEvil = new flixel_FlxSprite();
 		var senpaiEvil1 = senpaiEvil;
 		var library = null;
-		var returnAsset = Paths.returnGraphic("weeb/senpaiCrazy",library);
-		senpaiEvil1.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/senpaiCrazy" + ".xml","TEXT",library)));
+		var tmp;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"weeb/senpaiCrazy")) {
+			var returnAsset = Paths.returnGraphic("weeb/senpaiCrazy",library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/senpaiCrazy" + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h["weeb/senpaiCrazy"] = atlas;
+			tmp = atlas;
+		} else {
+			tmp = CacheTools.cacheAtlas.h["weeb/senpaiCrazy"];
+		}
+		senpaiEvil1.set_frames(tmp);
 		senpaiEvil.animation.addByPrefix("idle","Senpai Pre Explosion",24,false);
 		senpaiEvil.setGraphicSize(senpaiEvil.get_width() * 6 | 0);
 		senpaiEvil.scrollFactor.set();
@@ -63340,8 +63563,16 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		var tankman1 = tankman;
 		var key = "cutscenes/" + songName;
 		var library = null;
-		var returnAsset = Paths.returnGraphic(key,library);
-		tankman1.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+		var tmp;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+			var returnAsset = Paths.returnGraphic(key,library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h[key] = atlas;
+			tmp = atlas;
+		} else {
+			tmp = CacheTools.cacheAtlas.h[key];
+		}
+		tankman1.set_frames(tmp);
 		tankman.set_antialiasing(ClientPrefs.globalAntialiasing);
 		this.addBehindDad(tankman);
 		cutsceneHandler.push(tankman);
@@ -63421,22 +63652,46 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.precacheList.h["stressCutscene"] = "sound";
 			var tankman21 = tankman2;
 			var library = null;
-			var returnAsset = Paths.returnGraphic("cutscenes/stress2",library);
-			tankman21.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "cutscenes/stress2" + ".xml","TEXT",library)));
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"cutscenes/stress2")) {
+				var returnAsset = Paths.returnGraphic("cutscenes/stress2",library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "cutscenes/stress2" + ".xml","TEXT",library));
+				CacheTools.cacheAtlas.h["cutscenes/stress2"] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = CacheTools.cacheAtlas.h["cutscenes/stress2"];
+			}
+			tankman21.set_frames(tmp);
 			this.addBehindDad(tankman2);
 			if(!ClientPrefs.lowQuality) {
 				var gfDance1 = gfDance;
 				var library = null;
-				var returnAsset = Paths.returnGraphic("characters/gfTankmen",library);
-				gfDance1.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "characters/gfTankmen" + ".xml","TEXT",library)));
+				var tmp;
+				if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"characters/gfTankmen")) {
+					var returnAsset = Paths.returnGraphic("characters/gfTankmen",library);
+					var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "characters/gfTankmen" + ".xml","TEXT",library));
+					CacheTools.cacheAtlas.h["characters/gfTankmen"] = atlas;
+					tmp = atlas;
+				} else {
+					tmp = CacheTools.cacheAtlas.h["characters/gfTankmen"];
+				}
+				gfDance1.set_frames(tmp);
 				gfDance.animation.addByPrefix("dance","GF Dancing at Gunpoint",24,true);
 				gfDance.animation.play("dance",true);
 				this.addBehindGF(gfDance);
 			}
 			var gfCutscene1 = gfCutscene;
 			var library = null;
-			var returnAsset = Paths.returnGraphic("cutscenes/stressGF",library);
-			gfCutscene1.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "cutscenes/stressGF" + ".xml","TEXT",library)));
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"cutscenes/stressGF")) {
+				var returnAsset = Paths.returnGraphic("cutscenes/stressGF",library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "cutscenes/stressGF" + ".xml","TEXT",library));
+				CacheTools.cacheAtlas.h["cutscenes/stressGF"] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = CacheTools.cacheAtlas.h["cutscenes/stressGF"];
+			}
+			gfCutscene1.set_frames(tmp);
 			gfCutscene.animation.addByPrefix("dieBitch","GF STARTS TO TURN PART 1",24,false);
 			gfCutscene.animation.addByPrefix("getRektLmao","GF STARTS TO TURN PART 2",24,false);
 			gfCutscene.animation.play("dieBitch",true);
@@ -63454,8 +63709,16 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			picoCutscene.set_alpha(0.00001);
 			var boyfriendCutscene1 = boyfriendCutscene;
 			var library = null;
-			var returnAsset = Paths.returnGraphic("characters/BOYFRIEND",library);
-			boyfriendCutscene1.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "characters/BOYFRIEND" + ".xml","TEXT",library)));
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"characters/BOYFRIEND")) {
+				var returnAsset = Paths.returnGraphic("characters/BOYFRIEND",library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "characters/BOYFRIEND" + ".xml","TEXT",library));
+				CacheTools.cacheAtlas.h["characters/BOYFRIEND"] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = CacheTools.cacheAtlas.h["characters/BOYFRIEND"];
+			}
+			boyfriendCutscene1.set_frames(tmp);
 			boyfriendCutscene.animation.addByPrefix("idle","BF idle dance",24,false);
 			boyfriendCutscene.animation.play("idle",true);
 			boyfriendCutscene.animation._curAnim.finish();
@@ -64630,10 +64893,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		MusicBeatState.prototype.onFocus.call(this);
 	}
 	,onFocusLost: function() {
+		MusicBeatState.prototype.onFocusLost.call(this);
 		if(ClientPrefs.pauseUnFocus && this.startedCountdown && this.canPause && !this.paused) {
 			this.openPauseMenu();
 		}
-		MusicBeatState.prototype.onFocusLost.call(this);
 	}
 	,resyncVocals: function() {
 		if(this.finishTimer != null) {
@@ -66530,7 +66793,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		note.rating = daRating.name;
 		score = daRating.score;
-		if(daRating.noteSplash && !note.noteSplashDisabled && !note.fakeNoHit) {
+		if(daRating.noteSplash && !note.noteSplashDisabled && !note.fakeNoHit || note.forceNoteSplash) {
 			this.spawnNoteSplashOnNote(note,note.mustPress);
 		}
 		if(!this.practiceMode && !this.cpuControlled && !note.autoPress && !note.customField) {
@@ -67097,7 +67360,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(this.gamemode == "opponent") {
 			this.health += note.hitHealth * this.healthGain;
 		}
-		if(!note.noteSplashDisabled && !note.isSustainNote && !note.fakeNoHit) {
+		if(!note.noteSplashDisabled && !note.isSustainNote && !note.fakeNoHit || note.forceNoteSplash) {
 			this.spawnNoteSplashOnNote(note,note.mustPress);
 		}
 		var path = PlayState.SONG.song;
@@ -67172,12 +67435,14 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			if((this.cpuControlled || note.autoPress || (this.fieldNameAsPlayer == "" ? note.customField : note.fieldTarget != this.fieldNameAsPlayer)) && (note.ignoreNote || note.hitCausesMiss)) {
 				return;
 			}
-			if(ClientPrefs.hitsoundVolume > 0 && !note.hitsoundDisabled) {
-				flixel_FlxG.sound.play(Paths.sound("hitsound"),ClientPrefs.hitsoundVolume);
+			if(ClientPrefs.hitsoundVolume > 0 && !note.hitsoundDisabled || note.forceHitsound) {
+				if(Object.prototype.hasOwnProperty.call(CacheTools.cacheSound.h,note.hitsound)) {
+					flixel_FlxG.sound.play(CacheTools.cacheSound.h[note.hitsound],!note.forceHitsound ? ClientPrefs.hitsoundVolume : 1.0);
+				}
 			}
 			if(note.hitCausesMiss && this.gamemode != "opponent") {
 				this.noteMiss(note);
-				if(!note.noteSplashDisabled && !note.isSustainNote && !note.fakeNoHit) {
+				if(!note.noteSplashDisabled && !note.isSustainNote && !note.fakeNoHit || note.forceNoteSplash) {
 					this.spawnNoteSplashOnNote(note,note.mustPress);
 				}
 				if(!note.noMissAnimation) {
@@ -67355,13 +67620,13 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,spawnNoteSplashOnNote: function(note,player) {
 		if(note != null && !ClientPrefs.clsstrum) {
 			if(player == true) {
-				if(ClientPrefs.noteSplashes) {
+				if(ClientPrefs.noteSplashes || note.forceNoteSplash) {
 					var strum = !note.customField ? this.playerStrums.members[note.noteData] : this.strumGroupMap.h[note.fieldTarget].members[note.noteData];
 					if(strum != null) {
 						this.spawnNoteSplash(strum.x,strum.y,note.noteData,note);
 					}
 				}
-			} else if(ClientPrefs.noteSplashesOpt) {
+			} else if(ClientPrefs.noteSplashesOpt || note.forceNoteSplash) {
 				var strum = !note.customField ? note.gfNote && PlayState.SONG.secOpt ? this.gfStrums.members[note.noteData] : this.opponentStrums.members[note.noteData] : this.strumGroupMap.h[note.fieldTarget].members[note.noteData];
 				if(strum != null) {
 					this.spawnNoteSplashOpt(strum.x,strum.y,note.noteData,note);
@@ -67585,10 +67850,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,destroy: function() {
 		PlayState.SONG.secOpt = this.tempSecOpt;
-		CacheTools.jsonParse.h = Object.create(null);
-		CacheTools.cacheNoteSplash.h = Object.create(null);
-		CacheTools.cacheNote.h = Object.create(null);
-		CacheTools.cacheNoteAtlas.h = Object.create(null);
+		CacheTools.clearCache();
 		var _g = 0;
 		var _g1 = this.luaArray;
 		while(_g < _g1.length) {
@@ -68310,7 +68572,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.variables.h["camera:" + name] = isTemp;
 			this.customCameraMap.h[name] = isTemp;
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6796, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6795, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -68330,7 +68592,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6806, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6805, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,__class__: PlayState
@@ -69332,8 +69594,15 @@ StoryMenuState.prototype = $extend(MusicBeatState.prototype,{
 			rankText.set_y((flixel_FlxG.height - rankText.get_height()) / 2);
 		}
 		var library = null;
-		var returnAsset = Paths.returnGraphic("campaign_menu_UI_assets",library);
-		var ui_tex = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "campaign_menu_UI_assets" + ".xml","TEXT",library));
+		var ui_tex;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"campaign_menu_UI_assets")) {
+			var returnAsset = Paths.returnGraphic("campaign_menu_UI_assets",library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "campaign_menu_UI_assets" + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h["campaign_menu_UI_assets"] = atlas;
+			ui_tex = atlas;
+		} else {
+			ui_tex = CacheTools.cacheAtlas.h["campaign_menu_UI_assets"];
+		}
 		var bgYellow = new flixel_FlxSprite(0,56).makeGraphic(flixel_FlxG.width,386,-405679);
 		this.bgSprite = new flixel_FlxSprite(0,56);
 		this.bgSprite.set_antialiasing(ClientPrefs.globalAntialiasing);
@@ -70012,15 +70281,12 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			lastAnim = this.animation._curAnim.name;
 		}
 		if(PlayState.isPixelStage) {
-			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNote.h,image)) {
-				var this1 = CacheTools.cacheNote;
-				var returnAsset = Paths.returnGraphic("pixelUI/" + image,null);
-				this1.h[image] = returnAsset;
-			}
-			this.loadGraphic(CacheTools.cacheNote.h[image]);
+			var returnAsset = Paths.returnGraphic("pixelUI/" + image,null);
+			this.loadGraphic(returnAsset);
 			this.set_width(this.get_width() / 4);
 			this.set_height(this.get_height() / 5);
-			this.loadGraphic(CacheTools.cacheNote.h[image],true,Math.floor(this.get_width()),Math.floor(this.get_height()));
+			var returnAsset = Paths.returnGraphic("pixelUI/" + image,null);
+			this.loadGraphic(returnAsset,true,Math.floor(this.get_width()),Math.floor(this.get_height()));
 			this.set_antialiasing(false);
 			this.setGraphicSize(this.get_width() * PlayState.daPixelZoom | 0);
 			this.animation.add("green",[6]);
@@ -70054,14 +70320,17 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 				break;
 			}
 		} else {
-			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNoteAtlas.h,image)) {
-				var this1 = CacheTools.cacheNoteAtlas;
-				var library = null;
+			var library = null;
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,image)) {
 				var returnAsset = Paths.returnGraphic(image,library);
-				var value = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + image + ".xml","TEXT",library));
-				this1.h[image] = value;
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + image + ".xml","TEXT",library));
+				CacheTools.cacheAtlas.h[image] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = CacheTools.cacheAtlas.h[image];
 			}
-			this.set_frames(CacheTools.cacheNoteAtlas.h[image]);
+			this.set_frames(tmp);
 			this.animation.addByPrefix("green","arrowUP");
 			this.animation.addByPrefix("blue","arrowDOWN");
 			this.animation.addByPrefix("purple","arrowLEFT");
@@ -70214,8 +70483,16 @@ var TankmenBG = function(x,y,facingRight) {
 	this.goingRight = facingRight;
 	flixel_FlxSprite.call(this,x,y);
 	var library = null;
-	var returnAsset = Paths.returnGraphic("tankmanKilled1",library);
-	this.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "tankmanKilled1" + ".xml","TEXT",library)));
+	var tmp;
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"tankmanKilled1")) {
+		var returnAsset = Paths.returnGraphic("tankmanKilled1",library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "tankmanKilled1" + ".xml","TEXT",library));
+		CacheTools.cacheAtlas.h["tankmanKilled1"] = atlas;
+		tmp = atlas;
+	} else {
+		tmp = CacheTools.cacheAtlas.h["tankmanKilled1"];
+	}
+	this.set_frames(tmp);
 	this.animation.addByPrefix("run","tankman running",24,true);
 	this.animation.addByPrefix("shot","John Shot " + flixel_FlxG.random.int(1,2),24,false);
 	this.animation.play("run");
@@ -70362,8 +70639,16 @@ TitleState.prototype = $extend(MusicBeatState.prototype,{
 		this.logoBl = new flixel_FlxSprite((flixel_FlxG.width - 1280) / 2 + this.titleJSON.titlex,this.titleJSON.titley);
 		var tmp = this.logoBl;
 		var library = null;
-		var returnAsset = Paths.returnGraphic("logoBumpin",library);
-		tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "logoBumpin" + ".xml","TEXT",library)));
+		var tmp1;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"logoBumpin")) {
+			var returnAsset = Paths.returnGraphic("logoBumpin",library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "logoBumpin" + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h["logoBumpin"] = atlas;
+			tmp1 = atlas;
+		} else {
+			tmp1 = CacheTools.cacheAtlas.h["logoBumpin"];
+		}
+		tmp.set_frames(tmp1);
 		this.logoBl.set_antialiasing(ClientPrefs.globalAntialiasing);
 		this.logoBl.animation.addByPrefix("bump","logo bumpin",24,false);
 		this.logoBl.animation.play("bump");
@@ -70377,8 +70662,16 @@ TitleState.prototype = $extend(MusicBeatState.prototype,{
 		var _g = easterEgg.toUpperCase();
 		var tmp = this.gfDance;
 		var library = null;
-		var returnAsset = Paths.returnGraphic("gfDanceTitle",library);
-		tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "gfDanceTitle" + ".xml","TEXT",library)));
+		var tmp1;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"gfDanceTitle")) {
+			var returnAsset = Paths.returnGraphic("gfDanceTitle",library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "gfDanceTitle" + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h["gfDanceTitle"] = atlas;
+			tmp1 = atlas;
+		} else {
+			tmp1 = CacheTools.cacheAtlas.h["gfDanceTitle"];
+		}
+		tmp.set_frames(tmp1);
 		this.gfDance.animation.addByIndices("danceLeft","gfDance",[30,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14],"",24,false);
 		this.gfDance.animation.addByIndices("danceRight","gfDance",[15,16,17,18,19,20,21,22,23,24,25,26,27,28,29],"",24,false);
 		this.gfDance.set_antialiasing(ClientPrefs.globalAntialiasing);
@@ -70389,8 +70682,16 @@ TitleState.prototype = $extend(MusicBeatState.prototype,{
 		this.titleText = new flixel_FlxSprite((flixel_FlxG.width - 1280) / 2 + this.titleJSON.startx,this.titleJSON.starty);
 		var tmp = this.titleText;
 		var library = null;
-		var returnAsset = Paths.returnGraphic("titleEnter",library);
-		tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "titleEnter" + ".xml","TEXT",library)));
+		var tmp1;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"titleEnter")) {
+			var returnAsset = Paths.returnGraphic("titleEnter",library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "titleEnter" + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h["titleEnter"] = atlas;
+			tmp1 = atlas;
+		} else {
+			tmp1 = CacheTools.cacheAtlas.h["titleEnter"];
+		}
+		tmp.set_frames(tmp1);
 		var animFrames = [];
 		this.titleText.animation.findByPrefix(animFrames,"ENTER IDLE");
 		this.titleText.animation.findByPrefix(animFrames,"ENTER FREEZE");
@@ -73742,8 +74043,16 @@ editors_CharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 			var widShit = bgSky.get_width() * 6 | 0;
 			var bgTrees = new flixel_FlxSprite(repositionShit - 380,-800 - playerYDifference);
 			var library = null;
-			var returnAsset = Paths.returnGraphic("weeb/weebTrees",library);
-			bgTrees.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + "weeb/weebTrees" + ".txt","TEXT",library)));
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"weeb/weebTrees")) {
+				var returnAsset = Paths.returnGraphic("weeb/weebTrees",library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + "weeb/weebTrees" + ".txt","TEXT",library));
+				CacheTools.cacheAtlas.h["weeb/weebTrees"] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = CacheTools.cacheAtlas.h["weeb/weebTrees"];
+			}
+			bgTrees.set_frames(tmp);
 			bgTrees.animation.add("treeLoop",[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],12);
 			bgTrees.animation.play("treeLoop");
 			bgTrees.scrollFactor.set(0.85,0.85);
@@ -74228,14 +74537,30 @@ editors_CharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 			var tmp = this.char;
 			var key = this.char.imageFile;
 			var library = null;
-			var returnAsset = Paths.returnGraphic(key,library);
-			tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + key + ".txt","TEXT",library)));
+			var tmp1;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+				var returnAsset = Paths.returnGraphic(key,library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + key + ".txt","TEXT",library));
+				CacheTools.cacheAtlas.h[key] = atlas;
+				tmp1 = atlas;
+			} else {
+				tmp1 = CacheTools.cacheAtlas.h[key];
+			}
+			tmp.set_frames(tmp1);
 		} else {
 			var tmp = this.char;
 			var key = this.char.imageFile;
 			var library = null;
-			var returnAsset = Paths.returnGraphic(key,library);
-			tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+			var tmp1;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+				var returnAsset = Paths.returnGraphic(key,library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+				CacheTools.cacheAtlas.h[key] = atlas;
+				tmp1 = atlas;
+			} else {
+				tmp1 = CacheTools.cacheAtlas.h[key];
+			}
+			tmp.set_frames(tmp1);
 		}
 		if(this.char.animationsArray != null && this.char.animationsArray.length > 0) {
 			var _g = 0;
@@ -74916,7 +75241,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.UI_box.set_y(25);
 		this.UI_box.scrollFactor.set();
 		this.text = "When Use Has 2nd Strum, it only work GF Sing Notetype\r\n\t\tW/S or Mouse Wheel - Change Conductor's strum time\r\n\t\tA/D - Go to the previous/next section\r\n\t\tLeft/Right - Change Snap\r\n\t\tUp/Down - Change Conductor's Strum Time with Snapping\r\n\t\tLeft Bracket / Right Bracket - Change Song Playback Rate (SHIFT to go Faster)\r\n\t\tALT + Left Bracket / Right Bracket - Reset Song Playback Rate\r\n\t\tHold Shift to move 4x faster\r\n\t\tHold Control and click on an arrow to select it\r\n\t\tZ/X - Zoom in/out\r\n\t\tEsc - Test your chart inside Chart Editor\r\n\t\tEnter - Play your chart\r\n\t\tQ/E - Decrease/Increase Note Sustain Length\r\n\t\tSpace - Stop/Resume song\r\n\t\t Control+ ALT - Multiplace Notes";
-		var tipText = new flixel_text_FlxText(this.UI_box.x + this.UI_box.get_width() + 10,this.UI_box.y,flixel_FlxG.width / 4 | 0,this.text,15);
+		var tipText = new flixel_text_FlxText(this.UI_box.x + this.UI_box.get_width() + 10,this.UI_box.y,300 * (flixel_FlxG.width / 1280) | 0,this.text,15);
 		tipText.setFormat("assets/fonts/" + "vcr.ttf",15,-1,"left");
 		tipText.scrollFactor.set();
 		this.add(tipText);
@@ -74968,8 +75293,16 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.optChar = new flixel_FlxSprite(0,0);
 		var tmp = this.optChar;
 		var library = null;
-		var returnAsset = Paths.returnGraphic("characters/MintEnderDragon",library);
-		tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "characters/MintEnderDragon" + ".xml","TEXT",library)));
+		var tmp1;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"characters/MintEnderDragon")) {
+			var returnAsset = Paths.returnGraphic("characters/MintEnderDragon",library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "characters/MintEnderDragon" + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h["characters/MintEnderDragon"] = atlas;
+			tmp1 = atlas;
+		} else {
+			tmp1 = CacheTools.cacheAtlas.h["characters/MintEnderDragon"];
+		}
+		tmp.set_frames(tmp1);
 		this.optChar.animation.addByPrefix("idle","MintEnderDragon Idle",null,true);
 		var _g = 0;
 		var _g1 = this.animAssets.length;
@@ -74985,8 +75318,16 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.plyChar = new flixel_FlxSprite(0,0);
 		var tmp = this.plyChar;
 		var library = null;
-		var returnAsset = Paths.returnGraphic("characters/DubEnderDragon",library);
-		tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "characters/DubEnderDragon" + ".xml","TEXT",library)));
+		var tmp1;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"characters/DubEnderDragon")) {
+			var returnAsset = Paths.returnGraphic("characters/DubEnderDragon",library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "characters/DubEnderDragon" + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h["characters/DubEnderDragon"] = atlas;
+			tmp1 = atlas;
+		} else {
+			tmp1 = CacheTools.cacheAtlas.h["characters/DubEnderDragon"];
+		}
+		tmp.set_frames(tmp1);
 		this.plyChar.animation.addByPrefix("idle","DubEnderDragon Idle",null,true);
 		var _g = 0;
 		var _g1 = this.animAssets.length;
@@ -76482,8 +76823,8 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 								_gthis.strumLineNotes.members[noteDataToCheck].resetAnim = 0.15;
 							}
 							if(!playedSound[data]) {
-								if(_gthis.playSoundBf.checked && note.mustPress || _gthis.playSoundDad.checked && !note.mustPress) {
-									var soundToPlay = "hitsound";
+								if(_gthis.playSoundBf.checked && note.mustPress || _gthis.playSoundDad.checked && !note.mustPress || (!note.hitsoundDisabled || note.forceHitsound)) {
+									var soundToPlay = note.hitsound;
 									if(_gthis._song.player1 == "gf") {
 										soundToPlay = "GF_" + Std.string(data + 1);
 									}
@@ -76550,8 +76891,8 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 								_gthis.strumLineNotes.members[noteDataToCheck].resetAnim = 0.15;
 							}
 							if(!playedSound[data]) {
-								if(_gthis.playSoundBf.checked && note.mustPress || _gthis.playSoundDad.checked && !note.mustPress) {
-									var soundToPlay = "hitsound";
+								if(_gthis.playSoundBf.checked && note.mustPress || _gthis.playSoundDad.checked && !note.mustPress || (!note.hitsoundDisabled || note.forceHitsound)) {
+									var soundToPlay = note.hitsound;
 									if(_gthis._song.player1 == "gf") {
 										soundToPlay = "GF_" + Std.string(data + 1);
 									}
@@ -76619,8 +76960,8 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 							_gthis.strumLineNotes.members[noteDataToCheck].resetAnim = 0.15;
 						}
 						if(!playedSound[data]) {
-							if(_gthis.playSoundBf.checked && note.mustPress || _gthis.playSoundDad.checked && !note.mustPress) {
-								var soundToPlay = "hitsound";
+							if(_gthis.playSoundBf.checked && note.mustPress || _gthis.playSoundDad.checked && !note.mustPress || (!note.hitsoundDisabled || note.forceHitsound)) {
+								var soundToPlay = note.hitsound;
 								if(_gthis._song.player1 == "gf") {
 									soundToPlay = "GF_" + Std.string(data + 1);
 								}
@@ -76687,8 +77028,8 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 							_gthis.strumLineNotes.members[noteDataToCheck].resetAnim = 0.15;
 						}
 						if(!playedSound[data]) {
-							if(_gthis.playSoundBf.checked && note.mustPress || _gthis.playSoundDad.checked && !note.mustPress) {
-								var soundToPlay = "hitsound";
+							if(_gthis.playSoundBf.checked && note.mustPress || _gthis.playSoundDad.checked && !note.mustPress || (!note.hitsoundDisabled || note.forceHitsound)) {
+								var soundToPlay = note.hitsound;
 								if(_gthis._song.player1 == "gf") {
 									soundToPlay = "GF_" + Std.string(data + 1);
 								}
@@ -77230,12 +77571,8 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			note.sustainLength = daSus;
 			note.set_noteType(i[3]);
 		} else {
-			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheNote.h,"evenArrow")) {
-				var this1 = CacheTools.cacheNote;
-				var returnAsset = Paths.returnGraphic("eventArrow",null);
-				this1.h["eventArrow"] = returnAsset;
-			}
-			note.loadGraphic(CacheTools.cacheNote.h["eventArrow"]);
+			var returnAsset = Paths.returnGraphic("eventArrow",null);
+			note.loadGraphic(returnAsset);
 			note.eventName = this.getEventName(i[1]);
 			note.eventLength = i[1].length;
 			if(i[1].length < 2) {
@@ -77385,7 +77722,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 	,deleteNote: function(note) {
 		var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
 		var noteDataToCheck = actualNoteData;
-		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3345, className : "editors.ChartingState", methodName : "deleteNote"});
+		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3342, className : "editors.ChartingState", methodName : "deleteNote"});
 		if(note.noteData > -1) {
 			var _g = 0;
 			var _g1 = this._song.notes[editors_ChartingState.curSec].sectionNotes;
@@ -77450,7 +77787,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var noteStrum = this.getStrumTime(this.dummyArrow.y * (this.getSectionBeats() / 4),false) + this.sectionStartTime();
 		var noteData = Math.floor((pos - editors_ChartingState.GRID_SIZE) / editors_ChartingState.GRID_SIZE);
-		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3417, className : "editors.ChartingState", methodName : "addNote"});
+		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3414, className : "editors.ChartingState", methodName : "addNote"});
 		var noteSus = 0;
 		var daAlt = false;
 		var daType = this.currentType;
@@ -77774,9 +78111,7 @@ editors_AttachedFlxText.prototype = $extend(flixel_text_FlxText.prototype,{
 		}
 	}
 	,destroy: function() {
-		CacheTools.jsonParse.h = Object.create(null);
-		CacheTools.cacheNote.h = Object.create(null);
-		CacheTools.cacheNoteAtlas.h = Object.create(null);
+		CacheTools.clearCache();
 		flixel_text_FlxText.prototype.destroy.call(this);
 	}
 	,__class__: editors_AttachedFlxText
@@ -77966,8 +78301,16 @@ editors_DialogueCharacterEditorState.prototype = $extend(MusicBeatState.prototyp
 		this.box = new flixel_FlxSprite(70 + (flixel_FlxG.width - 1280) / 2,370);
 		var tmp = this.box;
 		var library = null;
-		var returnAsset = Paths.returnGraphic("speech_bubble",library);
-		tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "speech_bubble" + ".xml","TEXT",library)));
+		var tmp1;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"speech_bubble")) {
+			var returnAsset = Paths.returnGraphic("speech_bubble",library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "speech_bubble" + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h["speech_bubble"] = atlas;
+			tmp1 = atlas;
+		} else {
+			tmp1 = CacheTools.cacheAtlas.h["speech_bubble"];
+		}
+		tmp.set_frames(tmp1);
 		this.box.scrollFactor.set();
 		this.box.set_antialiasing(ClientPrefs.globalAntialiasing);
 		this.box.animation.addByPrefix("normal","speech bubble normal",24);
@@ -78245,8 +78588,16 @@ editors_DialogueCharacterEditorState.prototype = $extend(MusicBeatState.prototyp
 			++_g;
 			var key = "dialogue/" + this.character.jsonFile.image;
 			var library = null;
-			var returnAsset = Paths.returnGraphic(key,library);
-			char.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+				var returnAsset = Paths.returnGraphic(key,library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+				CacheTools.cacheAtlas.h[key] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = CacheTools.cacheAtlas.h[key];
+			}
+			char.set_frames(tmp);
 			char.jsonFile = this.character.jsonFile;
 			char.reloadAnimations();
 			char.setGraphicSize(char.get_width() * DialogueCharacter.DEFAULT_SCALE * this.character.jsonFile.scale | 0);
@@ -78793,8 +79144,16 @@ editors_DialogueEditorState.prototype = $extend(MusicBeatState.prototype,{
 		this.box = new flixel_FlxSprite(70 + (flixel_FlxG.width - 1280) / 2,370);
 		var tmp = this.box;
 		var library = null;
-		var returnAsset = Paths.returnGraphic("speech_bubble",library);
-		tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "speech_bubble" + ".xml","TEXT",library)));
+		var tmp1;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"speech_bubble")) {
+			var returnAsset = Paths.returnGraphic("speech_bubble",library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "speech_bubble" + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h["speech_bubble"] = atlas;
+			tmp1 = atlas;
+		} else {
+			tmp1 = CacheTools.cacheAtlas.h["speech_bubble"];
+		}
+		tmp.set_frames(tmp1);
 		this.box.scrollFactor.set();
 		this.box.set_antialiasing(ClientPrefs.globalAntialiasing);
 		this.box.animation.addByPrefix("normal","speech bubble normal",24);
@@ -78904,8 +79263,16 @@ editors_DialogueEditorState.prototype = $extend(MusicBeatState.prototype,{
 		var tmp = this.character;
 		var key = "dialogue/" + this.character.jsonFile.image;
 		var library = null;
-		var returnAsset = Paths.returnGraphic(key,library);
-		tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+		var tmp1;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+			var returnAsset = Paths.returnGraphic(key,library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h[key] = atlas;
+			tmp1 = atlas;
+		} else {
+			tmp1 = CacheTools.cacheAtlas.h[key];
+		}
+		tmp.set_frames(tmp1);
 		this.character.jsonFile = this.character.jsonFile;
 		this.character.reloadAnimations();
 		this.character.setGraphicSize(this.character.get_width() * DialogueCharacter.DEFAULT_SCALE * this.character.jsonFile.scale | 0);
@@ -79293,6 +79660,8 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 	,noteTypeMap: null
 	,keysArray: null
 	,create: function() {
+		CacheTools.clearCache();
+		Paths.clearStoredMemory();
 		editors_EditorPlayState.instance = this;
 		var bg = new flixel_FlxSprite();
 		var returnAsset = Paths.returnGraphic(ClientPrefs.darkmode ? "menuDesatDark" : "menuDesat",null);
@@ -79376,6 +79745,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 		flixel_FlxG.cameras.add(this.hitboxCam,false);
 		MusicBeatState.prototype.create.call(this);
 		this.cachePopUpScore();
+		Paths.clearUnusedMemory();
 	}
 	,sayGo: function() {
 		var go = new flixel_FlxSprite();
@@ -79498,6 +79868,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 								sustainNote.scrollFactor.set();
 								sustainNote.set_camTarget("");
 								sustainNote.noteSplashCam = "";
+								sustainNote.parent = swagNote;
 								this.unspawnNotes.push(sustainNote);
 								if(sustainNote.mustPress) {
 									sustainNote.set_x(sustainNote.x + flixel_FlxG.width / 2);
@@ -80300,10 +80671,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 			openfl_Lib.get_current().stage.removeEventListener("keyDown",$bind(this,this.onKeyPress));
 			openfl_Lib.get_current().stage.removeEventListener("keyUp",$bind(this,this.onKeyRelease));
 		}
-		CacheTools.jsonParse.h = Object.create(null);
-		CacheTools.cacheNoteSplash.h = Object.create(null);
-		CacheTools.cacheNote.h = Object.create(null);
-		CacheTools.cacheNoteAtlas.h = Object.create(null);
+		CacheTools.clearCache();
 		MusicBeatState.prototype.destroy.call(this);
 	}
 	,__class__: editors_EditorPlayState
@@ -80664,8 +81032,16 @@ editors_MenuCharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 		char.set_alpha(1);
 		var key = "menucharacters/" + this.characterFile.image;
 		var library = null;
-		var returnAsset = Paths.returnGraphic(key,library);
-		char.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+		var tmp;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+			var returnAsset = Paths.returnGraphic(key,library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h[key] = atlas;
+			tmp = atlas;
+		} else {
+			tmp = CacheTools.cacheAtlas.h[key];
+		}
+		char.set_frames(tmp);
 		char.animation.addByPrefix("idle",this.characterFile.idle_anim,24);
 		if(this.curTypeSelected == 1) {
 			char.animation.addByPrefix("confirm",this.characterFile.confirm_anim,24,false);
@@ -80926,8 +81302,15 @@ editors_WeekEditorState.prototype = $extend(MusicBeatState.prototype,{
 		this.txtWeekTitle.setFormat("VCR OSD Mono",32,-1,"right");
 		this.txtWeekTitle.set_alpha(0.7);
 		var library = null;
-		var returnAsset = Paths.returnGraphic("campaign_menu_UI_assets",library);
-		var ui_tex = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "campaign_menu_UI_assets" + ".xml","TEXT",library));
+		var ui_tex;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,"campaign_menu_UI_assets")) {
+			var returnAsset = Paths.returnGraphic("campaign_menu_UI_assets",library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "campaign_menu_UI_assets" + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h["campaign_menu_UI_assets"] = atlas;
+			ui_tex = atlas;
+		} else {
+			ui_tex = CacheTools.cacheAtlas.h["campaign_menu_UI_assets"];
+		}
 		var bgYellow = new flixel_FlxSprite(0,56).makeGraphic(flixel_FlxG.width,386,-405679);
 		this.bgSprite = new flixel_FlxSprite(0,56);
 		this.bgSprite.set_antialiasing(ClientPrefs.globalAntialiasing);
@@ -85056,7 +85439,7 @@ flixel_math_FlxRandom.prototype = {
 		}
 		return selected;
 	}
-	,getObject_flixel_system_FlxSound: function(Objects,WeightsArray,StartIndex,EndIndex) {
+	,getObject_Array_String: function(Objects,WeightsArray,StartIndex,EndIndex) {
 		if(StartIndex == null) {
 			StartIndex = 0;
 		}
@@ -85101,7 +85484,7 @@ flixel_math_FlxRandom.prototype = {
 		}
 		return selected;
 	}
-	,getObject_Array_String: function(Objects,WeightsArray,StartIndex,EndIndex) {
+	,getObject_flixel_system_FlxSound: function(Objects,WeightsArray,StartIndex,EndIndex) {
 		if(StartIndex == null) {
 			StartIndex = 0;
 		}
@@ -126936,7 +127319,7 @@ flixel_system_FlxSound.prototype = $extend(flixel_FlxBasic.prototype,{
 		this._sound.removeEventListener("id3",$bind(this,this.gotID3));
 	}
 	,onFocus: function() {
-		if(!this._alreadyPaused && (ClientPrefs.pauseUnFocus ? !((flixel_FlxG.game._state) instanceof PlayState) : true)) {
+		if(!this._alreadyPaused) {
 			this.resume();
 		}
 	}
@@ -133234,19 +133617,6 @@ flixel_tweens_FlxTweenManager.prototype = $extend(flixel_FlxBasic.prototype,{
 		}
 		return Tween;
 	}
-	,add_flixel_tweens_misc_ColorTween: function(Tween,Start) {
-		if(Start == null) {
-			Start = false;
-		}
-		if(Tween == null) {
-			return null;
-		}
-		this._tweens.push(Tween);
-		if(Start) {
-			Tween.start();
-		}
-		return Tween;
-	}
 	,add_flixel_tweens_misc_NumTween: function(Tween,Start) {
 		if(Start == null) {
 			Start = false;
@@ -133260,7 +133630,7 @@ flixel_tweens_FlxTweenManager.prototype = $extend(flixel_FlxBasic.prototype,{
 		}
 		return Tween;
 	}
-	,add_flixel_tweens_misc_VarTween: function(Tween,Start) {
+	,add_flixel_tweens_misc_ColorTween: function(Tween,Start) {
 		if(Start == null) {
 			Start = false;
 		}
@@ -133274,6 +133644,19 @@ flixel_tweens_FlxTweenManager.prototype = $extend(flixel_FlxBasic.prototype,{
 		return Tween;
 	}
 	,add_flixel_tweens_FlxTween: function(Tween,Start) {
+		if(Start == null) {
+			Start = false;
+		}
+		if(Tween == null) {
+			return null;
+		}
+		this._tweens.push(Tween);
+		if(Start) {
+			Tween.start();
+		}
+		return Tween;
+	}
+	,add_flixel_tweens_misc_VarTween: function(Tween,Start) {
 		if(Start == null) {
 			Start = false;
 		}
@@ -135305,7 +135688,7 @@ flixel_util_FlxArrayUtil.setLength_cacheValue_T = function(array,newLength) {
 	}
 	return array;
 };
-flixel_util_FlxArrayUtil.fastSplice_flixel_util_FlxTimer = function(array,element) {
+flixel_util_FlxArrayUtil.fastSplice_flixel_tweens_FlxTween = function(array,element) {
 	var index = array.indexOf(element);
 	if(index != -1) {
 		array[index] = array[array.length - 1];
@@ -135314,7 +135697,7 @@ flixel_util_FlxArrayUtil.fastSplice_flixel_util_FlxTimer = function(array,elemen
 	}
 	return array;
 };
-flixel_util_FlxArrayUtil.fastSplice_flixel_tweens_FlxTween = function(array,element) {
+flixel_util_FlxArrayUtil.fastSplice_flixel_util_FlxTimer = function(array,element) {
 	var index = array.indexOf(element);
 	if(index != -1) {
 		array[index] = array[array.length - 1];
@@ -161669,7 +162052,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 205023;
+	this.version = 249904;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -212097,8 +212480,16 @@ var options_BaseOptionsMenu = function() {
 		var note = new flixel_FlxSprite(750 + i * 112,0);
 		var key = ClientPrefs.dflnoteskin;
 		var library = null;
-		var returnAsset = Paths.returnGraphic(key,library);
-		note.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+		var tmp;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+			var returnAsset = Paths.returnGraphic(key,library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h[key] = atlas;
+			tmp = atlas;
+		} else {
+			tmp = CacheTools.cacheAtlas.h[key];
+		}
+		note.set_frames(tmp);
 		note.scale.set(0.7,0.7);
 		this.add(note);
 		note.set_visible(false);
@@ -212110,8 +212501,16 @@ var options_BaseOptionsMenu = function() {
 	var note_c = new flixel_FlxSprite(750,0);
 	var key = ClientPrefs.dflnoteskin;
 	var library = null;
-	var returnAsset = Paths.returnGraphic(key,library);
-	note_c.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+	var tmp;
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+		var returnAsset = Paths.returnGraphic(key,library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+		CacheTools.cacheAtlas.h[key] = atlas;
+		tmp = atlas;
+	} else {
+		tmp = CacheTools.cacheAtlas.h[key];
+	}
+	note_c.set_frames(tmp);
 	note_c.scale.set(0.7,0.7);
 	this.add(note_c);
 	note_c.set_visible(false);
@@ -212121,8 +212520,16 @@ var options_BaseOptionsMenu = function() {
 	var note_c = new flixel_FlxSprite(862,0);
 	var key = ClientPrefs.dflnoteskin;
 	var library = null;
-	var returnAsset = Paths.returnGraphic(key,library);
-	note_c.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+	var tmp;
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+		var returnAsset = Paths.returnGraphic(key,library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+		CacheTools.cacheAtlas.h[key] = atlas;
+		tmp = atlas;
+	} else {
+		tmp = CacheTools.cacheAtlas.h[key];
+	}
+	note_c.set_frames(tmp);
 	note_c.scale.set(0.7,0.7);
 	this.add(note_c);
 	note_c.set_visible(false);
@@ -212132,8 +212539,16 @@ var options_BaseOptionsMenu = function() {
 	var note_c = new flixel_FlxSprite(974,0);
 	var key = ClientPrefs.dflnoteskin;
 	var library = null;
-	var returnAsset = Paths.returnGraphic(key,library);
-	note_c.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+	var tmp;
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+		var returnAsset = Paths.returnGraphic(key,library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+		CacheTools.cacheAtlas.h[key] = atlas;
+		tmp = atlas;
+	} else {
+		tmp = CacheTools.cacheAtlas.h[key];
+	}
+	note_c.set_frames(tmp);
 	note_c.scale.set(0.7,0.7);
 	this.add(note_c);
 	note_c.set_visible(false);
@@ -212143,8 +212558,16 @@ var options_BaseOptionsMenu = function() {
 	var note_c = new flixel_FlxSprite(1086,0);
 	var key = ClientPrefs.dflnoteskin;
 	var library = null;
-	var returnAsset = Paths.returnGraphic(key,library);
-	note_c.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+	var tmp;
+	if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+		var returnAsset = Paths.returnGraphic(key,library);
+		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+		CacheTools.cacheAtlas.h[key] = atlas;
+		tmp = atlas;
+	} else {
+		tmp = CacheTools.cacheAtlas.h[key];
+	}
+	note_c.set_frames(tmp);
 	note_c.scale.set(0.7,0.7);
 	this.add(note_c);
 	note_c.set_visible(false);
@@ -213850,8 +214273,16 @@ var options_NotesSubState = function() {
 		var note = new flixel_FlxSprite(this.posX,yPos);
 		var key = ClientPrefs.dflnoteskin;
 		var library = null;
-		var returnAsset = Paths.returnGraphic(key,library);
-		note.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+		var tmp;
+		if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+			var returnAsset = Paths.returnGraphic(key,library);
+			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+			CacheTools.cacheAtlas.h[key] = atlas;
+			tmp = atlas;
+		} else {
+			tmp = CacheTools.cacheAtlas.h[key];
+		}
+		note.set_frames(tmp);
 		var animations = ["purple0","blue0","green0","red0"];
 		note.animation.addByPrefix("idle",animations[i]);
 		note.animation.play("idle");
@@ -214533,8 +214964,16 @@ options_dge_MiscSubState.prototype = $extend(options_BaseOptionsMenu.prototype,{
 			var tmp = this.spriteNote[i];
 			var key = ClientPrefs.dflnoteskin;
 			var library = null;
-			var returnAsset = Paths.returnGraphic(key,library);
-			tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+			var tmp1;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+				var returnAsset = Paths.returnGraphic(key,library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+				CacheTools.cacheAtlas.h[key] = atlas;
+				tmp1 = atlas;
+			} else {
+				tmp1 = CacheTools.cacheAtlas.h[key];
+			}
+			tmp.set_frames(tmp1);
 			this.spriteNote[i].animation.addByPrefix("idle","arrow" + this.arrowDir[i].toUpperCase(),ClientPrefs.fpsStrumAnim,true);
 			this.spriteNote[i].animation.addByPrefix("confirm",this.arrowDir[i].toLowerCase() + " confirm",ClientPrefs.fpsStrumAnim,true);
 			this.spriteNote[i].animation.play("idle");
@@ -214549,8 +214988,16 @@ options_dge_MiscSubState.prototype = $extend(options_BaseOptionsMenu.prototype,{
 			var tmp = this.spriteNote_c[i];
 			var key = ClientPrefs.dflnoteskin;
 			var library = null;
-			var returnAsset = Paths.returnGraphic(key,library);
-			tmp.set_frames(flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library)));
+			var tmp1;
+			if(!Object.prototype.hasOwnProperty.call(CacheTools.cacheAtlas.h,key)) {
+				var returnAsset = Paths.returnGraphic(key,library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+				CacheTools.cacheAtlas.h[key] = atlas;
+				tmp1 = atlas;
+			} else {
+				tmp1 = CacheTools.cacheAtlas.h[key];
+			}
+			tmp.set_frames(tmp1);
 			this.spriteNote_c[i].animation.addByPrefix("idle",this.noteColor[i].toLowerCase() + "0",ClientPrefs.fpsStrumAnim,true);
 			this.spriteNote_c[i].animation.play("idle");
 		}
@@ -215349,9 +215796,9 @@ openfl_display_DisplayObject.__tempStack = new lime_utils_ObjectPool(function() 
 });
 Character.DEFAULT_CHARACTER = "bf";
 CacheTools.jsonParse = new haxe_ds_StringMap();
-CacheTools.cacheNoteSplash = new haxe_ds_StringMap();
-CacheTools.cacheNoteAtlas = new haxe_ds_StringMap();
-CacheTools.cacheNote = new haxe_ds_StringMap();
+CacheTools.cacheSound = new haxe_ds_StringMap();
+CacheTools.cacheImage = new haxe_ds_StringMap();
+CacheTools.cacheAtlas = new haxe_ds_StringMap();
 ClientPrefs.pauseUnFocus = false;
 ClientPrefs.minEditorJson = false;
 ClientPrefs.useResultScr = false;
