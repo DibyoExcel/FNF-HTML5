@@ -6549,12 +6549,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "302";
+	app.meta.h["build"] = "303";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.0.0";
+	app.meta.h["version"] = "26.0.1";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -52029,22 +52029,25 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 			var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
 			var songLowercase = hideChars.split(path1).join("").toLowerCase();
 			var poop = Highscore.formatSong(songLowercase,this.curDifficulty);
-			haxe_Log.trace(poop,{ fileName : "source/FreeplayState.hx", lineNumber : 397, className : "FreeplayState", methodName : "update"});
-			PlayState.SONG = Song.loadFromJson(poop,songLowercase);
-			PlayState.isStoryMode = false;
-			PlayState.storyDifficulty = this.curDifficulty;
-			haxe_Log.trace("CURRENT WEEK: " + WeekData.getWeekFileName(),{ fileName : "source/FreeplayState.hx", lineNumber : 403, className : "FreeplayState", methodName : "update"});
-			if(this.colorTween != null) {
-				this.colorTween.cancel();
+			haxe_Log.trace(poop,{ fileName : "source/FreeplayState.hx", lineNumber : 400, className : "FreeplayState", methodName : "update"});
+			var songData = Song.loadFromJson(poop,songLowercase);
+			if(songData != null) {
+				PlayState.SONG = songData;
+				PlayState.isStoryMode = false;
+				PlayState.storyDifficulty = this.curDifficulty;
+				haxe_Log.trace("CURRENT WEEK: " + WeekData.getWeekFileName(),{ fileName : "source/FreeplayState.hx", lineNumber : 407, className : "FreeplayState", methodName : "update"});
+				if(this.colorTween != null) {
+					this.colorTween.cancel();
+				}
+				var _this = flixel_FlxG.keys.pressed;
+				if(_this.keyManager.checkStatusUnsafe(16,_this.status)) {
+					MusicBeatState.switchState(LoadingState.getNextState(new editors_ChartingState(),false));
+				} else {
+					MusicBeatState.switchState(LoadingState.getNextState(new PlayState(),false));
+				}
+				flixel_FlxG.sound.music.set_volume(0);
+				FreeplayState.destroyFreeplayVocals();
 			}
-			var _this = flixel_FlxG.keys.pressed;
-			if(_this.keyManager.checkStatusUnsafe(16,_this.status)) {
-				MusicBeatState.switchState(LoadingState.getNextState(new editors_ChartingState(),false));
-			} else {
-				MusicBeatState.switchState(LoadingState.getNextState(new PlayState(),false));
-			}
-			flixel_FlxG.sound.music.set_volume(0);
-			FreeplayState.destroyFreeplayVocals();
 		} else if(PlayerSettings.player1.controls._reset.check()) {
 			this.persistentUpdate = false;
 			this.openSubState(new ResetScoreSubState(this.songs[FreeplayState.curSelected].songName,this.curDifficulty,this.songs[FreeplayState.curSelected].songCharacter));
@@ -52564,7 +52567,6 @@ FunkinLua.prototype = {
 		var screenWidth = openfl_Lib.get_current().stage.stageWidth;
 		var screenHeight = openfl_Lib.get_current().stage.stageHeight;
 		flixel_FlxG.game.resizeGame(screenWidth,screenHeight);
-		PlayState.instance.camGameMult = Math.max(flixel_FlxG.width / 1280,flixel_FlxG.height / 720);
 		var _this = flixel_FlxG.worldBounds;
 		var X = 0;
 		var Y = 0;
@@ -52586,9 +52588,10 @@ FunkinLua.prototype = {
 		_this.y = Y;
 		_this.width = Width;
 		_this.height = Height;
-		this.set("camGameMult",Math.max(flixel_FlxG.width / 1280,flixel_FlxG.height / 720));
-		this.set("screenWidth",flixel_FlxG.width);
-		this.set("screenHeight",flixel_FlxG.height);
+		PlayState.instance.camGameMult = Math.max(flixel_FlxG.width / 1280,flixel_FlxG.height / 720);
+		PlayState.instance.setOnLuas("camGameMult",Math.max(flixel_FlxG.width / 1280,flixel_FlxG.height / 720));
+		PlayState.instance.setOnLuas("screenWidth",flixel_FlxG.width);
+		PlayState.instance.setOnLuas("screenHeight",flixel_FlxG.height);
 	}
 	,updateGameLayout: function() {
 		var game = PlayState.instance;
@@ -52806,7 +52809,7 @@ FunkinLua.prototype = {
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3588, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3596, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -57593,6 +57596,13 @@ GameplayChangersSubstate.prototype = $extend(MusicBeatSubstate.prototype,{
 		this.optionsArray.push(option);
 		var option = new GameplayOption("Health Drain","healthdrain","bool",false);
 		this.optionsArray.push(option);
+		var option = new GameplayOption("Health Drain Multiplier","healthDrainMult","float",1);
+		option.scrollSpeed = 2.5;
+		option.minValue = 0;
+		option.maxValue = 5;
+		option.changeValue = 0.1;
+		option.displayFormat = "%vX";
+		this.optionsArray.push(option);
 		var option = new GameplayOption("Game Mode","gamemode","string","none",this.gamemodeArray);
 		this.optionsArray.push(option);
 		var option = new GameplayOption("Modchart","modcharttype","string","none",["none","wave note","fade note","random flip scroll","random direction scroll "]);
@@ -61141,12 +61151,26 @@ PauseSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 				if(this.menuItems.length - 1 != this.curSelected && this.difficultyChoices.indexOf(daSelected) != -1) {
 					var name = PlayState.SONG.song;
 					var poop = Highscore.formatSong(name,this.curSelected);
-					PlayState.SONG = Song.loadFromJson(poop,name);
-					PlayState.storyDifficulty = this.curSelected;
-					MusicBeatState.resetState();
-					flixel_FlxG.sound.music.set_volume(0);
-					PlayState.changedDifficulty = true;
-					PlayState.chartingMode = false;
+					var songData = Song.loadFromJson(poop,name);
+					if(songData != null) {
+						PlayState.SONG = Song.loadFromJson(poop,name);
+						PlayState.storyDifficulty = this.curSelected;
+						MusicBeatState.resetState();
+						flixel_FlxG.sound.music.set_volume(0);
+						PlayState.changedDifficulty = true;
+						PlayState.chartingMode = false;
+					} else {
+						var Chance = 0.1;
+						if(Chance == null) {
+							Chance = 50;
+						}
+						if(flixel_FlxG.random.float(0,100) < Chance) {
+							haxe_Log.trace("PAUSE MENU REFUSE CHANGE DIFFICULT BECAUSE YOU DIDT GAVE A JSON FILE",{ fileName : "source/PauseSubState.hx", lineNumber : 267, className : "PauseSubState", methodName : "update"});
+						} else {
+							haxe_Log.trace("PAUSE MENU HAS BEEN CRASHED BECAUSE OF MISSING SONG DATA",{ fileName : "source/PauseSubState.hx", lineNumber : 269, className : "PauseSubState", methodName : "update"});
+						}
+						this.close();
+					}
 					return;
 				}
 				this.menuItems = this.menuItemsOG;
@@ -61502,6 +61526,7 @@ var PlayState = function(TransIn,TransOut) {
 	this.lastBeatHit = -1;
 	this.lightningOffset = 8;
 	this.lightningStrikeBeat = 0;
+	this.stepCount = -1;
 	this.lastStepHit = -1;
 	this.tankAngle = flixel_FlxG.random.int(-90,45);
 	this.tankSpeed = flixel_FlxG.random.float(5,7);
@@ -61548,6 +61573,7 @@ var PlayState = function(TransIn,TransOut) {
 	this.boyfriendIdled = false;
 	this.boyfriendIdleTime = 0.0;
 	this.keysPressed = [];
+	this.limitCamZoom = false;
 	this.camGameMult = Math.max(flixel_FlxG.width / 1280,flixel_FlxG.height / 720);
 	this.cacheRating = new haxe_ds_StringMap();
 	this.keyCount = 4;
@@ -61572,6 +61598,7 @@ var PlayState = function(TransIn,TransOut) {
 	this.dialogue = ["blah blah blah","coolswag"];
 	this.cameraSpeed = 1;
 	this.botplaySine = 0;
+	this.healthDrainMult = 1;
 	this.disableLuaEvent = false;
 	this.disableLuaScript = false;
 	this.disableLuaStage = false;
@@ -61621,6 +61648,7 @@ var PlayState = function(TransIn,TransOut) {
 	this.DAD_X = 100;
 	this.BF_Y = 100;
 	this.BF_X = 770;
+	this.privateData = new dge_backend_PrivateData();
 	this.customCameraMap = new haxe_ds_StringMap();
 	this.noteSplashGroupMap = new haxe_ds_StringMap();
 	this.notesGroupMap = new haxe_ds_StringMap();
@@ -61674,6 +61702,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,ratingGroup: null
 	,comboGroup: null
 	,numRatingGroup: null
+	,privateData: null
 	,BF_X: null
 	,BF_Y: null
 	,DAD_X: null
@@ -61747,6 +61776,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,disableLuaStage: null
 	,disableLuaScript: null
 	,disableLuaEvent: null
+	,healthDrainMult: null
 	,botplaySine: null
 	,botplayTxt: null
 	,iconP1: null
@@ -61818,6 +61848,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,hitboxSpace: null
 	,cacheRating: null
 	,camGameMult: null
+	,limitCamZoom: null
 	,keysPressed: null
 	,boyfriendIdleTime: null
 	,boyfriendIdled: null
@@ -61856,6 +61887,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.disableLuaScript = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"disableLuaScript") && ClientPrefs.gameplaySettings.h["disableLuaScript"];
 		this.disableLuaStage = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"disableLuaStage") && ClientPrefs.gameplaySettings.h["disableLuaStage"];
 		this.disableLuaEvent = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"disableLuaEvent") && ClientPrefs.gameplaySettings.h["disableLuaEvent"];
+		this.healthDrainMult = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"healthDrainMult") ? ClientPrefs.gameplaySettings.h["healthDrainMult"] : 1;
 		this.setKey();
 		this.ratingsData.push(new Rating("sick"));
 		var rating = new Rating("good");
@@ -62890,7 +62922,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.playbackRate = value;
 		flixel_animation_FlxAnimationController.globalSpeed = value;
-		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1663, className : "PlayState", methodName : "set_playbackRate"});
+		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1671, className : "PlayState", methodName : "set_playbackRate"});
 		Conductor.safeZoneOffset = ClientPrefs.safeFrames / 60 * 1000 * value;
 		this.setOnLuas("playbackRate",this.playbackRate);
 		return value;
@@ -63744,6 +63776,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						obj.remove(daNote,true);
 					}
 				}
+				if(!daNote.mustPress || daNote.mustPress && daNote.isDad) {
+					this.camZooming = true;
+				}
 				HxOverrides.remove(this.unspawnNotes,daNote);
 				daNote.destroy();
 			}
@@ -63777,6 +63812,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					if(obj.members.indexOf(daNote) != -1) {
 						obj.remove(daNote,true);
 					}
+				}
+				if(!daNote.mustPress || daNote.mustPress && daNote.isDad) {
+					this.camZooming = true;
 				}
 				this.notes.remove(daNote,true);
 				daNote.destroy();
@@ -64838,7 +64876,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3633, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3643, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
@@ -65114,6 +65152,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 								obj.remove(daNote,true);
 							}
 						}
+						if(!daNote.hitByOpponent && !daNote.mustPress || !daNote.wasGoodHit && daNote.mustPress && daNote.isDad) {
+							_gthis.camZooming = true;
+						}
 						_gthis.notes.remove(daNote,true);
 						daNote.destroy();
 					}
@@ -65227,7 +65268,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		var _gthis = this;
 		switch(eventName) {
 		case "Add Camera Zoom":
-			if(ClientPrefs.camZooms && flixel_FlxG.camera.zoom < 1.35) {
+			if(ClientPrefs.camZooms && (!this.limitCamZoom || flixel_FlxG.camera.zoom < 1.35)) {
 				var camZoom = parseFloat(value1);
 				var hudZoom = parseFloat(value2);
 				if(isNaN(camZoom)) {
@@ -66050,11 +66091,14 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.callOnLuas("onEvent",[eventName,value1,value2]);
 	}
-	,moveCameraSection: function() {
-		if(PlayState.SONG.notes[this.curSection] == null) {
+	,moveCameraSection: function(curSection) {
+		if(curSection == null) {
+			curSection = 0;
+		}
+		if(PlayState.SONG.notes[curSection] == null) {
 			return;
 		}
-		if(this.gf != null && PlayState.SONG.notes[this.curSection].gfSection) {
+		if(this.gf != null && PlayState.SONG.notes[curSection].gfSection) {
 			this.camFollow.set(this.gf.getMidpoint().x,this.gf.getMidpoint().y);
 			var fh = this.camFollow;
 			fh.set_x(fh.x + (this.gf.cameraPosition[0] + this.girlfriendCameraOffset[0]));
@@ -66064,7 +66108,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.callOnLuas("onMoveCamera",["gf"]);
 			return;
 		}
-		if(!PlayState.SONG.notes[this.curSection].mustHitSection) {
+		if(!PlayState.SONG.notes[curSection].mustHitSection) {
 			this.moveCamera(true);
 			this.callOnLuas("onMoveCamera",["dad"]);
 		} else {
@@ -66219,12 +66263,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4699, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4712, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4700, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4713, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -66241,21 +66285,34 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					flixel_addons_transition_FlxTransitionableState.skipNextTransOut = true;
 					PlayState.prevCamFollow = this.camFollow;
 					PlayState.prevCamFollowPos = this.camFollowPos;
-					PlayState.SONG = Song.loadFromJson(PlayState.storyPlaylist[0] + difficulty,PlayState.storyPlaylist[0]);
+					var songData = Song.loadFromJson(PlayState.storyPlaylist[0] + difficulty,PlayState.storyPlaylist[0]);
 					var _this = flixel_FlxG.sound.music;
 					_this.cleanup(_this.autoDestroy,true);
-					if(winterHorrorlandNext) {
-						new flixel_util_FlxTimer().start(1.5,function(tmr) {
+					if(songData != null) {
+						PlayState.SONG = songData;
+						if(winterHorrorlandNext) {
+							new flixel_util_FlxTimer().start(1.5,function(tmr) {
+								PlayState.cancelMusicFadeTween();
+								MusicBeatState.switchState(LoadingState.getNextState(new PlayState(),false));
+							});
+						} else {
 							PlayState.cancelMusicFadeTween();
 							MusicBeatState.switchState(LoadingState.getNextState(new PlayState(),false));
-						});
+						}
 					} else {
-						PlayState.cancelMusicFadeTween();
-						MusicBeatState.switchState(LoadingState.getNextState(new PlayState(),false));
+						var Chance = 0.1;
+						if(Chance == null) {
+							Chance = 50;
+						}
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 4746, className : "PlayState", methodName : "endSong"});
+						MusicBeatState.switchState(new StoryMenuState());
+						var tmp = flixel_FlxG.sound;
+						var file = Paths.returnSound("music","freakyMenu",null);
+						tmp.playMusic(file);
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4736, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4754, className : "PlayState", methodName : "endSong"});
 				WeekData.loadTheFirstEnabledMod();
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
@@ -66279,7 +66336,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4760, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4778, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -66967,15 +67024,15 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(!note.hitByOpponent && !note.wasGoodHit) {
 			if(this.healthdrain) {
 				if(this.gamemode != "opponent") {
-					if(this.health > note.hitHealth * this.healthGain) {
-						this.health -= note.hitHealth * this.healthGain;
+					if(this.health > note.hitHealth * this.healthDrainMult) {
+						this.health -= note.hitHealth * this.healthDrainMult;
 					} else {
 						this.health = 0.001;
 					}
 				}
 			}
 			if(this.gamemode == "opponent") {
-				this.health += note.hitHealth * this.healthGain;
+				this.health += note.hitHealth * this.healthDrainMult;
 			}
 			if(!note.noteSplashDisabled && !note.isSustainNote && !note.fakeNoHit || note.forceNoteSplash) {
 				this.spawnNoteSplashOnNote(note,note.mustPress);
@@ -66984,7 +67041,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			var invalidChars = new EReg("[~&\\\\;:<>#]","");
 			var hideChars = new EReg("[.,'\"%?!]","");
 			var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-			if(hideChars.split(path1).join("").toLowerCase() != "tutorial") {
+			if(hideChars.split(path1).join("").toLowerCase() != "tutorial" && (!note.mustPress || note.mustPress && note.isDad)) {
 				this.camZooming = true;
 			}
 			if(note.noteType == "Hey!" && Object.prototype.hasOwnProperty.call(this.dad.animOffsets.h,"hey")) {
@@ -67140,8 +67197,8 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					this.camZooming = true;
 				}
 				if(this.healthdrain) {
-					if(this.health > note.hitHealth * this.healthGain) {
-						this.health -= note.hitHealth * this.healthGain;
+					if(this.health > note.hitHealth * this.healthDrainMult) {
+						this.health -= note.hitHealth * this.healthDrainMult;
 					} else {
 						this.health = 0.001;
 					}
@@ -67506,6 +67563,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		MusicBeatState.prototype.destroy.call(this);
 	}
 	,lastStepHit: null
+	,stepCount: null
 	,stepHit: function() {
 		MusicBeatState.prototype.stepHit.call(this);
 		if(Math.abs(flixel_FlxG.sound.music._time - (Conductor.songPosition - Conductor.offset)) > 20 * this.playbackRate || PlayState.SONG.needsVoices && Math.abs(this.vocals._time - (Conductor.songPosition - Conductor.offset)) > 20 * this.playbackRate) {
@@ -67515,6 +67573,15 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			return;
 		}
 		this.lastStepHit = this.curStep;
+		this.privateData.add_stepCount();
+		while(this.privateData.get_stepCount() < this.curStep) {
+			this.privateData.add_stepCount();
+			this.setOnLuas("curStep",this.privateData.get_stepCount());
+			this.callOnLuas("onStepHit",[]);
+		}
+		if(this.privateData.get_stepCount() > this.curStep) {
+			this.privateData.set_stepCount(this.curStep);
+		}
 		this.setOnLuas("curStep",this.curStep);
 		this.callOnLuas("onStepHit",[]);
 	}
@@ -67654,33 +67721,56 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.lightningStrikeShit();
 		}
 		this.lastBeatHit = this.curBeat;
+		this.privateData.add_beatCount();
+		while(this.privateData.get_beatCount() < this.curBeat) {
+			this.privateData.add_beatCount();
+			this.setOnLuas("curBeat",this.privateData.get_beatCount());
+			this.callOnLuas("onBeatHit",[]);
+		}
+		if(this.privateData.get_beatCount() > this.curStep) {
+			this.privateData.set_beatCount(this.curStep);
+		}
 		this.setOnLuas("curBeat",this.curBeat);
 		this.callOnLuas("onBeatHit",[]);
 	}
-	,sectionHit: function() {
-		MusicBeatState.prototype.sectionHit.call(this);
-		if(PlayState.SONG.notes[this.curSection] != null) {
-			if(this.generatedMusic && !this.endingSong && !this.isCameraOnForcedPos) {
-				this.moveCameraSection();
-			}
-			if(this.camZooming && flixel_FlxG.camera.zoom < 1.35 && ClientPrefs.camZooms) {
-				var fh = flixel_FlxG.camera;
-				fh.set_zoom(fh.zoom + 0.015 * this.camZoomingMult);
-				var fh = this.camHUD;
-				fh.set_zoom(fh.zoom + 0.03 * this.camZoomingMult);
-			}
-			if(PlayState.SONG.notes[this.curSection].changeBPM) {
-				Conductor.changeBPM(PlayState.SONG.notes[this.curSection].bpm);
+	,sectionStuff: function(curSection) {
+		if(PlayState.SONG.notes[curSection] != null) {
+			if(PlayState.SONG.notes[curSection].changeBPM) {
+				Conductor.changeBPM(PlayState.SONG.notes[curSection].bpm);
 				this.setOnLuas("curBpm",Conductor.bpm);
 				this.setOnLuas("crochet",Conductor.crochet);
 				this.setOnLuas("stepCrochet",Conductor.stepCrochet);
 			}
-			this.setOnLuas("mustHitSection",PlayState.SONG.notes[this.curSection].mustHitSection);
-			this.setOnLuas("altAnim",PlayState.SONG.notes[this.curSection].altAnim);
-			this.setOnLuas("gfSection",PlayState.SONG.notes[this.curSection].gfSection);
+			this.setOnLuas("mustHitSection",PlayState.SONG.notes[curSection].mustHitSection);
+			this.setOnLuas("altAnim",PlayState.SONG.notes[curSection].altAnim);
+			this.setOnLuas("gfSection",PlayState.SONG.notes[curSection].gfSection);
 		}
-		this.setOnLuas("curSection",this.curSection);
+		this.setOnLuas("curSection",curSection);
 		this.callOnLuas("onSectionHit",[]);
+	}
+	,sectionHit: function() {
+		MusicBeatState.prototype.sectionHit.call(this);
+		this.privateData.add_sectionCount();
+		while(this.privateData.get_sectionCount() < this.curSection) {
+			this.privateData.add_sectionCount();
+			this.sectionStuff(this.privateData.get_sectionCount());
+			if(this.generatedMusic && !this.endingSong && !this.isCameraOnForcedPos) {
+				this.moveCameraSection(this.curSection);
+			}
+		}
+		if(this.privateData.get_sectionCount() > this.curStep) {
+			this.privateData.set_sectionCount(this.curStep);
+		}
+		this.sectionStuff(this.curSection);
+		if(this.generatedMusic && !this.endingSong && !this.isCameraOnForcedPos) {
+			this.moveCameraSection(this.curSection);
+		}
+		if(this.camZooming && (!this.limitCamZoom || flixel_FlxG.camera.zoom < 1.35) && ClientPrefs.camZooms) {
+			var fh = flixel_FlxG.camera;
+			fh.set_zoom(fh.zoom + 0.015 * this.camZoomingMult);
+			var fh = this.camHUD;
+			fh.set_zoom(fh.zoom + 0.03 * this.camZoomingMult);
+		}
 	}
 	,callOnLuas: function(event,args,ignoreStops,exclusions) {
 		if(ignoreStops == null) {
@@ -68206,7 +68296,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.variables.h["camera:" + name] = isTemp;
 			this.customCameraMap.h[name] = isTemp;
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6824, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6872, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -68226,11 +68316,18 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6834, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6882, className : "PlayState", methodName : "remCamera"});
 		}
 	}
+	,set_privateData: function(value) {
+		if(this.privateData == null) {
+			this.privateData = value;
+			return value;
+		}
+		return this.privateData;
+	}
 	,__class__: PlayState
-	,__properties__: $extend(MusicBeatState.prototype.__properties__,{set_mergeHealthColor:"set_mergeHealthColor",set_playbackRate:"set_playbackRate",set_songSpeed:"set_songSpeed"})
+	,__properties__: $extend(MusicBeatState.prototype.__properties__,{set_mergeHealthColor:"set_mergeHealthColor",set_playbackRate:"set_playbackRate",set_songSpeed:"set_songSpeed",set_privateData:"set_privateData"})
 });
 var flixel_util_FlxTypedSignal = {};
 flixel_util_FlxTypedSignal.__properties__ = {get_dispatch:"get_dispatch"};
@@ -69013,7 +69110,12 @@ Song.loadFromJson = function(jsonInput,folder) {
 	var path = invalidChars.split(StringTools.replace(jsonInput," ","-")).join("-");
 	var formattedSong = hideChars.split(path).join("").toLowerCase();
 	if(rawJson == null) {
-		rawJson = StringTools.trim(lime_utils_Assets.getText(Paths.getPath("data/" + (formattedFolder + "/" + formattedSong) + ".json","TEXT",null)));
+		if(lime_utils_Assets.exists(Paths.getPath("data/" + (formattedFolder + "/" + formattedSong) + ".json","TEXT",null))) {
+			rawJson = StringTools.trim(lime_utils_Assets.getText(Paths.getPath("data/" + (formattedFolder + "/" + formattedSong) + ".json","TEXT",null)));
+		} else {
+			Song.missingWarning(Paths.getPath("data/" + (formattedFolder + "/" + formattedSong) + ".json","TEXT",null));
+			return null;
+		}
 	}
 	while(!StringTools.endsWith(rawJson,"}")) rawJson = HxOverrides.substr(rawJson,0,rawJson.length - 1);
 	var songJson = Song.parseJSONshit(rawJson);
@@ -69027,6 +69129,18 @@ Song.parseJSONshit = function(rawJson) {
 	var swagShit = JSON.parse(rawJson).song;
 	swagShit.validScore = true;
 	return swagShit;
+};
+Song.missingWarning = function(path) {
+	var Chance = 0.1;
+	if(Chance == null) {
+		Chance = 50;
+	}
+	if(flixel_FlxG.random.float(0,100) < Chance) {
+		var msg = flixel_FlxG.random.getObject_String(Song.eggs);
+		haxe_Log.trace(msg + "(Json file not found: " + path + ").",{ fileName : "source/Song.hx", lineNumber : 185, className : "Song", methodName : "missingWarning"});
+	} else {
+		haxe_Log.trace("Json file not found: " + path + ".",{ fileName : "source/Song.hx", lineNumber : 187, className : "Song", methodName : "missingWarning"});
+	}
 };
 Song.prototype = {
 	song: null
@@ -69458,19 +69572,24 @@ StoryMenuState.prototype = $extend(MusicBeatState.prototype,{
 				diffic = "";
 			}
 			PlayState.storyDifficulty = this.curDifficulty;
-			PlayState.SONG = Song.loadFromJson(PlayState.storyPlaylist[0].toLowerCase() + diffic,PlayState.storyPlaylist[0].toLowerCase());
-			PlayState.campaignScore = 0;
-			PlayState.campaignPercent = 0;
-			PlayState.campaignMisses = 0;
-			new flixel_util_FlxTimer().start(1,function(tmr) {
-				var target = new PlayState();
-				var stopMusic = true;
-				if(stopMusic == null) {
-					stopMusic = false;
-				}
-				MusicBeatState.switchState(LoadingState.getNextState(target,stopMusic));
-				FreeplayState.destroyFreeplayVocals();
-			});
+			var songData = Song.loadFromJson(PlayState.storyPlaylist[0].toLowerCase() + diffic,PlayState.storyPlaylist[0].toLowerCase());
+			if(songData != null) {
+				PlayState.SONG = songData;
+				PlayState.campaignScore = 0;
+				PlayState.campaignPercent = 0;
+				PlayState.campaignMisses = 0;
+				new flixel_util_FlxTimer().start(1,function(tmr) {
+					var target = new PlayState();
+					var stopMusic = true;
+					if(stopMusic == null) {
+						stopMusic = false;
+					}
+					MusicBeatState.switchState(LoadingState.getNextState(target,stopMusic));
+					FreeplayState.destroyFreeplayVocals();
+				});
+			} else {
+				MusicBeatState.resetState();
+			}
 		} else {
 			flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
 		}
@@ -75243,6 +75362,64 @@ dge_backend_CacheTools.clearCache = function() {
 	dge_backend_CacheTools.cachePackerAtlas = new haxe_ds_StringMap();
 	dge_backend_CacheTools.cacheText = new haxe_ds_StringMap();
 };
+var dge_backend_PrivateData = function() {
+	this.stepCount = -1;
+	this.beatCount = -1;
+	this.sectionCount = -1;
+};
+$hxClasses["dge.backend.PrivateData"] = dge_backend_PrivateData;
+dge_backend_PrivateData.__name__ = "dge.backend.PrivateData";
+dge_backend_PrivateData.prototype = {
+	stepCount: null
+	,beatCount: null
+	,sectionCount: null
+	,get_stepCount: function() {
+		return this.stepCount;
+	}
+	,get_beatCount: function() {
+		return this.beatCount;
+	}
+	,get_sectionCount: function() {
+		return this.sectionCount;
+	}
+	,add_stepCount: function(value) {
+		if(value == null) {
+			value = 1;
+		}
+		this.stepCount += value;
+	}
+	,add_beatCount: function(value) {
+		if(value == null) {
+			value = 1;
+		}
+		this.beatCount += value;
+	}
+	,add_sectionCount: function(value) {
+		if(value == null) {
+			value = 1;
+		}
+		this.sectionCount += value;
+	}
+	,set_stepCount: function(value) {
+		if(value == null) {
+			value = -1;
+		}
+		this.stepCount = value;
+	}
+	,set_beatCount: function(value) {
+		if(value == null) {
+			value = -1;
+		}
+		this.beatCount = value;
+	}
+	,set_sectionCount: function(value) {
+		if(value == null) {
+			value = -1;
+		}
+		this.sectionCount = value;
+	}
+	,__class__: dge_backend_PrivateData
+};
 var dge_obj_Keypress = function(x,y,color) {
 	this.alphaKeyPress = ClientPrefs.keyStrokeAlpha;
 	this.alphaKey = ClientPrefs.keyStrokeAlpha;
@@ -80388,12 +80565,21 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 	,loadJson: function(song) {
 		if(CoolUtil.difficulties[PlayState.storyDifficulty] != CoolUtil.defaultDifficulty) {
 			if(CoolUtil.difficulties[PlayState.storyDifficulty] == null) {
-				PlayState.SONG = Song.loadFromJson(song.toLowerCase(),song.toLowerCase());
+				var songData = Song.loadFromJson(song.toLowerCase(),song.toLowerCase());
+				if(songData != null) {
+					PlayState.SONG = songData;
+				}
 			} else {
-				PlayState.SONG = Song.loadFromJson(song.toLowerCase() + "-" + CoolUtil.difficulties[PlayState.storyDifficulty],song.toLowerCase());
+				var songData = Song.loadFromJson(song.toLowerCase() + "-" + CoolUtil.difficulties[PlayState.storyDifficulty],song.toLowerCase());
+				if(songData != null) {
+					PlayState.SONG = songData;
+				}
 			}
 		} else {
-			PlayState.SONG = Song.loadFromJson(song.toLowerCase(),song.toLowerCase());
+			var songData = Song.loadFromJson(song.toLowerCase(),song.toLowerCase());
+			if(songData != null) {
+				PlayState.SONG = songData;
+			}
 		}
 		MusicBeatState.resetState();
 	}
@@ -88015,6 +88201,51 @@ flixel_math_FlxRandom.prototype = {
 		return selected;
 	}
 	,getObject_flixel_system_FlxSound: function(Objects,WeightsArray,StartIndex,EndIndex) {
+		if(StartIndex == null) {
+			StartIndex = 0;
+		}
+		var selected = null;
+		if(Objects.length != 0) {
+			if(WeightsArray == null) {
+				var _g = [];
+				var _g1 = 0;
+				var _g2 = Objects.length;
+				while(_g1 < _g2) {
+					var i = _g1++;
+					_g.push(1);
+				}
+				WeightsArray = _g;
+			}
+			if(EndIndex == null) {
+				EndIndex = Objects.length - 1;
+			}
+			var Max = Objects.length - 1;
+			var lowerBound = StartIndex < 0 ? 0 : StartIndex;
+			StartIndex = (Max != null && lowerBound > Max ? Max : lowerBound) | 0;
+			var Max = Objects.length - 1;
+			var lowerBound = EndIndex < 0 ? 0 : EndIndex;
+			EndIndex = (Max != null && lowerBound > Max ? Max : lowerBound) | 0;
+			if(EndIndex < StartIndex) {
+				StartIndex += EndIndex;
+				EndIndex = StartIndex - EndIndex;
+				StartIndex -= EndIndex;
+			}
+			if(EndIndex > WeightsArray.length - 1) {
+				EndIndex = WeightsArray.length - 1;
+			}
+			var _g = [];
+			var _g1 = StartIndex;
+			var _g2 = EndIndex + 1;
+			while(_g1 < _g2) {
+				var i = _g1++;
+				_g.push(WeightsArray[i]);
+			}
+			flixel_math_FlxRandom._arrayFloatHelper = _g;
+			selected = Objects[StartIndex + this.weightedPick(flixel_math_FlxRandom._arrayFloatHelper)];
+		}
+		return selected;
+	}
+	,getObject_String: function(Objects,WeightsArray,StartIndex,EndIndex) {
 		if(StartIndex == null) {
 			StartIndex = 0;
 		}
@@ -162969,7 +163200,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 81288;
+	this.version = 896885;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -215873,6 +216104,7 @@ ClientPrefs.gameplaySettings = (function($this) {
 	_g.h["disableLuaEvent"] = false;
 	_g.h["opponent"] = false;
 	_g.h["randomNote"] = false;
+	_g.h["healthDrainMult"] = 1.0;
 	$r = _g;
 	return $r;
 }(this));
@@ -216003,6 +216235,7 @@ PlayerSettings.numAvatars = 0;
 PlayerSettings.onAvatarAdd = new flixel_util__$FlxSignal_FlxSignal1();
 PlayerSettings.onAvatarRemove = new flixel_util__$FlxSignal_FlxSignal1();
 Section.COPYCAT = 0;
+Song.eggs = ["Json file went vacation.","Json file is missing, probably hiding from you.","Json file not found. Did it run away?","Json file is playing hide and seek.","Json file got stolen by dragon.","Json file is lost in the void.","Json file got burned by a fire spell.","Json file forgot the map.","Json file is on a secret mission.","Json file got abducted by aliens.","Json file is missing, maybe check under the couch."];
 StageData.forceNextDirectory = null;
 StoryMenuState.weekCompleted = new haxe_ds_StringMap();
 StoryMenuState.lastDifficultyName = "";
