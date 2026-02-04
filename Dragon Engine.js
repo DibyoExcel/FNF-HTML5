@@ -1803,12 +1803,13 @@ var flixel_FlxSprite = function(X,Y,SimpleGraphic) {
 		X = 0;
 	}
 	this.shaderType = null;
-	this.posterize = new Posterize();
-	this.pixelSprite = new PixelSprite();
-	this.colorRGBSwap = new ColorRGBSwap();
-	this.colorSingle = new ColorSingle();
-	this.colorInvert = new ColorInvert();
-	this.colorSwap = new ColorSwap();
+	this.rgbShader = new dge_shaders_RGBPalette();
+	this.posterize = new dge_shaders_Posterize();
+	this.pixelSprite = new dge_shaders_PixelSprite();
+	this.colorRGBSwap = new dge_shaders_ColorRGBSwap();
+	this.colorSingle = new dge_shaders_ColorSingle();
+	this.colorInvert = new dge_shaders_ColorInvert();
+	this.colorSwap = new dge_shaders_ColorSwap();
 	this._facingFlip = new haxe_ds_IntMap();
 	this._angleChanged = true;
 	this._cosAngle = 1;
@@ -1884,10 +1885,17 @@ flixel_FlxSprite.prototype = $extend(flixel_FlxObject.prototype,{
 	,colorRGBSwap: null
 	,pixelSprite: null
 	,posterize: null
+	,rgbShader: null
 	,shaderType: null
 	,set_shaderType: function(value) {
 		if(this.shaderType != value) {
-			var shouldUse = ["none","swap","invert","single","rgbswap","pixel","posterize"];
+			var shouldUse = ["none","swap","invert","single","rgbswap","pixel","posterize","rgbpalette"];
+			var _g = 0;
+			var _g1 = shouldUse.length;
+			while(_g < _g1) {
+				var i = _g++;
+				shouldUse[i] = shouldUse[i].toLowerCase();
+			}
 			if(value == null || value.length < 1) {
 				value = shouldUse[0];
 			}
@@ -1900,14 +1908,14 @@ flixel_FlxSprite.prototype = $extend(flixel_FlxObject.prototype,{
 			case "invert":
 				this.shader = this.colorInvert.shader;
 				break;
-			case "none":
-				this.shader = null;
-				break;
 			case "pixel":
 				this.shader = this.pixelSprite.shader;
 				break;
 			case "posterize":
 				this.shader = this.posterize.shader;
+				break;
+			case "rgbpalette":
+				this.shader = this.rgbShader.shader;
 				break;
 			case "rgbswap":
 				this.shader = this.colorRGBSwap.shader;
@@ -6549,12 +6557,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "308";
+	app.meta.h["build"] = "309";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.1.3";
+	app.meta.h["version"] = "26.2.0";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -9901,6 +9909,8 @@ ClientPrefs.loadDefaultKeys = function() {
 	ClientPrefs.defaultKeys = haxe_ds_StringMap.createCopy(ClientPrefs.keyBinds.h);
 };
 ClientPrefs.saveSettings = function() {
+	flixel_FlxG.save.data.pauseBGAlpha = ClientPrefs.pauseBGAlpha;
+	flixel_FlxG.save.data.classicNoteSpawn = ClientPrefs.classicNoteSpawn;
 	flixel_FlxG.save.data.fpsFontSize = ClientPrefs.fpsFontSize;
 	flixel_FlxG.save.data.invertYSwipe = ClientPrefs.invertYSwipe;
 	flixel_FlxG.save.data.invertScroll = ClientPrefs.invertScroll;
@@ -9972,6 +9982,12 @@ ClientPrefs.saveSettings = function() {
 ClientPrefs.loadPrefs = function() {
 	if(flixel_FlxG.save.data.downScroll != null) {
 		ClientPrefs.downScroll = flixel_FlxG.save.data.downScroll;
+	}
+	if(flixel_FlxG.save.data.pauseBGAlpha != null) {
+		ClientPrefs.pauseBGAlpha = flixel_FlxG.save.data.pauseBGAlpha;
+	}
+	if(flixel_FlxG.save.data.classicNoteSpawn != null) {
+		ClientPrefs.classicNoteSpawn = flixel_FlxG.save.data.classicNoteSpawn;
 	}
 	if(flixel_FlxG.save.data.fpsFontSize != null) {
 		ClientPrefs.fpsFontSize = flixel_FlxG.save.data.fpsFontSize;
@@ -10223,962 +10239,6 @@ ClientPrefs.copyKey = function(arrayToCopy) {
 	}
 	return copiedArray;
 };
-var ColorInvert = function() {
-	this.shader = new ColorInvertShader();
-	this.set_invertR(true);
-	this.set_invertG(true);
-	this.set_invertB(true);
-};
-$hxClasses["ColorInvert"] = ColorInvert;
-ColorInvert.__name__ = "ColorInvert";
-ColorInvert.prototype = {
-	shader: null
-	,invertR: null
-	,invertG: null
-	,invertB: null
-	,set_invertR: function(value) {
-		if(this.invertR != value) {
-			this.invertR = value;
-			this.shader.invertR.value = [value];
-		}
-		return value;
-	}
-	,set_invertG: function(value) {
-		if(this.invertG != value) {
-			this.invertG = value;
-			this.shader.invertG.value = [value];
-		}
-		return value;
-	}
-	,set_invertB: function(value) {
-		if(this.invertB != value) {
-			this.invertB = value;
-			this.shader.invertB.value = [value];
-		}
-		return value;
-	}
-	,__class__: ColorInvert
-	,__properties__: {set_invertB:"set_invertB",set_invertG:"set_invertG",set_invertR:"set_invertR"}
-};
-var openfl_display_Shader = function(code) {
-	this.byteCode = code;
-	this.precisionHint = 1;
-	this.__glSourceDirty = true;
-	this.__numPasses = 1;
-	this.__data = openfl_display_ShaderData._new(code);
-};
-$hxClasses["openfl.display.Shader"] = openfl_display_Shader;
-openfl_display_Shader.__name__ = "openfl.display.Shader";
-openfl_display_Shader.prototype = {
-	byteCode: null
-	,glProgram: null
-	,precisionHint: null
-	,program: null
-	,__alpha: null
-	,__bitmap: null
-	,__colorMultiplier: null
-	,__colorOffset: null
-	,__context: null
-	,__data: null
-	,__glFragmentSource: null
-	,__glSourceDirty: null
-	,__glVertexSource: null
-	,__hasColorTransform: null
-	,__inputBitmapData: null
-	,__isGenerated: null
-	,__matrix: null
-	,__numPasses: null
-	,__paramBool: null
-	,__paramFloat: null
-	,__paramInt: null
-	,__position: null
-	,__textureCoord: null
-	,__texture: null
-	,__textureSize: null
-	,__clearUseArray: function() {
-		var _g = 0;
-		var _g1 = this.__paramBool;
-		while(_g < _g1.length) {
-			var parameter = _g1[_g];
-			++_g;
-			parameter.__useArray = false;
-		}
-		var _g = 0;
-		var _g1 = this.__paramFloat;
-		while(_g < _g1.length) {
-			var parameter = _g1[_g];
-			++_g;
-			parameter.__useArray = false;
-		}
-		var _g = 0;
-		var _g1 = this.__paramInt;
-		while(_g < _g1.length) {
-			var parameter = _g1[_g];
-			++_g;
-			parameter.__useArray = false;
-		}
-	}
-	,__createGLShader: function(source,type) {
-		var gl = this.__context.gl;
-		var shader = gl.createShader(type);
-		gl.shaderSource(shader,source);
-		gl.compileShader(shader);
-		var shaderInfoLog = gl.getShaderInfoLog(shader);
-		var hasInfoLog = shaderInfoLog != null && StringTools.trim(shaderInfoLog) != "";
-		var compileStatus = gl.getShaderParameter(shader,gl.COMPILE_STATUS);
-		if(hasInfoLog || compileStatus == 0) {
-			var message = compileStatus == 0 ? "Error" : "Info";
-			message += type == gl.VERTEX_SHADER ? " compiling vertex shader" : " compiling fragment shader";
-			message += "\n" + shaderInfoLog;
-			message += "\n" + source;
-			if(compileStatus == 0) {
-				lime_utils_Log.error(message,{ fileName : "openfl/display/Shader.hx", lineNumber : 335, className : "openfl.display.Shader", methodName : "__createGLShader"});
-			} else if(hasInfoLog) {
-				lime_utils_Log.debug(message,{ fileName : "openfl/display/Shader.hx", lineNumber : 336, className : "openfl.display.Shader", methodName : "__createGLShader"});
-			}
-		}
-		return shader;
-	}
-	,__createGLProgram: function(vertexSource,fragmentSource) {
-		var gl = this.__context.gl;
-		var vertexShader = this.__createGLShader(vertexSource,gl.VERTEX_SHADER);
-		var fragmentShader = this.__createGLShader(fragmentSource,gl.FRAGMENT_SHADER);
-		var program = gl.createProgram();
-		var _g = 0;
-		var _g1 = this.__paramFloat;
-		while(_g < _g1.length) {
-			var param = _g1[_g];
-			++_g;
-			if(param.name.indexOf("Position") > -1 && StringTools.startsWith(param.name,"openfl_")) {
-				gl.bindAttribLocation(program,0,param.name);
-				break;
-			}
-		}
-		gl.attachShader(program,vertexShader);
-		gl.attachShader(program,fragmentShader);
-		gl.linkProgram(program);
-		if(gl.getProgramParameter(program,gl.LINK_STATUS) == 0) {
-			var message = "Unable to initialize the shader program";
-			message += "\n" + gl.getProgramInfoLog(program);
-			lime_utils_Log.error(message,{ fileName : "openfl/display/Shader.hx", lineNumber : 369, className : "openfl.display.Shader", methodName : "__createGLProgram"});
-		}
-		return program;
-	}
-	,__disable: function() {
-		if(this.program != null) {
-			this.__disableGL();
-		}
-	}
-	,__disableGL: function() {
-		var gl = this.__context.gl;
-		var textureCount = 0;
-		var _g = 0;
-		var _g1 = this.__inputBitmapData;
-		while(_g < _g1.length) {
-			var input = _g1[_g];
-			++_g;
-			input.__disableGL(this.__context,textureCount);
-			++textureCount;
-			if(textureCount == gl.MAX_TEXTURE_IMAGE_UNITS) {
-				break;
-			}
-		}
-		var _g = 0;
-		var _g1 = this.__paramBool;
-		while(_g < _g1.length) {
-			var parameter = _g1[_g];
-			++_g;
-			parameter.__disableGL(this.__context);
-		}
-		var _g = 0;
-		var _g1 = this.__paramFloat;
-		while(_g < _g1.length) {
-			var parameter = _g1[_g];
-			++_g;
-			parameter.__disableGL(this.__context);
-		}
-		var _g = 0;
-		var _g1 = this.__paramInt;
-		while(_g < _g1.length) {
-			var parameter = _g1[_g];
-			++_g;
-			parameter.__disableGL(this.__context);
-		}
-		this.__context.__bindGLArrayBuffer(null);
-		if(this.__context.__context.type == "opengl") {
-			gl.disable(gl.TEXTURE_2D);
-		}
-	}
-	,__enable: function() {
-		this.__init();
-		if(this.program != null) {
-			this.__enableGL();
-		}
-	}
-	,__enableGL: function() {
-		var textureCount = 0;
-		var gl = this.__context.gl;
-		var _g = 0;
-		var _g1 = this.__inputBitmapData;
-		while(_g < _g1.length) {
-			var input = _g1[_g];
-			++_g;
-			gl.uniform1i(input.index,textureCount);
-			++textureCount;
-		}
-		if(this.__context.__context.type == "opengl" && textureCount > 0) {
-			gl.enable(gl.TEXTURE_2D);
-		}
-	}
-	,__init: function() {
-		if(this.__data == null) {
-			this.__data = openfl_display_ShaderData._new(null);
-		}
-		if(this.__glFragmentSource != null && this.__glVertexSource != null && (this.program == null || this.__glSourceDirty)) {
-			this.__initGL();
-		}
-	}
-	,__initGL: function() {
-		if(this.__glSourceDirty || this.__paramBool == null) {
-			this.__glSourceDirty = false;
-			this.program = null;
-			this.__inputBitmapData = [];
-			this.__paramBool = [];
-			this.__paramFloat = [];
-			this.__paramInt = [];
-			this.__processGLData(this.get_glVertexSource(),"attribute");
-			this.__processGLData(this.get_glVertexSource(),"uniform");
-			this.__processGLData(this.get_glFragmentSource(),"uniform");
-		}
-		if(this.__context != null && this.program == null) {
-			var gl = this.__context.gl;
-			var prefix = this.precisionHint == 1 ? "precision mediump float;\n" : "precision lowp float;\n";
-			var vertex = prefix + this.get_glVertexSource();
-			var fragment = prefix + this.get_glFragmentSource();
-			var id = vertex + fragment;
-			if(Object.prototype.hasOwnProperty.call(this.__context.__programs.h,id)) {
-				this.program = this.__context.__programs.h[id];
-			} else {
-				this.program = this.__context.createProgram(1);
-				this.program.__glProgram = this.__createGLProgram(vertex,fragment);
-				this.__context.__programs.h[id] = this.program;
-			}
-			if(this.program != null) {
-				this.glProgram = this.program.__glProgram;
-				var _g = 0;
-				var _g1 = this.__inputBitmapData;
-				while(_g < _g1.length) {
-					var input = _g1[_g];
-					++_g;
-					if(input.__isUniform) {
-						input.index = gl.getUniformLocation(this.glProgram,input.name);
-					} else {
-						input.index = gl.getAttribLocation(this.glProgram,input.name);
-					}
-				}
-				var _g = 0;
-				var _g1 = this.__paramBool;
-				while(_g < _g1.length) {
-					var parameter = _g1[_g];
-					++_g;
-					if(parameter.__isUniform) {
-						parameter.index = gl.getUniformLocation(this.glProgram,parameter.name);
-					} else {
-						parameter.index = gl.getAttribLocation(this.glProgram,parameter.name);
-					}
-				}
-				var _g = 0;
-				var _g1 = this.__paramFloat;
-				while(_g < _g1.length) {
-					var parameter = _g1[_g];
-					++_g;
-					if(parameter.__isUniform) {
-						parameter.index = gl.getUniformLocation(this.glProgram,parameter.name);
-					} else {
-						parameter.index = gl.getAttribLocation(this.glProgram,parameter.name);
-					}
-				}
-				var _g = 0;
-				var _g1 = this.__paramInt;
-				while(_g < _g1.length) {
-					var parameter = _g1[_g];
-					++_g;
-					if(parameter.__isUniform) {
-						parameter.index = gl.getUniformLocation(this.glProgram,parameter.name);
-					} else {
-						parameter.index = gl.getAttribLocation(this.glProgram,parameter.name);
-					}
-				}
-			}
-		}
-	}
-	,__processGLData: function(source,storageType) {
-		var lastMatch = 0;
-		var position;
-		var regex;
-		var name;
-		var type;
-		if(storageType == "uniform") {
-			regex = new EReg("uniform ([A-Za-z0-9]+) ([A-Za-z0-9_]+)","");
-		} else {
-			regex = new EReg("attribute ([A-Za-z0-9]+) ([A-Za-z0-9_]+)","");
-		}
-		while(regex.matchSub(source,lastMatch)) {
-			type = regex.matched(1);
-			name = regex.matched(2);
-			if(StringTools.startsWith(name,"gl_")) {
-				continue;
-			}
-			var isUniform = storageType == "uniform";
-			if(StringTools.startsWith(type,"sampler")) {
-				var input = new openfl_display_ShaderInput();
-				input.name = name;
-				input.__isUniform = isUniform;
-				this.__inputBitmapData.push(input);
-				switch(name) {
-				case "bitmap":
-					this.__bitmap = input;
-					break;
-				case "openfl_Texture":
-					this.__texture = input;
-					break;
-				default:
-				}
-				this.__data[name] = input;
-				if(this.__isGenerated) {
-					this[name] = input;
-				}
-			} else if(!Object.prototype.hasOwnProperty.call(this.__data,name) || Reflect.field(this.__data,name) == null) {
-				var parameterType;
-				switch(type) {
-				case "bool":
-					parameterType = 0;
-					break;
-				case "bvec2":
-					parameterType = 1;
-					break;
-				case "bvec3":
-					parameterType = 2;
-					break;
-				case "bvec4":
-					parameterType = 3;
-					break;
-				case "dvec2":case "vec2":
-					parameterType = 5;
-					break;
-				case "dvec3":case "vec3":
-					parameterType = 6;
-					break;
-				case "double":case "float":
-					parameterType = 4;
-					break;
-				case "ivec3":case "uvec3":
-					parameterType = 10;
-					break;
-				case "ivec4":case "uvec4":
-					parameterType = 11;
-					break;
-				case "mat2":case "mat2x2":
-					parameterType = 12;
-					break;
-				case "mat2x3":
-					parameterType = 13;
-					break;
-				case "mat2x4":
-					parameterType = 14;
-					break;
-				case "mat3x2":
-					parameterType = 15;
-					break;
-				case "mat3":case "mat3x3":
-					parameterType = 16;
-					break;
-				case "mat3x4":
-					parameterType = 17;
-					break;
-				case "mat4":case "mat4x4":
-					parameterType = 20;
-					break;
-				case "mat4x2":
-					parameterType = 18;
-					break;
-				case "mat4x3":
-					parameterType = 19;
-					break;
-				case "int":case "uint":
-					parameterType = 8;
-					break;
-				case "ivec2":case "uvec2":
-					parameterType = 9;
-					break;
-				case "dvec4":case "vec4":
-					parameterType = 7;
-					break;
-				default:
-					parameterType = null;
-				}
-				var length;
-				switch(parameterType) {
-				case 1:case 5:case 9:
-					length = 2;
-					break;
-				case 3:case 7:case 11:case 12:
-					length = 4;
-					break;
-				case 2:case 6:case 10:
-					length = 3;
-					break;
-				case 16:
-					length = 9;
-					break;
-				case 20:
-					length = 16;
-					break;
-				default:
-					length = 1;
-				}
-				var arrayLength;
-				switch(parameterType) {
-				case 12:
-					arrayLength = 2;
-					break;
-				case 16:
-					arrayLength = 3;
-					break;
-				case 20:
-					arrayLength = 4;
-					break;
-				default:
-					arrayLength = 1;
-				}
-				switch(parameterType) {
-				case 0:case 1:case 2:case 3:
-					var parameter = new openfl_display_ShaderParameter();
-					parameter.set_name(name);
-					parameter.type = parameterType;
-					parameter.__arrayLength = arrayLength;
-					parameter.__isBool = true;
-					parameter.__isUniform = isUniform;
-					parameter.__length = length;
-					this.__paramBool.push(parameter);
-					if(name == "openfl_HasColorTransform") {
-						this.__hasColorTransform = parameter;
-					}
-					this.__data[name] = parameter;
-					if(this.__isGenerated) {
-						this[name] = parameter;
-					}
-					break;
-				case 8:case 9:case 10:case 11:
-					var parameter1 = new openfl_display_ShaderParameter();
-					parameter1.set_name(name);
-					parameter1.type = parameterType;
-					parameter1.__arrayLength = arrayLength;
-					parameter1.__isInt = true;
-					parameter1.__isUniform = isUniform;
-					parameter1.__length = length;
-					this.__paramInt.push(parameter1);
-					this.__data[name] = parameter1;
-					if(this.__isGenerated) {
-						this[name] = parameter1;
-					}
-					break;
-				default:
-					var parameter2 = new openfl_display_ShaderParameter();
-					parameter2.set_name(name);
-					parameter2.type = parameterType;
-					parameter2.__arrayLength = arrayLength;
-					if(arrayLength > 0) {
-						var elements = arrayLength * arrayLength;
-						var array = null;
-						var vector = null;
-						var view = null;
-						var buffer = null;
-						var len = null;
-						var this1;
-						if(elements != null) {
-							this1 = new Float32Array(elements);
-						} else if(array != null) {
-							this1 = new Float32Array(array);
-						} else if(vector != null) {
-							this1 = new Float32Array(vector.__array);
-						} else if(view != null) {
-							this1 = new Float32Array(view);
-						} else if(buffer != null) {
-							if(len == null) {
-								this1 = new Float32Array(buffer,0);
-							} else {
-								this1 = new Float32Array(buffer,0,len);
-							}
-						} else {
-							this1 = null;
-						}
-						parameter2.__uniformMatrix = this1;
-					}
-					parameter2.__isFloat = true;
-					parameter2.__isUniform = isUniform;
-					parameter2.__length = length;
-					this.__paramFloat.push(parameter2);
-					if(StringTools.startsWith(name,"openfl_")) {
-						switch(name) {
-						case "openfl_Alpha":
-							this.__alpha = parameter2;
-							break;
-						case "openfl_ColorMultiplier":
-							this.__colorMultiplier = parameter2;
-							break;
-						case "openfl_ColorOffset":
-							this.__colorOffset = parameter2;
-							break;
-						case "openfl_Matrix":
-							this.__matrix = parameter2;
-							break;
-						case "openfl_Position":
-							this.__position = parameter2;
-							break;
-						case "openfl_TextureCoord":
-							this.__textureCoord = parameter2;
-							break;
-						case "openfl_TextureSize":
-							this.__textureSize = parameter2;
-							break;
-						default:
-						}
-					}
-					this.__data[name] = parameter2;
-					if(this.__isGenerated) {
-						this[name] = parameter2;
-					}
-				}
-			}
-			position = regex.matchedPos();
-			lastMatch = position.pos + position.len;
-		}
-	}
-	,__update: function() {
-		if(this.program != null) {
-			this.__updateGL();
-		}
-	}
-	,__updateFromBuffer: function(shaderBuffer,bufferOffset) {
-		if(this.program != null) {
-			this.__updateGLFromBuffer(shaderBuffer,bufferOffset);
-		}
-	}
-	,__updateGL: function() {
-		var textureCount = 0;
-		var _g = 0;
-		var _g1 = this.__inputBitmapData;
-		while(_g < _g1.length) {
-			var input = _g1[_g];
-			++_g;
-			input.__updateGL(this.__context,textureCount);
-			++textureCount;
-		}
-		var _g = 0;
-		var _g1 = this.__paramBool;
-		while(_g < _g1.length) {
-			var parameter = _g1[_g];
-			++_g;
-			parameter.__updateGL(this.__context);
-		}
-		var _g = 0;
-		var _g1 = this.__paramFloat;
-		while(_g < _g1.length) {
-			var parameter = _g1[_g];
-			++_g;
-			parameter.__updateGL(this.__context);
-		}
-		var _g = 0;
-		var _g1 = this.__paramInt;
-		while(_g < _g1.length) {
-			var parameter = _g1[_g];
-			++_g;
-			parameter.__updateGL(this.__context);
-		}
-	}
-	,__updateGLFromBuffer: function(shaderBuffer,bufferOffset) {
-		var textureCount = 0;
-		var input;
-		var inputData;
-		var inputFilter;
-		var inputMipFilter;
-		var inputWrap;
-		var _g = 0;
-		var _g1 = shaderBuffer.inputCount;
-		while(_g < _g1) {
-			var i = _g++;
-			input = shaderBuffer.inputRefs[i];
-			inputData = shaderBuffer.inputs[i];
-			inputFilter = shaderBuffer.inputFilter[i];
-			inputMipFilter = shaderBuffer.inputMipFilter[i];
-			inputWrap = shaderBuffer.inputWrap[i];
-			if(inputData != null) {
-				input.__updateGL(this.__context,textureCount,inputData,inputFilter,inputMipFilter,inputWrap);
-				++textureCount;
-			}
-		}
-		var gl = this.__context.gl;
-		if(shaderBuffer.paramDataLength > 0) {
-			if(shaderBuffer.paramDataBuffer == null) {
-				shaderBuffer.paramDataBuffer = gl.createBuffer();
-			}
-			this.__context.__bindGLArrayBuffer(shaderBuffer.paramDataBuffer);
-			lime_graphics_WebGLRenderContext.bufferData(gl,gl.ARRAY_BUFFER,shaderBuffer.paramData,gl.DYNAMIC_DRAW);
-		} else {
-			this.__context.__bindGLArrayBuffer(null);
-		}
-		var boolIndex = 0;
-		var floatIndex = 0;
-		var intIndex = 0;
-		var boolCount = shaderBuffer.paramBoolCount;
-		var floatCount = shaderBuffer.paramFloatCount;
-		var paramData = shaderBuffer.paramData;
-		var boolRef;
-		var floatRef;
-		var intRef;
-		var hasOverride;
-		var overrideBoolValue = null;
-		var overrideFloatValue = null;
-		var overrideIntValue = null;
-		var _g = 0;
-		var _g1 = shaderBuffer.paramCount;
-		while(_g < _g1) {
-			var i = _g++;
-			hasOverride = false;
-			if(i < boolCount) {
-				boolRef = shaderBuffer.paramRefs_Bool[boolIndex];
-				var _g2 = 0;
-				var _g3 = shaderBuffer.overrideBoolCount;
-				while(_g2 < _g3) {
-					var j = _g2++;
-					if(boolRef.name == shaderBuffer.overrideBoolNames[j]) {
-						overrideBoolValue = shaderBuffer.overrideBoolValues[j];
-						hasOverride = true;
-						break;
-					}
-				}
-				if(hasOverride) {
-					boolRef.__updateGL(this.__context,overrideBoolValue);
-				} else {
-					boolRef.__updateGLFromBuffer(this.__context,paramData,shaderBuffer.paramPositions[i],shaderBuffer.paramLengths[i],bufferOffset);
-				}
-				++boolIndex;
-			} else if(i < boolCount + floatCount) {
-				floatRef = shaderBuffer.paramRefs_Float[floatIndex];
-				var _g4 = 0;
-				var _g5 = shaderBuffer.overrideFloatCount;
-				while(_g4 < _g5) {
-					var j1 = _g4++;
-					if(floatRef.name == shaderBuffer.overrideFloatNames[j1]) {
-						overrideFloatValue = shaderBuffer.overrideFloatValues[j1];
-						hasOverride = true;
-						break;
-					}
-				}
-				if(hasOverride) {
-					floatRef.__updateGL(this.__context,overrideFloatValue);
-				} else {
-					floatRef.__updateGLFromBuffer(this.__context,paramData,shaderBuffer.paramPositions[i],shaderBuffer.paramLengths[i],bufferOffset);
-				}
-				++floatIndex;
-			} else {
-				intRef = shaderBuffer.paramRefs_Int[intIndex];
-				var _g6 = 0;
-				var _g7 = shaderBuffer.overrideIntCount;
-				while(_g6 < _g7) {
-					var j2 = _g6++;
-					if(intRef.name == shaderBuffer.overrideIntNames[j2]) {
-						overrideIntValue = shaderBuffer.overrideIntValues[j2];
-						hasOverride = true;
-						break;
-					}
-				}
-				if(hasOverride) {
-					intRef.__updateGL(this.__context,overrideIntValue);
-				} else {
-					intRef.__updateGLFromBuffer(this.__context,paramData,shaderBuffer.paramPositions[i],shaderBuffer.paramLengths[i],bufferOffset);
-				}
-				++intIndex;
-			}
-		}
-	}
-	,get_data: function() {
-		if(this.__glSourceDirty || this.__data == null) {
-			this.__init();
-		}
-		return this.__data;
-	}
-	,set_data: function(value) {
-		return this.__data = value;
-	}
-	,get_glFragmentSource: function() {
-		return this.__glFragmentSource;
-	}
-	,set_glFragmentSource: function(value) {
-		if(value != this.__glFragmentSource) {
-			this.__glSourceDirty = true;
-		}
-		return this.__glFragmentSource = value;
-	}
-	,get_glVertexSource: function() {
-		return this.__glVertexSource;
-	}
-	,set_glVertexSource: function(value) {
-		if(value != this.__glVertexSource) {
-			this.__glSourceDirty = true;
-		}
-		return this.__glVertexSource = value;
-	}
-	,__class__: openfl_display_Shader
-	,__properties__: {set_glVertexSource:"set_glVertexSource",get_glVertexSource:"get_glVertexSource",set_glFragmentSource:"set_glFragmentSource",get_glFragmentSource:"get_glFragmentSource",set_data:"set_data",get_data:"get_data"}
-};
-var openfl_display_GraphicsShader = function(code) {
-	if(this.__glFragmentSource == null) {
-		this.__glFragmentSource = "varying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tvoid main(void) {\n\n\t\t\tvec4 color = texture2D (bitmap, openfl_TextureCoordv);\n\n\t\tif (color.a == 0.0) {\n\n\t\t\tgl_FragColor = vec4 (0.0, 0.0, 0.0, 0.0);\n\n\t\t} else if (openfl_HasColorTransform) {\n\n\t\t\tcolor = vec4 (color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4 (0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = 1.0; // openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp (openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0) {\n\n\t\t\t\tgl_FragColor = vec4 (color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\n\t\t\t} else {\n\n\t\t\t\tgl_FragColor = vec4 (0.0, 0.0, 0.0, 0.0);\n\n\t\t\t}\n\n\t\t} else {\n\n\t\t\tgl_FragColor = color * openfl_Alphav;\n\n\t\t}\n\n\t\t}";
-	}
-	if(this.__glVertexSource == null) {
-		this.__glVertexSource = "attribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\tvoid main(void) {\n\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t}";
-	}
-	openfl_display_Shader.call(this,code);
-	this.__isGenerated = true;
-	this.__initGL();
-};
-$hxClasses["openfl.display.GraphicsShader"] = openfl_display_GraphicsShader;
-openfl_display_GraphicsShader.__name__ = "openfl.display.GraphicsShader";
-openfl_display_GraphicsShader.__super__ = openfl_display_Shader;
-openfl_display_GraphicsShader.prototype = $extend(openfl_display_Shader.prototype,{
-	openfl_Alpha: null
-	,openfl_ColorMultiplier: null
-	,openfl_ColorOffset: null
-	,openfl_Position: null
-	,openfl_TextureCoord: null
-	,openfl_Matrix: null
-	,openfl_HasColorTransform: null
-	,openfl_TextureSize: null
-	,bitmap: null
-	,__class__: openfl_display_GraphicsShader
-});
-var flixel_graphics_tile_FlxGraphicsShader = function() {
-	if(this.__glFragmentSource == null) {
-		this.__glFragmentSource = "\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\tgl_FragColor = flixel_texture2D(bitmap, openfl_TextureCoordv);\n\t\t}";
-	}
-	if(this.__glVertexSource == null) {
-		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\t\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\t\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\t\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
-	}
-	openfl_display_GraphicsShader.call(this);
-	this.__isGenerated = true;
-	this.__initGL();
-};
-$hxClasses["flixel.graphics.tile.FlxGraphicsShader"] = flixel_graphics_tile_FlxGraphicsShader;
-flixel_graphics_tile_FlxGraphicsShader.__name__ = "flixel.graphics.tile.FlxGraphicsShader";
-flixel_graphics_tile_FlxGraphicsShader.__super__ = openfl_display_GraphicsShader;
-flixel_graphics_tile_FlxGraphicsShader.prototype = $extend(openfl_display_GraphicsShader.prototype,{
-	alpha: null
-	,colorMultiplier: null
-	,colorOffset: null
-	,hasColorTransform: null
-	,hasTransform: null
-	,__class__: flixel_graphics_tile_FlxGraphicsShader
-});
-var ColorInvertShader = function() {
-	if(this.__glFragmentSource == null) {
-		this.__glFragmentSource = "\r\n    varying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\r\n    uniform bool invertR;\r\n    uniform bool invertG;\r\n    uniform bool invertB;\r\n    \r\n    void main() {\r\n        vec4 color = flixel_texture2D(bitmap, openfl_TextureCoordv);\r\n        //idk why without this(*= color.a). it turn transparent into white\r\n        if (invertR) {    \r\n            color.r = (1.0 - color.r) * color.a;\r\n        }\r\n        if (invertG) {\r\n            color.g = (1.0 - color.g) * color.a;\r\n        }\r\n        if (invertB) {\r\n            color.b = (1.0 - color.b) * color.a;\r\n        }\r\n        gl_FragColor = vec4(color.r, color.g, color.b, color.a);\r\n    }\r\n    ";
-	}
-	if(this.__glVertexSource == null) {
-		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\t\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\t\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\t\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
-	}
-	flixel_graphics_tile_FlxGraphicsShader.call(this);
-	this.__isGenerated = true;
-	this.__initGL();
-};
-$hxClasses["ColorInvertShader"] = ColorInvertShader;
-ColorInvertShader.__name__ = "ColorInvertShader";
-ColorInvertShader.__super__ = flixel_graphics_tile_FlxGraphicsShader;
-ColorInvertShader.prototype = $extend(flixel_graphics_tile_FlxGraphicsShader.prototype,{
-	invertR: null
-	,invertG: null
-	,invertB: null
-	,__class__: ColorInvertShader
-});
-var ColorRGBSwap = function() {
-	this.swapB = -1;
-	this.swapG = -1;
-	this.swapR = -1;
-	this.shader = new ColorRGBSwapShader();
-	this.set_swapR(0);
-	this.set_swapG(1);
-	this.set_swapB(2);
-};
-$hxClasses["ColorRGBSwap"] = ColorRGBSwap;
-ColorRGBSwap.__name__ = "ColorRGBSwap";
-ColorRGBSwap.prototype = {
-	shader: null
-	,swapR: null
-	,swapG: null
-	,swapB: null
-	,set_swapR: function(value) {
-		if(this.swapR != value) {
-			if(value < 0 || value > 2) {
-				value = 0;
-			}
-			this.swapR = value;
-			this.shader.swapR.value = [value];
-		}
-		return value;
-	}
-	,set_swapG: function(value) {
-		if(this.swapG != value) {
-			if(value < 0 || value > 2) {
-				value = 1;
-			}
-			this.swapG = value;
-			this.shader.swapG.value = [value];
-		}
-		return value;
-	}
-	,set_swapB: function(value) {
-		if(this.swapB != value) {
-			if(value < 0 || value > 2) {
-				value = 2;
-			}
-			this.swapB = value;
-			this.shader.swapB.value = [value];
-		}
-		return value;
-	}
-	,__class__: ColorRGBSwap
-	,__properties__: {set_swapB:"set_swapB",set_swapG:"set_swapG",set_swapR:"set_swapR"}
-};
-var ColorRGBSwapShader = function() {
-	if(this.__glFragmentSource == null) {
-		this.__glFragmentSource = "\r\n    varying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\r\n    uniform int swapR;\r\n    uniform int swapG;\r\n    uniform int swapB;\r\n    float rgbSwap(int index, vec4 color) {\r\n        float channels[3];\r\n        channels[0] = color.r;\r\n        channels[1] = color.g;\r\n        channels[2] = color.b;\r\n        return channels[index];\r\n    }\r\n    void main() {\r\n        vec4 color = flixel_texture2D(bitmap, openfl_TextureCoordv);\r\n        gl_FragColor = vec4(rgbSwap(swapR, color), rgbSwap(swapG, color), rgbSwap(swapB, color), color.a);\r\n    }\r\n    ";
-	}
-	if(this.__glVertexSource == null) {
-		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\t\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\t\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\t\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
-	}
-	flixel_graphics_tile_FlxGraphicsShader.call(this);
-	this.__isGenerated = true;
-	this.__initGL();
-};
-$hxClasses["ColorRGBSwapShader"] = ColorRGBSwapShader;
-ColorRGBSwapShader.__name__ = "ColorRGBSwapShader";
-ColorRGBSwapShader.__super__ = flixel_graphics_tile_FlxGraphicsShader;
-ColorRGBSwapShader.prototype = $extend(flixel_graphics_tile_FlxGraphicsShader.prototype,{
-	swapR: null
-	,swapG: null
-	,swapB: null
-	,__class__: ColorRGBSwapShader
-});
-var ColorSingle = function() {
-	this.shader = new ColorSingleShader();
-	this.set_r(1.0);
-	this.set_g(1.0);
-	this.set_b(1.0);
-};
-$hxClasses["ColorSingle"] = ColorSingle;
-ColorSingle.__name__ = "ColorSingle";
-ColorSingle.prototype = {
-	shader: null
-	,r: null
-	,g: null
-	,b: null
-	,set_r: function(value) {
-		if(this.r != value) {
-			this.r = value;
-			this.shader.r.value = [value];
-		}
-		return value;
-	}
-	,set_g: function(value) {
-		if(this.g != value) {
-			this.g = value;
-			this.shader.g.value = [value];
-		}
-		return value;
-	}
-	,set_b: function(value) {
-		if(this.b != value) {
-			this.b = value;
-			this.shader.b.value = [value];
-		}
-		return value;
-	}
-	,__class__: ColorSingle
-	,__properties__: {set_b:"set_b",set_g:"set_g",set_r:"set_r"}
-};
-var ColorSingleShader = function() {
-	if(this.__glFragmentSource == null) {
-		this.__glFragmentSource = "\r\n    varying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\r\n    uniform float r;\r\n    uniform float g;\r\n    uniform float b;\r\n    \r\n    //cuz without this everyhing turn square\r\n    void main() {\r\n        vec4 color = flixel_texture2D(bitmap, openfl_TextureCoordv);\r\n        \r\n        gl_FragColor = vec4(r*color.a, g*color.a, b*color.a, color.a);\r\n    }\r\n    ";
-	}
-	if(this.__glVertexSource == null) {
-		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\t\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\t\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\t\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
-	}
-	flixel_graphics_tile_FlxGraphicsShader.call(this);
-	this.__isGenerated = true;
-	this.__initGL();
-};
-$hxClasses["ColorSingleShader"] = ColorSingleShader;
-ColorSingleShader.__name__ = "ColorSingleShader";
-ColorSingleShader.__super__ = flixel_graphics_tile_FlxGraphicsShader;
-ColorSingleShader.prototype = $extend(flixel_graphics_tile_FlxGraphicsShader.prototype,{
-	r: null
-	,g: null
-	,b: null
-	,__class__: ColorSingleShader
-});
-var ColorSwap = function() {
-	this.brightness = 0;
-	this.saturation = 0;
-	this.hue = 0;
-	this.shader = new ColorSwapShader();
-	this.shader.uTime.value = [0,0,0];
-	this.shader.awesomeOutline.value = [false];
-};
-$hxClasses["ColorSwap"] = ColorSwap;
-ColorSwap.__name__ = "ColorSwap";
-ColorSwap.prototype = {
-	shader: null
-	,hue: null
-	,saturation: null
-	,brightness: null
-	,set_hue: function(value) {
-		this.hue = value;
-		this.shader.uTime.value[0] = this.hue;
-		return this.hue;
-	}
-	,set_saturation: function(value) {
-		this.saturation = value;
-		this.shader.uTime.value[1] = this.saturation;
-		return this.saturation;
-	}
-	,set_brightness: function(value) {
-		this.brightness = value;
-		this.shader.uTime.value[2] = this.brightness;
-		return this.brightness;
-	}
-	,__class__: ColorSwap
-	,__properties__: {set_brightness:"set_brightness",set_saturation:"set_saturation",set_hue:"set_hue"}
-};
-var ColorSwapShader = function() {
-	if(this.__glFragmentSource == null) {
-		this.__glFragmentSource = "\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\n\t\tuniform vec3 uTime;\n\t\tuniform bool awesomeOutline;\n\n\t\tconst float offset = 1.0 / 128.0;\n\t\tvec3 normalizeColor(vec3 color)\n\t\t{\n\t\t\treturn vec3(\n\t\t\t\tcolor[0] / 255.0,\n\t\t\t\tcolor[1] / 255.0,\n\t\t\t\tcolor[2] / 255.0\n\t\t\t);\n\t\t}\n\n\t\tvec3 rgb2hsv(vec3 c)\n\t\t{\n\t\t\tvec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\t\t\tvec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));\n\t\t\tvec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));\n\n\t\t\tfloat d = q.x - min(q.w, q.y);\n\t\t\tfloat e = 1.0e-10;\n\t\t\treturn vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);\n\t\t}\n\n\t\tvec3 hsv2rgb(vec3 c)\n\t\t{\n\t\t\tvec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);\n\t\t\tvec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);\n\t\t\treturn c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);\n\t\t}\n\n\t\tvoid main()\n\t\t{\n\t\t\tvec4 color = flixel_texture2D(bitmap, openfl_TextureCoordv);\n\n\t\t\tvec4 swagColor = vec4(rgb2hsv(vec3(color[0], color[1], color[2])), color[3]);\n\n\t\t\t// [0] is the hue???\n\t\t\tswagColor[0] = swagColor[0] + uTime[0];\n\t\t\tswagColor[1] = swagColor[1] + uTime[1];\n\t\t\tswagColor[2] = swagColor[2] * (1.0 + uTime[2]);\n\t\t\t\n\t\t\tif(swagColor[1] < 0.0)\n\t\t\t{\n\t\t\t\tswagColor[1] = 0.0;\n\t\t\t}\n\t\t\telse if(swagColor[1] > 1.0)\n\t\t\t{\n\t\t\t\tswagColor[1] = 1.0;\n\t\t\t}\n\n\t\t\tcolor = vec4(hsv2rgb(vec3(swagColor[0], swagColor[1], swagColor[2])), swagColor[3]);\n\n\t\t\tif (awesomeOutline)\n\t\t\t{\n\t\t\t\t // Outline bullshit?\n\t\t\t\tvec2 size = vec2(3, 3);\n\n\t\t\t\tif (color.a <= 0.5) {\n\t\t\t\t\tfloat w = size.x / openfl_TextureSize.x;\n\t\t\t\t\tfloat h = size.y / openfl_TextureSize.y;\n\t\t\t\t\t\n\t\t\t\t\tif (flixel_texture2D(bitmap, vec2(openfl_TextureCoordv.x + w, openfl_TextureCoordv.y)).a != 0.\n\t\t\t\t\t|| flixel_texture2D(bitmap, vec2(openfl_TextureCoordv.x - w, openfl_TextureCoordv.y)).a != 0.\n\t\t\t\t\t|| flixel_texture2D(bitmap, vec2(openfl_TextureCoordv.x, openfl_TextureCoordv.y + h)).a != 0.\n\t\t\t\t\t|| flixel_texture2D(bitmap, vec2(openfl_TextureCoordv.x, openfl_TextureCoordv.y - h)).a != 0.)\n\t\t\t\t\t\tcolor = vec4(1.0, 1.0, 1.0, 1.0);\n\t\t\t\t}\n\t\t\t}\n\t\t\tgl_FragColor = color;\n\n\t\t\t/* \n\t\t\tif (color.a > 0.5)\n\t\t\t\tgl_FragColor = color;\n\t\t\telse\n\t\t\t{\n\t\t\t\tfloat a = flixel_texture2D(bitmap, vec2(openfl_TextureCoordv + offset, openfl_TextureCoordv.y)).a +\n\t\t\t\t\t\t  flixel_texture2D(bitmap, vec2(openfl_TextureCoordv, openfl_TextureCoordv.y - offset)).a +\n\t\t\t\t\t\t  flixel_texture2D(bitmap, vec2(openfl_TextureCoordv - offset, openfl_TextureCoordv.y)).a +\n\t\t\t\t\t\t  flixel_texture2D(bitmap, vec2(openfl_TextureCoordv, openfl_TextureCoordv.y + offset)).a;\n\t\t\t\tif (color.a < 1.0 && a > 0.0)\n\t\t\t\t\tgl_FragColor = vec4(0.0, 0.0, 0.0, 0.8);\n\t\t\t\telse\n\t\t\t\t\tgl_FragColor = color;\n\t\t\t} */\n\t\t}";
-	}
-	if(this.__glVertexSource == null) {
-		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\t\tif (openfl_HasColorTransform) {\n\t\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\t\t\t}\n\n\t\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
-	}
-	flixel_graphics_tile_FlxGraphicsShader.call(this);
-	this.__isGenerated = true;
-	this.__initGL();
-};
-$hxClasses["ColorSwapShader"] = ColorSwapShader;
-ColorSwapShader.__name__ = "ColorSwapShader";
-ColorSwapShader.__super__ = flixel_graphics_tile_FlxGraphicsShader;
-ColorSwapShader.prototype = $extend(flixel_graphics_tile_FlxGraphicsShader.prototype,{
-	uTime: null
-	,awesomeOutline: null
-	,__class__: ColorSwapShader
-});
 var Conductor = function() {
 };
 $hxClasses["Conductor"] = Conductor;
@@ -49190,7 +48250,7 @@ $hxClasses["CoolUtil"] = CoolUtil;
 CoolUtil.__name__ = "CoolUtil";
 CoolUtil.quantize = function(f,snap) {
 	var m = Math.round(f * snap);
-	haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 34, className : "CoolUtil", methodName : "quantize"});
+	haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
 	return m / snap;
 };
 CoolUtil.getDifficultyFilePath = function(num) {
@@ -49382,6 +48442,37 @@ CoolUtil.fitBackground = function(spr,center) {
 };
 CoolUtil.getXFrom1280P = function() {
 	return (flixel_FlxG.width - 1280) / 2;
+};
+CoolUtil.makeCheckerboardGraphic = function(width,height,size,color1,color2) {
+	if(color2 == null) {
+		color2 = 16711680;
+	}
+	if(color1 == null) {
+		color1 = 0;
+	}
+	if(size == null) {
+		size = 32;
+	}
+	if(height == null) {
+		height = 64;
+	}
+	if(width == null) {
+		width = 64;
+	}
+	var bitmapData = new openfl_display_BitmapData(width,height,false);
+	var _g = 0;
+	var _g1 = height;
+	while(_g < _g1) {
+		var y = _g++;
+		var _g2 = 0;
+		var _g3 = width;
+		while(_g2 < _g3) {
+			var x = _g2++;
+			var isColor1 = ((x / size | 0) + (y / size | 0)) % 2 == 0;
+			bitmapData.setPixel(x,y,isColor1 ? color1 : color2);
+		}
+	}
+	return flixel_graphics_FlxGraphic.fromBitmapData(bitmapData);
 };
 var CreditsState = function(TransIn,TransOut) {
 	this.moveTween = null;
@@ -51890,7 +50981,7 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 			songText.isMenuItem = true;
 			songText.targetY = i - FreeplayState.curSelected;
 			this.grpSongs.add(songText);
-			var maxWidth = 980;
+			var maxWidth = 980 * (flixel_FlxG.width / 1280);
 			if(songText.get_width() > maxWidth) {
 				songText.set_scaleX(maxWidth / songText.get_width());
 			}
@@ -52828,7 +51919,7 @@ FunkinLua.prototype = {
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3672, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3685, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -59688,6 +58779,7 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	}
 	this.originalHeightForCalcs = 6;
 	this.lastNoteScaleToo = 1;
+	this.canFreeze = false;
 	this.snapAlpha = 0;
 	this.snapAngle = 0;
 	this.snapY = 0;
@@ -59742,6 +58834,9 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	this.offsetAngle = 0;
 	this.offsetY = 0;
 	this.offsetX = 0;
+	this.noteSplashB = -16776961;
+	this.noteSplashG = -16711936;
+	this.noteSplashR = -65536;
 	this.noteSplashPosterizeRange = 0;
 	this.noteSplashPixelSize = 0;
 	this.noteSplashRGBSwapB = 2;
@@ -59812,13 +58907,13 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	if(!inEditor) {
 		this.strumTime += ClientPrefs.noteOffset;
 	}
-	this.noteData = noteData;
 	this.set_texture("");
+	this.set_noteData(noteData);
 	this.set_shaderType("swap");
 	this.set_x(this.x + Note.swagWidth * noteData);
-	if(!this.isSustainNote && noteData > -1 && noteData < 8) {
+	if(!this.isSustainNote) {
 		var animToPlay = "";
-		animToPlay = this.colArray[noteData % 4];
+		animToPlay = this.colArray[noteData % this.colArray.length];
 		this.animation.play(animToPlay + "Scroll");
 	}
 	if(prevNote != null) {
@@ -59830,7 +58925,7 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 		this.hitsoundDisabled = true;
 		this.copyAngle = false;
 		this.copyFlipY = true;
-		this.animation.play(this.colArray[noteData % 4] + (tail ? "holdend" : "hold"));
+		this.animation.play(this.colArray[noteData % this.colArray.length] + (tail ? "holdend" : "hold"));
 		this.updateHitbox();
 		if(!tail) {
 			var fh = this.scale;
@@ -59943,6 +59038,9 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	,noteSplashRGBSwapB: null
 	,noteSplashPixelSize: null
 	,noteSplashPosterizeRange: null
+	,noteSplashR: null
+	,noteSplashG: null
+	,noteSplashB: null
 	,offsetX: null
 	,offsetY: null
 	,offsetAngle: null
@@ -59998,6 +59096,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	,snapY: null
 	,snapAngle: null
 	,snapAlpha: null
+	,canFreeze: null
 	,set_y: function(value) {
 		if(!this.inEditor && this.snapY > 0) {
 			var dist = value - this.y;
@@ -60079,6 +59178,9 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				break;
 			case "Flip Scroll":
 				this.set_flipScroll(true);
+				break;
+			case "Freeze Note":
+				this.canFreeze = true;
 				break;
 			case "GF Sing":
 				this.set_gfNote(true);
@@ -60214,17 +59316,33 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			this.loadPixelNoteAnims();
 			this.set_antialiasing(false);
 		} else {
-			var library = null;
-			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,blahblah)) {
-				var returnAsset = Paths.returnGraphic(blahblah,library);
-				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + blahblah + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h[blahblah] = atlas;
-				tmp = atlas;
-			} else {
-				tmp = dge_backend_CacheTools.cacheAtlas.h[blahblah];
+			try {
+				var library = null;
+				var tmp;
+				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,blahblah)) {
+					var returnAsset = Paths.returnGraphic(blahblah,library);
+					var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + blahblah + ".xml","TEXT",library));
+					dge_backend_CacheTools.cacheAtlas.h[blahblah] = atlas;
+					tmp = atlas;
+				} else {
+					tmp = dge_backend_CacheTools.cacheAtlas.h[blahblah];
+				}
+				this.set_frames(tmp);
+			} catch( _g ) {
+				haxe_NativeStackTrace.lastError = _g;
+				var key = ClientPrefs.dflnoteskin;
+				var library = null;
+				var tmp;
+				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+					var returnAsset = Paths.returnGraphic(key,library);
+					var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+					dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+					tmp = atlas;
+				} else {
+					tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+				}
+				this.set_frames(tmp);
 			}
-			this.set_frames(tmp);
 			this.loadNoteAnims();
 			this.setGraphicSize(this.get_width() * ClientPrefs.strumsize | 0);
 			this.set_antialiasing(ClientPrefs.globalAntialiasing);
@@ -60242,19 +59360,29 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 	}
 	,loadNoteAnims: function() {
-		this.animation.addByPrefix(this.colArray[this.noteData % 4] + "Scroll",this.colArray[this.noteData % 4] + "0");
-		if(this.isSustainNote) {
-			this.animation.addByPrefix("purpleholdend","pruple end hold");
-			this.animation.addByPrefix(this.colArray[this.noteData % 4] + "holdend",this.colArray[this.noteData % 4] + " hold end");
-			this.animation.addByPrefix(this.colArray[this.noteData % 4] + "hold",this.colArray[this.noteData % 4] + " hold piece");
+		var _g = 0;
+		var _g1 = this.colArray.length;
+		while(_g < _g1) {
+			var i = _g++;
+			this.animation.addByPrefix(this.colArray[i] + "Scroll",this.colArray[i] + "0");
+			if(this.isSustainNote) {
+				this.animation.addByPrefix("purpleholdend","pruple end hold");
+				this.animation.addByPrefix(this.colArray[i] + "holdend",this.colArray[i] + " hold end");
+				this.animation.addByPrefix(this.colArray[i] + "hold",this.colArray[i] + " hold piece");
+			}
 		}
 	}
 	,loadPixelNoteAnims: function() {
-		if(this.isSustainNote) {
-			this.animation.add(this.colArray[this.noteData % 4] + "holdend",[this.pixelInt[this.noteData % 4] + 4]);
-			this.animation.add(this.colArray[this.noteData % 4] + "hold",[this.pixelInt[this.noteData % 4]]);
-		} else {
-			this.animation.add(this.colArray[this.noteData % 4] + "Scroll",[this.pixelInt[this.noteData % 4] + 4]);
+		var _g = 0;
+		var _g1 = this.colArray.length;
+		while(_g < _g1) {
+			var i = _g++;
+			if(this.isSustainNote) {
+				this.animation.add(this.colArray[i % this.colArray.length] + "holdend",[this.pixelInt[i % this.pixelInt.length] + 4]);
+				this.animation.add(this.colArray[i % this.colArray.length] + "hold",[this.pixelInt[i % this.pixelInt.length]]);
+			} else {
+				this.animation.add(this.colArray[i % this.colArray.length] + "Scroll",[this.pixelInt[i % this.pixelInt.length] + 4]);
+			}
 		}
 	}
 	,update: function(elapsed) {
@@ -60437,8 +59565,21 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 		return value;
 	}
+	,set_noteData: function(value) {
+		if(this.noteData != value) {
+			this.noteData = value;
+			if(!this.isSustainNote) {
+				var animToPlay = "";
+				animToPlay = this.colArray[this.noteData % this.colArray.length];
+				this.animation.play(animToPlay + "Scroll");
+			} else {
+				this.animation.play(this.colArray[this.noteData % this.colArray.length] + (this.sustainTail ? "holdend" : "hold"));
+			}
+		}
+		return value;
+	}
 	,__class__: Note
-	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_downScroll:"set_downScroll",set_flipScroll:"set_flipScroll",set_hitsound:"set_hitsound",set_alignSustainNote:"set_alignSustainNote",set_camTarget:"set_camTarget",set_scrollFactorCam:"set_scrollFactorCam",set_noteScale:"set_noteScale",set_texture:"set_texture",set_multSpeed:"set_multSpeed",set_gfNote:"set_gfNote",set_noteType:"set_noteType"})
+	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_downScroll:"set_downScroll",set_flipScroll:"set_flipScroll",set_hitsound:"set_hitsound",set_alignSustainNote:"set_alignSustainNote",set_camTarget:"set_camTarget",set_scrollFactorCam:"set_scrollFactorCam",set_noteScale:"set_noteScale",set_texture:"set_texture",set_multSpeed:"set_multSpeed",set_gfNote:"set_gfNote",set_noteType:"set_noteType",set_noteData:"set_noteData"})
 });
 var NoteSplash = function(x,y,note,type) {
 	if(type == null) {
@@ -60507,7 +59648,7 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 		this.setPosition(x - Note.swagWidth * 0.95,y - Note.swagWidth);
 		this.set_alpha(ClientPrefs.noteSplashAlpha);
-		if(texture == null) {
+		if(texture == null || texture.length <= 0) {
 			texture = "noteSplashes";
 			if(PlayState.SONG.splashSkin != null && PlayState.SONG.splashSkin.length > 0) {
 				texture = PlayState.SONG.splashSkin;
@@ -60545,6 +59686,9 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 			this.colorRGBSwap.set_swapB(oriNote.noteSplashRGBSwapB);
 			this.pixelSprite.set_pixelSize(oriNote.noteSplashPixelSize);
 			this.posterize.set_posterizeRange(oriNote.noteSplashPosterizeRange);
+			this.rgbShader.set_r(oriNote.noteSplashR);
+			this.rgbShader.set_g(oriNote.noteSplashG);
+			this.rgbShader.set_b(oriNote.noteSplashB);
 			this.set_angle(oriNote.noteSplashAngle);
 			this.set_alpha(oriNote.noteSplashAlpha);
 		}
@@ -60557,17 +59701,32 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 		this.origin.set(this.frameWidth * 0.5,this.frameHeight * 0.5);
 	}
 	,loadAnims: function(skin) {
-		var library = null;
-		var tmp;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,skin)) {
-			var returnAsset = Paths.returnGraphic(skin,library);
-			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + skin + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h[skin] = atlas;
-			tmp = atlas;
-		} else {
-			tmp = dge_backend_CacheTools.cacheAtlas.h[skin];
+		try {
+			var library = null;
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,skin)) {
+				var returnAsset = Paths.returnGraphic(skin,library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + skin + ".xml","TEXT",library));
+				dge_backend_CacheTools.cacheAtlas.h[skin] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = dge_backend_CacheTools.cacheAtlas.h[skin];
+			}
+			this.set_frames(tmp);
+		} catch( _g ) {
+			haxe_NativeStackTrace.lastError = _g;
+			var library = null;
+			var tmp;
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"noteSplashes")) {
+				var returnAsset = Paths.returnGraphic("noteSplashes",library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "noteSplashes" + ".xml","TEXT",library));
+				dge_backend_CacheTools.cacheAtlas.h["noteSplashes"] = atlas;
+				tmp = atlas;
+			} else {
+				tmp = dge_backend_CacheTools.cacheAtlas.h["noteSplashes"];
+			}
+			this.set_frames(tmp);
 		}
-		this.set_frames(tmp);
 		this.animation.addByPrefix("note1-" + 1,"note splash blue " + 1,ClientPrefs.fpsStrumAnim,false);
 		this.animation.addByPrefix("note2-" + 1,"note splash green " + 1,ClientPrefs.fpsStrumAnim,false);
 		this.animation.addByPrefix("note0-" + 1,"note splash purple " + 1,ClientPrefs.fpsStrumAnim,false);
@@ -60923,9 +60082,11 @@ Paths.returnGraphic = function(key,library) {
 			dge_backend_CacheTools.cacheImage.h[key] = Paths.currentTrackedAssets.h[path];
 			return Paths.currentTrackedAssets.h[path];
 		}
-		haxe_Log.trace("oh no its returning null NOOOO",{ fileName : "source/Paths.hx", lineNumber : 418, className : "Paths", methodName : "returnGraphic"});
-		dge_backend_CacheTools.cacheImage.h[key] = null;
-		return null;
+		haxe_Log.trace("Missing image asset: " + key + ". Using Checkerboard placeholder.",{ fileName : "source/Paths.hx", lineNumber : 424, className : "Paths", methodName : "returnGraphic"});
+		var checkBoard = CoolUtil.makeCheckerboardGraphic();
+		checkBoard.persist = true;
+		dge_backend_CacheTools.cacheImage.h[key] = checkBoard;
+		return checkBoard;
 	}
 	return dge_backend_CacheTools.cacheImage.h[key];
 };
@@ -61013,10 +60174,11 @@ var PauseSubState = function() {
 	this.pauseMusic.set_volume(0);
 	this.pauseMusic.play(false,flixel_FlxG.random.int(0,this.pauseMusic._length / 2 | 0));
 	flixel_FlxG.sound.list.add(this.pauseMusic);
-	var bg = new flixel_FlxSprite().makeGraphic(flixel_FlxG.width,flixel_FlxG.height,-16777216);
-	bg.set_alpha(0);
-	bg.scrollFactor.set();
-	this.add(bg);
+	var bg = PlayState.instance != null ? PlayState.instance.bgPauseColor : -16777216;
+	var bg1 = new flixel_FlxSprite().makeGraphic(flixel_FlxG.width,flixel_FlxG.height,bg);
+	bg1.set_alpha(0);
+	bg1.scrollFactor.set();
+	this.add(bg1);
 	var levelInfo = new flixel_text_FlxText(20,15,0,"",32);
 	levelInfo.set_text(levelInfo.text + PlayState.SONG.song);
 	levelInfo.scrollFactor.set();
@@ -61063,7 +60225,7 @@ var PauseSubState = function() {
 	levelInfo.set_x(flixel_FlxG.width - (levelInfo.get_width() + 20));
 	levelDifficulty.set_x(flixel_FlxG.width - (levelDifficulty.get_width() + 20));
 	blueballedTxt.set_x(flixel_FlxG.width - (blueballedTxt.get_width() + 20));
-	flixel_tweens_FlxTween.tween(bg,{ alpha : 0.6},0.4,{ ease : flixel_tweens_FlxEase.quartInOut});
+	flixel_tweens_FlxTween.tween(bg1,{ alpha : PlayState.instance != null ? PlayState.instance.bgPauseAlpha : ClientPrefs.pauseBGAlpha},0.4,{ ease : flixel_tweens_FlxEase.quartInOut});
 	flixel_tweens_FlxTween.tween(levelInfo,{ alpha : 1, y : 20},0.4,{ ease : flixel_tweens_FlxEase.quartInOut, startDelay : 0.3});
 	flixel_tweens_FlxTween.tween(levelDifficulty,{ alpha : 1, y : levelDifficulty.y + 5},0.4,{ ease : flixel_tweens_FlxEase.quartInOut, startDelay : 0.5});
 	flixel_tweens_FlxTween.tween(blueballedTxt,{ alpha : 1, y : blueballedTxt.y + 5},0.4,{ ease : flixel_tweens_FlxEase.quartInOut, startDelay : 0.7});
@@ -61396,6 +60558,10 @@ PauseSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 		while(_g < _g1) {
 			var i = _g++;
 			var item = new Alphabet(90,320,this.menuItems[i],true);
+			var maxWidth = 980 * (flixel_FlxG.width / 1280);
+			if(item.get_width() > maxWidth) {
+				item.set_scaleX(maxWidth / item.get_width());
+			}
 			item.isMenuItem = true;
 			item.targetY = i;
 			this.grpMenuShit.add(item);
@@ -61516,45 +60682,6 @@ PhillyGlowGradient.prototype = $extend(flixel_FlxSprite.prototype,{
 		this.set_alpha(this.intendedAlpha);
 	}
 	,__class__: PhillyGlowGradient
-});
-var PixelSprite = function() {
-	this.pixelSize = 0;
-	this.shader = new PixelSpriteShader();
-};
-$hxClasses["PixelSprite"] = PixelSprite;
-PixelSprite.__name__ = "PixelSprite";
-PixelSprite.prototype = {
-	shader: null
-	,pixelSize: null
-	,set_pixelSize: function(value) {
-		if(this.pixelSize != value) {
-			value = Math.max(0,Math.min(value,1));
-			this.pixelSize = value;
-			this.shader.pixelSize.value = [value];
-		}
-		return value;
-	}
-	,__class__: PixelSprite
-	,__properties__: {set_pixelSize:"set_pixelSize"}
-};
-var PixelSpriteShader = function() {
-	if(this.__glFragmentSource == null) {
-		this.__glFragmentSource = "\r\n        varying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\r\n\r\n        uniform float pixelSize;\r\n\r\n        void main() {\r\n            vec2 uv = openfl_TextureCoordv;\r\n            if (pixelSize > 0.0) {\r\n                vec2 pixelUV = vec2(floor(uv.x / pixelSize) * pixelSize, floor(uv.y / pixelSize) * pixelSize);\r\n                gl_FragColor = flixel_texture2D(bitmap, pixelUV);\r\n            } else {\r\n                gl_FragColor = flixel_texture2D(bitmap, uv);\r\n            }\r\n        }\r\n    ";
-	}
-	if(this.__glVertexSource == null) {
-		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\t\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\t\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\t\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
-	}
-	flixel_graphics_tile_FlxGraphicsShader.call(this);
-	this.pixelSize.value = [0];
-	this.__isGenerated = true;
-	this.__initGL();
-};
-$hxClasses["PixelSpriteShader"] = PixelSpriteShader;
-PixelSpriteShader.__name__ = "PixelSpriteShader";
-PixelSpriteShader.__super__ = flixel_graphics_tile_FlxGraphicsShader;
-PixelSpriteShader.prototype = $extend(flixel_graphics_tile_FlxGraphicsShader.prototype,{
-	pixelSize: null
-	,__class__: PixelSpriteShader
 });
 var PlayState = function(TransIn,TransOut) {
 	this.curLightEvent = -1;
@@ -61686,8 +60813,11 @@ var PlayState = function(TransIn,TransOut) {
 	this.BF_Y = 100;
 	this.BF_X = 770;
 	this.privateData = new dge_backend_PrivateData();
+	this.bgPauseAlpha = ClientPrefs.pauseBGAlpha;
+	this.bgPauseColor = -16777216;
 	this.customToggleMap = new haxe_ds_StringMap();
 	this.customButtonMap = new haxe_ds_StringMap();
+	this.freezeNoteTimer = new haxe_ds_StringMap();
 	this.customCameraMap = new haxe_ds_StringMap();
 	this.noteSplashGroupMap = new haxe_ds_StringMap();
 	this.notesGroupMap = new haxe_ds_StringMap();
@@ -61741,8 +60871,11 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,ratingGroup: null
 	,comboGroup: null
 	,numRatingGroup: null
+	,freezeNoteTimer: null
 	,customButtonMap: null
 	,customToggleMap: null
+	,bgPauseColor: null
+	,bgPauseAlpha: null
 	,privateData: null
 	,BF_X: null
 	,BF_Y: null
@@ -62963,7 +62096,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.playbackRate = value;
 		flixel_animation_FlxAnimationController.globalSpeed = value;
-		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1674, className : "PlayState", methodName : "set_playbackRate"});
+		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1678, className : "PlayState", methodName : "set_playbackRate"});
 		Conductor.safeZoneOffset = ClientPrefs.safeFrames / 60 * 1000 * value;
 		this.setOnLuas("playbackRate",this.playbackRate);
 		return value;
@@ -63792,36 +62925,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		while(i >= 0) {
 			var daNote = this.unspawnNotes[i];
 			if(daNote.strumTime - 350 < time) {
-				daNote.set_active(false);
-				daNote.set_visible(false);
-				daNote.ignoreNote = true;
-				daNote.kill();
-				var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
-				var _g = 0;
-				while(_g < specialGroup.length) {
-					var group = specialGroup[_g];
-					++_g;
-					if(group.members.indexOf(daNote) != -1) {
-						group.remove(daNote,true);
-					}
-				}
-				var h = this.notesGroupMap.h;
-				var i_h = h;
-				var i_keys = Object.keys(h);
-				var i_length = i_keys.length;
-				var i_current = 0;
-				while(i_current < i_length) {
-					var i1 = i_keys[i_current++];
-					var obj = this.notesGroupMap.h[i1];
-					if(obj.members.indexOf(daNote) != -1) {
-						obj.remove(daNote,true);
-					}
-				}
 				if(!daNote.mustPress || daNote.mustPress && daNote.isDad) {
 					this.camZooming = true;
 				}
-				HxOverrides.remove(this.unspawnNotes,daNote);
-				daNote.destroy();
+				this.destroyNote(daNote);
 			}
 			--i;
 		}
@@ -63829,36 +62936,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		while(i >= 0) {
 			var daNote = this.notes.members[i];
 			if(daNote.strumTime - 350 < time) {
-				daNote.set_active(false);
-				daNote.set_visible(false);
-				daNote.ignoreNote = true;
-				daNote.kill();
-				var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
-				var _g = 0;
-				while(_g < specialGroup.length) {
-					var group = specialGroup[_g];
-					++_g;
-					if(group.members.indexOf(daNote) != -1) {
-						group.remove(daNote,true);
-					}
-				}
-				var h = this.notesGroupMap.h;
-				var i_h = h;
-				var i_keys = Object.keys(h);
-				var i_length = i_keys.length;
-				var i_current = 0;
-				while(i_current < i_length) {
-					var i1 = i_keys[i_current++];
-					var obj = this.notesGroupMap.h[i1];
-					if(obj.members.indexOf(daNote) != -1) {
-						obj.remove(daNote,true);
-					}
-				}
 				if(!daNote.mustPress || daNote.mustPress && daNote.isDad) {
 					this.camZooming = true;
 				}
-				this.notes.remove(daNote,true);
-				daNote.destroy();
+				this.destroyNote(daNote);
 			}
 			--i;
 		}
@@ -64108,7 +63189,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							oldNote = this.unspawnNotes[this.unspawnNotes.length - 1 | 0];
 							var sustainNote = null;
 							var sustainData = daNoteData;
-							sustainNote = new Note(daStrumTime + Conductor.stepCrochet * susNote + i * (100 / this.multNote) + Conductor.stepCrochet / flixel_math_FlxMath.roundDecimal(Math.abs(this.songSpeed),2),sustainData,oldNote,true,null,swagNote.noteType == "GF Sing Force Opponent" ? false : gottaHitNote,gfSec,swagNote.noteType,susNote == floorSus,swagNote);
+							sustainNote = new Note(daStrumTime + Conductor.stepCrochet * susNote + i * (100 / this.multNote) + Conductor.stepCrochet / flixel_math_FlxMath.roundDecimal(Math.abs(this.songSpeed),2),swagNote.noteData,oldNote,true,null,swagNote.noteType == "GF Sing Force Opponent" ? false : gottaHitNote,gfSec,swagNote.noteType,susNote == floorSus,swagNote);
 							sustainNote.set_noteType(swagNote.noteType);
 							if(this.modcharttype == "random flip scroll") {
 								sustainNote.set_flipScroll(swagNote.flipScroll);
@@ -64160,6 +63241,32 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var newEventNote_3 = event[1][i][2];
 				var subEvent = { strumTime : newEventNote_0 + ClientPrefs.noteOffset, event : newEventNote_1, value1 : newEventNote_2, value2 : newEventNote_3};
 				subEvent.strumTime -= this.eventNoteEarlyTrigger(subEvent);
+				if(subEvent.event == "Freeze Note") {
+					var second = parseFloat(subEvent.value1);
+					subEvent.strumTime -= second * 1000;
+					var groupNote = [];
+					if(this.unspawnNotes != null && this.unspawnNotes.length > 0) {
+						groupNote.push(this.unspawnNotes);
+					}
+					if(this.notes != null && this.notes.length > 0) {
+						groupNote.push(this.notes.members);
+					}
+					if(groupNote.length > 0) {
+						var _g4 = 0;
+						while(_g4 < groupNote.length) {
+							var group = groupNote[_g4];
+							++_g4;
+							var _g5 = 0;
+							while(_g5 < group.length) {
+								var note = group[_g5];
+								++_g5;
+								if(note.canFreeze && (note.strumTime + note.offsetStrumTime >= subEvent.strumTime + second * 1000 && note.strumTime + note.offsetStrumTime - 1000 * second <= subEvent.strumTime + second * 1000)) {
+									note.strumTime -= second * 1000;
+								}
+							}
+						}
+					}
+				}
 				this.eventNotes.push(subEvent);
 				this.eventPushed(subEvent);
 			}
@@ -64457,6 +63564,15 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var timer = timer_h[timer_keys[timer_current++]];
 				timer.active = false;
 			}
+			var h = this.freezeNoteTimer.h;
+			var timer_h = h;
+			var timer_keys = Object.keys(h);
+			var timer_length = timer_keys.length;
+			var timer_current = 0;
+			while(timer_current < timer_length) {
+				var timer = timer_h[timer_keys[timer_current++]];
+				timer.active = false;
+			}
 			var tweenStuff = FunkinLua.indoTween;
 			var _g = 0;
 			while(_g < tweenStuff.length) {
@@ -64529,6 +63645,15 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				tween.set_active(true);
 			}
 			var h = this.modchartTimers.h;
+			var timer_h = h;
+			var timer_keys = Object.keys(h);
+			var timer_length = timer_keys.length;
+			var timer_current = 0;
+			while(timer_current < timer_length) {
+				var timer = timer_h[timer_keys[timer_current++]];
+				timer.active = true;
+			}
+			var h = this.freezeNoteTimer.h;
 			var timer_h = h;
 			var timer_keys = Object.keys(h);
 			var timer_length = timer_keys.length;
@@ -64917,21 +64042,21 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3646, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3641, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
-		while(noteCount >= 0) {
-			if(this.unspawnNotes[noteCount] != null) {
+		if(ClientPrefs.classicNoteSpawn) {
+			if(this.unspawnNotes[0] != null) {
 				var time = this.spawnTime;
 				if(Math.abs(this.songSpeed) < 1) {
 					time /= Math.max(0.25,Math.abs(this.songSpeed));
 				}
-				if(this.unspawnNotes[noteCount].multSpeed < 1) {
-					time /= this.unspawnNotes[noteCount].multSpeed;
+				if(this.unspawnNotes[0].multSpeed < 1) {
+					time /= this.unspawnNotes[0].multSpeed;
 				}
-				if(this.unspawnNotes.length > 0 && this.unspawnNotes[noteCount].strumTime + this.unspawnNotes[noteCount].offsetStrumTime - Conductor.songPosition < time && (ClientPrefs.limitSpawn ? this.notes.length < ClientPrefs.limitSpawnNotes : true)) {
-					var dunceNote = this.unspawnNotes[noteCount];
+				while(this.unspawnNotes.length > 0 && this.unspawnNotes[0].strumTime + this.unspawnNotes[0].offsetStrumTime - Conductor.songPosition < time && (ClientPrefs.limitSpawn ? this.notes.length < ClientPrefs.limitSpawnNotes : true)) {
+					var dunceNote = this.unspawnNotes[0];
 					this.notes.insert(0,dunceNote);
 					dunceNote.spawned = true;
 					this.callOnLuas("onSpawnNote",[this.notes.members.indexOf(dunceNote),dunceNote.noteData,dunceNote.noteType,dunceNote.isSustainNote]);
@@ -64939,7 +64064,27 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					this.unspawnNotes.splice(index,1);
 				}
 			}
-			--noteCount;
+		} else {
+			while(noteCount >= 0) {
+				if(this.unspawnNotes[noteCount] != null) {
+					var time = this.spawnTime;
+					if(Math.abs(this.songSpeed) < 1) {
+						time /= Math.max(0.25,Math.abs(this.songSpeed));
+					}
+					if(this.unspawnNotes[noteCount].multSpeed < 1) {
+						time /= this.unspawnNotes[noteCount].multSpeed;
+					}
+					if(this.unspawnNotes.length > 0 && this.unspawnNotes[noteCount].strumTime + this.unspawnNotes[noteCount].offsetStrumTime - Conductor.songPosition < time && (ClientPrefs.limitSpawn ? this.notes.length < ClientPrefs.limitSpawnNotes : true)) {
+						var dunceNote = this.unspawnNotes[noteCount];
+						this.notes.insert(0,dunceNote);
+						dunceNote.spawned = true;
+						this.callOnLuas("onSpawnNote",[this.notes.members.indexOf(dunceNote),dunceNote.noteData,dunceNote.noteType,dunceNote.isSustainNote]);
+						var index = this.unspawnNotes.indexOf(dunceNote);
+						this.unspawnNotes.splice(index,1);
+					}
+				}
+				--noteCount;
+			}
 		}
 		if(this.generatedMusic && !this.inCutscene) {
 			if(this.gf != null && this.gf.animation._curAnim != null && this.gf.holdTimer > Conductor.stepCrochet * (0.0011 / flixel_FlxG.sound.music._pitch) * this.gf.singDuration && StringTools.startsWith(this.gf.animation._curAnim.name,"sing")) {
@@ -65073,7 +64218,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						}
 						if(!daNote.fakeNoHit) {
 							var center = strumY + actualStrum.get_height() * actualStrum.sustainReducePoint;
-							if(actualStrum.sustainReduce && daNote.isSustainNote && (_gthis.gamemodeManager(daNote) || !daNote.ignoreNote) && (!_gthis.gamemodeManager(daNote) || (daNote.wasGoodHit || daNote.prevNote.wasGoodHit && (!daNote.canBeHit || _gthis.cpuControlled)))) {
+							if(actualStrum.sustainReduce && daNote.isSustainNote && (_gthis.gamemodeManager(daNote) || !daNote.ignoreNote && !daNote.canFreeze) && (!_gthis.gamemodeManager(daNote) || (daNote.wasGoodHit || daNote.prevNote.wasGoodHit && (!daNote.canBeHit || _gthis.cpuControlled)))) {
 								if(strumScroll) {
 									if(daNote.y - daNote.offset.y * daNote.scale.y + daNote.get_height() >= center) {
 										var swagRect = new flixel_math_FlxRect(0,0,daNote.frameWidth,daNote.frameHeight);
@@ -65144,7 +64289,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							}
 						}
 					}
-					if((_gthis.gamemode == "opponent" ? !daNote.blockHit && daNote.mustPress : !daNote.mustPress) && daNote.canBeHit && !daNote.ignoreNote && !daNote.customField && !(_gthis.gamemode == "bothside v2" || _gthis.gamemode == "bothside")) {
+					if((_gthis.gamemode == "opponent" ? !daNote.blockHit && !daNote.canFreeze && daNote.mustPress : !daNote.mustPress) && daNote.canBeHit && (!daNote.ignoreNote && !daNote.canFreeze) && !daNote.customField && !(_gthis.gamemode == "bothside v2" || _gthis.gamemode == "bothside")) {
 						if(daNote.isSustainNote) {
 							if(daNote.canBeHit) {
 								_gthis.opponentNoteHit(daNote);
@@ -65153,7 +64298,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							_gthis.opponentNoteHit(daNote);
 						}
 					}
-					if((_gthis.gamemode == "opponent" ? !daNote.blockHit && daNote.mustPress : !daNote.mustPress) && daNote.canBeHit && !daNote.ignoreNote && daNote.customField) {
+					if((_gthis.gamemode == "opponent" ? !daNote.blockHit && !daNote.canFreeze && daNote.mustPress : !daNote.mustPress) && daNote.canBeHit && (!daNote.ignoreNote && !daNote.canFreeze) && daNote.customField) {
 						if(daNote.isSustainNote) {
 							if(daNote.canBeHit) {
 								_gthis.opponentNoteHit(daNote);
@@ -65162,7 +64307,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							_gthis.opponentNoteHit(daNote);
 						}
 					}
-					if((_gthis.gamemode != "opponent" ? !daNote.blockHit && (_gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress) : !daNote.mustPress) && _gthis.cpuControlled && daNote.canBeHit && !(daNote.autoPress || (_gthis.fieldNameAsPlayer == "" ? daNote.customField : daNote.fieldTarget != _gthis.fieldNameAsPlayer))) {
+					if((_gthis.gamemode != "opponent" ? !daNote.blockHit && !daNote.canFreeze && (_gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress) : !daNote.mustPress) && _gthis.cpuControlled && daNote.canBeHit && !(daNote.autoPress || (_gthis.fieldNameAsPlayer == "" ? daNote.customField : daNote.fieldTarget != _gthis.fieldNameAsPlayer))) {
 						if(daNote.isSustainNote) {
 							if(daNote.canBeHit) {
 								_gthis.goodNoteHit(daNote);
@@ -65171,7 +64316,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							_gthis.goodNoteHit(daNote);
 						}
 					}
-					if((_gthis.gamemode != "opponent" ? !daNote.blockHit && (_gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress) : !daNote.mustPress) && (daNote.autoPress || (_gthis.fieldNameAsPlayer == "" ? daNote.customField : daNote.fieldTarget != _gthis.fieldNameAsPlayer)) && daNote.canBeHit) {
+					if((_gthis.gamemode != "opponent" ? !daNote.blockHit && !daNote.canFreeze && (_gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress) : !daNote.mustPress) && (daNote.autoPress || (_gthis.fieldNameAsPlayer == "" ? daNote.customField : daNote.fieldTarget != _gthis.fieldNameAsPlayer)) && daNote.canBeHit) {
 						if(daNote.isSustainNote) {
 							if(daNote.canBeHit) {
 								_gthis.goodNoteHit(daNote);
@@ -65184,35 +64329,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if((_gthis.gamemode != "opponent" ? _gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress : !daNote.mustPress) && !_gthis.cpuControlled && !daNote.ignoreNote && !_gthis.endingSong && (daNote.tooLate || !daNote.wasGoodHit) && !(daNote.autoPress || (_gthis.fieldNameAsPlayer == "" ? daNote.customField : daNote.fieldTarget != _gthis.fieldNameAsPlayer))) {
 							_gthis.noteMiss(daNote);
 						}
-						daNote.set_active(false);
-						daNote.set_visible(false);
-						daNote.kill();
-						var specialGroup = [_gthis.opponentNotes,_gthis.playerNotes,_gthis.gfNotes];
-						var _g = 0;
-						while(_g < specialGroup.length) {
-							var group = specialGroup[_g];
-							++_g;
-							if(group.members.indexOf(daNote) != -1) {
-								group.remove(daNote,true);
-							}
-						}
-						var h = _gthis.notesGroupMap.h;
-						var i_h = h;
-						var i_keys = Object.keys(h);
-						var i_length = i_keys.length;
-						var i_current = 0;
-						while(i_current < i_length) {
-							var i = i_keys[i_current++];
-							var obj = _gthis.notesGroupMap.h[i];
-							if(obj.members.indexOf(daNote) != -1) {
-								obj.remove(daNote,true);
-							}
-						}
+						_gthis.destroyNote(daNote);
 						if(!daNote.hitByOpponent && !daNote.mustPress || !daNote.wasGoodHit && daNote.mustPress && daNote.isDad) {
 							_gthis.camZooming = true;
 						}
-						_gthis.notes.remove(daNote,true);
-						daNote.destroy();
 					}
 				});
 			} else {
@@ -65291,6 +64411,15 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					var timer = timer_h[timer_keys[timer_current++]];
 					timer.active = true;
 				}
+				var h = this.freezeNoteTimer.h;
+				var timer_h = h;
+				var timer_keys = Object.keys(h);
+				var timer_length = timer_keys.length;
+				var timer_current = 0;
+				while(timer_current < timer_length) {
+					var timer = timer_h[timer_keys[timer_current++]];
+					timer.active = true;
+				}
 				this.openSubState(new GameOverSubstate(this.boyfriend.getScreenPosition().x - this.boyfriend.positionArray[0],this.boyfriend.getScreenPosition().y - this.boyfriend.positionArray[1],this.camFollowPos.x,this.camFollowPos.y));
 				this.isDead = true;
 				return true;
@@ -65312,7 +64441,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			if(this.eventNotes[0].value2 != null) {
 				value2 = this.eventNotes[0].value2;
 			}
-			this.triggerEventNote(this.eventNotes[0].event,value1,value2);
+			this.triggerEventNote(this.eventNotes[0].event,value1,value2,this.eventNotes[0]);
 			this.eventNotes.shift();
 		}
 	}
@@ -65320,7 +64449,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		var pressed = Reflect.getProperty(PlayerSettings.player1.controls,key);
 		return pressed;
 	}
-	,triggerEventNote: function(eventName,value1,value2) {
+	,triggerEventNote: function(eventName,value1,value2,eventData) {
 		var _gthis = this;
 		switch(eventName) {
 		case "Add Camera Zoom":
@@ -65560,6 +64689,17 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}});
 				}
 			}
+			break;
+		case "Freeze Note":
+			if(value1.length < 1 || value1 == null) {
+				value1 = "1";
+			}
+			if(value2.length < 1 || value2 == null) {
+				value2 = "1";
+			}
+			var coolConvert = parseFloat(value1);
+			var coolConvert2 = parseFloat(value2) | 0;
+			this.freezeNote(coolConvert,coolConvert2 == 1,eventData == null ? Conductor.songPosition : eventData.strumTime);
 			break;
 		case "Hey!":
 			var value = 2;
@@ -66319,12 +65459,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4730, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4737, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4731, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4738, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -66360,7 +65500,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 4764, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 4771, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -66371,7 +65511,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4775, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4782, className : "PlayState", methodName : "endSong"});
 				WeekData.loadTheFirstEnabledMod();
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
@@ -66395,7 +65535,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4799, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4806, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -66406,32 +65546,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,KillNotes: function() {
 		while(this.notes.length > 0) {
 			var daNote = this.notes.members[0];
-			daNote.set_active(false);
-			daNote.set_visible(false);
-			daNote.kill();
-			var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
-			var _g = 0;
-			while(_g < specialGroup.length) {
-				var group = specialGroup[_g];
-				++_g;
-				if(group.members.indexOf(daNote) != -1) {
-					group.remove(daNote,true);
-				}
-			}
-			var h = this.notesGroupMap.h;
-			var i_h = h;
-			var i_keys = Object.keys(h);
-			var i_length = i_keys.length;
-			var i_current = 0;
-			while(i_current < i_length) {
-				var i = i_keys[i_current++];
-				var obj = this.notesGroupMap.h[i];
-				if(obj.members.indexOf(daNote) != -1) {
-					obj.remove(daNote,true);
-				}
-			}
-			this.notes.remove(daNote,true);
-			daNote.destroy();
+			this.destroyNote(daNote);
 		}
 		this.unspawnNotes = [];
 		this.eventNotes = [];
@@ -66802,7 +65917,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var notesStopped = false;
 				var sortedNotesList = [];
 				this.notes.forEachAlive(function(daNote) {
-					if(_gthis.strumsBlocked[daNote.noteData + ((_gthis.gamemode == "bothside v2" && !daNote.mustPress ? _gthis.keyCount : 0) + (!daNote.mustPress && daNote.gfNote && PlayState.SONG.secOpt ? _gthis.keyCount : 0))] != true && (daNote.canBeHit && (_gthis.gamemode == "opponent" || _gthis.gamemode == "bothside v2" && key >= _gthis.keyCount ? !daNote.mustPress : _gthis.gamemode == "bothside" ? true : daNote.mustPress) && !daNote.tooLate && !daNote.wasGoodHit && !daNote.isSustainNote && (_gthis.gamemode == "opponent" ? !daNote.ignoreNote : !daNote.blockHit) && !daNote.autoPress) && !(_gthis.fieldNameAsPlayer == "" ? daNote.customField : daNote.fieldTarget != _gthis.fieldNameAsPlayer)) {
+					if(_gthis.strumsBlocked[daNote.noteData + ((_gthis.gamemode == "bothside v2" && !daNote.mustPress ? _gthis.keyCount : 0) + (!daNote.mustPress && daNote.gfNote && PlayState.SONG.secOpt ? _gthis.keyCount : 0))] != true && (daNote.canBeHit && (_gthis.gamemode == "opponent" || _gthis.gamemode == "bothside v2" && key >= _gthis.keyCount ? !daNote.mustPress : _gthis.gamemode == "bothside" ? true : daNote.mustPress) && !daNote.tooLate && !daNote.wasGoodHit && !daNote.isSustainNote && (_gthis.gamemode == "opponent" ? !daNote.ignoreNote && !daNote.canFreeze : !daNote.blockHit && !daNote.canFreeze) && !daNote.autoPress) && !(_gthis.fieldNameAsPlayer == "" ? daNote.customField : daNote.fieldTarget != _gthis.fieldNameAsPlayer)) {
 						if(daNote.noteData == key - ((daNote.gfNote && !daNote.mustPress && PlayState.SONG.secOpt ? _gthis.keyCount : 0) + (daNote.mustPress && _gthis.gamemode == "bothside v2" ? _gthis.keyCount : 0))) {
 							sortedNotesList.push(daNote);
 						}
@@ -66820,30 +65935,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							var doubleNote = pressNotes[_g1];
 							++_g1;
 							if(Math.abs(doubleNote.strumTime + doubleNote.offsetStrumTime - (epicNote.strumTime + epicNote.offsetStrumTime)) < 1) {
-								doubleNote.kill();
-								var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
-								var _g2 = 0;
-								while(_g2 < specialGroup.length) {
-									var group = specialGroup[_g2];
-									++_g2;
-									if(group.members.indexOf(doubleNote) != -1) {
-										group.remove(doubleNote,true);
-									}
-								}
-								var h = this.notesGroupMap.h;
-								var i_h = h;
-								var i_keys = Object.keys(h);
-								var i_length = i_keys.length;
-								var i_current = 0;
-								while(i_current < i_length) {
-									var i = i_keys[i_current++];
-									var obj = this.notesGroupMap.h[i];
-									if(obj.members.indexOf(doubleNote) != -1) {
-										obj.remove(doubleNote,true);
-									}
-								}
-								this.notes.remove(doubleNote,true);
-								doubleNote.destroy();
+								this.destroyNote(doubleNote);
 							} else {
 								notesStopped = true;
 							}
@@ -66942,7 +66034,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(this.startedCountdown && !this.boyfriend.stunned && this.generatedMusic) {
 			this.notes.forEachAlive(function(daNote) {
-				if(_gthis.strumsBlocked[daNote.noteData + ((_gthis.gamemode == "bothside v2" && !daNote.mustPress ? _gthis.keyCount : 0) + (!daNote.mustPress && daNote.gfNote && PlayState.SONG.secOpt ? _gthis.keyCount : 0))] != true && daNote.isSustainNote && parsedHoldArray[daNote.noteData + ((_gthis.gamemode == "bothside v2" && !daNote.mustPress ? _gthis.keyCount : 0) + (!daNote.mustPress && daNote.gfNote && PlayState.SONG.secOpt ? _gthis.keyCount : 0))] && daNote.canBeHit && (_gthis.gamemode != "opponent" ? _gthis.gamemode == "bothside v2" || _gthis.gamemode == "bothside" ? true : daNote.mustPress : !daNote.mustPress) && !daNote.tooLate && !daNote.wasGoodHit && (_gthis.gamemode == "opponent" || (_gthis.gamemode == "bothside v2" || _gthis.gamemode == "bothside") && !daNote.mustPress ? !daNote.ignoreNote : !daNote.blockHit)) {
+				if(_gthis.strumsBlocked[daNote.noteData + ((_gthis.gamemode == "bothside v2" && !daNote.mustPress ? _gthis.keyCount : 0) + (!daNote.mustPress && daNote.gfNote && PlayState.SONG.secOpt ? _gthis.keyCount : 0))] != true && daNote.isSustainNote && parsedHoldArray[daNote.noteData + ((_gthis.gamemode == "bothside v2" && !daNote.mustPress ? _gthis.keyCount : 0) + (!daNote.mustPress && daNote.gfNote && PlayState.SONG.secOpt ? _gthis.keyCount : 0))] && daNote.canBeHit && (_gthis.gamemode != "opponent" ? _gthis.gamemode == "bothside v2" || _gthis.gamemode == "bothside" ? true : daNote.mustPress : !daNote.mustPress) && !daNote.tooLate && !daNote.wasGoodHit && (_gthis.gamemode == "opponent" || (_gthis.gamemode == "bothside v2" || _gthis.gamemode == "bothside") && !daNote.mustPress ? !daNote.ignoreNote && !daNote.canFreeze : !daNote.blockHit && !daNote.canFreeze)) {
 					_gthis.goodNoteHit(daNote);
 				}
 			});
@@ -66991,30 +66083,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		var _gthis = this;
 		this.notes.forEachAlive(function(note) {
 			if(daNote != note && (_gthis.gamemode != "opponent" ? _gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress : !daNote.mustPress) && daNote.noteData == note.noteData && daNote.isSustainNote == note.isSustainNote && Math.abs(daNote.strumTime + daNote.offsetStrumTime - (note.strumTime + note.offsetStrumTime)) < 1) {
-				note.kill();
-				var specialGroup = [_gthis.opponentNotes,_gthis.playerNotes,_gthis.gfNotes];
-				var _g = 0;
-				while(_g < specialGroup.length) {
-					var group = specialGroup[_g];
-					++_g;
-					if(group.members.indexOf(note) != -1) {
-						group.remove(note,true);
-					}
-				}
-				var h = _gthis.notesGroupMap.h;
-				var i_h = h;
-				var i_keys = Object.keys(h);
-				var i_length = i_keys.length;
-				var i_current = 0;
-				while(i_current < i_length) {
-					var i = i_keys[i_current++];
-					var obj = _gthis.notesGroupMap.h[i];
-					if(obj.members.indexOf(note) != -1) {
-						obj.remove(note,true);
-					}
-				}
-				_gthis.notes.remove(note,true);
-				note.destroy();
+				_gthis.destroyNote(daNote);
 			}
 		});
 		this.combo = 0;
@@ -67145,30 +66214,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				note.hitByOpponent = true;
 				note.wasGoodHit = true;
 				if(!note.isSustainNote && !note.fakeNoHit) {
-					note.kill();
-					var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
-					var _g = 0;
-					while(_g < specialGroup.length) {
-						var group = specialGroup[_g];
-						++_g;
-						if(group.members.indexOf(note) != -1) {
-							group.remove(note,true);
-						}
-					}
-					var h = this.notesGroupMap.h;
-					var i_h = h;
-					var i_keys = Object.keys(h);
-					var i_length = i_keys.length;
-					var i_current = 0;
-					while(i_current < i_length) {
-						var i = i_keys[i_current++];
-						var obj = this.notesGroupMap.h[i];
-						if(obj.members.indexOf(note) != -1) {
-							obj.remove(note,true);
-						}
-					}
-					this.notes.remove(note,true);
-					note.destroy();
+					this.destroyNote(note);
 				}
 			} else {
 				note.strumTime += note.strumTimeOffsetMultiPress;
@@ -67178,7 +66224,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,goodNoteHit: function(note) {
 		if(!note.wasGoodHit) {
-			if((this.cpuControlled || note.autoPress || (this.fieldNameAsPlayer == "" ? note.customField : note.fieldTarget != this.fieldNameAsPlayer)) && (note.ignoreNote || note.hitCausesMiss)) {
+			if((this.cpuControlled || note.autoPress || (this.fieldNameAsPlayer == "" ? note.customField : note.fieldTarget != this.fieldNameAsPlayer)) && (note.ignoreNote || note.canFreeze || note.hitCausesMiss)) {
 				return;
 			}
 			if(ClientPrefs.hitsoundVolume > 0 && !note.hitsoundDisabled || note.forceHitsound) {
@@ -67215,30 +66261,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				if(note.multiPress <= 0) {
 					note.wasGoodHit = true;
 					if(!note.isSustainNote && !note.fakeNoHit) {
-						note.kill();
-						var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
-						var _g = 0;
-						while(_g < specialGroup.length) {
-							var group = specialGroup[_g];
-							++_g;
-							if(group.members.indexOf(note) != -1) {
-								group.remove(note,true);
-							}
-						}
-						var h = this.notesGroupMap.h;
-						var i_h = h;
-						var i_keys = Object.keys(h);
-						var i_length = i_keys.length;
-						var i_current = 0;
-						while(i_current < i_length) {
-							var i = i_keys[i_current++];
-							var obj = this.notesGroupMap.h[i];
-							if(obj.members.indexOf(note) != -1) {
-								obj.remove(note,true);
-							}
-						}
-						this.notes.remove(note,true);
-						note.destroy();
+						this.destroyNote(note);
 					}
 				} else {
 					note.strumTime += note.strumTimeOffsetMultiPress;
@@ -67341,30 +66364,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			if(note.multiPress <= 0) {
 				note.wasGoodHit = true;
 				if(!note.isSustainNote && !note.fakeNoHit) {
-					note.kill();
-					var specialGroup = [this.opponentNotes,this.playerNotes,this.gfNotes];
-					var _g = 0;
-					while(_g < specialGroup.length) {
-						var group = specialGroup[_g];
-						++_g;
-						if(group.members.indexOf(note) != -1) {
-							group.remove(note,true);
-						}
-					}
-					var h = this.notesGroupMap.h;
-					var i_h = h;
-					var i_keys = Object.keys(h);
-					var i_length = i_keys.length;
-					var i_current = 0;
-					while(i_current < i_length) {
-						var i = i_keys[i_current++];
-						var obj = this.notesGroupMap.h[i];
-						if(obj.members.indexOf(note) != -1) {
-							obj.remove(note,true);
-						}
-					}
-					this.notes.remove(note,true);
-					note.destroy();
+					this.destroyNote(note);
 				}
 			} else {
 				note.strumTime += note.strumTimeOffsetMultiPress;
@@ -68361,7 +67361,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.variables.h["camera:" + name] = isTemp;
 			this.customCameraMap.h[name] = isTemp;
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6897, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6818, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -68381,7 +67381,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6907, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6828, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -68402,6 +67402,135 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			}
 		}
 		return false;
+	}
+	,freezeNote: function(second,destroy,songPos) {
+		if(destroy == null) {
+			destroy = true;
+		}
+		if(second == null) {
+			second = 1;
+		}
+		var _gthis = this;
+		if(Object.prototype.hasOwnProperty.call(this.freezeNoteTimer.h,"freezeNote")) {
+			return;
+		}
+		if(songPos == null) {
+			songPos = Conductor.songPosition;
+		}
+		var noteGotCaught = [];
+		var note = new flixel_group_FlxTypedGroupIterator(this.notes.members,null);
+		while(note.hasNext()) {
+			var note1 = note.next();
+			if(note1.canFreeze && !note1.isSustainNote && note1.strumTime + note1.offsetStrumTime >= songPos && note1.strumTime + note1.offsetStrumTime - second * 1000 <= songPos) {
+				note1.strumTime += second * 1000;
+				note1.attachStrum = false;
+				noteGotCaught.push(note1);
+				if(note1.tail != null) {
+					var _g = 0;
+					var _g1 = note1.tail;
+					while(_g < _g1.length) {
+						var parent = _g1[_g];
+						++_g;
+						parent.strumTime += second * 1000;
+						parent.attachStrum = false;
+					}
+				}
+			}
+		}
+		var _g = 0;
+		var _g1 = this.unspawnNotes;
+		while(_g < _g1.length) {
+			var note = _g1[_g];
+			++_g;
+			if(note.canFreeze && !note.isSustainNote && (note.strumTime >= songPos && note.strumTime - second * 1000 <= songPos)) {
+				note.strumTime += second * 1000;
+				note.attachStrum = false;
+				noteGotCaught.push(note);
+				if(note.tail != null) {
+					var _g2 = 0;
+					var _g3 = note.tail;
+					while(_g2 < _g3.length) {
+						var parent = _g3[_g2];
+						++_g2;
+						parent.strumTime += second * 1000;
+						parent.attachStrum = false;
+					}
+				}
+			}
+		}
+		var this1 = this.freezeNoteTimer;
+		var value = new flixel_util_FlxTimer().start(second,function(tmr) {
+			var i = noteGotCaught.length - 1;
+			while(i >= 0) {
+				var thisNote = noteGotCaught[i];
+				if(!thisNote.isSustainNote) {
+					var iTail = thisNote.tail.length - 1;
+					if(destroy) {
+						while(iTail >= 0) {
+							var thisTail = thisNote.tail[iTail];
+							if(thisTail != null) {
+								_gthis.destroyNote(thisTail);
+							}
+							--iTail;
+						}
+						if(thisNote != null) {
+							_gthis.destroyNote(thisNote);
+						}
+					} else {
+						while(iTail >= 0) {
+							var thisTail1 = thisNote.tail[iTail];
+							thisTail1.attachStrum = true;
+							thisTail1.canFreeze = false;
+							--iTail;
+						}
+						thisNote.attachStrum = true;
+						thisNote.canFreeze = false;
+					}
+				}
+				HxOverrides.remove(noteGotCaught,thisNote);
+				--i;
+			}
+			if(tmr.finished) {
+				var _this = _gthis.freezeNoteTimer;
+				if(Object.prototype.hasOwnProperty.call(_this.h,"freezeNote")) {
+					delete(_this.h["freezeNote"]);
+				}
+			}
+		});
+		this1.h["freezeNote"] = value;
+	}
+	,destroyNote: function(note) {
+		note.set_visible(false);
+		note.set_active(false);
+		note.kill();
+		var specialGroup = [this.opponentNotes,this.gfNotes,this.playerNotes];
+		var _g = 0;
+		while(_g < specialGroup.length) {
+			var group = specialGroup[_g];
+			++_g;
+			if(group.members.indexOf(note) != -1) {
+				group.remove(note,true);
+			}
+		}
+		var h = this.notesGroupMap.h;
+		var group_h = h;
+		var group_keys = Object.keys(h);
+		var group_length = group_keys.length;
+		var group_current = 0;
+		while(group_current < group_length) {
+			var group = group_keys[group_current++];
+			var obj = this.notesGroupMap.h[group];
+			if(obj.members.indexOf(note) != -1) {
+				obj.remove(note,true);
+			}
+		}
+		if(this.unspawnNotes.indexOf(note) != -1) {
+			HxOverrides.remove(this.unspawnNotes,note);
+		}
+		if(this.notes.members.indexOf(note) != -1) {
+			this.notes.remove(note,true);
+		}
+		note.destroy();
 	}
 	,__class__: PlayState
 	,__properties__: $extend(MusicBeatState.prototype.__properties__,{set_mergeHealthColor:"set_mergeHealthColor",set_playbackRate:"set_playbackRate",set_songSpeed:"set_songSpeed",set_privateData:"set_privateData"})
@@ -68487,45 +67616,6 @@ PlayerSettings.prototype = {
 	}
 	,__class__: PlayerSettings
 };
-var Posterize = function() {
-	this.posterizeRange = 0;
-	this.shader = new PosterizeShader();
-};
-$hxClasses["Posterize"] = Posterize;
-Posterize.__name__ = "Posterize";
-Posterize.prototype = {
-	shader: null
-	,posterizeRange: null
-	,set_posterizeRange: function(value) {
-		if(this.posterizeRange != value) {
-			value = Math.max(0,value);
-			this.posterizeRange = value;
-			this.shader.posterizeRange.value = [value];
-		}
-		return value;
-	}
-	,__class__: Posterize
-	,__properties__: {set_posterizeRange:"set_posterizeRange"}
-};
-var PosterizeShader = function() {
-	if(this.__glFragmentSource == null) {
-		this.__glFragmentSource = "\r\n        varying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\r\n\r\n        uniform float posterizeRange;\r\n\r\n        void main() {\r\n            vec4 color = flixel_texture2D(bitmap, openfl_TextureCoordv);\r\n            if (posterizeRange > 0.0) {\r\n                float r = floor(color.r * posterizeRange) / posterizeRange;\r\n                float g = floor(color.g * posterizeRange) / posterizeRange;\r\n                float b = floor(color.b * posterizeRange) / posterizeRange;\r\n                gl_FragColor = vec4(r, g, b, color.a);\r\n            } else {\r\n                //nothing change\r\n                gl_FragColor = vec4(color);\r\n            }\r\n        }\r\n    ";
-	}
-	if(this.__glVertexSource == null) {
-		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\t\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\t\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\t\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
-	}
-	flixel_graphics_tile_FlxGraphicsShader.call(this);
-	this.posterizeRange.value = [4.0];
-	this.__isGenerated = true;
-	this.__initGL();
-};
-$hxClasses["PosterizeShader"] = PosterizeShader;
-PosterizeShader.__name__ = "PosterizeShader";
-PosterizeShader.__super__ = flixel_graphics_tile_FlxGraphicsShader;
-PosterizeShader.prototype = $extend(flixel_graphics_tile_FlxGraphicsShader.prototype,{
-	posterizeRange: null
-	,__class__: PosterizeShader
-});
 var Prompt = function(promptText,defaultSelected,okCallback,cancelCallback,acceptOnDefault,option1,option2) {
 	if(acceptOnDefault == null) {
 		acceptOnDefault = false;
@@ -69149,9 +68239,16 @@ var Song = function(song,notes,bpm) {
 $hxClasses["Song"] = Song;
 Song.__name__ = "Song";
 Song.onLoadJson = function(songJson) {
+	if(songJson.secOpt == null) {
+		songJson.secOpt = false;
+	}
 	if(songJson.gfVersion == null) {
-		songJson.gfVersion = songJson.player3;
-		songJson.player3 = null;
+		if(songJson.player3 != null) {
+			songJson.gfVersion = songJson.player3;
+			songJson.player3 = null;
+		} else {
+			songJson.gfVersion = "gf";
+		}
 	}
 	if(songJson.events == null) {
 		songJson.events = [];
@@ -69203,9 +68300,16 @@ Song.loadFromJson = function(jsonInput,folder) {
 	return songJson;
 };
 Song.parseJSONshit = function(rawJson) {
-	var swagShit = JSON.parse(rawJson).song;
-	swagShit.validScore = true;
-	return swagShit;
+	try {
+		var swagShit = JSON.parse(rawJson).song;
+		swagShit.validScore = true;
+		return swagShit;
+	} catch( _g ) {
+		haxe_NativeStackTrace.lastError = _g;
+		var e = haxe_Exception.caught(_g).unwrap();
+		haxe_Log.trace("Error parsing JSON data. The file may be corrupted or improperly formatted.(" + Std.string(e) + ")",{ fileName : "source/Song.hx", lineNumber : 192, className : "Song", methodName : "parseJSONshit"});
+	}
+	return null;
 };
 Song.missingWarning = function(path) {
 	var Chance = 0.1;
@@ -69214,9 +68318,9 @@ Song.missingWarning = function(path) {
 	}
 	if(flixel_FlxG.random.float(0,100) < Chance) {
 		var msg = flixel_FlxG.random.getObject_String(Song.eggs);
-		haxe_Log.trace(msg + "(Json file not found: " + path + ").",{ fileName : "source/Song.hx", lineNumber : 185, className : "Song", methodName : "missingWarning"});
+		haxe_Log.trace(msg + "(Json file not found: " + path + ").",{ fileName : "source/Song.hx", lineNumber : 203, className : "Song", methodName : "missingWarning"});
 	} else {
-		haxe_Log.trace("Json file not found: " + path + ".",{ fileName : "source/Song.hx", lineNumber : 187, className : "Song", methodName : "missingWarning"});
+		haxe_Log.trace("Json file not found: " + path + ".",{ fileName : "source/Song.hx", lineNumber : 205, className : "Song", methodName : "missingWarning"});
 	}
 };
 Song.prototype = {
@@ -70150,17 +69254,33 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 				break;
 			}
 		} else {
-			var library = null;
-			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,image)) {
-				var returnAsset = Paths.returnGraphic(image,library);
-				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + image + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h[image] = atlas;
-				tmp = atlas;
-			} else {
-				tmp = dge_backend_CacheTools.cacheAtlas.h[image];
+			try {
+				var library = null;
+				var tmp;
+				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,image)) {
+					var returnAsset = Paths.returnGraphic(image,library);
+					var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + image + ".xml","TEXT",library));
+					dge_backend_CacheTools.cacheAtlas.h[image] = atlas;
+					tmp = atlas;
+				} else {
+					tmp = dge_backend_CacheTools.cacheAtlas.h[image];
+				}
+				this.set_frames(tmp);
+			} catch( _g ) {
+				haxe_NativeStackTrace.lastError = _g;
+				var key = ClientPrefs.dflnoteskin;
+				var library = null;
+				var tmp;
+				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+					var returnAsset = Paths.returnGraphic(key,library);
+					var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+					dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+					tmp = atlas;
+				} else {
+					tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+				}
+				this.set_frames(tmp);
 			}
-			this.set_frames(tmp);
 			this.animation.addByPrefix("green","arrowUP");
 			this.animation.addByPrefix("blue","arrowDOWN");
 			this.animation.addByPrefix("purple","arrowLEFT");
@@ -70413,7 +69533,7 @@ TitleState.prototype = $extend(MusicBeatState.prototype,{
 		flixel_FlxG.keys.preventDefaultKeys = [9];
 		PlayerSettings.init();
 		this.curWacky = flixel_FlxG.random.getObject_Array_String(this.getIntroTextShit());
-		this.swagShader = new ColorSwap();
+		this.swagShader = new dge_shaders_ColorSwap();
 		MusicBeatState.prototype.create.call(this);
 		flixel_FlxG.save.bind("funkin","ninjamuffin99");
 		ClientPrefs.loadPrefs();
@@ -70483,7 +69603,7 @@ TitleState.prototype = $extend(MusicBeatState.prototype,{
 		this.logoBl.animation.addByPrefix("bump","logo bumpin",24,false);
 		this.logoBl.animation.play("bump");
 		this.logoBl.updateHitbox();
-		this.swagShader = new ColorSwap();
+		this.swagShader = new dge_shaders_ColorSwap();
 		this.gfDance = new flixel_FlxSprite((flixel_FlxG.width - 1280) / 2 + this.titleJSON.gfx,this.titleJSON.gfy);
 		var easterEgg = flixel_FlxG.save.data.psychDevsEasterEgg;
 		if(easterEgg == null) {
@@ -71567,6 +70687,727 @@ WiggleEffect.prototype = {
 	,__class__: WiggleEffect
 	,__properties__: {set_waveAmplitude:"set_waveAmplitude",set_waveFrequency:"set_waveFrequency",set_waveSpeed:"set_waveSpeed",set_effectType:"set_effectType"}
 };
+var openfl_display_Shader = function(code) {
+	this.byteCode = code;
+	this.precisionHint = 1;
+	this.__glSourceDirty = true;
+	this.__numPasses = 1;
+	this.__data = openfl_display_ShaderData._new(code);
+};
+$hxClasses["openfl.display.Shader"] = openfl_display_Shader;
+openfl_display_Shader.__name__ = "openfl.display.Shader";
+openfl_display_Shader.prototype = {
+	byteCode: null
+	,glProgram: null
+	,precisionHint: null
+	,program: null
+	,__alpha: null
+	,__bitmap: null
+	,__colorMultiplier: null
+	,__colorOffset: null
+	,__context: null
+	,__data: null
+	,__glFragmentSource: null
+	,__glSourceDirty: null
+	,__glVertexSource: null
+	,__hasColorTransform: null
+	,__inputBitmapData: null
+	,__isGenerated: null
+	,__matrix: null
+	,__numPasses: null
+	,__paramBool: null
+	,__paramFloat: null
+	,__paramInt: null
+	,__position: null
+	,__textureCoord: null
+	,__texture: null
+	,__textureSize: null
+	,__clearUseArray: function() {
+		var _g = 0;
+		var _g1 = this.__paramBool;
+		while(_g < _g1.length) {
+			var parameter = _g1[_g];
+			++_g;
+			parameter.__useArray = false;
+		}
+		var _g = 0;
+		var _g1 = this.__paramFloat;
+		while(_g < _g1.length) {
+			var parameter = _g1[_g];
+			++_g;
+			parameter.__useArray = false;
+		}
+		var _g = 0;
+		var _g1 = this.__paramInt;
+		while(_g < _g1.length) {
+			var parameter = _g1[_g];
+			++_g;
+			parameter.__useArray = false;
+		}
+	}
+	,__createGLShader: function(source,type) {
+		var gl = this.__context.gl;
+		var shader = gl.createShader(type);
+		gl.shaderSource(shader,source);
+		gl.compileShader(shader);
+		var shaderInfoLog = gl.getShaderInfoLog(shader);
+		var hasInfoLog = shaderInfoLog != null && StringTools.trim(shaderInfoLog) != "";
+		var compileStatus = gl.getShaderParameter(shader,gl.COMPILE_STATUS);
+		if(hasInfoLog || compileStatus == 0) {
+			var message = compileStatus == 0 ? "Error" : "Info";
+			message += type == gl.VERTEX_SHADER ? " compiling vertex shader" : " compiling fragment shader";
+			message += "\n" + shaderInfoLog;
+			message += "\n" + source;
+			if(compileStatus == 0) {
+				lime_utils_Log.error(message,{ fileName : "openfl/display/Shader.hx", lineNumber : 335, className : "openfl.display.Shader", methodName : "__createGLShader"});
+			} else if(hasInfoLog) {
+				lime_utils_Log.debug(message,{ fileName : "openfl/display/Shader.hx", lineNumber : 336, className : "openfl.display.Shader", methodName : "__createGLShader"});
+			}
+		}
+		return shader;
+	}
+	,__createGLProgram: function(vertexSource,fragmentSource) {
+		var gl = this.__context.gl;
+		var vertexShader = this.__createGLShader(vertexSource,gl.VERTEX_SHADER);
+		var fragmentShader = this.__createGLShader(fragmentSource,gl.FRAGMENT_SHADER);
+		var program = gl.createProgram();
+		var _g = 0;
+		var _g1 = this.__paramFloat;
+		while(_g < _g1.length) {
+			var param = _g1[_g];
+			++_g;
+			if(param.name.indexOf("Position") > -1 && StringTools.startsWith(param.name,"openfl_")) {
+				gl.bindAttribLocation(program,0,param.name);
+				break;
+			}
+		}
+		gl.attachShader(program,vertexShader);
+		gl.attachShader(program,fragmentShader);
+		gl.linkProgram(program);
+		if(gl.getProgramParameter(program,gl.LINK_STATUS) == 0) {
+			var message = "Unable to initialize the shader program";
+			message += "\n" + gl.getProgramInfoLog(program);
+			lime_utils_Log.error(message,{ fileName : "openfl/display/Shader.hx", lineNumber : 369, className : "openfl.display.Shader", methodName : "__createGLProgram"});
+		}
+		return program;
+	}
+	,__disable: function() {
+		if(this.program != null) {
+			this.__disableGL();
+		}
+	}
+	,__disableGL: function() {
+		var gl = this.__context.gl;
+		var textureCount = 0;
+		var _g = 0;
+		var _g1 = this.__inputBitmapData;
+		while(_g < _g1.length) {
+			var input = _g1[_g];
+			++_g;
+			input.__disableGL(this.__context,textureCount);
+			++textureCount;
+			if(textureCount == gl.MAX_TEXTURE_IMAGE_UNITS) {
+				break;
+			}
+		}
+		var _g = 0;
+		var _g1 = this.__paramBool;
+		while(_g < _g1.length) {
+			var parameter = _g1[_g];
+			++_g;
+			parameter.__disableGL(this.__context);
+		}
+		var _g = 0;
+		var _g1 = this.__paramFloat;
+		while(_g < _g1.length) {
+			var parameter = _g1[_g];
+			++_g;
+			parameter.__disableGL(this.__context);
+		}
+		var _g = 0;
+		var _g1 = this.__paramInt;
+		while(_g < _g1.length) {
+			var parameter = _g1[_g];
+			++_g;
+			parameter.__disableGL(this.__context);
+		}
+		this.__context.__bindGLArrayBuffer(null);
+		if(this.__context.__context.type == "opengl") {
+			gl.disable(gl.TEXTURE_2D);
+		}
+	}
+	,__enable: function() {
+		this.__init();
+		if(this.program != null) {
+			this.__enableGL();
+		}
+	}
+	,__enableGL: function() {
+		var textureCount = 0;
+		var gl = this.__context.gl;
+		var _g = 0;
+		var _g1 = this.__inputBitmapData;
+		while(_g < _g1.length) {
+			var input = _g1[_g];
+			++_g;
+			gl.uniform1i(input.index,textureCount);
+			++textureCount;
+		}
+		if(this.__context.__context.type == "opengl" && textureCount > 0) {
+			gl.enable(gl.TEXTURE_2D);
+		}
+	}
+	,__init: function() {
+		if(this.__data == null) {
+			this.__data = openfl_display_ShaderData._new(null);
+		}
+		if(this.__glFragmentSource != null && this.__glVertexSource != null && (this.program == null || this.__glSourceDirty)) {
+			this.__initGL();
+		}
+	}
+	,__initGL: function() {
+		if(this.__glSourceDirty || this.__paramBool == null) {
+			this.__glSourceDirty = false;
+			this.program = null;
+			this.__inputBitmapData = [];
+			this.__paramBool = [];
+			this.__paramFloat = [];
+			this.__paramInt = [];
+			this.__processGLData(this.get_glVertexSource(),"attribute");
+			this.__processGLData(this.get_glVertexSource(),"uniform");
+			this.__processGLData(this.get_glFragmentSource(),"uniform");
+		}
+		if(this.__context != null && this.program == null) {
+			var gl = this.__context.gl;
+			var prefix = this.precisionHint == 1 ? "precision mediump float;\n" : "precision lowp float;\n";
+			var vertex = prefix + this.get_glVertexSource();
+			var fragment = prefix + this.get_glFragmentSource();
+			var id = vertex + fragment;
+			if(Object.prototype.hasOwnProperty.call(this.__context.__programs.h,id)) {
+				this.program = this.__context.__programs.h[id];
+			} else {
+				this.program = this.__context.createProgram(1);
+				this.program.__glProgram = this.__createGLProgram(vertex,fragment);
+				this.__context.__programs.h[id] = this.program;
+			}
+			if(this.program != null) {
+				this.glProgram = this.program.__glProgram;
+				var _g = 0;
+				var _g1 = this.__inputBitmapData;
+				while(_g < _g1.length) {
+					var input = _g1[_g];
+					++_g;
+					if(input.__isUniform) {
+						input.index = gl.getUniformLocation(this.glProgram,input.name);
+					} else {
+						input.index = gl.getAttribLocation(this.glProgram,input.name);
+					}
+				}
+				var _g = 0;
+				var _g1 = this.__paramBool;
+				while(_g < _g1.length) {
+					var parameter = _g1[_g];
+					++_g;
+					if(parameter.__isUniform) {
+						parameter.index = gl.getUniformLocation(this.glProgram,parameter.name);
+					} else {
+						parameter.index = gl.getAttribLocation(this.glProgram,parameter.name);
+					}
+				}
+				var _g = 0;
+				var _g1 = this.__paramFloat;
+				while(_g < _g1.length) {
+					var parameter = _g1[_g];
+					++_g;
+					if(parameter.__isUniform) {
+						parameter.index = gl.getUniformLocation(this.glProgram,parameter.name);
+					} else {
+						parameter.index = gl.getAttribLocation(this.glProgram,parameter.name);
+					}
+				}
+				var _g = 0;
+				var _g1 = this.__paramInt;
+				while(_g < _g1.length) {
+					var parameter = _g1[_g];
+					++_g;
+					if(parameter.__isUniform) {
+						parameter.index = gl.getUniformLocation(this.glProgram,parameter.name);
+					} else {
+						parameter.index = gl.getAttribLocation(this.glProgram,parameter.name);
+					}
+				}
+			}
+		}
+	}
+	,__processGLData: function(source,storageType) {
+		var lastMatch = 0;
+		var position;
+		var regex;
+		var name;
+		var type;
+		if(storageType == "uniform") {
+			regex = new EReg("uniform ([A-Za-z0-9]+) ([A-Za-z0-9_]+)","");
+		} else {
+			regex = new EReg("attribute ([A-Za-z0-9]+) ([A-Za-z0-9_]+)","");
+		}
+		while(regex.matchSub(source,lastMatch)) {
+			type = regex.matched(1);
+			name = regex.matched(2);
+			if(StringTools.startsWith(name,"gl_")) {
+				continue;
+			}
+			var isUniform = storageType == "uniform";
+			if(StringTools.startsWith(type,"sampler")) {
+				var input = new openfl_display_ShaderInput();
+				input.name = name;
+				input.__isUniform = isUniform;
+				this.__inputBitmapData.push(input);
+				switch(name) {
+				case "bitmap":
+					this.__bitmap = input;
+					break;
+				case "openfl_Texture":
+					this.__texture = input;
+					break;
+				default:
+				}
+				this.__data[name] = input;
+				if(this.__isGenerated) {
+					this[name] = input;
+				}
+			} else if(!Object.prototype.hasOwnProperty.call(this.__data,name) || Reflect.field(this.__data,name) == null) {
+				var parameterType;
+				switch(type) {
+				case "bool":
+					parameterType = 0;
+					break;
+				case "bvec2":
+					parameterType = 1;
+					break;
+				case "bvec3":
+					parameterType = 2;
+					break;
+				case "bvec4":
+					parameterType = 3;
+					break;
+				case "dvec2":case "vec2":
+					parameterType = 5;
+					break;
+				case "dvec3":case "vec3":
+					parameterType = 6;
+					break;
+				case "double":case "float":
+					parameterType = 4;
+					break;
+				case "ivec3":case "uvec3":
+					parameterType = 10;
+					break;
+				case "ivec4":case "uvec4":
+					parameterType = 11;
+					break;
+				case "mat2":case "mat2x2":
+					parameterType = 12;
+					break;
+				case "mat2x3":
+					parameterType = 13;
+					break;
+				case "mat2x4":
+					parameterType = 14;
+					break;
+				case "mat3x2":
+					parameterType = 15;
+					break;
+				case "mat3":case "mat3x3":
+					parameterType = 16;
+					break;
+				case "mat3x4":
+					parameterType = 17;
+					break;
+				case "mat4":case "mat4x4":
+					parameterType = 20;
+					break;
+				case "mat4x2":
+					parameterType = 18;
+					break;
+				case "mat4x3":
+					parameterType = 19;
+					break;
+				case "int":case "uint":
+					parameterType = 8;
+					break;
+				case "ivec2":case "uvec2":
+					parameterType = 9;
+					break;
+				case "dvec4":case "vec4":
+					parameterType = 7;
+					break;
+				default:
+					parameterType = null;
+				}
+				var length;
+				switch(parameterType) {
+				case 1:case 5:case 9:
+					length = 2;
+					break;
+				case 3:case 7:case 11:case 12:
+					length = 4;
+					break;
+				case 2:case 6:case 10:
+					length = 3;
+					break;
+				case 16:
+					length = 9;
+					break;
+				case 20:
+					length = 16;
+					break;
+				default:
+					length = 1;
+				}
+				var arrayLength;
+				switch(parameterType) {
+				case 12:
+					arrayLength = 2;
+					break;
+				case 16:
+					arrayLength = 3;
+					break;
+				case 20:
+					arrayLength = 4;
+					break;
+				default:
+					arrayLength = 1;
+				}
+				switch(parameterType) {
+				case 0:case 1:case 2:case 3:
+					var parameter = new openfl_display_ShaderParameter();
+					parameter.set_name(name);
+					parameter.type = parameterType;
+					parameter.__arrayLength = arrayLength;
+					parameter.__isBool = true;
+					parameter.__isUniform = isUniform;
+					parameter.__length = length;
+					this.__paramBool.push(parameter);
+					if(name == "openfl_HasColorTransform") {
+						this.__hasColorTransform = parameter;
+					}
+					this.__data[name] = parameter;
+					if(this.__isGenerated) {
+						this[name] = parameter;
+					}
+					break;
+				case 8:case 9:case 10:case 11:
+					var parameter1 = new openfl_display_ShaderParameter();
+					parameter1.set_name(name);
+					parameter1.type = parameterType;
+					parameter1.__arrayLength = arrayLength;
+					parameter1.__isInt = true;
+					parameter1.__isUniform = isUniform;
+					parameter1.__length = length;
+					this.__paramInt.push(parameter1);
+					this.__data[name] = parameter1;
+					if(this.__isGenerated) {
+						this[name] = parameter1;
+					}
+					break;
+				default:
+					var parameter2 = new openfl_display_ShaderParameter();
+					parameter2.set_name(name);
+					parameter2.type = parameterType;
+					parameter2.__arrayLength = arrayLength;
+					if(arrayLength > 0) {
+						var elements = arrayLength * arrayLength;
+						var array = null;
+						var vector = null;
+						var view = null;
+						var buffer = null;
+						var len = null;
+						var this1;
+						if(elements != null) {
+							this1 = new Float32Array(elements);
+						} else if(array != null) {
+							this1 = new Float32Array(array);
+						} else if(vector != null) {
+							this1 = new Float32Array(vector.__array);
+						} else if(view != null) {
+							this1 = new Float32Array(view);
+						} else if(buffer != null) {
+							if(len == null) {
+								this1 = new Float32Array(buffer,0);
+							} else {
+								this1 = new Float32Array(buffer,0,len);
+							}
+						} else {
+							this1 = null;
+						}
+						parameter2.__uniformMatrix = this1;
+					}
+					parameter2.__isFloat = true;
+					parameter2.__isUniform = isUniform;
+					parameter2.__length = length;
+					this.__paramFloat.push(parameter2);
+					if(StringTools.startsWith(name,"openfl_")) {
+						switch(name) {
+						case "openfl_Alpha":
+							this.__alpha = parameter2;
+							break;
+						case "openfl_ColorMultiplier":
+							this.__colorMultiplier = parameter2;
+							break;
+						case "openfl_ColorOffset":
+							this.__colorOffset = parameter2;
+							break;
+						case "openfl_Matrix":
+							this.__matrix = parameter2;
+							break;
+						case "openfl_Position":
+							this.__position = parameter2;
+							break;
+						case "openfl_TextureCoord":
+							this.__textureCoord = parameter2;
+							break;
+						case "openfl_TextureSize":
+							this.__textureSize = parameter2;
+							break;
+						default:
+						}
+					}
+					this.__data[name] = parameter2;
+					if(this.__isGenerated) {
+						this[name] = parameter2;
+					}
+				}
+			}
+			position = regex.matchedPos();
+			lastMatch = position.pos + position.len;
+		}
+	}
+	,__update: function() {
+		if(this.program != null) {
+			this.__updateGL();
+		}
+	}
+	,__updateFromBuffer: function(shaderBuffer,bufferOffset) {
+		if(this.program != null) {
+			this.__updateGLFromBuffer(shaderBuffer,bufferOffset);
+		}
+	}
+	,__updateGL: function() {
+		var textureCount = 0;
+		var _g = 0;
+		var _g1 = this.__inputBitmapData;
+		while(_g < _g1.length) {
+			var input = _g1[_g];
+			++_g;
+			input.__updateGL(this.__context,textureCount);
+			++textureCount;
+		}
+		var _g = 0;
+		var _g1 = this.__paramBool;
+		while(_g < _g1.length) {
+			var parameter = _g1[_g];
+			++_g;
+			parameter.__updateGL(this.__context);
+		}
+		var _g = 0;
+		var _g1 = this.__paramFloat;
+		while(_g < _g1.length) {
+			var parameter = _g1[_g];
+			++_g;
+			parameter.__updateGL(this.__context);
+		}
+		var _g = 0;
+		var _g1 = this.__paramInt;
+		while(_g < _g1.length) {
+			var parameter = _g1[_g];
+			++_g;
+			parameter.__updateGL(this.__context);
+		}
+	}
+	,__updateGLFromBuffer: function(shaderBuffer,bufferOffset) {
+		var textureCount = 0;
+		var input;
+		var inputData;
+		var inputFilter;
+		var inputMipFilter;
+		var inputWrap;
+		var _g = 0;
+		var _g1 = shaderBuffer.inputCount;
+		while(_g < _g1) {
+			var i = _g++;
+			input = shaderBuffer.inputRefs[i];
+			inputData = shaderBuffer.inputs[i];
+			inputFilter = shaderBuffer.inputFilter[i];
+			inputMipFilter = shaderBuffer.inputMipFilter[i];
+			inputWrap = shaderBuffer.inputWrap[i];
+			if(inputData != null) {
+				input.__updateGL(this.__context,textureCount,inputData,inputFilter,inputMipFilter,inputWrap);
+				++textureCount;
+			}
+		}
+		var gl = this.__context.gl;
+		if(shaderBuffer.paramDataLength > 0) {
+			if(shaderBuffer.paramDataBuffer == null) {
+				shaderBuffer.paramDataBuffer = gl.createBuffer();
+			}
+			this.__context.__bindGLArrayBuffer(shaderBuffer.paramDataBuffer);
+			lime_graphics_WebGLRenderContext.bufferData(gl,gl.ARRAY_BUFFER,shaderBuffer.paramData,gl.DYNAMIC_DRAW);
+		} else {
+			this.__context.__bindGLArrayBuffer(null);
+		}
+		var boolIndex = 0;
+		var floatIndex = 0;
+		var intIndex = 0;
+		var boolCount = shaderBuffer.paramBoolCount;
+		var floatCount = shaderBuffer.paramFloatCount;
+		var paramData = shaderBuffer.paramData;
+		var boolRef;
+		var floatRef;
+		var intRef;
+		var hasOverride;
+		var overrideBoolValue = null;
+		var overrideFloatValue = null;
+		var overrideIntValue = null;
+		var _g = 0;
+		var _g1 = shaderBuffer.paramCount;
+		while(_g < _g1) {
+			var i = _g++;
+			hasOverride = false;
+			if(i < boolCount) {
+				boolRef = shaderBuffer.paramRefs_Bool[boolIndex];
+				var _g2 = 0;
+				var _g3 = shaderBuffer.overrideBoolCount;
+				while(_g2 < _g3) {
+					var j = _g2++;
+					if(boolRef.name == shaderBuffer.overrideBoolNames[j]) {
+						overrideBoolValue = shaderBuffer.overrideBoolValues[j];
+						hasOverride = true;
+						break;
+					}
+				}
+				if(hasOverride) {
+					boolRef.__updateGL(this.__context,overrideBoolValue);
+				} else {
+					boolRef.__updateGLFromBuffer(this.__context,paramData,shaderBuffer.paramPositions[i],shaderBuffer.paramLengths[i],bufferOffset);
+				}
+				++boolIndex;
+			} else if(i < boolCount + floatCount) {
+				floatRef = shaderBuffer.paramRefs_Float[floatIndex];
+				var _g4 = 0;
+				var _g5 = shaderBuffer.overrideFloatCount;
+				while(_g4 < _g5) {
+					var j1 = _g4++;
+					if(floatRef.name == shaderBuffer.overrideFloatNames[j1]) {
+						overrideFloatValue = shaderBuffer.overrideFloatValues[j1];
+						hasOverride = true;
+						break;
+					}
+				}
+				if(hasOverride) {
+					floatRef.__updateGL(this.__context,overrideFloatValue);
+				} else {
+					floatRef.__updateGLFromBuffer(this.__context,paramData,shaderBuffer.paramPositions[i],shaderBuffer.paramLengths[i],bufferOffset);
+				}
+				++floatIndex;
+			} else {
+				intRef = shaderBuffer.paramRefs_Int[intIndex];
+				var _g6 = 0;
+				var _g7 = shaderBuffer.overrideIntCount;
+				while(_g6 < _g7) {
+					var j2 = _g6++;
+					if(intRef.name == shaderBuffer.overrideIntNames[j2]) {
+						overrideIntValue = shaderBuffer.overrideIntValues[j2];
+						hasOverride = true;
+						break;
+					}
+				}
+				if(hasOverride) {
+					intRef.__updateGL(this.__context,overrideIntValue);
+				} else {
+					intRef.__updateGLFromBuffer(this.__context,paramData,shaderBuffer.paramPositions[i],shaderBuffer.paramLengths[i],bufferOffset);
+				}
+				++intIndex;
+			}
+		}
+	}
+	,get_data: function() {
+		if(this.__glSourceDirty || this.__data == null) {
+			this.__init();
+		}
+		return this.__data;
+	}
+	,set_data: function(value) {
+		return this.__data = value;
+	}
+	,get_glFragmentSource: function() {
+		return this.__glFragmentSource;
+	}
+	,set_glFragmentSource: function(value) {
+		if(value != this.__glFragmentSource) {
+			this.__glSourceDirty = true;
+		}
+		return this.__glFragmentSource = value;
+	}
+	,get_glVertexSource: function() {
+		return this.__glVertexSource;
+	}
+	,set_glVertexSource: function(value) {
+		if(value != this.__glVertexSource) {
+			this.__glSourceDirty = true;
+		}
+		return this.__glVertexSource = value;
+	}
+	,__class__: openfl_display_Shader
+	,__properties__: {set_glVertexSource:"set_glVertexSource",get_glVertexSource:"get_glVertexSource",set_glFragmentSource:"set_glFragmentSource",get_glFragmentSource:"get_glFragmentSource",set_data:"set_data",get_data:"get_data"}
+};
+var openfl_display_GraphicsShader = function(code) {
+	if(this.__glFragmentSource == null) {
+		this.__glFragmentSource = "varying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tvoid main(void) {\n\n\t\t\tvec4 color = texture2D (bitmap, openfl_TextureCoordv);\n\n\t\tif (color.a == 0.0) {\n\n\t\t\tgl_FragColor = vec4 (0.0, 0.0, 0.0, 0.0);\n\n\t\t} else if (openfl_HasColorTransform) {\n\n\t\t\tcolor = vec4 (color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4 (0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = 1.0; // openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp (openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0) {\n\n\t\t\t\tgl_FragColor = vec4 (color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\n\t\t\t} else {\n\n\t\t\t\tgl_FragColor = vec4 (0.0, 0.0, 0.0, 0.0);\n\n\t\t\t}\n\n\t\t} else {\n\n\t\t\tgl_FragColor = color * openfl_Alphav;\n\n\t\t}\n\n\t\t}";
+	}
+	if(this.__glVertexSource == null) {
+		this.__glVertexSource = "attribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\tvoid main(void) {\n\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t}";
+	}
+	openfl_display_Shader.call(this,code);
+	this.__isGenerated = true;
+	this.__initGL();
+};
+$hxClasses["openfl.display.GraphicsShader"] = openfl_display_GraphicsShader;
+openfl_display_GraphicsShader.__name__ = "openfl.display.GraphicsShader";
+openfl_display_GraphicsShader.__super__ = openfl_display_Shader;
+openfl_display_GraphicsShader.prototype = $extend(openfl_display_Shader.prototype,{
+	openfl_Alpha: null
+	,openfl_ColorMultiplier: null
+	,openfl_ColorOffset: null
+	,openfl_Position: null
+	,openfl_TextureCoord: null
+	,openfl_Matrix: null
+	,openfl_HasColorTransform: null
+	,openfl_TextureSize: null
+	,bitmap: null
+	,__class__: openfl_display_GraphicsShader
+});
+var flixel_graphics_tile_FlxGraphicsShader = function() {
+	if(this.__glFragmentSource == null) {
+		this.__glFragmentSource = "\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\tgl_FragColor = flixel_texture2D(bitmap, openfl_TextureCoordv);\n\t\t}";
+	}
+	if(this.__glVertexSource == null) {
+		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\t\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\t\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\t\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
+	}
+	openfl_display_GraphicsShader.call(this);
+	this.__isGenerated = true;
+	this.__initGL();
+};
+$hxClasses["flixel.graphics.tile.FlxGraphicsShader"] = flixel_graphics_tile_FlxGraphicsShader;
+flixel_graphics_tile_FlxGraphicsShader.__name__ = "flixel.graphics.tile.FlxGraphicsShader";
+flixel_graphics_tile_FlxGraphicsShader.__super__ = openfl_display_GraphicsShader;
+flixel_graphics_tile_FlxGraphicsShader.prototype = $extend(openfl_display_GraphicsShader.prototype,{
+	alpha: null
+	,colorMultiplier: null
+	,colorOffset: null
+	,hasColorTransform: null
+	,hasTransform: null
+	,__class__: flixel_graphics_tile_FlxGraphicsShader
+});
 var WiggleShader = function() {
 	if(this.__glFragmentSource == null) {
 		this.__glFragmentSource = "\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\n\t\t//uniform float tx, ty; // x,y waves phase\n\t\tuniform float uTime;\n\t\t\n\t\tconst int EFFECT_TYPE_DREAMY = 0;\n\t\tconst int EFFECT_TYPE_WAVY = 1;\n\t\tconst int EFFECT_TYPE_HEAT_WAVE_HORIZONTAL = 2;\n\t\tconst int EFFECT_TYPE_HEAT_WAVE_VERTICAL = 3;\n\t\tconst int EFFECT_TYPE_FLAG = 4;\n\t\t\n\t\tuniform int effectType;\n\t\t\n\t\t/**\n\t\t * How fast the waves move over time\n\t\t */\n\t\tuniform float uSpeed;\n\t\t\n\t\t/**\n\t\t * Number of waves over time\n\t\t */\n\t\tuniform float uFrequency;\n\t\t\n\t\t/**\n\t\t * How much the pixels are going to stretch over the waves\n\t\t */\n\t\tuniform float uWaveAmplitude;\n\n\t\tvec2 sineWave(vec2 pt)\n\t\t{\n\t\t\tfloat x = 0.0;\n\t\t\tfloat y = 0.0;\n\t\t\t\n\t\t\tif (effectType == EFFECT_TYPE_DREAMY) \n\t\t\t{\n\t\t\t\tfloat offsetX = sin(pt.y * uFrequency + uTime * uSpeed) * uWaveAmplitude;\n                pt.x += offsetX; // * (pt.y - 1.0); // <- Uncomment to stop bottom part of the screen from moving\n\t\t\t}\n\t\t\telse if (effectType == EFFECT_TYPE_WAVY) \n\t\t\t{\n\t\t\t\tfloat offsetY = sin(pt.x * uFrequency + uTime * uSpeed) * uWaveAmplitude;\n\t\t\t\tpt.y += offsetY; // * (pt.y - 1.0); // <- Uncomment to stop bottom part of the screen from moving\n\t\t\t}\n\t\t\telse if (effectType == EFFECT_TYPE_HEAT_WAVE_HORIZONTAL)\n\t\t\t{\n\t\t\t\tx = sin(pt.x * uFrequency + uTime * uSpeed) * uWaveAmplitude;\n\t\t\t}\n\t\t\telse if (effectType == EFFECT_TYPE_HEAT_WAVE_VERTICAL)\n\t\t\t{\n\t\t\t\ty = sin(pt.y * uFrequency + uTime * uSpeed) * uWaveAmplitude;\n\t\t\t}\n\t\t\telse if (effectType == EFFECT_TYPE_FLAG)\n\t\t\t{\n\t\t\t\ty = sin(pt.y * uFrequency + 10.0 * pt.x + uTime * uSpeed) * uWaveAmplitude;\n\t\t\t\tx = sin(pt.x * uFrequency + 5.0 * pt.y + uTime * uSpeed) * uWaveAmplitude;\n\t\t\t}\n\t\t\t\n\t\t\treturn vec2(pt.x + x, pt.y + y);\n\t\t}\n\n\t\tvoid main()\n\t\t{\n\t\t\tvec2 uv = sineWave(openfl_TextureCoordv);\n\t\t\tgl_FragColor = texture2D(bitmap, uv);\n\t\t}";
@@ -77119,6 +76960,379 @@ dge_obj_mobile_ToggleButton.prototype = $extend(dge_obj_mobile_VirtualButton.pro
 	,__class__: dge_obj_mobile_ToggleButton
 	,__properties__: $extend(dge_obj_mobile_VirtualButton.prototype.__properties__,{set_enable:"set_enable"})
 });
+var dge_shaders_ColorInvert = function() {
+	this.shader = new dge_shaders_ColorInvertShader();
+	this.set_invertR(true);
+	this.set_invertG(true);
+	this.set_invertB(true);
+};
+$hxClasses["dge.shaders.ColorInvert"] = dge_shaders_ColorInvert;
+dge_shaders_ColorInvert.__name__ = "dge.shaders.ColorInvert";
+dge_shaders_ColorInvert.prototype = {
+	shader: null
+	,invertR: null
+	,invertG: null
+	,invertB: null
+	,set_invertR: function(value) {
+		if(this.invertR != value) {
+			this.invertR = value;
+			this.shader.invertR.value = [value];
+		}
+		return value;
+	}
+	,set_invertG: function(value) {
+		if(this.invertG != value) {
+			this.invertG = value;
+			this.shader.invertG.value = [value];
+		}
+		return value;
+	}
+	,set_invertB: function(value) {
+		if(this.invertB != value) {
+			this.invertB = value;
+			this.shader.invertB.value = [value];
+		}
+		return value;
+	}
+	,__class__: dge_shaders_ColorInvert
+	,__properties__: {set_invertB:"set_invertB",set_invertG:"set_invertG",set_invertR:"set_invertR"}
+};
+var dge_shaders_ColorInvertShader = function() {
+	if(this.__glFragmentSource == null) {
+		this.__glFragmentSource = "\r\n    varying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\r\n    uniform bool invertR;\r\n    uniform bool invertG;\r\n    uniform bool invertB;\r\n    \r\n    void main() {\r\n        vec4 color = flixel_texture2D(bitmap, openfl_TextureCoordv);\r\n        //idk why without this(*= color.a). it turn transparent into white\r\n        if (invertR) {    \r\n            color.r = (1.0 - color.r) * color.a;\r\n        }\r\n        if (invertG) {\r\n            color.g = (1.0 - color.g) * color.a;\r\n        }\r\n        if (invertB) {\r\n            color.b = (1.0 - color.b) * color.a;\r\n        }\r\n        gl_FragColor = vec4(color.r, color.g, color.b, color.a);\r\n    }\r\n    ";
+	}
+	if(this.__glVertexSource == null) {
+		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\t\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\t\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\t\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
+	}
+	flixel_graphics_tile_FlxGraphicsShader.call(this);
+	this.__isGenerated = true;
+	this.__initGL();
+};
+$hxClasses["dge.shaders.ColorInvertShader"] = dge_shaders_ColorInvertShader;
+dge_shaders_ColorInvertShader.__name__ = "dge.shaders.ColorInvertShader";
+dge_shaders_ColorInvertShader.__super__ = flixel_graphics_tile_FlxGraphicsShader;
+dge_shaders_ColorInvertShader.prototype = $extend(flixel_graphics_tile_FlxGraphicsShader.prototype,{
+	invertR: null
+	,invertG: null
+	,invertB: null
+	,__class__: dge_shaders_ColorInvertShader
+});
+var dge_shaders_ColorRGBSwap = function() {
+	this.swapB = -1;
+	this.swapG = -1;
+	this.swapR = -1;
+	this.shader = new dge_shaders_ColorRGBSwapShader();
+	this.set_swapR(0);
+	this.set_swapG(1);
+	this.set_swapB(2);
+};
+$hxClasses["dge.shaders.ColorRGBSwap"] = dge_shaders_ColorRGBSwap;
+dge_shaders_ColorRGBSwap.__name__ = "dge.shaders.ColorRGBSwap";
+dge_shaders_ColorRGBSwap.prototype = {
+	shader: null
+	,swapR: null
+	,swapG: null
+	,swapB: null
+	,set_swapR: function(value) {
+		if(this.swapR != value) {
+			if(value < 0 || value > 2) {
+				value = 0;
+			}
+			this.swapR = value;
+			this.shader.swapR.value = [value];
+		}
+		return value;
+	}
+	,set_swapG: function(value) {
+		if(this.swapG != value) {
+			if(value < 0 || value > 2) {
+				value = 1;
+			}
+			this.swapG = value;
+			this.shader.swapG.value = [value];
+		}
+		return value;
+	}
+	,set_swapB: function(value) {
+		if(this.swapB != value) {
+			if(value < 0 || value > 2) {
+				value = 2;
+			}
+			this.swapB = value;
+			this.shader.swapB.value = [value];
+		}
+		return value;
+	}
+	,__class__: dge_shaders_ColorRGBSwap
+	,__properties__: {set_swapB:"set_swapB",set_swapG:"set_swapG",set_swapR:"set_swapR"}
+};
+var dge_shaders_ColorRGBSwapShader = function() {
+	if(this.__glFragmentSource == null) {
+		this.__glFragmentSource = "\r\n    varying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\r\n    uniform int swapR;\r\n    uniform int swapG;\r\n    uniform int swapB;\r\n    float rgbSwap(int index, vec4 color) {\r\n        float channels[3];\r\n        channels[0] = color.r;\r\n        channels[1] = color.g;\r\n        channels[2] = color.b;\r\n        return channels[index];\r\n    }\r\n    void main() {\r\n        vec4 color = flixel_texture2D(bitmap, openfl_TextureCoordv);\r\n        gl_FragColor = vec4(rgbSwap(swapR, color), rgbSwap(swapG, color), rgbSwap(swapB, color), color.a);\r\n    }\r\n    ";
+	}
+	if(this.__glVertexSource == null) {
+		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\t\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\t\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\t\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
+	}
+	flixel_graphics_tile_FlxGraphicsShader.call(this);
+	this.__isGenerated = true;
+	this.__initGL();
+};
+$hxClasses["dge.shaders.ColorRGBSwapShader"] = dge_shaders_ColorRGBSwapShader;
+dge_shaders_ColorRGBSwapShader.__name__ = "dge.shaders.ColorRGBSwapShader";
+dge_shaders_ColorRGBSwapShader.__super__ = flixel_graphics_tile_FlxGraphicsShader;
+dge_shaders_ColorRGBSwapShader.prototype = $extend(flixel_graphics_tile_FlxGraphicsShader.prototype,{
+	swapR: null
+	,swapG: null
+	,swapB: null
+	,__class__: dge_shaders_ColorRGBSwapShader
+});
+var dge_shaders_ColorSingle = function() {
+	this.shader = new dge_shaders_ColorSingleShader();
+	this.set_r(1.0);
+	this.set_g(1.0);
+	this.set_b(1.0);
+};
+$hxClasses["dge.shaders.ColorSingle"] = dge_shaders_ColorSingle;
+dge_shaders_ColorSingle.__name__ = "dge.shaders.ColorSingle";
+dge_shaders_ColorSingle.prototype = {
+	shader: null
+	,r: null
+	,g: null
+	,b: null
+	,set_r: function(value) {
+		if(this.r != value) {
+			this.r = value;
+			this.shader.r.value = [value];
+		}
+		return value;
+	}
+	,set_g: function(value) {
+		if(this.g != value) {
+			this.g = value;
+			this.shader.g.value = [value];
+		}
+		return value;
+	}
+	,set_b: function(value) {
+		if(this.b != value) {
+			this.b = value;
+			this.shader.b.value = [value];
+		}
+		return value;
+	}
+	,__class__: dge_shaders_ColorSingle
+	,__properties__: {set_b:"set_b",set_g:"set_g",set_r:"set_r"}
+};
+var dge_shaders_ColorSingleShader = function() {
+	if(this.__glFragmentSource == null) {
+		this.__glFragmentSource = "\r\n    varying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\r\n    uniform float r;\r\n    uniform float g;\r\n    uniform float b;\r\n    \r\n    //cuz without this everyhing turn square\r\n    void main() {\r\n        vec4 color = flixel_texture2D(bitmap, openfl_TextureCoordv);\r\n        \r\n        gl_FragColor = vec4(r*color.a, g*color.a, b*color.a, color.a);\r\n    }\r\n    ";
+	}
+	if(this.__glVertexSource == null) {
+		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\t\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\t\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\t\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
+	}
+	flixel_graphics_tile_FlxGraphicsShader.call(this);
+	this.__isGenerated = true;
+	this.__initGL();
+};
+$hxClasses["dge.shaders.ColorSingleShader"] = dge_shaders_ColorSingleShader;
+dge_shaders_ColorSingleShader.__name__ = "dge.shaders.ColorSingleShader";
+dge_shaders_ColorSingleShader.__super__ = flixel_graphics_tile_FlxGraphicsShader;
+dge_shaders_ColorSingleShader.prototype = $extend(flixel_graphics_tile_FlxGraphicsShader.prototype,{
+	r: null
+	,g: null
+	,b: null
+	,__class__: dge_shaders_ColorSingleShader
+});
+var dge_shaders_ColorSwap = function() {
+	this.brightness = 0;
+	this.saturation = 0;
+	this.hue = 0;
+	this.shader = new dge_shaders_ColorSwapShader();
+	this.shader.uTime.value = [0,0,0];
+	this.shader.awesomeOutline.value = [false];
+};
+$hxClasses["dge.shaders.ColorSwap"] = dge_shaders_ColorSwap;
+dge_shaders_ColorSwap.__name__ = "dge.shaders.ColorSwap";
+dge_shaders_ColorSwap.prototype = {
+	shader: null
+	,hue: null
+	,saturation: null
+	,brightness: null
+	,set_hue: function(value) {
+		this.hue = value;
+		this.shader.uTime.value[0] = this.hue;
+		return this.hue;
+	}
+	,set_saturation: function(value) {
+		this.saturation = value;
+		this.shader.uTime.value[1] = this.saturation;
+		return this.saturation;
+	}
+	,set_brightness: function(value) {
+		this.brightness = value;
+		this.shader.uTime.value[2] = this.brightness;
+		return this.brightness;
+	}
+	,__class__: dge_shaders_ColorSwap
+	,__properties__: {set_brightness:"set_brightness",set_saturation:"set_saturation",set_hue:"set_hue"}
+};
+var dge_shaders_ColorSwapShader = function() {
+	if(this.__glFragmentSource == null) {
+		this.__glFragmentSource = "\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\n\t\tuniform vec3 uTime;\n\t\tuniform bool awesomeOutline;\n\n\t\tconst float offset = 1.0 / 128.0;\n\t\tvec3 normalizeColor(vec3 color)\n\t\t{\n\t\t\treturn vec3(\n\t\t\t\tcolor[0] / 255.0,\n\t\t\t\tcolor[1] / 255.0,\n\t\t\t\tcolor[2] / 255.0\n\t\t\t);\n\t\t}\n\n\t\tvec3 rgb2hsv(vec3 c)\n\t\t{\n\t\t\tvec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\t\t\tvec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));\n\t\t\tvec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));\n\n\t\t\tfloat d = q.x - min(q.w, q.y);\n\t\t\tfloat e = 1.0e-10;\n\t\t\treturn vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);\n\t\t}\n\n\t\tvec3 hsv2rgb(vec3 c)\n\t\t{\n\t\t\tvec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);\n\t\t\tvec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);\n\t\t\treturn c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);\n\t\t}\n\n\t\tvoid main()\n\t\t{\n\t\t\tvec4 color = flixel_texture2D(bitmap, openfl_TextureCoordv);\n\n\t\t\tvec4 swagColor = vec4(rgb2hsv(vec3(color[0], color[1], color[2])), color[3]);\n\n\t\t\t// [0] is the hue???\n\t\t\tswagColor[0] = swagColor[0] + uTime[0];\n\t\t\tswagColor[1] = swagColor[1] + uTime[1];\n\t\t\tswagColor[2] = swagColor[2] * (1.0 + uTime[2]);\n\t\t\t\n\t\t\tif(swagColor[1] < 0.0)\n\t\t\t{\n\t\t\t\tswagColor[1] = 0.0;\n\t\t\t}\n\t\t\telse if(swagColor[1] > 1.0)\n\t\t\t{\n\t\t\t\tswagColor[1] = 1.0;\n\t\t\t}\n\n\t\t\tcolor = vec4(hsv2rgb(vec3(swagColor[0], swagColor[1], swagColor[2])), swagColor[3]);\n\n\t\t\tif (awesomeOutline)\n\t\t\t{\n\t\t\t\t // Outline bullshit?\n\t\t\t\tvec2 size = vec2(3, 3);\n\n\t\t\t\tif (color.a <= 0.5) {\n\t\t\t\t\tfloat w = size.x / openfl_TextureSize.x;\n\t\t\t\t\tfloat h = size.y / openfl_TextureSize.y;\n\t\t\t\t\t\n\t\t\t\t\tif (flixel_texture2D(bitmap, vec2(openfl_TextureCoordv.x + w, openfl_TextureCoordv.y)).a != 0.\n\t\t\t\t\t|| flixel_texture2D(bitmap, vec2(openfl_TextureCoordv.x - w, openfl_TextureCoordv.y)).a != 0.\n\t\t\t\t\t|| flixel_texture2D(bitmap, vec2(openfl_TextureCoordv.x, openfl_TextureCoordv.y + h)).a != 0.\n\t\t\t\t\t|| flixel_texture2D(bitmap, vec2(openfl_TextureCoordv.x, openfl_TextureCoordv.y - h)).a != 0.)\n\t\t\t\t\t\tcolor = vec4(1.0, 1.0, 1.0, 1.0);\n\t\t\t\t}\n\t\t\t}\n\t\t\tgl_FragColor = color;\n\n\t\t\t/* \n\t\t\tif (color.a > 0.5)\n\t\t\t\tgl_FragColor = color;\n\t\t\telse\n\t\t\t{\n\t\t\t\tfloat a = flixel_texture2D(bitmap, vec2(openfl_TextureCoordv + offset, openfl_TextureCoordv.y)).a +\n\t\t\t\t\t\t  flixel_texture2D(bitmap, vec2(openfl_TextureCoordv, openfl_TextureCoordv.y - offset)).a +\n\t\t\t\t\t\t  flixel_texture2D(bitmap, vec2(openfl_TextureCoordv - offset, openfl_TextureCoordv.y)).a +\n\t\t\t\t\t\t  flixel_texture2D(bitmap, vec2(openfl_TextureCoordv, openfl_TextureCoordv.y + offset)).a;\n\t\t\t\tif (color.a < 1.0 && a > 0.0)\n\t\t\t\t\tgl_FragColor = vec4(0.0, 0.0, 0.0, 0.8);\n\t\t\t\telse\n\t\t\t\t\tgl_FragColor = color;\n\t\t\t} */\n\t\t}";
+	}
+	if(this.__glVertexSource == null) {
+		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\t\tif (openfl_HasColorTransform) {\n\t\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\t\t\t}\n\n\t\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
+	}
+	flixel_graphics_tile_FlxGraphicsShader.call(this);
+	this.__isGenerated = true;
+	this.__initGL();
+};
+$hxClasses["dge.shaders.ColorSwapShader"] = dge_shaders_ColorSwapShader;
+dge_shaders_ColorSwapShader.__name__ = "dge.shaders.ColorSwapShader";
+dge_shaders_ColorSwapShader.__super__ = flixel_graphics_tile_FlxGraphicsShader;
+dge_shaders_ColorSwapShader.prototype = $extend(flixel_graphics_tile_FlxGraphicsShader.prototype,{
+	uTime: null
+	,awesomeOutline: null
+	,__class__: dge_shaders_ColorSwapShader
+});
+var dge_shaders_PixelSprite = function() {
+	this.pixelSize = 0;
+	this.shader = new dge_shaders_PixelSpriteShader();
+};
+$hxClasses["dge.shaders.PixelSprite"] = dge_shaders_PixelSprite;
+dge_shaders_PixelSprite.__name__ = "dge.shaders.PixelSprite";
+dge_shaders_PixelSprite.prototype = {
+	shader: null
+	,pixelSize: null
+	,set_pixelSize: function(value) {
+		if(this.pixelSize != value) {
+			value = Math.max(0,Math.min(value,1));
+			this.pixelSize = value;
+			this.shader.pixelSize.value = [value];
+		}
+		return value;
+	}
+	,__class__: dge_shaders_PixelSprite
+	,__properties__: {set_pixelSize:"set_pixelSize"}
+};
+var dge_shaders_PixelSpriteShader = function() {
+	if(this.__glFragmentSource == null) {
+		this.__glFragmentSource = "\r\n        varying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\r\n\r\n        uniform float pixelSize;\r\n\r\n        void main() {\r\n            vec2 uv = openfl_TextureCoordv;\r\n            if (pixelSize > 0.0) {\r\n                vec2 pixelUV = vec2(floor(uv.x / pixelSize) * pixelSize, floor(uv.y / pixelSize) * pixelSize);\r\n                gl_FragColor = flixel_texture2D(bitmap, pixelUV);\r\n            } else {\r\n                gl_FragColor = flixel_texture2D(bitmap, uv);\r\n            }\r\n        }\r\n    ";
+	}
+	if(this.__glVertexSource == null) {
+		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\t\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\t\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\t\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
+	}
+	flixel_graphics_tile_FlxGraphicsShader.call(this);
+	this.pixelSize.value = [0];
+	this.__isGenerated = true;
+	this.__initGL();
+};
+$hxClasses["dge.shaders.PixelSpriteShader"] = dge_shaders_PixelSpriteShader;
+dge_shaders_PixelSpriteShader.__name__ = "dge.shaders.PixelSpriteShader";
+dge_shaders_PixelSpriteShader.__super__ = flixel_graphics_tile_FlxGraphicsShader;
+dge_shaders_PixelSpriteShader.prototype = $extend(flixel_graphics_tile_FlxGraphicsShader.prototype,{
+	pixelSize: null
+	,__class__: dge_shaders_PixelSpriteShader
+});
+var dge_shaders_Posterize = function() {
+	this.posterizeRange = 0;
+	this.shader = new dge_shaders_PosterizeShader();
+};
+$hxClasses["dge.shaders.Posterize"] = dge_shaders_Posterize;
+dge_shaders_Posterize.__name__ = "dge.shaders.Posterize";
+dge_shaders_Posterize.prototype = {
+	shader: null
+	,posterizeRange: null
+	,set_posterizeRange: function(value) {
+		if(this.posterizeRange != value) {
+			value = Math.max(0,value);
+			this.posterizeRange = value;
+			this.shader.posterizeRange.value = [value];
+		}
+		return value;
+	}
+	,__class__: dge_shaders_Posterize
+	,__properties__: {set_posterizeRange:"set_posterizeRange"}
+};
+var dge_shaders_PosterizeShader = function() {
+	if(this.__glFragmentSource == null) {
+		this.__glFragmentSource = "\r\n        varying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\r\n\r\n        uniform float posterizeRange;\r\n\r\n        void main() {\r\n            vec4 color = flixel_texture2D(bitmap, openfl_TextureCoordv);\r\n            if (posterizeRange > 0.0) {\r\n                float r = floor(color.r * posterizeRange) / posterizeRange;\r\n                float g = floor(color.g * posterizeRange) / posterizeRange;\r\n                float b = floor(color.b * posterizeRange) / posterizeRange;\r\n                gl_FragColor = vec4(r, g, b, color.a);\r\n            } else {\r\n                //nothing change\r\n                gl_FragColor = vec4(color);\r\n            }\r\n        }\r\n    ";
+	}
+	if(this.__glVertexSource == null) {
+		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\t\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\t\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\t\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
+	}
+	flixel_graphics_tile_FlxGraphicsShader.call(this);
+	this.posterizeRange.value = [4.0];
+	this.__isGenerated = true;
+	this.__initGL();
+};
+$hxClasses["dge.shaders.PosterizeShader"] = dge_shaders_PosterizeShader;
+dge_shaders_PosterizeShader.__name__ = "dge.shaders.PosterizeShader";
+dge_shaders_PosterizeShader.__super__ = flixel_graphics_tile_FlxGraphicsShader;
+dge_shaders_PosterizeShader.prototype = $extend(flixel_graphics_tile_FlxGraphicsShader.prototype,{
+	posterizeRange: null
+	,__class__: dge_shaders_PosterizeShader
+});
+var dge_shaders_RGBPalette = function() {
+	this.shader = new dge_shaders_RGBPaletteShader();
+	this.set_r(-65536);
+	this.set_g(-16711936);
+	this.set_b(-16776961);
+	this.set_mult(1.0);
+};
+$hxClasses["dge.shaders.RGBPalette"] = dge_shaders_RGBPalette;
+dge_shaders_RGBPalette.__name__ = "dge.shaders.RGBPalette";
+dge_shaders_RGBPalette.prototype = {
+	shader: null
+	,r: null
+	,g: null
+	,b: null
+	,mult: null
+	,set_r: function(color) {
+		this.r = color;
+		this.shader.r.value = [(color >> 16 & 255) / 255,(color >> 8 & 255) / 255,(color & 255) / 255];
+		return color;
+	}
+	,set_g: function(color) {
+		this.g = color;
+		this.shader.g.value = [(color >> 16 & 255) / 255,(color >> 8 & 255) / 255,(color & 255) / 255];
+		return color;
+	}
+	,set_b: function(color) {
+		this.b = color;
+		this.shader.b.value = [(color >> 16 & 255) / 255,(color >> 8 & 255) / 255,(color & 255) / 255];
+		return color;
+	}
+	,set_mult: function(value) {
+		var lowerBound = value < 0 ? 0 : value;
+		this.mult = lowerBound > 1 ? 1 : lowerBound;
+		this.shader.mult.value = [this.mult];
+		return this.mult;
+	}
+	,__class__: dge_shaders_RGBPalette
+	,__properties__: {set_mult:"set_mult",set_b:"set_b",set_g:"set_g",set_r:"set_r"}
+};
+var dge_shaders_RGBPaletteShader = function() {
+	if(this.__glFragmentSource == null) {
+		this.__glFragmentSource = "\r\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\t\tuniform sampler2D bitmap;\n\n\t\tuniform bool hasTransform;\n\t\tuniform bool hasColorTransform;\n\n\t\tvec4 flixel_texture2D(sampler2D bitmap, vec2 coord)\n\t\t{\n\t\t\tvec4 color = texture2D(bitmap, coord);\n\t\t\tif (!hasTransform)\n\t\t\t{\n\t\t\t\treturn color;\n\t\t\t}\n\n\t\t\tif (color.a == 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t\t}\n\n\t\t\tif (!hasColorTransform)\n\t\t\t{\n\t\t\t\treturn color * openfl_Alphav;\n\t\t\t}\n\n\t\t\tcolor = vec4(color.rgb / color.a, color.a);\n\n\t\t\tmat4 colorMultiplier = mat4(0);\n\t\t\tcolorMultiplier[0][0] = openfl_ColorMultiplierv.x;\n\t\t\tcolorMultiplier[1][1] = openfl_ColorMultiplierv.y;\n\t\t\tcolorMultiplier[2][2] = openfl_ColorMultiplierv.z;\n\t\t\tcolorMultiplier[3][3] = openfl_ColorMultiplierv.w;\n\n\t\t\tcolor = clamp(openfl_ColorOffsetv + (color * colorMultiplier), 0.0, 1.0);\n\n\t\t\tif (color.a > 0.0)\n\t\t\t{\n\t\t\t\treturn vec4(color.rgb * color.a * openfl_Alphav, color.a * openfl_Alphav);\n\t\t\t}\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\n\t\t}\n\t\n\r\n\t\t#pragma header\r\n\t\t\r\n\t\tuniform vec3 r;\r\n\t\tuniform vec3 g;\r\n\t\tuniform vec3 b;\r\n\t\tuniform float mult;\r\n\r\n\t\tvec4 flixel_texture2DCustom(sampler2D bitmap, vec2 coord) {\r\n\t\t\tvec4 color = flixel_texture2D(bitmap, coord);\r\n\t\t\tif (!hasTransform || color.a == 0.0 || mult == 0.0) {\r\n\t\t\t\treturn color;\r\n\t\t\t}\r\n\r\n\t\t\tvec4 newColor = color;\r\n\t\t\tnewColor.rgb = min(color.r * r + color.g * g + color.b * b, vec3(1.0));\r\n\t\t\tnewColor.a = color.a;\r\n\t\t\t\r\n\t\t\tcolor = mix(color, newColor, mult);\r\n\t\t\t\r\n\t\t\tif(color.a > 0.0) {\r\n\t\t\t\treturn vec4(color.rgb, color.a);\r\n\t\t\t}\r\n\t\t\treturn vec4(0.0, 0.0, 0.0, 0.0);\r\n\t\t}\r\n\r\n\t\tvoid main() {\r\n\t\t\tgl_FragColor = flixel_texture2DCustom(bitmap, openfl_TextureCoordv);\r\n\t\t}";
+	}
+	if(this.__glVertexSource == null) {
+		this.__glVertexSource = "\n\t\tattribute float openfl_Alpha;\n\t\tattribute vec4 openfl_ColorMultiplier;\n\t\tattribute vec4 openfl_ColorOffset;\n\t\tattribute vec4 openfl_Position;\n\t\tattribute vec2 openfl_TextureCoord;\n\n\t\tvarying float openfl_Alphav;\n\t\tvarying vec4 openfl_ColorMultiplierv;\n\t\tvarying vec4 openfl_ColorOffsetv;\n\t\tvarying vec2 openfl_TextureCoordv;\n\n\t\tuniform mat4 openfl_Matrix;\n\t\tuniform bool openfl_HasColorTransform;\n\t\tuniform vec2 openfl_TextureSize;\n\n\t\t\n\t\tattribute float alpha;\n\t\tattribute vec4 colorMultiplier;\n\t\tattribute vec4 colorOffset;\n\t\tuniform bool hasColorTransform;\n\t\t\n\t\tvoid main(void)\n\t\t{\n\t\t\topenfl_Alphav = openfl_Alpha;\n\t\topenfl_TextureCoordv = openfl_TextureCoord;\n\n\t\tif (openfl_HasColorTransform) {\n\n\t\t\topenfl_ColorMultiplierv = openfl_ColorMultiplier;\n\t\t\topenfl_ColorOffsetv = openfl_ColorOffset / 255.0;\n\n\t\t}\n\n\t\tgl_Position = openfl_Matrix * openfl_Position;\n\n\t\t\t\n\t\t\topenfl_Alphav = openfl_Alpha * alpha;\n\t\t\t\n\t\t\tif (hasColorTransform)\n\t\t\t{\n\t\t\t\topenfl_ColorOffsetv = colorOffset / 255.0;\n\t\t\t\topenfl_ColorMultiplierv = colorMultiplier;\n\t\t\t}\n\t\t}";
+	}
+	flixel_graphics_tile_FlxGraphicsShader.call(this);
+	this.__isGenerated = true;
+	this.__initGL();
+};
+$hxClasses["dge.shaders.RGBPaletteShader"] = dge_shaders_RGBPaletteShader;
+dge_shaders_RGBPaletteShader.__name__ = "dge.shaders.RGBPaletteShader";
+dge_shaders_RGBPaletteShader.__super__ = flixel_graphics_tile_FlxGraphicsShader;
+dge_shaders_RGBPaletteShader.prototype = $extend(flixel_graphics_tile_FlxGraphicsShader.prototype,{
+	r: null
+	,g: null
+	,b: null
+	,mult: null
+	,__class__: dge_shaders_RGBPaletteShader
+});
 var dge_states_ResultScreen = function(score,miss,rating,percent) {
 	this.toStoryMode = false;
 	var _gthis = this;
@@ -78398,7 +78612,7 @@ var editors_ChartingState = function(TransIn,TransOut) {
 	this.CAM_OFFSET = 360 + editors_ChartingState.GRID_SIZE * 4;
 	this.amountSteps = 0;
 	this.curSong = "Test";
-	this.eventStuff = [["","Nothing. Yep, that's right."],["Dadbattle Spotlight","Used in Dad Battle,\nValue 1: 0/1 = ON/OFF,\n2 = Target Dad\n3 = Target BF"],["Hey!","Plays the \"Hey!\" animation from Bopeebo,\nValue 1: BF = Only Boyfriend, GF = Only Girlfriend,\nSomething else = Both.\nValue 2: Custom animation duration,\nleave it blank for 0.6s"],["Set GF Speed","Sets GF head bopping speed,\nValue 1: 1 = Normal speed,\n2 = 1/2 speed, 4 = 1/4 speed etc.\nUsed on Fresh during the beatbox parts.\n\nWarning: Value must be integer!"],["Philly Glow","Exclusive to Week 3\nValue 1: 0/1/2 = OFF/ON/Reset Gradient\n \nNo, i won't add it to other weeks."],["Kill Henchmen","For Mom's songs, don't use this please, i love them :("],["Add Camera Zoom","Used on MILF on that one \"hard\" part\nValue 1: Camera zoom add (Default: 0.015)\nValue 2: UI zoom add (Default: 0.03)\nLeave the values blank if you want to use Default."],["BG Freaks Expression","Should be used only in \"school\" Stage!"],["Trigger BG Ghouls","Should be used only in \"schoolEvil\" Stage!"],["Play Animation","Plays an animation on a Character,\nonce the animation is completed,\nthe animation changes to Idle\n\nValue 1: Animation to play.\nValue 2: Character (Dad, BF, GF)"],["Camera Follow Pos","Value 1: X\nValue 2: Y\n\nThe camera won't change the follow point\nafter using this, for getting it back\nto normal, leave both values blank."],["Alt Idle Animation","Sets a specified suffix after the idle animation name.\nYou can use this to trigger 'idle-alt' if you set\nValue 2 to -alt\n\nValue 1: Character to set (Dad, BF or GF)\nValue 2: New suffix (Leave it blank to disable)"],["Screen Shake","Value 1: Camera shake\nValue 2: HUD shake\n\nEvery value works as the following example: \"1, 0.05\".\nThe first number (1) is the duration.\nThe second number (0.05) is the intensity."],["Change Character","Value 1: Character to change (Dad, BF, GF)\nValue 2: New character's name"],["Change Scroll Speed","Value 1: Scroll Speed Multiplier (1 is default)\nValue 2: Time it takes to change fully in seconds."],["Set Property","Value 1: Variable name\nValue 2: New value"],["Change Gamemode","Value 1: Name of gamemode to change.\nValue 2: transition(1 = true 0 = false)"],["Change Second Strums","Value 1: should use 2nd strums mode(1 = true 0 = false).\nValue 2: transition(1 is true 0 is false)\n\nexample: \"1, 0\". the first number(1) is a transition for\nplayer side. The second number(0) is a disable\nopponent strums transition"],["Alert","Value1: content of alert.\nValue2: title of alert."]];
+	this.eventStuff = [["","Nothing. Yep, that's right."],["Dadbattle Spotlight","Used in Dad Battle,\nValue 1: 0/1 = ON/OFF,\n2 = Target Dad\n3 = Target BF"],["Hey!","Plays the \"Hey!\" animation from Bopeebo,\nValue 1: BF = Only Boyfriend, GF = Only Girlfriend,\nSomething else = Both.\nValue 2: Custom animation duration,\nleave it blank for 0.6s"],["Set GF Speed","Sets GF head bopping speed,\nValue 1: 1 = Normal speed,\n2 = 1/2 speed, 4 = 1/4 speed etc.\nUsed on Fresh during the beatbox parts.\n\nWarning: Value must be integer!"],["Philly Glow","Exclusive to Week 3\nValue 1: 0/1/2 = OFF/ON/Reset Gradient\n \nNo, i won't add it to other weeks."],["Kill Henchmen","For Mom's songs, don't use this please, i love them :("],["Add Camera Zoom","Used on MILF on that one \"hard\" part\nValue 1: Camera zoom add (Default: 0.015)\nValue 2: UI zoom add (Default: 0.03)\nLeave the values blank if you want to use Default."],["BG Freaks Expression","Should be used only in \"school\" Stage!"],["Trigger BG Ghouls","Should be used only in \"schoolEvil\" Stage!"],["Play Animation","Plays an animation on a Character,\nonce the animation is completed,\nthe animation changes to Idle\n\nValue 1: Animation to play.\nValue 2: Character (Dad, BF, GF)"],["Camera Follow Pos","Value 1: X\nValue 2: Y\n\nThe camera won't change the follow point\nafter using this, for getting it back\nto normal, leave both values blank."],["Alt Idle Animation","Sets a specified suffix after the idle animation name.\nYou can use this to trigger 'idle-alt' if you set\nValue 2 to -alt\n\nValue 1: Character to set (Dad, BF or GF)\nValue 2: New suffix (Leave it blank to disable)"],["Screen Shake","Value 1: Camera shake\nValue 2: HUD shake\n\nEvery value works as the following example: \"1, 0.05\".\nThe first number (1) is the duration.\nThe second number (0.05) is the intensity."],["Change Character","Value 1: Character to change (Dad, BF, GF)\nValue 2: New character's name"],["Change Scroll Speed","Value 1: Scroll Speed Multiplier (1 is default)\nValue 2: Time it takes to change fully in seconds."],["Set Property","Value 1: Variable name\nValue 2: New value"],["Change Gamemode","Value 1: Name of gamemode to change.\nValue 2: transition(1 = true 0 = false)"],["Change Second Strums","Value 1: should use 2nd strums mode(1 = true 0 = false).\nValue 2: transition(1 is true 0 is false)\n\nexample: \"1, 0\". the first number(1) is a transition for\nplayer side. The second number(0) is a disable\nopponent strums transition"],["Alert","Value1: content of alert.\nValue2: title of alert."],["Freeze Note","Freeze the notes on the screen for a duration.\nValue 1: Duration in seconds(Default 1).\nValue 2: Should destroy after freeze (1 = true 0 = false)\n(default 1)."]];
 	this.redos = [];
 	this.undos = [];
 	this.ignoreWarnings = false;
@@ -79831,12 +80045,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 					var increase = 1 / snap;
 					if(flixel_FlxG.mouse.wheel > 0) {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 34, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap - increase;
 						flixel_FlxG.sound.music.set_time(Conductor.beatToSeconds(fuck));
 					} else {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 34, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap + increase;
 						flixel_FlxG.sound.music.set_time(Conductor.beatToSeconds(fuck));
 					}
@@ -79899,12 +80113,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 					var _this = flixel_FlxG.keys.pressed;
 					if(_this.keyManager.checkStatusUnsafe(38,_this.status)) {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 34, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap - increase;
 						flixel_FlxG.sound.music.set_time(Conductor.beatToSeconds(fuck));
 					} else {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 34, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap + increase;
 						flixel_FlxG.sound.music.set_time(Conductor.beatToSeconds(fuck));
 					}
@@ -79981,12 +80195,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 					var _this = flixel_FlxG.keys.pressed;
 					if(_this.keyManager.checkStatusUnsafe(38,_this.status)) {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 34, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap - increase;
 						feces = Conductor.beatToSeconds(fuck);
 					} else {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 34, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap + increase;
 						feces = Conductor.beatToSeconds(fuck);
 					}
@@ -80117,74 +80331,6 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.zoomTxt.set_y(this.bpmTxt.y - (this.zoomTxt.get_height() + 10));
 		var playedSound = [false,false,false,false];
 		if(editors_ChartingState.curSec > 0) {
-			this.prevRenderedNotes.forEachAlive(function(note) {
-				note.set_alpha(1);
-				if(_gthis.curSelectedNote != null) {
-					var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
-					var noteDataToCheck = actualNoteData;
-					if(_gthis.curSelectedNote[0] == note.strumTime && (_gthis.curSelectedNote[2] == null && noteDataToCheck < 0 || _gthis.curSelectedNote[2] != null && _gthis.curSelectedNote[1] == noteDataToCheck)) {
-						_gthis.colorSine += elapsed;
-						var colorVal = 0.7 + Math.sin(Math.PI * _gthis.colorSine) * 0.3;
-						var Alpha = 0.999;
-						if(Alpha == null) {
-							Alpha = 1;
-						}
-						var color = flixel_util_FlxColor._new();
-						var Alpha1 = Alpha;
-						if(Alpha1 == null) {
-							Alpha1 = 1;
-						}
-						var Value = Math.round(colorVal * 255);
-						color &= -16711681;
-						color |= (Value > 255 ? 255 : Value < 0 ? 0 : Value) << 16;
-						var Value = Math.round(colorVal * 255);
-						color &= -65281;
-						color |= (Value > 255 ? 255 : Value < 0 ? 0 : Value) << 8;
-						var Value = Math.round(colorVal * 255);
-						color &= -256;
-						color |= Value > 255 ? 255 : Value < 0 ? 0 : Value;
-						var Value = Math.round(Alpha1 * 255);
-						color &= 16777215;
-						color |= (Value > 255 ? 255 : Value < 0 ? 0 : Value) << 24;
-						note.set_color(color);
-					}
-				}
-				if(note.strumTime <= Conductor.songPosition) {
-					note.set_alpha(0.4);
-					if(note.strumTime > _gthis.lastConductorPos && flixel_FlxG.sound.music._channel != null && note.noteData > -1) {
-						var data = note.noteData % 4;
-						var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
-						var noteDataToCheck = actualNoteData;
-						if(!note.ignoreNote) {
-							if(!note.noAnimation) {
-								if(!note.mustPress) {
-									_gthis.optChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
-								} else {
-									_gthis.plyChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
-								}
-							}
-							if(note.playStrumAnim && !note.fakeNoHit) {
-								_gthis.strumLineNotes.members[noteDataToCheck].playAnim(note.animConfirm.length == 0 ? "confirm" : note.animConfirm,true);
-								_gthis.strumLineNotes.members[noteDataToCheck].resetAnim = 0.15;
-							}
-							if(!playedSound[data]) {
-								if((_gthis.playSoundBf.checked && note.mustPress || _gthis.playSoundDad.checked && !note.mustPress) && !note.hitsoundDisabled || note.forceHitsound) {
-									var soundToPlay = note.hitsound;
-									if(_gthis._song.player1 == "gf") {
-										soundToPlay = "GF_" + Std.string(data + 1);
-									}
-									flixel_FlxG.sound.play(Paths.sound(soundToPlay))._transform.pan = note.noteData < 4 ? -0.3 : 0.3;
-									playedSound[data] = true;
-								}
-								data = note.noteData;
-								if(note.mustPress != _gthis._song.notes[editors_ChartingState.curSec - 1].mustHitSection) {
-									data += 4;
-								}
-							}
-						}
-					}
-				}
-			});
 			this.prevRenderedSustains.forEachAlive(function(note) {
 				note.set_alpha(1);
 				if(_gthis.curSelectedNote != null) {
@@ -80223,7 +80369,75 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 						var data = note.noteData % 4;
 						var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
 						var noteDataToCheck = actualNoteData;
-						if(!note.ignoreNote) {
+						if(!note.ignoreNote && !note.canFreeze) {
+							if(!note.noAnimation) {
+								if(!note.mustPress) {
+									_gthis.optChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
+								} else {
+									_gthis.plyChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
+								}
+							}
+							if(note.playStrumAnim && !note.fakeNoHit) {
+								_gthis.strumLineNotes.members[noteDataToCheck].playAnim(note.animConfirm.length == 0 ? "confirm" : note.animConfirm,true);
+								_gthis.strumLineNotes.members[noteDataToCheck].resetAnim = 0.15;
+							}
+							if(!playedSound[data]) {
+								if((_gthis.playSoundBf.checked && note.mustPress || _gthis.playSoundDad.checked && !note.mustPress) && !note.hitsoundDisabled || note.forceHitsound) {
+									var soundToPlay = note.hitsound;
+									if(_gthis._song.player1 == "gf") {
+										soundToPlay = "GF_" + Std.string(data + 1);
+									}
+									flixel_FlxG.sound.play(Paths.sound(soundToPlay))._transform.pan = note.noteData < 4 ? -0.3 : 0.3;
+									playedSound[data] = true;
+								}
+								data = note.noteData;
+								if(note.mustPress != _gthis._song.notes[editors_ChartingState.curSec - 1].mustHitSection) {
+									data += 4;
+								}
+							}
+						}
+					}
+				}
+			});
+			this.prevRenderedNotes.forEachAlive(function(note) {
+				note.set_alpha(1);
+				if(_gthis.curSelectedNote != null) {
+					var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
+					var noteDataToCheck = actualNoteData;
+					if(_gthis.curSelectedNote[0] == note.strumTime && (_gthis.curSelectedNote[2] == null && noteDataToCheck < 0 || _gthis.curSelectedNote[2] != null && _gthis.curSelectedNote[1] == noteDataToCheck)) {
+						_gthis.colorSine += elapsed;
+						var colorVal = 0.7 + Math.sin(Math.PI * _gthis.colorSine) * 0.3;
+						var Alpha = 0.999;
+						if(Alpha == null) {
+							Alpha = 1;
+						}
+						var color = flixel_util_FlxColor._new();
+						var Alpha1 = Alpha;
+						if(Alpha1 == null) {
+							Alpha1 = 1;
+						}
+						var Value = Math.round(colorVal * 255);
+						color &= -16711681;
+						color |= (Value > 255 ? 255 : Value < 0 ? 0 : Value) << 16;
+						var Value = Math.round(colorVal * 255);
+						color &= -65281;
+						color |= (Value > 255 ? 255 : Value < 0 ? 0 : Value) << 8;
+						var Value = Math.round(colorVal * 255);
+						color &= -256;
+						color |= Value > 255 ? 255 : Value < 0 ? 0 : Value;
+						var Value = Math.round(Alpha1 * 255);
+						color &= 16777215;
+						color |= (Value > 255 ? 255 : Value < 0 ? 0 : Value) << 24;
+						note.set_color(color);
+					}
+				}
+				if(note.strumTime <= Conductor.songPosition) {
+					note.set_alpha(0.4);
+					if(note.strumTime > _gthis.lastConductorPos && flixel_FlxG.sound.music._channel != null && note.noteData > -1) {
+						var data = note.noteData % 4;
+						var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
+						var noteDataToCheck = actualNoteData;
+						if(!note.ignoreNote && !note.canFreeze) {
 							if(!note.noAnimation) {
 								if(!note.mustPress) {
 									_gthis.optChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
@@ -80254,74 +80468,6 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 				}
 			});
 		}
-		this.curRenderedNotes.forEachAlive(function(note) {
-			note.set_alpha(1);
-			if(_gthis.curSelectedNote != null) {
-				var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
-				var noteDataToCheck = actualNoteData;
-				if(_gthis.curSelectedNote[0] == note.strumTime && (_gthis.curSelectedNote[2] == null && noteDataToCheck < 0 || _gthis.curSelectedNote[2] != null && _gthis.curSelectedNote[1] == noteDataToCheck)) {
-					_gthis.colorSine += elapsed;
-					var colorVal = 0.7 + Math.sin(Math.PI * _gthis.colorSine) * 0.3;
-					var Alpha = 0.999;
-					if(Alpha == null) {
-						Alpha = 1;
-					}
-					var color = flixel_util_FlxColor._new();
-					var Alpha1 = Alpha;
-					if(Alpha1 == null) {
-						Alpha1 = 1;
-					}
-					var Value = Math.round(colorVal * 255);
-					color &= -16711681;
-					color |= (Value > 255 ? 255 : Value < 0 ? 0 : Value) << 16;
-					var Value = Math.round(colorVal * 255);
-					color &= -65281;
-					color |= (Value > 255 ? 255 : Value < 0 ? 0 : Value) << 8;
-					var Value = Math.round(colorVal * 255);
-					color &= -256;
-					color |= Value > 255 ? 255 : Value < 0 ? 0 : Value;
-					var Value = Math.round(Alpha1 * 255);
-					color &= 16777215;
-					color |= (Value > 255 ? 255 : Value < 0 ? 0 : Value) << 24;
-					note.set_color(color);
-				}
-			}
-			if(note.strumTime <= Conductor.songPosition) {
-				note.set_alpha(0.4);
-				if(note.strumTime > _gthis.lastConductorPos && flixel_FlxG.sound.music._channel != null && note.noteData > -1) {
-					var data = note.noteData % 4;
-					var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
-					var noteDataToCheck = actualNoteData;
-					if(!note.ignoreNote) {
-						if(!note.noAnimation) {
-							if(!note.mustPress) {
-								_gthis.optChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
-							} else {
-								_gthis.plyChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
-							}
-						}
-						if(note.playStrumAnim && !note.fakeNoHit) {
-							_gthis.strumLineNotes.members[noteDataToCheck].playAnim(note.animConfirm.length == 0 ? "confirm" : note.animConfirm,true);
-							_gthis.strumLineNotes.members[noteDataToCheck].resetAnim = 0.15;
-						}
-						if(!playedSound[data]) {
-							if((_gthis.playSoundBf.checked && note.mustPress || _gthis.playSoundDad.checked && !note.mustPress) && !note.hitsoundDisabled || note.forceHitsound) {
-								var soundToPlay = note.hitsound;
-								if(_gthis._song.player1 == "gf") {
-									soundToPlay = "GF_" + Std.string(data + 1);
-								}
-								flixel_FlxG.sound.play(Paths.sound(soundToPlay))._transform.pan = note.noteData < 4 ? -0.3 : 0.3;
-								playedSound[data] = true;
-							}
-							data = note.noteData;
-							if(note.mustPress != _gthis._song.notes[editors_ChartingState.curSec].mustHitSection) {
-								data += 4;
-							}
-						}
-					}
-				}
-			}
-		});
 		this.curRenderedSustains.forEachAlive(function(note) {
 			note.set_alpha(1);
 			if(_gthis.curSelectedNote != null) {
@@ -80360,7 +80506,75 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 					var data = note.noteData % 4;
 					var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
 					var noteDataToCheck = actualNoteData;
-					if(!note.ignoreNote) {
+					if(!note.ignoreNote && !note.canFreeze) {
+						if(!note.noAnimation) {
+							if(!note.mustPress) {
+								_gthis.optChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
+							} else {
+								_gthis.plyChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
+							}
+						}
+						if(note.playStrumAnim && !note.fakeNoHit) {
+							_gthis.strumLineNotes.members[noteDataToCheck].playAnim(note.animConfirm.length == 0 ? "confirm" : note.animConfirm,true);
+							_gthis.strumLineNotes.members[noteDataToCheck].resetAnim = 0.15;
+						}
+						if(!playedSound[data]) {
+							if((_gthis.playSoundBf.checked && note.mustPress || _gthis.playSoundDad.checked && !note.mustPress) && !note.hitsoundDisabled || note.forceHitsound) {
+								var soundToPlay = note.hitsound;
+								if(_gthis._song.player1 == "gf") {
+									soundToPlay = "GF_" + Std.string(data + 1);
+								}
+								flixel_FlxG.sound.play(Paths.sound(soundToPlay))._transform.pan = note.noteData < 4 ? -0.3 : 0.3;
+								playedSound[data] = true;
+							}
+							data = note.noteData;
+							if(note.mustPress != _gthis._song.notes[editors_ChartingState.curSec].mustHitSection) {
+								data += 4;
+							}
+						}
+					}
+				}
+			}
+		});
+		this.curRenderedNotes.forEachAlive(function(note) {
+			note.set_alpha(1);
+			if(_gthis.curSelectedNote != null) {
+				var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
+				var noteDataToCheck = actualNoteData;
+				if(_gthis.curSelectedNote[0] == note.strumTime && (_gthis.curSelectedNote[2] == null && noteDataToCheck < 0 || _gthis.curSelectedNote[2] != null && _gthis.curSelectedNote[1] == noteDataToCheck)) {
+					_gthis.colorSine += elapsed;
+					var colorVal = 0.7 + Math.sin(Math.PI * _gthis.colorSine) * 0.3;
+					var Alpha = 0.999;
+					if(Alpha == null) {
+						Alpha = 1;
+					}
+					var color = flixel_util_FlxColor._new();
+					var Alpha1 = Alpha;
+					if(Alpha1 == null) {
+						Alpha1 = 1;
+					}
+					var Value = Math.round(colorVal * 255);
+					color &= -16711681;
+					color |= (Value > 255 ? 255 : Value < 0 ? 0 : Value) << 16;
+					var Value = Math.round(colorVal * 255);
+					color &= -65281;
+					color |= (Value > 255 ? 255 : Value < 0 ? 0 : Value) << 8;
+					var Value = Math.round(colorVal * 255);
+					color &= -256;
+					color |= Value > 255 ? 255 : Value < 0 ? 0 : Value;
+					var Value = Math.round(Alpha1 * 255);
+					color &= 16777215;
+					color |= (Value > 255 ? 255 : Value < 0 ? 0 : Value) << 24;
+					note.set_color(color);
+				}
+			}
+			if(note.strumTime <= Conductor.songPosition) {
+				note.set_alpha(0.4);
+				if(note.strumTime > _gthis.lastConductorPos && flixel_FlxG.sound.music._channel != null && note.noteData > -1) {
+					var data = note.noteData % 4;
+					var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
+					var noteDataToCheck = actualNoteData;
+					if(!note.ignoreNote && !note.canFreeze) {
 						if(!note.noAnimation) {
 							if(!note.mustPress) {
 								_gthis.optChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
@@ -80920,7 +81134,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 				note.eventVal1 = i[1][0][1];
 				note.eventVal2 = i[1][0][2];
 			}
-			note.noteData = -1;
+			note.set_noteData(-1);
 			daNoteInfo = -1;
 		}
 		note.setGraphicSize(editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE);
@@ -81030,6 +81244,9 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this._song.notes.push(sec);
 	}
 	,selectNote: function(note) {
+		if(note.isSustainNote) {
+			return;
+		}
 		var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
 		var noteDataToCheck = actualNoteData;
 		if(noteDataToCheck > -1) {
@@ -81061,9 +81278,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.updateNoteUI();
 	}
 	,deleteNote: function(note) {
+		if(note.isSustainNote) {
+			return;
+		}
 		var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
 		var noteDataToCheck = actualNoteData;
-		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3351, className : "editors.ChartingState", methodName : "deleteNote"});
+		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3353, className : "editors.ChartingState", methodName : "deleteNote"});
 		if(note.noteData > -1) {
 			var _g = 0;
 			var _g1 = this._song.notes[editors_ChartingState.curSec].sectionNotes;
@@ -81128,7 +81348,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var noteStrum = this.getStrumTime(this.dummyArrow.y * (this.getSectionBeats() / 4),false) + this.sectionStartTime();
 		var noteData = Math.floor((pos - editors_ChartingState.GRID_SIZE) / editors_ChartingState.GRID_SIZE);
-		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3423, className : "editors.ChartingState", methodName : "addNote"});
+		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3425, className : "editors.ChartingState", methodName : "addNote"});
 		var noteSus = 0;
 		var daAlt = false;
 		var daType = this.currentType;
@@ -81214,17 +81434,23 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 				var songData = Song.loadFromJson(song.toLowerCase(),song.toLowerCase());
 				if(songData != null) {
 					PlayState.SONG = songData;
+				} else {
+					return;
 				}
 			} else {
 				var songData = Song.loadFromJson(song.toLowerCase() + "-" + CoolUtil.difficulties[PlayState.storyDifficulty],song.toLowerCase());
 				if(songData != null) {
 					PlayState.SONG = songData;
+				} else {
+					return;
 				}
 			}
 		} else {
 			var songData = Song.loadFromJson(song.toLowerCase(),song.toLowerCase());
 			if(songData != null) {
 				PlayState.SONG = songData;
+			} else {
+				return;
 			}
 		}
 		MusicBeatState.resetState();
@@ -83371,7 +83597,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 								}
 								daNote.set_y(daNote.y + (Note.swagWidth / 2 - 60.5 * (PlayState.SONG.speed - 1)));
 								daNote.set_y(daNote.y + 27.5 * (PlayState.SONG.bpm / 100 - 1) * (PlayState.SONG.speed - 1));
-								if(daNote.mustPress || !daNote.ignoreNote) {
+								if(daNote.mustPress || !daNote.ignoreNote && !daNote.canFreeze) {
 									if(daNote.y - daNote.offset.y * daNote.scale.y + daNote.get_height() >= center && (!daNote.mustPress || (daNote.wasGoodHit || daNote.prevNote.wasGoodHit && !daNote.canBeHit))) {
 										var swagRect = new flixel_math_FlxRect(0,0,daNote.frameWidth,daNote.frameHeight);
 										swagRect.height = (center - daNote.y) / daNote.scale.y;
@@ -83382,7 +83608,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 							}
 						} else {
 							daNote.set_y(strumY - 0.45 * (Conductor.songPosition - (daNote.strumTime + daNote.offsetStrumTime)) * PlayState.SONG.speed);
-							if(daNote.mustPress || !daNote.ignoreNote) {
+							if(daNote.mustPress || !daNote.ignoreNote && !daNote.canFreeze) {
 								if(daNote.isSustainNote && daNote.y + daNote.offset.y * daNote.scale.y <= center && (!daNote.mustPress || (daNote.wasGoodHit || daNote.prevNote.wasGoodHit && !daNote.canBeHit))) {
 									var swagRect = new flixel_math_FlxRect(0,0,daNote.get_width() / daNote.scale.x,daNote.get_height() / daNote.scale.y);
 									swagRect.y = (center - daNote.y) / daNote.scale.y;
@@ -83398,7 +83624,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 				if(daNote.copyFlipY) {
 					daNote.set_flipY(ClientPrefs.downScroll);
 				}
-				if(!daNote.mustPress && daNote.canBeHit && !daNote.hitByOpponent && !daNote.ignoreNote) {
+				if(!daNote.mustPress && daNote.canBeHit && !daNote.hitByOpponent && (!daNote.ignoreNote && !daNote.canFreeze)) {
 					var time = 0.15;
 					if(daNote.isSustainNote) {
 						if(PlayState.SONG.needsVoices) {
@@ -83436,7 +83662,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 							}
 						});
 						if(daNote.tooLate || !daNote.wasGoodHit) {
-							if(!daNote.ignoreNote) {
+							if(!daNote.ignoreNote && !daNote.canFreeze) {
 								_gthis.songMisses++;
 								_gthis.vocals.set_volume(0);
 							}
@@ -163458,7 +163684,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 692794;
+	this.version = 147417;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -212948,7 +213174,7 @@ var options_BaseOptionsMenu = function() {
 	titleText.set_scaleY(0.6);
 	titleText.set_alpha(0.4);
 	this.add(titleText);
-	this.descText = new flixel_text_FlxText(50,600,1180,"",32);
+	this.descText = new flixel_text_FlxText(50,600,flixel_FlxG.width * 0.85 | 0,"",32);
 	this.descText.setFormat("assets/fonts/" + "vcr.ttf",32,-1,"center",flixel_text_FlxTextBorderStyle.OUTLINE,-16777216);
 	this.descText.scrollFactor.set();
 	this.descText.set_borderSize(2.4);
@@ -214769,7 +214995,7 @@ var options_NotesSubState = function() {
 		note.animation.play("idle");
 		note.set_antialiasing(ClientPrefs.globalAntialiasing);
 		this.grpNotes.add(note);
-		var newShader = new ColorSwap();
+		var newShader = new dge_shaders_ColorSwap();
 		note.shader = newShader.shader;
 		newShader.set_hue(ClientPrefs.arrowHSV[i][0] / 360);
 		newShader.set_saturation(ClientPrefs.arrowHSV[i][1] / 100);
@@ -215431,6 +215657,8 @@ var options_dge_MiscSubState = function() {
 		}
 	};
 	this.addOption(option);
+	var option = new options_Option("Classic Spawn Note","If Checked It Will Use Classic Note Spawn.(Might Reduce Lag)","classicNoteSpawn","bool",false);
+	this.addOption(option);
 	options_BaseOptionsMenu.call(this);
 	this.changeBGColor(-65536);
 };
@@ -215446,7 +215674,7 @@ options_dge_MiscSubState.prototype = $extend(options_BaseOptionsMenu.prototype,{
 		flixel_FlxG.autoPause = ClientPrefs.autopause;
 	}
 	,onChangeNoteSkin: function() {
-		haxe_Log.trace("'" + ClientPrefs.dflnoteskin + "'",{ fileName : "source/options/dge/MiscSubState.hx", lineNumber : 144, className : "options.dge.MiscSubState", methodName : "onChangeNoteSkin"});
+		haxe_Log.trace("'" + ClientPrefs.dflnoteskin + "'",{ fileName : "source/options/dge/MiscSubState.hx", lineNumber : 151, className : "options.dge.MiscSubState", methodName : "onChangeNoteSkin"});
 		var _g = 0;
 		var _g1 = this.spriteNote.length;
 		while(_g < _g1) {
@@ -215569,6 +215797,13 @@ var options_dge_VisualUISubState = function() {
 		option.decimals = 2;
 		this.addOption(option);
 	}
+	var option = new options_Option("Pause BG Transparency","How much transparent should the Pause Background.","pauseBGAlpha","percent",0.6);
+	option.scrollSpeed = 1.6;
+	option.minValue = 0.0;
+	option.maxValue = 1;
+	option.changeValue = 0.01;
+	option.decimals = 2;
+	this.addOption(option);
 	options_BaseOptionsMenu.call(this);
 	this.changeBGColor(-65536);
 };
@@ -216285,6 +216520,8 @@ openfl_display_DisplayObject.__tempStack = new lime_utils_ObjectPool(function() 
 	stack.set_length(0);
 });
 Character.DEFAULT_CHARACTER = "bf";
+ClientPrefs.pauseBGAlpha = 0.6;
+ClientPrefs.classicNoteSpawn = false;
 ClientPrefs.fpsFontSize = 14;
 ClientPrefs.minEditorJson = false;
 ClientPrefs.useResultScr = false;
@@ -216408,7 +216645,6 @@ ClientPrefs.keyBinds = (function($this) {
 	return $r;
 }(this));
 ClientPrefs.defaultKeys = null;
-openfl_display_Shader.__meta__ = { fields : { glProgram : { SuppressWarnings : ["checkstyle:Dynamic"]}}};
 Conductor.bpm = 100;
 Conductor.crochet = 60 / Conductor.bpm * 1000;
 Conductor.stepCrochet = Conductor.crochet / 4;
@@ -216510,6 +216746,7 @@ TitleState.playJingle = false;
 TitleState.closedState = false;
 WeekData.weeksLoaded = new haxe_ds_StringMap();
 WeekData.weeksList = [];
+openfl_display_Shader.__meta__ = { fields : { glProgram : { SuppressWarnings : ["checkstyle:Dynamic"]}}};
 Xml.Element = 0;
 Xml.PCData = 1;
 Xml.CData = 2;
@@ -216554,7 +216791,7 @@ flixel_ui_FlxButton.PRESSED = 2;
 dge_obj_mobile_FlxButton.NORMAL = 0;
 dge_obj_mobile_FlxButton.HIGHLIGHT = 1;
 dge_obj_mobile_FlxButton.PRESSED = 2;
-editors_ChartingState.noteTypeList = ["","Alt Animation","Hey!","Hurt Note","GF Sing","No Animation","GF Sing Force Opponent","Auto Press","GF Sing Auto Press","Flip Scroll","Fake No Hit","Snap Note","Snap Note X","Snap Note Y","Multi Press","Down Scroll","Up Scroll"];
+editors_ChartingState.noteTypeList = ["","Alt Animation","Hey!","Hurt Note","GF Sing","No Animation","GF Sing Force Opponent","Auto Press","GF Sing Auto Press","Flip Scroll","Fake No Hit","Snap Note","Snap Note X","Snap Note Y","Multi Press","Down Scroll","Up Scroll","Freeze Note"];
 editors_ChartingState.goToPlayState = false;
 editors_ChartingState.curSec = 0;
 editors_ChartingState.lastSection = 0;
