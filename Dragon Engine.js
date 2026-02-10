@@ -6557,12 +6557,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "309";
+	app.meta.h["build"] = "310";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.2.0";
+	app.meta.h["version"] = "26.2.1";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -9909,6 +9909,8 @@ ClientPrefs.loadDefaultKeys = function() {
 	ClientPrefs.defaultKeys = haxe_ds_StringMap.createCopy(ClientPrefs.keyBinds.h);
 };
 ClientPrefs.saveSettings = function() {
+	flixel_FlxG.save.data.noteMechanic = ClientPrefs.noteMechanic;
+	flixel_FlxG.save.data.modchart = ClientPrefs.modchart;
 	flixel_FlxG.save.data.pauseBGAlpha = ClientPrefs.pauseBGAlpha;
 	flixel_FlxG.save.data.classicNoteSpawn = ClientPrefs.classicNoteSpawn;
 	flixel_FlxG.save.data.fpsFontSize = ClientPrefs.fpsFontSize;
@@ -9982,6 +9984,12 @@ ClientPrefs.saveSettings = function() {
 ClientPrefs.loadPrefs = function() {
 	if(flixel_FlxG.save.data.downScroll != null) {
 		ClientPrefs.downScroll = flixel_FlxG.save.data.downScroll;
+	}
+	if(flixel_FlxG.save.data.noteMechanic != null) {
+		ClientPrefs.noteMechanic = flixel_FlxG.save.data.noteMechanic;
+	}
+	if(flixel_FlxG.save.data.modchart != null) {
+		ClientPrefs.modchart = flixel_FlxG.save.data.modchart;
 	}
 	if(flixel_FlxG.save.data.pauseBGAlpha != null) {
 		ClientPrefs.pauseBGAlpha = flixel_FlxG.save.data.pauseBGAlpha;
@@ -51919,7 +51927,7 @@ FunkinLua.prototype = {
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3685, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3687, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -56723,14 +56731,6 @@ GameplayChangersSubstate.prototype = $extend(MusicBeatSubstate.prototype,{
 		option.maxValue = 1000000000;
 		option.scrollSpeed = 10;
 		this.optionsArray.push(option);
-		var option = new GameplayOption("Disable Lua Song","disableLuaSong","bool",false);
-		this.optionsArray.push(option);
-		var option = new GameplayOption("Disable Lua Script","disableLuaScript","bool",false);
-		this.optionsArray.push(option);
-		var option = new GameplayOption("Disable Lua Stage","disableLuaStage","bool",false);
-		this.optionsArray.push(option);
-		var option = new GameplayOption("Disable Lua Event","disableLuaEvent","bool",false);
-		this.optionsArray.push(option);
 		var option = new GameplayOption("Randomized Note Placement","randomNote","bool",false);
 		this.optionsArray.push(option);
 	}
@@ -58779,6 +58779,7 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	}
 	this.originalHeightForCalcs = 6;
 	this.lastNoteScaleToo = 1;
+	this.mechanicNote = false;
 	this.canFreeze = false;
 	this.snapAlpha = 0;
 	this.snapAngle = 0;
@@ -59097,6 +59098,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	,snapAngle: null
 	,snapAlpha: null
 	,canFreeze: null
+	,mechanicNote: null
 	,set_y: function(value) {
 		if(!this.inEditor && this.snapY > 0) {
 			var dist = value - this.y;
@@ -60737,6 +60739,11 @@ var PlayState = function(TransIn,TransOut) {
 	this.boyfriendIdled = false;
 	this.boyfriendIdleTime = 0.0;
 	this.keysPressed = [];
+	this.strumPointMiddle = 0.5;
+	this.strumPointPlayer = 0.75;
+	this.strumPointOpponent = 0.25;
+	this.timeBarName = "timeBar";
+	this.healthBarName = "healthBar";
 	this.limitCamZoom = false;
 	this.camGameMult = Math.max(flixel_FlxG.width / 1280,flixel_FlxG.height / 720);
 	this.cacheRating = new haxe_ds_StringMap();
@@ -60818,6 +60825,7 @@ var PlayState = function(TransIn,TransOut) {
 	this.customToggleMap = new haxe_ds_StringMap();
 	this.customButtonMap = new haxe_ds_StringMap();
 	this.freezeNoteTimer = new haxe_ds_StringMap();
+	this.customCameraZoomMap = new haxe_ds_StringMap();
 	this.customCameraMap = new haxe_ds_StringMap();
 	this.noteSplashGroupMap = new haxe_ds_StringMap();
 	this.notesGroupMap = new haxe_ds_StringMap();
@@ -60868,6 +60876,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,notesGroupMap: null
 	,noteSplashGroupMap: null
 	,customCameraMap: null
+	,customCameraZoomMap: null
 	,ratingGroup: null
 	,comboGroup: null
 	,numRatingGroup: null
@@ -61023,6 +61032,11 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,cacheRating: null
 	,camGameMult: null
 	,limitCamZoom: null
+	,healthBarName: null
+	,timeBarName: null
+	,strumPointOpponent: null
+	,strumPointPlayer: null
+	,strumPointMiddle: null
 	,keysPressed: null
 	,boyfriendIdleTime: null
 	,boyfriendIdled: null
@@ -61642,7 +61656,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.timeTxt.set_text(PlayState.SONG.song);
 		}
 		this.updateTime = showTime;
-		this.timeBarBG = new AttachedSprite("timeBar");
+		this.timeBarBG = new AttachedSprite(this.timeBarName);
 		this.timeBarBG.set_x(this.timeTxt.x);
 		this.timeBarBG.set_y(this.timeTxt.y + this.timeTxt.get_height() / 4);
 		this.timeBarBG.scrollFactor.set();
@@ -61769,7 +61783,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		_this.height = Height;
 		flixel_FlxG.fixedTimestep = false;
 		this.moveCameraSection();
-		this.healthBarBG = new AttachedSprite("healthBar");
+		this.healthBarBG = new AttachedSprite(this.healthBarName);
 		this.healthBarBG.set_y(flixel_FlxG.height * 0.89);
 		var _this = this.healthBarBG;
 		var axes = flixel_util_FlxAxes.X;
@@ -62096,7 +62110,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.playbackRate = value;
 		flixel_animation_FlxAnimationController.globalSpeed = value;
-		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1678, className : "PlayState", methodName : "set_playbackRate"});
+		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1686, className : "PlayState", methodName : "set_playbackRate"});
 		Conductor.safeZoneOffset = ClientPrefs.safeFrames / 60 * 1000 * value;
 		this.setOnLuas("playbackRate",this.playbackRate);
 		return value;
@@ -63179,7 +63193,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 					var susLength = swagNote.sustainLength;
 					susLength /= Conductor.stepCrochet;
-					this.unspawnNotes.push(swagNote);
+					if(ClientPrefs.noteMechanic && swagNote.mechanicNote || !swagNote.mechanicNote) {
+						this.unspawnNotes.push(swagNote);
+					}
 					var floorSus = Math.floor(susLength);
 					if(floorSus > 0) {
 						var _g5 = 0;
@@ -63197,8 +63213,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							if(this.modcharttype == "random direction scroll ") {
 								sustainNote.direction = swagNote.direction;
 							}
-							swagNote.tail.push(sustainNote);
-							this.unspawnNotes.push(sustainNote);
+							if(ClientPrefs.noteMechanic && sustainNote.mechanicNote || !sustainNote.mechanicNote) {
+								swagNote.tail.push(sustainNote);
+								this.unspawnNotes.push(sustainNote);
+							}
 							if(sustainNote != null) {
 								if(sustainNote.mustPress) {
 									sustainNote.set_x(sustainNote.x + flixel_FlxG.width / 2);
@@ -63211,16 +63229,18 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							}
 						}
 					}
-					if(swagNote.mustPress) {
-						swagNote.set_x(swagNote.x + flixel_FlxG.width / 2);
-					} else if(ClientPrefs.middleScroll) {
-						swagNote.set_x(swagNote.x + 310);
-						if(daNoteData > 1) {
-							swagNote.set_x(swagNote.x + (flixel_FlxG.width / 2 + 25));
+					if(ClientPrefs.noteMechanic && swagNote.mechanicNote || !swagNote.mechanicNote) {
+						if(swagNote.mustPress) {
+							swagNote.set_x(swagNote.x + flixel_FlxG.width / 2);
+						} else if(ClientPrefs.middleScroll) {
+							swagNote.set_x(swagNote.x + 310);
+							if(daNoteData > 1) {
+								swagNote.set_x(swagNote.x + (flixel_FlxG.width / 2 + 25));
+							}
 						}
-					}
-					if(!Object.prototype.hasOwnProperty.call(this.noteTypeMap.h,swagNote.noteType)) {
-						this.noteTypeMap.h[swagNote.noteType] = true;
+						if(!Object.prototype.hasOwnProperty.call(this.noteTypeMap.h,swagNote.noteType)) {
+							this.noteTypeMap.h[swagNote.noteType] = true;
+						}
 					}
 				}
 			}
@@ -63410,7 +63430,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			var _g = 0;
 			while(_g < 4) {
 				var i = _g++;
-				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width / 2 : player == 1 ? flixel_FlxG.width * 0.75 : flixel_FlxG.width * 0.25) - Note.swagWidth * 2 + Note.swagWidth * i,this.strumLine.y,i,player);
+				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : player == 1 ? flixel_FlxG.width * this.strumPointPlayer : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * 2 + Note.swagWidth * i,this.strumLine.y,i,player);
 				if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 					babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 				}
@@ -63453,7 +63473,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var noteSize = Note.swagWidth * Math.min(0.75,0.7 * (flixel_FlxG.width / 1280));
 				var noteSizeSub = Note.swagWidth * Math.min(0.125,0.15 * (flixel_FlxG.width / 1280));
 				var number = -(noteSize * 4) + noteSize * i;
-				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width / 2 : flixel_FlxG.width * 0.25 + Note.swagWidth / 2) + number - noteSizeSub,this.strumLine.y,i,player,i > 3);
+				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent + Note.swagWidth / 2) + number - noteSizeSub,this.strumLine.y,i,player,i > 3);
 				babyArrow.downScroll = ClientPrefs.downScroll;
 				if(this.gamemode == "bothside") {
 					babyArrow.set_visible(false);
@@ -63491,7 +63511,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					continue;
 				}
 				var number = (PlayState.SONG.secOpt && this.gamemode == "bothside" ? -Note.swagWidth * 4 : -Note.swagWidth * 2) + Note.swagWidth * i;
-				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width / 2 : flixel_FlxG.width * 0.75) + number,this.strumLine.y,i,player,i > 3);
+				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) + number,this.strumLine.y,i,player,i > 3);
 				babyArrow.downScroll = ClientPrefs.downScroll;
 				if(!PlayState.isStoryMode && !this.skipArrowStartTween && t) {
 					babyArrow.set_alpha(0);
@@ -64039,10 +64059,23 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			flixel_FlxG.camera.set_zoom(a + Math.max(0,Math.min(1,1 - elapsed * 3.125 * this.camZoomingDecay * this.playbackRate)) * (flixel_FlxG.camera.zoom - a));
 			var a = this.defaultCamZoomHUD;
 			this.camHUD.set_zoom(a + Math.max(0,Math.min(1,1 - elapsed * 3.125 * this.camZoomingDecay * this.playbackRate)) * (this.camHUD.zoom - a));
+			var h = this.customCameraZoomMap.h;
+			var cam_h = h;
+			var cam_keys = Object.keys(h);
+			var cam_length = cam_keys.length;
+			var cam_current = 0;
+			while(cam_current < cam_length) {
+				var cam = cam_keys[cam_current++];
+				if(Object.prototype.hasOwnProperty.call(this.customCameraMap.h,cam)) {
+					var camera = this.customCameraMap.h[cam];
+					var targetZoom = this.customCameraZoomMap.h[cam];
+					camera.set_zoom(targetZoom + Math.max(0,Math.min(1,1 - elapsed * 3.125 * this.camZoomingDecay * this.playbackRate)) * (camera.zoom - targetZoom));
+				}
+			}
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3641, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3663, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
@@ -64057,11 +64090,15 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				}
 				while(this.unspawnNotes.length > 0 && this.unspawnNotes[0].strumTime + this.unspawnNotes[0].offsetStrumTime - Conductor.songPosition < time && (ClientPrefs.limitSpawn ? this.notes.length < ClientPrefs.limitSpawnNotes : true)) {
 					var dunceNote = this.unspawnNotes[0];
-					this.notes.insert(0,dunceNote);
-					dunceNote.spawned = true;
-					this.callOnLuas("onSpawnNote",[this.notes.members.indexOf(dunceNote),dunceNote.noteData,dunceNote.noteType,dunceNote.isSustainNote]);
-					var index = this.unspawnNotes.indexOf(dunceNote);
-					this.unspawnNotes.splice(index,1);
+					if(ClientPrefs.noteMechanic && this.unspawnNotes[0].mechanicNote || !this.unspawnNotes[0].mechanicNote) {
+						this.notes.insert(0,dunceNote);
+						dunceNote.spawned = true;
+						this.callOnLuas("onSpawnNote",[this.notes.members.indexOf(dunceNote),dunceNote.noteData,dunceNote.noteType,dunceNote.isSustainNote]);
+						var index = this.unspawnNotes.indexOf(dunceNote);
+						this.unspawnNotes.splice(index,1);
+					} else {
+						this.destroyNote(dunceNote);
+					}
 				}
 			}
 		} else {
@@ -64076,11 +64113,15 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 					if(this.unspawnNotes.length > 0 && this.unspawnNotes[noteCount].strumTime + this.unspawnNotes[noteCount].offsetStrumTime - Conductor.songPosition < time && (ClientPrefs.limitSpawn ? this.notes.length < ClientPrefs.limitSpawnNotes : true)) {
 						var dunceNote = this.unspawnNotes[noteCount];
-						this.notes.insert(0,dunceNote);
-						dunceNote.spawned = true;
-						this.callOnLuas("onSpawnNote",[this.notes.members.indexOf(dunceNote),dunceNote.noteData,dunceNote.noteType,dunceNote.isSustainNote]);
-						var index = this.unspawnNotes.indexOf(dunceNote);
-						this.unspawnNotes.splice(index,1);
+						if(ClientPrefs.noteMechanic && this.unspawnNotes[noteCount].mechanicNote || !this.unspawnNotes[noteCount].mechanicNote) {
+							this.notes.insert(0,dunceNote);
+							dunceNote.spawned = true;
+							this.callOnLuas("onSpawnNote",[this.notes.members.indexOf(dunceNote),dunceNote.noteData,dunceNote.noteType,dunceNote.isSustainNote]);
+							var index = this.unspawnNotes.indexOf(dunceNote);
+							this.unspawnNotes.splice(index,1);
+						} else {
+							this.destroyNote(dunceNote);
+						}
 					}
 				}
 				--noteCount;
@@ -65459,12 +65500,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4737, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4769, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4738, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4770, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -65500,7 +65541,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 4771, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 4803, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -65511,7 +65552,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4782, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4814, className : "PlayState", methodName : "endSong"});
 				WeekData.loadTheFirstEnabledMod();
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
@@ -65535,7 +65576,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4806, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4838, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -66835,6 +66876,18 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			fh.set_zoom(fh.zoom + 0.015 * this.camZoomingMult);
 			var fh = this.camHUD;
 			fh.set_zoom(fh.zoom + 0.03 * this.camZoomingMult);
+			var h = this.customCameraZoomMap.h;
+			var cam_h = h;
+			var cam_keys = Object.keys(h);
+			var cam_length = cam_keys.length;
+			var cam_current = 0;
+			while(cam_current < cam_length) {
+				var cam = cam_keys[cam_current++];
+				if(Object.prototype.hasOwnProperty.call(this.customCameraMap.h,cam)) {
+					var camTarget = this.customCameraMap.h[cam];
+					camTarget.set_zoom(camTarget.zoom + 0.015 * this.camZoomingMult);
+				}
+			}
 		}
 	}
 	,callOnLuas: function(event,args,ignoreStops,exclusions) {
@@ -67346,7 +67399,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.controlArray = ["NOTE_LEFT","NOTE_DOWN","NOTE_UP","NOTE_RIGHT"];
 		}
 	}
-	,addCamera: function(name,x,y,width,height,zoom) {
+	,addCamera: function(name,x,y,width,height,zoom,sectionZoom) {
+		if(sectionZoom == null) {
+			sectionZoom = false;
+		}
 		if(zoom == null) {
 			zoom = 1;
 		}
@@ -67360,8 +67416,11 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			flixel_FlxG.cameras.add(isTemp,false);
 			this.variables.h["camera:" + name] = isTemp;
 			this.customCameraMap.h[name] = isTemp;
+			if(sectionZoom) {
+				this.customCameraZoomMap.h[name] = zoom;
+			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6818, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6859, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -67376,12 +67435,18 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			if(Object.prototype.hasOwnProperty.call(_this.h,key)) {
 				delete(_this.h[key]);
 			}
+			if(Object.prototype.hasOwnProperty.call(this.customCameraZoomMap.h,name)) {
+				var _this = this.customCameraZoomMap;
+				if(Object.prototype.hasOwnProperty.call(_this.h,name)) {
+					delete(_this.h[name]);
+				}
+			}
 			var _this = this.customCameraMap;
 			if(Object.prototype.hasOwnProperty.call(_this.h,name)) {
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6828, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6872, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -68293,6 +68358,9 @@ Song.loadFromJson = function(jsonInput,folder) {
 	}
 	while(!StringTools.endsWith(rawJson,"}")) rawJson = HxOverrides.substr(rawJson,0,rawJson.length - 1);
 	var songJson = Song.parseJSONshit(rawJson);
+	if(songJson == null) {
+		return null;
+	}
 	if(jsonInput != "events") {
 		StageData.loadDirectory(songJson);
 	}
@@ -68307,7 +68375,7 @@ Song.parseJSONshit = function(rawJson) {
 	} catch( _g ) {
 		haxe_NativeStackTrace.lastError = _g;
 		var e = haxe_Exception.caught(_g).unwrap();
-		haxe_Log.trace("Error parsing JSON data. The file may be corrupted or improperly formatted.(" + Std.string(e) + ")",{ fileName : "source/Song.hx", lineNumber : 192, className : "Song", methodName : "parseJSONshit"});
+		haxe_Log.trace("Error parsing JSON data. The file may be corrupted or improperly formatted.(" + Std.string(e) + ")",{ fileName : "source/Song.hx", lineNumber : 193, className : "Song", methodName : "parseJSONshit"});
 	}
 	return null;
 };
@@ -68318,9 +68386,9 @@ Song.missingWarning = function(path) {
 	}
 	if(flixel_FlxG.random.float(0,100) < Chance) {
 		var msg = flixel_FlxG.random.getObject_String(Song.eggs);
-		haxe_Log.trace(msg + "(Json file not found: " + path + ").",{ fileName : "source/Song.hx", lineNumber : 203, className : "Song", methodName : "missingWarning"});
+		haxe_Log.trace(msg + "(Json file not found: " + path + ").",{ fileName : "source/Song.hx", lineNumber : 204, className : "Song", methodName : "missingWarning"});
 	} else {
-		haxe_Log.trace("Json file not found: " + path + ".",{ fileName : "source/Song.hx", lineNumber : 205, className : "Song", methodName : "missingWarning"});
+		haxe_Log.trace("Json file not found: " + path + ".",{ fileName : "source/Song.hx", lineNumber : 206, className : "Song", methodName : "missingWarning"});
 	}
 };
 Song.prototype = {
@@ -163684,7 +163752,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 147417;
+	this.version = 39536;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -215659,6 +215727,10 @@ var options_dge_MiscSubState = function() {
 	this.addOption(option);
 	var option = new options_Option("Classic Spawn Note","If Checked It Will Use Classic Note Spawn.(Might Reduce Lag)","classicNoteSpawn","bool",false);
 	this.addOption(option);
+	var option = new options_Option("Modchart","If Checked It Enabled Modchart.(For Mods)","modchart","bool",true);
+	this.addOption(option);
+	var option = new options_Option("Note Mechanic","If Checked It Enabled Note Mechanic.(For Mods)","noteMechanic","bool",true);
+	this.addOption(option);
 	options_BaseOptionsMenu.call(this);
 	this.changeBGColor(-65536);
 };
@@ -215674,7 +215746,7 @@ options_dge_MiscSubState.prototype = $extend(options_BaseOptionsMenu.prototype,{
 		flixel_FlxG.autoPause = ClientPrefs.autopause;
 	}
 	,onChangeNoteSkin: function() {
-		haxe_Log.trace("'" + ClientPrefs.dflnoteskin + "'",{ fileName : "source/options/dge/MiscSubState.hx", lineNumber : 151, className : "options.dge.MiscSubState", methodName : "onChangeNoteSkin"});
+		haxe_Log.trace("'" + ClientPrefs.dflnoteskin + "'",{ fileName : "source/options/dge/MiscSubState.hx", lineNumber : 165, className : "options.dge.MiscSubState", methodName : "onChangeNoteSkin"});
 		var _g = 0;
 		var _g1 = this.spriteNote.length;
 		while(_g < _g1) {
@@ -216520,6 +216592,8 @@ openfl_display_DisplayObject.__tempStack = new lime_utils_ObjectPool(function() 
 	stack.set_length(0);
 });
 Character.DEFAULT_CHARACTER = "bf";
+ClientPrefs.modchart = true;
+ClientPrefs.noteMechanic = true;
 ClientPrefs.pauseBGAlpha = 0.6;
 ClientPrefs.classicNoteSpawn = false;
 ClientPrefs.fpsFontSize = 14;
