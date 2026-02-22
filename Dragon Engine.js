@@ -6557,12 +6557,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "311";
+	app.meta.h["build"] = "312";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.2.2";
+	app.meta.h["version"] = "26.2.3";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -9469,6 +9469,7 @@ var Character = function(x,y,character,isPlayer) {
 	this.settingCharacterUp = true;
 	this.danceEveryNumBeats = 2;
 	this.danced = false;
+	this.classicAnim = ClientPrefs.classicAnim;
 	this.healthColorArray = [255,0,0];
 	this.originalFlipX = false;
 	this.noAntialiasing = false;
@@ -9642,6 +9643,7 @@ Character.prototype = $extend(flixel_FlxSprite.prototype,{
 	,noAntialiasing: null
 	,originalFlipX: null
 	,healthColorArray: null
+	,classicAnim: null
 	,update: function(elapsed) {
 		if(!this.debugMode && this.animation._curAnim != null) {
 			if(this.heyTimer > 0) {
@@ -9671,10 +9673,8 @@ Character.prototype = $extend(flixel_FlxSprite.prototype,{
 					this.playAnim(this.animation._curAnim.name,false,false,this.animation._curAnim.frames.length - 3);
 				}
 			}
-			if(!this.isPlayer) {
-				if(StringTools.startsWith(this.animation._curAnim.name,"sing")) {
-					this.holdTimer += elapsed;
-				}
+			if(StringTools.startsWith(this.animation._curAnim.name,"sing")) {
+				this.holdTimer += elapsed;
 			}
 			if(this.animation._curAnim.finished && this.animation._animations.h[this.animation._curAnim.name + "-loop"] != null) {
 				this.playAnim(this.animation._curAnim.name + "-loop");
@@ -9697,7 +9697,10 @@ Character.prototype = $extend(flixel_FlxSprite.prototype,{
 			}
 		}
 	}
-	,playAnim: function(AnimName,Force,Reversed,Frame) {
+	,playAnim: function(AnimName,Force,Reversed,Frame,isSustainNote) {
+		if(isSustainNote == null) {
+			isSustainNote = false;
+		}
 		if(Frame == null) {
 			Frame = 0;
 		}
@@ -9706,6 +9709,9 @@ Character.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 		if(Force == null) {
 			Force = false;
+		}
+		if(this.animation._curAnim != null && this.animation._curAnim.name == AnimName && isSustainNote && !this.classicAnim) {
+			return;
 		}
 		this.specialAnim = false;
 		this.animation.play(AnimName,Force,Reversed,Frame);
@@ -9909,6 +9915,7 @@ ClientPrefs.loadDefaultKeys = function() {
 	ClientPrefs.defaultKeys = haxe_ds_StringMap.createCopy(ClientPrefs.keyBinds.h);
 };
 ClientPrefs.saveSettings = function() {
+	flixel_FlxG.save.data.classicAnim = ClientPrefs.classicAnim;
 	flixel_FlxG.save.data.noteMechanic = ClientPrefs.noteMechanic;
 	flixel_FlxG.save.data.modchart = ClientPrefs.modchart;
 	flixel_FlxG.save.data.pauseBGAlpha = ClientPrefs.pauseBGAlpha;
@@ -9984,6 +9991,9 @@ ClientPrefs.saveSettings = function() {
 ClientPrefs.loadPrefs = function() {
 	if(flixel_FlxG.save.data.downScroll != null) {
 		ClientPrefs.downScroll = flixel_FlxG.save.data.downScroll;
+	}
+	if(flixel_FlxG.save.data.classicAnim != null) {
+		ClientPrefs.classicAnim = flixel_FlxG.save.data.classicAnim;
 	}
 	if(flixel_FlxG.save.data.noteMechanic != null) {
 		ClientPrefs.noteMechanic = flixel_FlxG.save.data.noteMechanic;
@@ -58066,12 +58076,25 @@ MainMenuState.prototype = $extend(MusicBeatState.prototype,{
 				ClientPrefs.saveSettings();
 			}
 		}
+		if(leDate.getDate() == 21 && leDate.getMonth() == 4) {
+			var achieveID = Achievements.getAchievementIndex("birthday");
+			if(!Achievements.isAchievementUnlocked(Achievements.achievementsStuff[achieveID][2])) {
+				Achievements.achievementsMap.h[Achievements.achievementsStuff[achieveID][2]] = true;
+				this.giveAchievementDev();
+				ClientPrefs.saveSettings();
+			}
+		}
 		MusicBeatState.prototype.create.call(this);
 	}
 	,giveAchievement: function() {
 		this.add(new AchievementObject("friday_night_play",this.camAchievement));
 		flixel_FlxG.sound.play(Paths.sound("confirmMenu"),0.7);
-		haxe_Log.trace("Giving achievement \"friday_night_play\"",{ fileName : "source/MainMenuState.hx", lineNumber : 179, className : "MainMenuState", methodName : "giveAchievement"});
+		haxe_Log.trace("Giving achievement \"friday_night_play\"",{ fileName : "source/MainMenuState.hx", lineNumber : 187, className : "MainMenuState", methodName : "giveAchievement"});
+	}
+	,giveAchievementDev: function() {
+		this.add(new AchievementObject("birthday",this.camAchievement));
+		flixel_FlxG.sound.play(Paths.sound("confirmMenu"),0.7);
+		haxe_Log.trace("Giving achievement \"birthday\"",{ fileName : "source/MainMenuState.hx", lineNumber : 192, className : "MainMenuState", methodName : "giveAchievementDev"});
 	}
 	,selectedSomethin: null
 	,update: function(elapsed) {
@@ -58837,6 +58860,7 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	}
 	this.originalHeightForCalcs = 6;
 	this.lastNoteScaleToo = 1;
+	this.resetTimeStrumAnim = 0;
 	this.secondOpponent = false;
 	this.mechanicNote = false;
 	this.canFreeze = false;
@@ -58949,11 +58973,7 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	if(parent != null) {
 		this.parent = parent;
 	}
-	this.mustPress = mustPress;
 	var gamemode = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"gamemode") ? ClientPrefs.gameplaySettings.h["gamemode"] : "none";
-	var skin = PlayState.SONG.splashSkin;
-	var skinOpt = PlayState.SONG.splashSkinOpt;
-	var skinSec = PlayState.SONG.splashSkinSec;
 	this.sustainTail = tail;
 	if(prevNote == null) {
 		prevNote = this;
@@ -59015,33 +59035,14 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	}
 	this.set_camTarget("hud");
 	this.set_hitsound("hitsound");
-	this.set_gfNote(gfSec);
-	this.set_noteType(noteType);
-	if(skin == null || skin.length < 1) {
-		skin = "noteSplashes";
-	}
-	if(skinOpt == null || skinOpt.length < 1) {
-		skinOpt = skin;
-	}
-	if(skinSec == null || skinSec.length < 1) {
-		if(skinOpt == null || skinOpt.length < 1) {
-			skinOpt = skin;
-		}
-		skinSec = skinOpt;
-	}
-	if(this.noteSplashTexture == null || this.noteSplashTexture.length < 1) {
-		if(mustPress) {
-			this.noteSplashTexture = skin;
-		} else if(this.gfNote) {
-			this.noteSplashTexture = skinSec;
-		} else {
-			this.noteSplashTexture = skinOpt;
-		}
-	}
 	if(PlayState.SONG.secOpt && gamemode != "bothside" && !mustPress) {
 		this.set_noteScale(0.75);
 		this.noteSplashScale = 0.75;
 	}
+	this.set_mustPress(mustPress);
+	this.set_gfNote(gfSec);
+	this.set_noteSplashTexture("");
+	this.set_noteType(noteType);
 };
 $hxClasses["Note"] = Note;
 Note.__name__ = "Note";
@@ -59159,6 +59160,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	,canFreeze: null
 	,mechanicNote: null
 	,secondOpponent: null
+	,resetTimeStrumAnim: null
 	,set_y: function(value) {
 		if(!this.inEditor && this.snapY > 0) {
 			var dist = value - this.y;
@@ -59257,7 +59259,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			case "Hurt Note":
 				this.ignoreNote = this.mustPress;
 				this.set_texture("HURTNOTE_assets");
-				this.noteSplashTexture = "HURTnoteSplashes";
+				this.set_noteSplashTexture("HURTnoteSplashes");
 				this.colorSwap.set_hue(0);
 				this.colorSwap.set_saturation(0);
 				this.colorSwap.set_brightness(0);
@@ -59395,18 +59397,32 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				this.set_frames(tmp);
 			} catch( _g ) {
 				haxe_NativeStackTrace.lastError = _g;
-				var key = ClientPrefs.dflnoteskin;
-				var library = null;
-				var tmp;
-				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
-					var returnAsset = Paths.returnGraphic(key,library);
-					var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-					dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
-					tmp = atlas;
-				} else {
-					tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+				try {
+					var key = ClientPrefs.dflnoteskin;
+					var library = null;
+					var tmp;
+					if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+						var returnAsset = Paths.returnGraphic(key,library);
+						var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+						dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+						tmp = atlas;
+					} else {
+						tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+					}
+					this.set_frames(tmp);
+				} catch( _g1 ) {
+					var library = null;
+					var tmp;
+					if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"NOTE_assets")) {
+						var returnAsset = Paths.returnGraphic("NOTE_assets",library);
+						var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "NOTE_assets" + ".xml","TEXT",library));
+						dge_backend_CacheTools.cacheAtlas.h["NOTE_assets"] = atlas;
+						tmp = atlas;
+					} else {
+						tmp = dge_backend_CacheTools.cacheAtlas.h["NOTE_assets"];
+					}
+					this.set_frames(tmp);
 				}
-				this.set_frames(tmp);
 			}
 			this.loadNoteAnims();
 			this.setGraphicSize(this.get_width() * ClientPrefs.strumsize | 0);
@@ -59481,39 +59497,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	,set_gfNote: function(value) {
 		if(this.gfNote != value) {
 			this.gfNote = value;
-			var lastScale = this.noteScale;
-			this.set_noteScale(1);
-			this.reloadNote("",this.texture);
-			this.set_noteScale(lastScale);
-			if(PlayState.SONG.secOpt && !this.mustPress) {
-				this.set_noteScale(0.75);
-			}
-			if(this.noteType != "Hurt Note") {
-				var skin = PlayState.SONG.splashSkin;
-				var skinOpt = PlayState.SONG.splashSkinOpt;
-				var skinSec = PlayState.SONG.splashSkinSec;
-				if(skin == null || skin.length < 1) {
-					skin = "noteSplashes";
-				}
-				if(skinOpt == null || skinOpt.length < 1) {
-					skinOpt = skin;
-				}
-				if(skinSec == null || skinSec.length < 1) {
-					if(skinOpt == null || skinOpt.length < 1) {
-						skinSec = skin;
-					} else {
-						skinSec = skinOpt;
-					}
-					skinSec = skinOpt;
-				}
-				if(this.noteSplashTexture == null || this.noteSplashTexture.length < 1) {
-					if(this.gfNote && !this.mustPress) {
-						this.noteSplashTexture = skinSec;
-					} else {
-						this.noteSplashTexture = skinOpt;
-					}
-				}
-			}
+			this.reloadNoteSkin();
 		}
 		return value;
 	}
@@ -59643,8 +59627,96 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 		return value;
 	}
+	,set_noteSplashTexture: function(value) {
+		if(this.noteSplashTexture != value) {
+			this.noteSplashTexture = value;
+			try {
+				if(value == null || value.length < 1) {
+					var skin = PlayState.SONG.splashSkin;
+					var skinOpt = PlayState.SONG.splashSkinOpt;
+					var skinSec = PlayState.SONG.splashSkinSec;
+					if(skin == null || skin.length < 1) {
+						skin = "noteSplashes";
+					}
+					if(skinOpt == null || skinOpt.length < 1) {
+						skinOpt = skin;
+					}
+					if(skinSec == null || skinSec.length < 1) {
+						if(skinOpt == null || skinOpt.length < 1) {
+							skinOpt = skin;
+						}
+						skinSec = skinOpt;
+					}
+					if(this.mustPress) {
+						var library = null;
+						if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,skin)) {
+							var returnAsset = Paths.returnGraphic(skin,library);
+							var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + skin + ".xml","TEXT",library));
+							dge_backend_CacheTools.cacheAtlas.h[skin] = atlas;
+						} else {
+							var this1 = dge_backend_CacheTools.cacheAtlas;
+						}
+					} else if(this.gfNote) {
+						var library = null;
+						if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,skinSec)) {
+							var returnAsset = Paths.returnGraphic(skinSec,library);
+							var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + skinSec + ".xml","TEXT",library));
+							dge_backend_CacheTools.cacheAtlas.h[skinSec] = atlas;
+						} else {
+							var this1 = dge_backend_CacheTools.cacheAtlas;
+						}
+					} else {
+						var library = null;
+						if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,skinOpt)) {
+							var returnAsset = Paths.returnGraphic(skinOpt,library);
+							var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + skinOpt + ".xml","TEXT",library));
+							dge_backend_CacheTools.cacheAtlas.h[skinOpt] = atlas;
+						} else {
+							var this1 = dge_backend_CacheTools.cacheAtlas;
+						}
+					}
+				} else {
+					var library = null;
+					if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,value)) {
+						var returnAsset = Paths.returnGraphic(value,library);
+						var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + value + ".xml","TEXT",library));
+						dge_backend_CacheTools.cacheAtlas.h[value] = atlas;
+					} else {
+						var this1 = dge_backend_CacheTools.cacheAtlas;
+					}
+				}
+			} catch( _g ) {
+				haxe_NativeStackTrace.lastError = _g;
+				var library = null;
+				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"noteSplashes")) {
+					var returnAsset = Paths.returnGraphic("noteSplashes",library);
+					var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "noteSplashes" + ".xml","TEXT",library));
+					dge_backend_CacheTools.cacheAtlas.h["noteSplashes"] = atlas;
+				} else {
+					var this1 = dge_backend_CacheTools.cacheAtlas;
+				}
+			}
+		}
+		return value;
+	}
+	,set_mustPress: function(value) {
+		if(this.mustPress != value) {
+			this.mustPress = value;
+			this.reloadNoteSkin();
+		}
+		return value;
+	}
+	,reloadNoteSkin: function() {
+		var lastScale = this.noteScale;
+		this.set_noteScale(1);
+		this.reloadNote("",this.texture);
+		this.set_noteScale(lastScale);
+		if(PlayState.SONG.secOpt && !this.mustPress) {
+			this.set_noteScale(0.75);
+		}
+	}
 	,__class__: Note
-	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_downScroll:"set_downScroll",set_flipScroll:"set_flipScroll",set_hitsound:"set_hitsound",set_alignSustainNote:"set_alignSustainNote",set_camTarget:"set_camTarget",set_scrollFactorCam:"set_scrollFactorCam",set_noteScale:"set_noteScale",set_texture:"set_texture",set_multSpeed:"set_multSpeed",set_gfNote:"set_gfNote",set_noteType:"set_noteType",set_noteData:"set_noteData"})
+	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_downScroll:"set_downScroll",set_flipScroll:"set_flipScroll",set_hitsound:"set_hitsound",set_alignSustainNote:"set_alignSustainNote",set_camTarget:"set_camTarget",set_scrollFactorCam:"set_scrollFactorCam",set_noteScale:"set_noteScale",set_texture:"set_texture",set_multSpeed:"set_multSpeed",set_noteSplashTexture:"set_noteSplashTexture",set_gfNote:"set_gfNote",set_noteType:"set_noteType",set_noteData:"set_noteData",set_mustPress:"set_mustPress"})
 });
 var NoteSplash = function(x,y,note,type) {
 	if(type == null) {
@@ -59714,9 +59786,31 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 		this.setPosition(x - Note.swagWidth * 0.95,y - Note.swagWidth);
 		this.set_alpha(ClientPrefs.noteSplashAlpha);
 		if(texture == null || texture.length <= 0) {
-			texture = "noteSplashes";
-			if(PlayState.SONG.splashSkin != null && PlayState.SONG.splashSkin.length > 0) {
-				texture = PlayState.SONG.splashSkin;
+			var skin = PlayState.SONG.splashSkin;
+			var skinOpt = PlayState.SONG.splashSkinOpt;
+			var skinSec = PlayState.SONG.splashSkinSec;
+			if(skin == null || skin.length < 1) {
+				skin = "noteSplashes";
+			}
+			if(skinOpt == null || skinOpt.length < 1) {
+				skinOpt = skin;
+			}
+			if(skinSec == null || skinSec.length < 1) {
+				if(skinOpt == null || skinOpt.length < 1) {
+					skinOpt = skin;
+				}
+				skinSec = skinOpt;
+			}
+			if(oriNote != null) {
+				if(oriNote.mustPress) {
+					texture = skin;
+				} else if(oriNote.gfNote) {
+					texture = skinSec;
+				} else {
+					texture = skinOpt;
+				}
+			} else {
+				texture = "noteSplashes";
 			}
 		}
 		this.setGraphicSize(this.get_width() * scale | 0,this.get_height() * scale | 0);
@@ -63454,6 +63548,22 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		return 0;
 	}
+	,sortByTimeNote: function(Order,Obj1,Obj2) {
+		if(!Obj1.attachStrum && Obj2.attachStrum) {
+			return -1;
+		} else if(Obj1.attachStrum && !Obj2.attachStrum) {
+			return 1;
+		}
+		var Value1 = (Obj1.strumTime + Obj1.offsetStrumTime - Conductor.songPosition) * Obj1.multSpeed;
+		var Value2 = (Obj2.strumTime + Obj2.offsetStrumTime - Conductor.songPosition) * Obj2.multSpeed;
+		var result = 0;
+		if(Value1 < Value2) {
+			result = Order;
+		} else if(Value1 > Value2) {
+			result = -Order;
+		}
+		return result;
+	}
 	,sortByShit: function(Obj1,Obj2) {
 		var Value1 = Obj1.strumTime + Obj1.offsetStrumTime;
 		var Value2 = Obj2.strumTime + Obj2.offsetStrumTime;
@@ -64138,7 +64248,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3663, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3674, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
@@ -65540,12 +65650,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4745, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4756, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4746, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4757, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -65581,7 +65691,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 4779, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 4790, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -65592,7 +65702,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4790, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4801, className : "PlayState", methodName : "endSong"});
 				WeekData.loadTheFirstEnabledMod();
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
@@ -65616,7 +65726,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4814, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4825, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -66276,16 +66386,29 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					char = this.gf;
 				}
 				if(char != null) {
-					char.playAnim(animToPlay,true);
+					char.playAnim(animToPlay,true,false,0,note.isSustainNote);
 					char.holdTimer = 0;
 				}
 			}
 			if(PlayState.SONG.needsVoices) {
 				this.vocals.set_volume(1);
 			}
-			var time = 0.15;
+			var time = 0.2;
+			if(note.strumNote != null) {
+				time = note.strumNote.resetTime;
+			}
+			if(note.resetTimeStrumAnim > 0) {
+				time = note.resetTimeStrumAnim;
+			}
 			if(note.isSustainNote && !StringTools.endsWith(note.animation._curAnim.name,"end")) {
-				time += 0.15;
+				var timeAdd = 0.2;
+				if(note.strumNote != null) {
+					timeAdd = note.strumNote.resetTime;
+				}
+				if(note.resetTimeStrumAnim > 0) {
+					timeAdd = note.resetTimeStrumAnim;
+				}
+				time += timeAdd;
 			}
 			if(note.playStrumAnim && !note.fakeNoHit && !ClientPrefs.clsstrum) {
 				this.StrumPlayAnim(this.gamemode == "opponent" || (this.gamemode == "bothside v2" || this.gamemode == "bothside") && note.mustPress ? false : true,Math.abs(note.noteData) | 0,time,note.customField,note.fieldTarget,note);
@@ -66323,17 +66446,17 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(!note.isDad) {
 							if((this.gamemode == "bothside v2" || this.gamemode == "bothside") && !note.mustPress || this.gamemode == "opponent") {
 								if(this.dad.animation._animations.h["hurt"] != null) {
-									this.dad.playAnim("hurt",true);
+									this.dad.playAnim("hurt",true,false,0,note.isSustainNote);
 									this.dad.specialAnim = true;
 								} else if(this.boyfriend.animation._animations.h["hurt"] != null) {
-									this.boyfriend.playAnim("hurt",true);
+									this.boyfriend.playAnim("hurt",true,false,0,note.isSustainNote);
 									this.boyfriend.specialAnim = true;
 								}
 							} else if(this.boyfriend.animation._animations.h["hurt"] != null) {
-								this.boyfriend.playAnim("hurt",true);
+								this.boyfriend.playAnim("hurt",true,false,0,note.isSustainNote);
 								this.boyfriend.specialAnim = true;
 							} else if(this.dad.animation._animations.h["hurt"] != null) {
-								this.dad.playAnim("hurt",true);
+								this.dad.playAnim("hurt",true,false,0,note.isSustainNote);
 								this.dad.specialAnim = true;
 							}
 						}
@@ -66380,25 +66503,25 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var animToPlay = this.singAnimations[Math.abs(note.noteData) | 0];
 				if(note.gfNote) {
 					if(this.gf != null) {
-						this.gf.playAnim(animToPlay + note.animSuffix,true);
+						this.gf.playAnim(animToPlay + note.animSuffix,true,false,0,note.isSustainNote);
 						this.gf.holdTimer = 0;
 					}
 				} else if(!note.isDad) {
 					if(this.gamemode == "opponent" || (this.gamemode == "bothside v2" || this.gamemode == "bothside") && !note.mustPress) {
-						this.dad.playAnim(animToPlay + note.animSuffix,true);
+						this.dad.playAnim(animToPlay + note.animSuffix,true,false,0,note.isSustainNote);
 						this.dad.holdTimer = 0;
 					} else {
-						this.boyfriend.playAnim(animToPlay + note.animSuffix,true);
+						this.boyfriend.playAnim(animToPlay + note.animSuffix,true,false,0,note.isSustainNote);
 						this.boyfriend.holdTimer = 0;
 					}
 				} else {
-					this.dad.playAnim(animToPlay + note.animSuffix,true);
+					this.dad.playAnim(animToPlay + note.animSuffix,true,false,0,note.isSustainNote);
 					this.dad.holdTimer = 0;
 				}
 				if(note.noteType == "Hey!") {
 					if(!note.isDad && !note.mustPress) {
 						if(Object.prototype.hasOwnProperty.call(this.boyfriend.animOffsets.h,"hey")) {
-							this.boyfriend.playAnim("hey",true);
+							this.boyfriend.playAnim("hey",true,false,0,note.isSustainNote);
 							this.boyfriend.specialAnim = true;
 							this.boyfriend.heyTimer = 0.6;
 						}
@@ -66415,26 +66538,49 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				}
 			}
 			if(this.cpuControlled) {
-				var time = 0.15;
+				var time = 0.2;
+				if(note.strumNote != null) {
+					time = note.strumNote.resetTime;
+				}
+				if(note.resetTimeStrumAnim > 0) {
+					time = note.resetTimeStrumAnim;
+				}
 				if(note.isSustainNote && !StringTools.endsWith(note.animation._curAnim.name,"end")) {
-					time += 0.15;
+					var timeAdd = 0.2;
+					if(note.strumNote != null) {
+						timeAdd = note.strumNote.resetTime;
+					}
+					if(note.resetTimeStrumAnim > 0) {
+						timeAdd = note.resetTimeStrumAnim;
+					}
+					time += timeAdd;
 				}
 				if(note.playStrumAnim && !note.fakeNoHit && !ClientPrefs.clsstrum) {
 					this.StrumPlayAnim(!note.mustPress,Math.abs(note.noteData) | 0,time,note.customField,note.fieldTarget,note);
 				}
 			} else if(note.autoPress || (this.fieldNameAsPlayer == "" ? note.customField : note.fieldTarget != this.fieldNameAsPlayer)) {
-				var time = 0.15;
-				if(note.isSustainNote && !StringTools.endsWith(note.animation._curAnim.name,"end")) {
-					time += 0.15;
+				var time = 0.2;
+				if(note.strumNote != null) {
+					time = note.strumNote.resetTime;
 				}
-				if(note.playStrumAnim && !note.fakeNoHit && !ClientPrefs.clsstrum) {
-					this.StrumPlayAnim(!note.mustPress,Math.abs(note.noteData) | 0,time,note.customField,note.fieldTarget,note);
+				if(note.resetTimeStrumAnim > 0) {
+					time = note.resetTimeStrumAnim;
+				}
+				if(note.isSustainNote && !StringTools.endsWith(note.animation._curAnim.name,"end")) {
+					var timeAdd = 0.2;
+					if(note.strumNote != null) {
+						timeAdd = note.strumNote.resetTime;
+					}
+					if(note.resetTimeStrumAnim > 0) {
+						timeAdd = note.resetTimeStrumAnim;
+					}
+					time += timeAdd;
 				}
 			} else {
-				var spr = !note.customField ? this.gamemode == "opponent" || !note.mustPress ? (note.gfNote || note.secondOpponent) && PlayState.SONG.secOpt ? this.gfStrums.members[note.noteData] : this.opponentStrums.members[note.noteData] : this.playerStrums.members[note.noteData] : this.strumGroupMap.h[note.fieldTarget].members[note.noteData];
+				var spr = note.strumNote;
 				if(spr != null) {
 					if(note.playStrumAnim && !note.fakeNoHit) {
-						spr.playAnim(note.animConfirm == null || note.animConfirm.length < 1 ? spr.animConfirm == null || spr.animConfirm.length < 1 ? "confirm" : spr.animConfirm : note.animConfirm,true);
+						spr.playAnim(note.animConfirm == null || note.animConfirm.length < 1 ? spr.animConfirm == null || spr.animConfirm.length < 1 ? "confirm" : spr.animConfirm : note.animConfirm,true,note.isSustainNote);
 					}
 				}
 			}
@@ -66455,27 +66601,17 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 	}
 	,spawnNoteSplashOnNote: function(note,player) {
-		if(note != null && !ClientPrefs.clsstrum) {
-			if(player == true) {
-				if(ClientPrefs.noteSplashes || note.forceNoteSplash) {
-					var strum = !note.customField ? this.playerStrums.members[note.noteData] : this.strumGroupMap.h[note.fieldTarget].members[note.noteData];
-					if(strum != null) {
-						this.spawnNoteSplash(strum.x,strum.y,note.noteData,note);
-					}
-				}
-			} else if(ClientPrefs.noteSplashesOpt || note.forceNoteSplash) {
-				var strum = !note.customField ? (note.gfNote || note.secondOpponent) && PlayState.SONG.secOpt ? this.gfStrums.members[note.noteData] : this.opponentStrums.members[note.noteData] : this.strumGroupMap.h[note.fieldTarget].members[note.noteData];
+		if(note != null && !ClientPrefs.clsstrum || note.forceNoteSplash) {
+			if(note.mustPress ? ClientPrefs.noteSplashes : ClientPrefs.noteSplashesOpt) {
+				var strum = note.strumNote;
 				if(strum != null) {
-					this.spawnNoteSplashOpt(strum.x,strum.y,note.noteData,note);
+					this.spawnNoteSplash(strum.x,strum.y,note.noteData,note);
 				}
 			}
 		}
 	}
 	,spawnNoteSplash: function(x,y,data,note) {
-		var skin = "noteSplashes";
-		if(PlayState.SONG.splashSkin != null && PlayState.SONG.splashSkin.length > 0) {
-			skin = PlayState.SONG.splashSkin;
-		}
+		var skin = "";
 		var hue = 0;
 		var sat = 0;
 		var brt = 0;
@@ -66501,43 +66637,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		groupTarget.add(splash);
 		splash.set_color(-1);
 		var splashIndex = groupTarget.members.indexOf(splash);
-		if(note != null) {
-			var noteIndex = this.notes.members.indexOf(note);
-			this.callOnLuas("onSpawnNoteSplashes",[noteIndex,splashIndex,note.noteData,note.noteType]);
-		} else {
-			this.callOnLuas("onSpawnNoteSplashes",[0,splashIndex,0,""]);
-		}
-	}
-	,spawnNoteSplashOpt: function(x,y,data,note) {
-		var skin = "noteSplashes";
-		if(PlayState.SONG.splashSkinOpt != null && PlayState.SONG.splashSkinOpt.length > 0) {
-			skin = PlayState.SONG.splashSkinOpt;
-		}
-		var hue = 0;
-		var sat = 0;
-		var brt = 0;
-		if(data > -1 && data % 4 < ClientPrefs.arrowHSV.length) {
-			hue = ClientPrefs.arrowHSV[data % 4][0] / 360;
-			sat = ClientPrefs.arrowHSV[data % 4][1] / 100;
-			brt = ClientPrefs.arrowHSV[data % 4][2] / 100;
-			if(note != null) {
-				skin = note.noteSplashTexture;
-				hue = note.noteSplashHue;
-				sat = note.noteSplashSat;
-				brt = note.noteSplashBrt;
-			}
-		}
-		var groupTarget = this.grpNoteSplashesOpt;
-		if(note != null && note.customField && Object.prototype.hasOwnProperty.call(this.noteSplashGroupMap.h,note.fieldTarget)) {
-			groupTarget = this.noteSplashGroupMap.h[note.fieldTarget];
-		} else if(note.gfNote || note.secondOpponent) {
-			groupTarget = this.grpNoteSplashesGf;
-		}
-		var splashOpt = groupTarget.recycle(NoteSplash);
-		splashOpt.setupNoteSplash(x,y,data,skin,hue,sat,brt,note.noteSplashCam,note.noteSplashScale,note.noteSplashScrollFactor[0],note.noteSplashScrollFactor[1],note);
-		groupTarget.add(splashOpt);
-		splashOpt.set_color(-1);
-		var splashIndex = groupTarget.members.indexOf(splashOpt);
 		if(note != null) {
 			var noteIndex = this.notes.members.indexOf(note);
 			this.callOnLuas("onSpawnNoteSplashes",[noteIndex,splashIndex,note.noteData,note.noteType]);
@@ -66745,7 +66844,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			while(_g < groupToSort.length) {
 				var group = groupToSort[_g];
 				++_g;
-				var Order = ClientPrefs.downScroll ? -1 : 1;
+				var Order = 1;
 				if(Order == null) {
 					Order = -1;
 				}
@@ -66753,7 +66852,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					return function(a2,a3) {
 						return _g[0](a1[0],a2,a3);
 					};
-				})([Order],[flixel_util_FlxSort.byY]));
+				})([Order],[$bind(this,this.sortByTimeNote)]));
 			}
 			var h = this.notesGroupMap.h;
 			var i_h = h;
@@ -66763,7 +66862,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			while(i_current < i_length) {
 				var i = i_keys[i_current++];
 				var group = this.notesGroupMap.h[i];
-				var Order = ClientPrefs.downScroll ? -1 : 1;
+				var Order = 1;
 				if(Order == null) {
 					Order = -1;
 				}
@@ -66771,7 +66870,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					return function(a2,a3) {
 						return _g[0](a1[0],a2,a3);
 					};
-				})([Order],[flixel_util_FlxSort.byY]));
+				})([Order],[$bind(this,this.sortByTimeNote)]));
 			}
 		}
 		this.iconP1.scale.set(1.2,1.2);
@@ -66947,18 +67046,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			custom = false;
 		}
 		var spr = null;
-		if(isDad) {
-			spr = custom ? this.strumGroupMap.h[ft].members[id] : (note.gfNote || note.secondOpponent) && PlayState.SONG.secOpt ? this.gfStrums.members[id] : this.opponentStrums.members[id];
-			if(spr != null) {
-				spr.playAnim(note.animConfirm == null || note.animConfirm.length < 1 ? spr.animConfirm == null || spr.animConfirm.length < 1 ? "confirm" : spr.animConfirm : note.animConfirm,true);
-				spr.resetAnim = time;
-			}
-		} else {
-			spr = custom ? this.strumGroupMap.h[ft].members[id] : this.playerStrums.members[id];
-			if(spr != null) {
-				spr.playAnim(note.animConfirm == null || note.animConfirm.length < 1 ? spr.animConfirm == null || spr.animConfirm.length < 1 ? "confirm" : spr.animConfirm : note.animConfirm,true);
-				spr.resetAnim = time;
-			}
+		if(note != null) {
+			spr = note.strumNote;
+		}
+		if(spr != null) {
+			spr.playAnim(note.animConfirm == null || note.animConfirm.length < 1 ? spr.animConfirm == null || spr.animConfirm.length < 1 ? "confirm" : spr.animConfirm : note.animConfirm,true,note.isSustainNote);
+			spr.resetAnim = time;
 		}
 	}
 	,ratingName: null
@@ -67460,7 +67553,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6835, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 6839, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -67486,7 +67579,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6848, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 6852, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -69280,6 +69373,8 @@ var StrumNote = function(x,y,leData,player,gf) {
 	if(gf == null) {
 		gf = false;
 	}
+	this.classicAnim = ClientPrefs.classicAnim;
+	this.resetTime = 0.2;
 	this.sustainReducePoint = 0.5;
 	this.ignoreTextureChange = false;
 	this.snapAlpha = 0;
@@ -69331,6 +69426,8 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 	,snapAlpha: null
 	,ignoreTextureChange: null
 	,sustainReducePoint: null
+	,resetTime: null
+	,classicAnim: null
 	,set_texture: function(value) {
 		if(value == null) {
 			value = "";
@@ -69501,9 +69598,15 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 		flixel_FlxSprite.prototype.update.call(this,elapsed);
 	}
-	,playAnim: function(anim,force) {
+	,playAnim: function(anim,force,sustainNote) {
+		if(sustainNote == null) {
+			sustainNote = false;
+		}
 		if(force == null) {
 			force = false;
+		}
+		if(this.animation._curAnim != null && this.animation._curAnim.name == anim && sustainNote && !this.classicAnim) {
+			return;
 		}
 		this.animation.play(anim,force);
 		this.origin.set(this.frameWidth * 0.5,this.frameHeight * 0.5);
@@ -78428,6 +78531,8 @@ var dge_states_options_VisualUISubState = function() {
 	option.changeValue = 0.01;
 	option.decimals = 2;
 	this.addOption(option);
+	var option = new options_Option("Classic Animation","Using classic animation Strums and Character. Checked if you not like new animation behavior.","classicAnim","bool",false);
+	this.addOption(option);
 	options_BaseOptionsMenu.call(this);
 	this.changeBGColor(-65536);
 };
@@ -85271,12 +85376,10 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 	}
 	,StrumPlayAnim: function(isDad,id,time,note) {
-		var spr = null;
-		if(isDad) {
-			spr = note.gfNote && PlayState.SONG.secOpt ? this.gfStrums.members[id] : this.opponentStrums.members[id];
-		} else {
-			spr = this.playerStrums.members[id];
+		if(note == null) {
+			return;
 		}
+		var spr = note.strumNote;
 		if(spr != null) {
 			spr.playAnim(note.animConfirm.length < 1 ? spr.animConfirm : note.animConfirm,true);
 			spr.resetAnim = time;
@@ -85287,7 +85390,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 			player = true;
 		}
 		if(ClientPrefs.noteSplashes && note != null && !ClientPrefs.clsstrum) {
-			var strum = player ? this.playerStrums.members[note.noteData] : note.gfNote && PlayState.SONG.secOpt ? this.gfStrums.members[note.noteData] : this.opponentStrums.members[note.noteData];
+			var strum = note.strumNote;
 			if(strum != null) {
 				this.spawnNoteSplash(strum.x,strum.y,note.noteData,note);
 			}
@@ -164740,7 +164843,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 843110;
+	this.version = 496068;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -216695,6 +216798,7 @@ openfl_display_DisplayObject.__tempStack = new lime_utils_ObjectPool(function() 
 	stack.set_length(0);
 });
 Character.DEFAULT_CHARACTER = "bf";
+ClientPrefs.classicAnim = false;
 ClientPrefs.modchart = true;
 ClientPrefs.noteMechanic = true;
 ClientPrefs.pauseBGAlpha = 0.6;
