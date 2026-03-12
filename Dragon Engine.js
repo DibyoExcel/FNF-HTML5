@@ -6585,12 +6585,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "317";
+	app.meta.h["build"] = "318";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.3.0";
+	app.meta.h["version"] = "26.3.1";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -58890,6 +58890,10 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	}
 	this.originalHeightForCalcs = 6;
 	this.lastNoteScaleToo = 1;
+	this.noteSplashOffsetOriginY = 0;
+	this.noteSplashOffsetOriginX = 0;
+	this.noteSplashOffsetY = 0;
+	this.noteSplashOffsetX = 0;
 	this.noteSplash = null;
 	this.topLayer = false;
 	this.resetTimeStrumAnim = 0;
@@ -59195,6 +59199,10 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	,resetTimeStrumAnim: null
 	,topLayer: null
 	,noteSplash: null
+	,noteSplashOffsetX: null
+	,noteSplashOffsetY: null
+	,noteSplashOffsetOriginX: null
+	,noteSplashOffsetOriginY: null
 	,set_y: function(value) {
 		if(!this.inEditor && this.snapY > 0) {
 			var dist = value - this.y;
@@ -59812,7 +59820,6 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 		if(note == null) {
 			note = 0;
 		}
-		this.setPosition(x - Note.swagWidth * 0.95,y - Note.swagWidth);
 		this.set_alpha(ClientPrefs.noteSplashAlpha);
 		if(texture == null || texture.length <= 0) {
 			var skin = PlayState.SONG.splashSkin;
@@ -59858,6 +59865,12 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 		if(this.textureLoaded != texture) {
 			this.loadAnims(texture);
 		}
+		var noteWidth = Note.swagWidth;
+		var noteHeight = Note.swagWidth;
+		var noteSplashOffsetX = 0.0;
+		var noteSplashOffsetY = 0.0;
+		var noteSplashOffsetOriginX = 0.0;
+		var noteSplashOffsetOriginY = 0.0;
 		if(oriNote != null) {
 			this.set_shaderType(oriNote.noteSplashShaderType);
 			this.get_colorSwap().set_hue(hueColor);
@@ -59879,14 +59892,26 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 			this.get_rgbShader().set_b(oriNote.noteSplashB);
 			this.set_angle(oriNote.noteSplashAngle);
 			this.set_alpha(oriNote.noteSplashAlpha);
+			if(oriNote.strumNote != null) {
+				noteWidth = oriNote.strumNote.get_width();
+				noteHeight = oriNote.strumNote.get_height();
+			}
+			noteSplashOffsetX = oriNote.noteSplashOffsetX;
+			noteSplashOffsetY = oriNote.noteSplashOffsetY;
+			noteSplashOffsetOriginX = oriNote.noteSplashOffsetOriginX;
+			noteSplashOffsetOriginY = oriNote.noteSplashOffsetOriginY;
 		}
-		this.offset.set(10,10);
+		this.setPosition(x + noteWidth / 2 - this.get_width() / 2 + noteSplashOffsetX,y + noteHeight / 2 - this.get_height() / 2 + noteSplashOffsetY);
 		var animNum = flixel_FlxG.random.int(1,2);
 		this.animation.play("note" + note % 4 + "-" + animNum,true);
 		if(this.animation._curAnim != null) {
 			this.animation._curAnim.set_frameRate(ClientPrefs.fpsStrumAnim + flixel_FlxG.random.int(-2,2));
 		}
 		this.origin.set(this.frameWidth * 0.5,this.frameHeight * 0.5);
+		var fh = this.origin;
+		fh.set_x(fh.x + noteSplashOffsetOriginX);
+		var fh = this.origin;
+		fh.set_y(fh.y + noteSplashOffsetOriginY);
 	}
 	,loadAnims: function(skin) {
 		try {
@@ -165120,7 +165145,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 431858;
+	this.version = 527250;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
