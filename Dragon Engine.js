@@ -5652,13 +5652,13 @@ AlphaCharacter.prototype = $extend(flixel_FlxSprite.prototype,{
 		this.image = name;
 		var library = null;
 		var tmp;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,name)) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + name)) {
 			var returnAsset = Paths.returnGraphic(name,library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + name + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h[name] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + name] = atlas;
 			tmp = atlas;
 		} else {
-			tmp = dge_backend_CacheTools.cacheAtlas.h[name];
+			tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + name];
 		}
 		this.set_frames(tmp);
 		this.scale.set_x(this.parent.scaleX);
@@ -6592,12 +6592,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "319";
+	app.meta.h["build"] = "321";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.3.2";
+	app.meta.h["version"] = "26.3.3";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -9252,13 +9252,13 @@ var AttachedSprite = function(file,anim,library,loop) {
 	flixel_FlxSprite.call(this);
 	if(anim != null) {
 		var tmp;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,file)) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + file)) {
 			var returnAsset = Paths.returnGraphic(file,library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + file + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h[file] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + file] = atlas;
 			tmp = atlas;
 		} else {
-			tmp = dge_backend_CacheTools.cacheAtlas.h[file];
+			tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + file];
 		}
 		this.set_frames(tmp);
 		this.animation.addByPrefix("idle",anim,24,loop);
@@ -9370,13 +9370,13 @@ var BGSprite = function(image,x,y,scrollX,scrollY,animArray,loop) {
 	if(animArray != null) {
 		var library = null;
 		var tmp;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,image)) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + image)) {
 			var returnAsset = Paths.returnGraphic(image,library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + image + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h[image] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + image] = atlas;
 			tmp = atlas;
 		} else {
-			tmp = dge_backend_CacheTools.cacheAtlas.h[image];
+			tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + image];
 		}
 		this.set_frames(tmp);
 		var _g = 0;
@@ -9420,13 +9420,13 @@ var BackgroundDancer = function(x,y) {
 	flixel_FlxSprite.call(this,x,y);
 	var library = null;
 	var tmp;
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"limo/limoDancer")) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "limo/limoDancer")) {
 		var returnAsset = Paths.returnGraphic("limo/limoDancer",library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "limo/limoDancer" + ".xml","TEXT",library));
-		dge_backend_CacheTools.cacheAtlas.h["limo/limoDancer"] = atlas;
+		dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "limo/limoDancer"] = atlas;
 		tmp = atlas;
 	} else {
-		tmp = dge_backend_CacheTools.cacheAtlas.h["limo/limoDancer"];
+		tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "limo/limoDancer"];
 	}
 	this.set_frames(tmp);
 	this.animation.addByIndices("danceLeft","bg dancer sketch PINK",[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14],"",24,false);
@@ -9455,13 +9455,13 @@ var BackgroundGirls = function(x,y) {
 	flixel_FlxSprite.call(this,x,y);
 	var library = null;
 	var tmp;
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"weeb/bgFreaks")) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "weeb/bgFreaks")) {
 		var returnAsset = Paths.returnGraphic("weeb/bgFreaks",library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/bgFreaks" + ".xml","TEXT",library));
-		dge_backend_CacheTools.cacheAtlas.h["weeb/bgFreaks"] = atlas;
+		dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/bgFreaks"] = atlas;
 		tmp = atlas;
 	} else {
-		tmp = dge_backend_CacheTools.cacheAtlas.h["weeb/bgFreaks"];
+		tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/bgFreaks"];
 	}
 	this.set_frames(tmp);
 	this.swapDanceType();
@@ -9561,13 +9561,13 @@ var Character = function(x,y,character,isPlayer) {
 		var key = json.image;
 		var library = null;
 		var tmp;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cachePackerAtlas.h,key)) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cachePackerAtlas.h,Paths.currentModDirectory + key)) {
 			var returnAsset = Paths.returnGraphic(key,library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + key + ".txt","TEXT",library));
-			dge_backend_CacheTools.cachePackerAtlas.h[key] = atlas;
+			dge_backend_CacheTools.cachePackerAtlas.h[Paths.currentModDirectory + key] = atlas;
 			tmp = atlas;
 		} else {
-			tmp = dge_backend_CacheTools.cachePackerAtlas.h[key];
+			tmp = dge_backend_CacheTools.cachePackerAtlas.h[Paths.currentModDirectory + key];
 		}
 		this.set_frames(tmp);
 		break;
@@ -9575,13 +9575,13 @@ var Character = function(x,y,character,isPlayer) {
 		var key = json.image;
 		var library = null;
 		var tmp;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 			var returnAsset = Paths.returnGraphic(key,library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 			tmp = atlas;
 		} else {
-			tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+			tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 		}
 		this.set_frames(tmp);
 		break;
@@ -9880,13 +9880,13 @@ var CheckboxThingie = function(x,y,checked) {
 	flixel_FlxSprite.call(this,x,y);
 	var library = null;
 	var tmp;
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"checkboxanim")) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "checkboxanim")) {
 		var returnAsset = Paths.returnGraphic("checkboxanim",library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "checkboxanim" + ".xml","TEXT",library));
-		dge_backend_CacheTools.cacheAtlas.h["checkboxanim"] = atlas;
+		dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "checkboxanim"] = atlas;
 		tmp = atlas;
 	} else {
-		tmp = dge_backend_CacheTools.cacheAtlas.h["checkboxanim"];
+		tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "checkboxanim"];
 	}
 	this.set_frames(tmp);
 	this.animation.addByPrefix("unchecked","checkbox0",24,false);
@@ -49161,13 +49161,13 @@ var DialogueBox = function(talkingRight,dialogueList) {
 		var tmp = this.box;
 		var library = null;
 		var tmp1;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"weeb/pixelUI/dialogueBox-senpaiMad")) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "weeb/pixelUI/dialogueBox-senpaiMad")) {
 			var returnAsset = Paths.returnGraphic("weeb/pixelUI/dialogueBox-senpaiMad",library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/pixelUI/dialogueBox-senpaiMad" + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h["weeb/pixelUI/dialogueBox-senpaiMad"] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/pixelUI/dialogueBox-senpaiMad"] = atlas;
 			tmp1 = atlas;
 		} else {
-			tmp1 = dge_backend_CacheTools.cacheAtlas.h["weeb/pixelUI/dialogueBox-senpaiMad"];
+			tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/pixelUI/dialogueBox-senpaiMad"];
 		}
 		tmp.set_frames(tmp1);
 		this.box.animation.addByPrefix("normalOpen","SENPAI ANGRY IMPACT SPEECH",24,false);
@@ -49178,13 +49178,13 @@ var DialogueBox = function(talkingRight,dialogueList) {
 		var tmp = this.box;
 		var library = null;
 		var tmp1;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"weeb/pixelUI/dialogueBox-pixel")) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "weeb/pixelUI/dialogueBox-pixel")) {
 			var returnAsset = Paths.returnGraphic("weeb/pixelUI/dialogueBox-pixel",library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/pixelUI/dialogueBox-pixel" + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h["weeb/pixelUI/dialogueBox-pixel"] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/pixelUI/dialogueBox-pixel"] = atlas;
 			tmp1 = atlas;
 		} else {
-			tmp1 = dge_backend_CacheTools.cacheAtlas.h["weeb/pixelUI/dialogueBox-pixel"];
+			tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/pixelUI/dialogueBox-pixel"];
 		}
 		tmp.set_frames(tmp1);
 		this.box.animation.addByPrefix("normalOpen","Text Box Appear",24,false);
@@ -49195,13 +49195,13 @@ var DialogueBox = function(talkingRight,dialogueList) {
 		var tmp = this.box;
 		var library = null;
 		var tmp1;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"weeb/pixelUI/dialogueBox-evil")) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "weeb/pixelUI/dialogueBox-evil")) {
 			var returnAsset = Paths.returnGraphic("weeb/pixelUI/dialogueBox-evil",library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/pixelUI/dialogueBox-evil" + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h["weeb/pixelUI/dialogueBox-evil"] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/pixelUI/dialogueBox-evil"] = atlas;
 			tmp1 = atlas;
 		} else {
-			tmp1 = dge_backend_CacheTools.cacheAtlas.h["weeb/pixelUI/dialogueBox-evil"];
+			tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/pixelUI/dialogueBox-evil"];
 		}
 		tmp.set_frames(tmp1);
 		this.box.animation.addByPrefix("normalOpen","Spirit Textbox spawn",24,false);
@@ -49221,13 +49221,13 @@ var DialogueBox = function(talkingRight,dialogueList) {
 	var tmp = this.portraitLeft;
 	var library = null;
 	var tmp1;
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"weeb/senpaiPortrait")) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "weeb/senpaiPortrait")) {
 		var returnAsset = Paths.returnGraphic("weeb/senpaiPortrait",library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/senpaiPortrait" + ".xml","TEXT",library));
-		dge_backend_CacheTools.cacheAtlas.h["weeb/senpaiPortrait"] = atlas;
+		dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/senpaiPortrait"] = atlas;
 		tmp1 = atlas;
 	} else {
-		tmp1 = dge_backend_CacheTools.cacheAtlas.h["weeb/senpaiPortrait"];
+		tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/senpaiPortrait"];
 	}
 	tmp.set_frames(tmp1);
 	this.portraitLeft.animation.addByPrefix("enter","Senpai Portrait Enter",24,false);
@@ -49240,13 +49240,13 @@ var DialogueBox = function(talkingRight,dialogueList) {
 	var tmp = this.portraitRight;
 	var library = null;
 	var tmp1;
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"weeb/bfPortrait")) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "weeb/bfPortrait")) {
 		var returnAsset = Paths.returnGraphic("weeb/bfPortrait",library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/bfPortrait" + ".xml","TEXT",library));
-		dge_backend_CacheTools.cacheAtlas.h["weeb/bfPortrait"] = atlas;
+		dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/bfPortrait"] = atlas;
 		tmp1 = atlas;
 	} else {
-		tmp1 = dge_backend_CacheTools.cacheAtlas.h["weeb/bfPortrait"];
+		tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/bfPortrait"];
 	}
 	tmp.set_frames(tmp1);
 	this.portraitRight.animation.addByPrefix("enter","Boyfriend portrait enter",24,false);
@@ -49490,13 +49490,13 @@ var DialogueCharacter = function(x,y,character) {
 	var key = "dialogue/" + this.jsonFile.image;
 	var library = null;
 	var tmp;
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 		var returnAsset = Paths.returnGraphic(key,library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-		dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+		dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 		tmp = atlas;
 	} else {
-		tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+		tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 	}
 	this.set_frames(tmp);
 	this.reloadAnimations();
@@ -49642,13 +49642,13 @@ var DialogueBoxPsych = function(dialogueList,song) {
 	var tmp = this.box;
 	var library = null;
 	var tmp1;
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"speech_bubble")) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "speech_bubble")) {
 		var returnAsset = Paths.returnGraphic("speech_bubble",library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "speech_bubble" + ".xml","TEXT",library));
-		dge_backend_CacheTools.cacheAtlas.h["speech_bubble"] = atlas;
+		dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "speech_bubble"] = atlas;
 		tmp1 = atlas;
 	} else {
-		tmp1 = dge_backend_CacheTools.cacheAtlas.h["speech_bubble"];
+		tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "speech_bubble"];
 	}
 	tmp.set_frames(tmp1);
 	this.box.scrollFactor.set();
@@ -52113,13 +52113,13 @@ FunkinLua.prototype = {
 		case "pac":case "packer":case "packeratlas":
 			var library = null;
 			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cachePackerAtlas.h,image)) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cachePackerAtlas.h,Paths.currentModDirectory + image)) {
 				var returnAsset = Paths.returnGraphic(image,library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + image + ".txt","TEXT",library));
-				dge_backend_CacheTools.cachePackerAtlas.h[image] = atlas;
+				dge_backend_CacheTools.cachePackerAtlas.h[Paths.currentModDirectory + image] = atlas;
 				tmp = atlas;
 			} else {
-				tmp = dge_backend_CacheTools.cachePackerAtlas.h[image];
+				tmp = dge_backend_CacheTools.cachePackerAtlas.h[Paths.currentModDirectory + image];
 			}
 			spr.set_frames(tmp);
 			break;
@@ -52132,13 +52132,13 @@ FunkinLua.prototype = {
 		default:
 			var library = null;
 			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,image)) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + image)) {
 				var returnAsset = Paths.returnGraphic(image,library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + image + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h[image] = atlas;
+				dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + image] = atlas;
 				tmp = atlas;
 			} else {
-				tmp = dge_backend_CacheTools.cacheAtlas.h[image];
+				tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + image];
 			}
 			spr.set_frames(tmp);
 		}
@@ -56646,9 +56646,9 @@ GameOverSubstate.prototype = $extend(MusicBeatSubstate.prototype,{
 			PlayState.chartingMode = false;
 			WeekData.loadTheFirstEnabledMod();
 			if(PlayState.isStoryMode) {
-				MusicBeatState.switchState(new StoryMenuState());
+				MusicBeatState.switchState(new StoryMenuState(),true);
 			} else {
-				MusicBeatState.switchState(new FreeplayState());
+				MusicBeatState.switchState(new FreeplayState(),true);
 			}
 			var tmp = flixel_FlxG.sound;
 			var file = Paths.returnSound("music","freakyMenu",null);
@@ -56724,7 +56724,7 @@ GameOverSubstate.prototype = $extend(MusicBeatSubstate.prototype,{
 			tmp.play(file);
 			new flixel_util_FlxTimer().start(0.7,function(tmr) {
 				flixel_FlxG.camera.fade(-16777216,2,false,function() {
-					MusicBeatState.resetState();
+					MusicBeatState.resetState(true);
 				});
 			});
 			PlayState.instance.callOnLuas("onGameOverConfirm",[true]);
@@ -58076,13 +58076,13 @@ MainMenuState.prototype = $extend(MusicBeatState.prototype,{
 			var key = "mainmenu/menu_" + this.optionShit[i];
 			var library = null;
 			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 				var returnAsset = Paths.returnGraphic(key,library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+				dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 				tmp = atlas;
 			} else {
-				tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+				tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 			}
 			menuItem.set_frames(tmp);
 			menuItem.animation.addByPrefix("idle",this.optionShit[i] + " basic",24);
@@ -58793,13 +58793,13 @@ MenuCharacter.prototype = $extend(flixel_FlxSprite.prototype,{
 			var key = "menucharacters/" + charFile.image;
 			var library = null;
 			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 				var returnAsset = Paths.returnGraphic(key,library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+				dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 				tmp = atlas;
 			} else {
-				tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+				tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 			}
 			this.set_frames(tmp);
 			this.animation.addByPrefix("idle",charFile.idle_anim,24);
@@ -58840,13 +58840,13 @@ MenuCharacter.prototype = $extend(flixel_FlxSprite.prototype,{
 			var key = "menucharacters/" + charFile.image;
 			var library = null;
 			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 				var returnAsset = Paths.returnGraphic(key,library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+				dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 				tmp = atlas;
 			} else {
-				tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+				tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 			}
 			this.set_frames(tmp);
 			this.animation.addByPrefix("idle",charFile.idle_anim,24);
@@ -59466,13 +59466,13 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			try {
 				var library = null;
 				var tmp;
-				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,blahblah)) {
+				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + blahblah)) {
 					var returnAsset = Paths.returnGraphic(blahblah,library);
 					var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + blahblah + ".xml","TEXT",library));
-					dge_backend_CacheTools.cacheAtlas.h[blahblah] = atlas;
+					dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + blahblah] = atlas;
 					tmp = atlas;
 				} else {
-					tmp = dge_backend_CacheTools.cacheAtlas.h[blahblah];
+					tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + blahblah];
 				}
 				this.set_frames(tmp);
 			} catch( _g ) {
@@ -59481,25 +59481,25 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 					var key = ClientPrefs.dflnoteskin;
 					var library = null;
 					var tmp;
-					if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+					if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 						var returnAsset = Paths.returnGraphic(key,library);
 						var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-						dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+						dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 						tmp = atlas;
 					} else {
-						tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+						tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 					}
 					this.set_frames(tmp);
 				} catch( _g1 ) {
 					var library = null;
 					var tmp;
-					if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"NOTE_assets")) {
+					if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "NOTE_assets")) {
 						var returnAsset = Paths.returnGraphic("NOTE_assets",library);
 						var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "NOTE_assets" + ".xml","TEXT",library));
-						dge_backend_CacheTools.cacheAtlas.h["NOTE_assets"] = atlas;
+						dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "NOTE_assets"] = atlas;
 						tmp = atlas;
 					} else {
-						tmp = dge_backend_CacheTools.cacheAtlas.h["NOTE_assets"];
+						tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "NOTE_assets"];
 					}
 					this.set_frames(tmp);
 				}
@@ -59724,51 +59724,56 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 					}
 					if(this.mustPress) {
 						var library = null;
-						if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,skin)) {
+						if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + skin)) {
 							var returnAsset = Paths.returnGraphic(skin,library);
 							var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + skin + ".xml","TEXT",library));
-							dge_backend_CacheTools.cacheAtlas.h[skin] = atlas;
+							dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + skin] = atlas;
 						} else {
 							var this1 = dge_backend_CacheTools.cacheAtlas;
+							var key = Paths.currentModDirectory + skin;
 						}
 					} else if(this.gfNote) {
 						var library = null;
-						if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,skinSec)) {
+						if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + skinSec)) {
 							var returnAsset = Paths.returnGraphic(skinSec,library);
 							var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + skinSec + ".xml","TEXT",library));
-							dge_backend_CacheTools.cacheAtlas.h[skinSec] = atlas;
+							dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + skinSec] = atlas;
 						} else {
 							var this1 = dge_backend_CacheTools.cacheAtlas;
+							var key = Paths.currentModDirectory + skinSec;
 						}
 					} else {
 						var library = null;
-						if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,skinOpt)) {
+						if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + skinOpt)) {
 							var returnAsset = Paths.returnGraphic(skinOpt,library);
 							var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + skinOpt + ".xml","TEXT",library));
-							dge_backend_CacheTools.cacheAtlas.h[skinOpt] = atlas;
+							dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + skinOpt] = atlas;
 						} else {
 							var this1 = dge_backend_CacheTools.cacheAtlas;
+							var key = Paths.currentModDirectory + skinOpt;
 						}
 					}
 				} else {
 					var library = null;
-					if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,value)) {
+					if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + value)) {
 						var returnAsset = Paths.returnGraphic(value,library);
 						var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + value + ".xml","TEXT",library));
-						dge_backend_CacheTools.cacheAtlas.h[value] = atlas;
+						dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + value] = atlas;
 					} else {
 						var this1 = dge_backend_CacheTools.cacheAtlas;
+						var key = Paths.currentModDirectory + value;
 					}
 				}
 			} catch( _g ) {
 				haxe_NativeStackTrace.lastError = _g;
 				var library = null;
-				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"noteSplashes")) {
+				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "noteSplashes")) {
 					var returnAsset = Paths.returnGraphic("noteSplashes",library);
 					var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "noteSplashes" + ".xml","TEXT",library));
-					dge_backend_CacheTools.cacheAtlas.h["noteSplashes"] = atlas;
+					dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "noteSplashes"] = atlas;
 				} else {
 					var this1 = dge_backend_CacheTools.cacheAtlas;
+					var key = Paths.currentModDirectory + "noteSplashes";
 				}
 			}
 		}
@@ -59955,26 +59960,26 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 		try {
 			var library = null;
 			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,skin)) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + skin)) {
 				var returnAsset = Paths.returnGraphic(skin,library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + skin + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h[skin] = atlas;
+				dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + skin] = atlas;
 				tmp = atlas;
 			} else {
-				tmp = dge_backend_CacheTools.cacheAtlas.h[skin];
+				tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + skin];
 			}
 			this.set_frames(tmp);
 		} catch( _g ) {
 			haxe_NativeStackTrace.lastError = _g;
 			var library = null;
 			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"noteSplashes")) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "noteSplashes")) {
 				var returnAsset = Paths.returnGraphic("noteSplashes",library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "noteSplashes" + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h["noteSplashes"] = atlas;
+				dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "noteSplashes"] = atlas;
 				tmp = atlas;
 			} else {
-				tmp = dge_backend_CacheTools.cacheAtlas.h["noteSplashes"];
+				tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "noteSplashes"];
 			}
 			this.set_frames(tmp);
 		}
@@ -60277,12 +60282,12 @@ Paths.getTextFromFile = function(key,ignoreMods,forceFromDisk) {
 		ignoreMods = false;
 	}
 	var keyName = key + (ignoreMods ? "_ignoreMods" : "");
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheText.h,keyName) || forceFromDisk) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheText.h,Paths.currentModDirectory + keyName) || forceFromDisk) {
 		var content = lime_utils_Assets.getText(Paths.getPath(key,"TEXT"));
-		dge_backend_CacheTools.cacheText.h[keyName] = content;
+		dge_backend_CacheTools.cacheText.h[Paths.currentModDirectory + keyName] = content;
 		return content;
 	}
-	return dge_backend_CacheTools.cacheText.h[keyName];
+	return dge_backend_CacheTools.cacheText.h[Paths.currentModDirectory + keyName];
 };
 Paths.font = function(key) {
 	return "assets/fonts/" + key;
@@ -60297,22 +60302,22 @@ Paths.fileExists = function(key,type,ignoreMods,library) {
 	return false;
 };
 Paths.getSparrowAtlas = function(key,library) {
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 		var returnAsset = Paths.returnGraphic(key,library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-		dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+		dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 		return atlas;
 	}
-	return dge_backend_CacheTools.cacheAtlas.h[key];
+	return dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 };
 Paths.getPackerAtlas = function(key,library) {
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cachePackerAtlas.h,key)) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cachePackerAtlas.h,Paths.currentModDirectory + key)) {
 		var returnAsset = Paths.returnGraphic(key,library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + key + ".txt","TEXT",library));
-		dge_backend_CacheTools.cachePackerAtlas.h[key] = atlas;
+		dge_backend_CacheTools.cachePackerAtlas.h[Paths.currentModDirectory + key] = atlas;
 		return atlas;
 	}
-	return dge_backend_CacheTools.cachePackerAtlas.h[key];
+	return dge_backend_CacheTools.cachePackerAtlas.h[Paths.currentModDirectory + key];
 };
 Paths.formatToSongPath = function(path) {
 	var invalidChars = new EReg("[~&\\\\;:<>#]","");
@@ -60321,7 +60326,7 @@ Paths.formatToSongPath = function(path) {
 	return hideChars.split(path1).join("").toLowerCase();
 };
 Paths.returnGraphic = function(key,library) {
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheImage.h,key)) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheImage.h,Paths.currentModDirectory + key)) {
 		var path = Paths.getPath("images/" + key + ".png","IMAGE",library);
 		if(openfl_utils_Assets.exists(path,"IMAGE")) {
 			if(!Object.prototype.hasOwnProperty.call(Paths.currentTrackedAssets.h,path)) {
@@ -60330,19 +60335,19 @@ Paths.returnGraphic = function(key,library) {
 				Paths.currentTrackedAssets.h[path] = newGraphic;
 			}
 			Paths.localTrackedAssets.push(path);
-			dge_backend_CacheTools.cacheImage.h[key] = Paths.currentTrackedAssets.h[path];
+			dge_backend_CacheTools.cacheImage.h[Paths.currentModDirectory + key] = Paths.currentTrackedAssets.h[path];
 			return Paths.currentTrackedAssets.h[path];
 		}
 		haxe_Log.trace("Missing image asset: " + key + ". Using Checkerboard placeholder.",{ fileName : "source/Paths.hx", lineNumber : 484, className : "Paths", methodName : "returnGraphic"});
 		var checkBoard = CoolUtil.makeCheckerboardGraphic();
 		checkBoard.persist = true;
-		dge_backend_CacheTools.cacheImage.h[key] = checkBoard;
+		dge_backend_CacheTools.cacheImage.h[Paths.currentModDirectory + key] = checkBoard;
 		return checkBoard;
 	}
-	return dge_backend_CacheTools.cacheImage.h[key];
+	return dge_backend_CacheTools.cacheImage.h[Paths.currentModDirectory + key];
 };
 Paths.returnSound = function(path,key,library) {
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheSound.h,"" + path + "/" + key)) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheSound.h,"" + Paths.currentModDirectory + path + "/" + key)) {
 		var gottenPath = Paths.getPath("" + path + "/" + key + "." + "mp3","SOUND",library);
 		gottenPath = gottenPath.substring(gottenPath.indexOf(":") + 1,gottenPath.length);
 		if(!Object.prototype.hasOwnProperty.call(Paths.currentTrackedSounds.h,gottenPath)) {
@@ -60355,10 +60360,10 @@ Paths.returnSound = function(path,key,library) {
 			this1.h[gottenPath] = value;
 		}
 		Paths.localTrackedAssets.push(gottenPath);
-		dge_backend_CacheTools.cacheSound.h["" + path + "/" + key] = Paths.currentTrackedSounds.h[gottenPath];
+		dge_backend_CacheTools.cacheSound.h["" + Paths.currentModDirectory + path + "/" + key] = Paths.currentTrackedSounds.h[gottenPath];
 		return Paths.currentTrackedSounds.h[gottenPath];
 	}
-	return dge_backend_CacheTools.cacheSound.h["" + path + "/" + key];
+	return dge_backend_CacheTools.cacheSound.h["" + Paths.currentModDirectory + path + "/" + key];
 };
 Paths.externalPreloadPath = function(file) {
 	if(file == null) {
@@ -61583,13 +61588,13 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			var bgTrees = new flixel_FlxSprite(repositionShit - 380,-800);
 			var library = null;
 			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cachePackerAtlas.h,"weeb/weebTrees")) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cachePackerAtlas.h,Paths.currentModDirectory + "weeb/weebTrees")) {
 				var returnAsset = Paths.returnGraphic("weeb/weebTrees",library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + "weeb/weebTrees" + ".txt","TEXT",library));
-				dge_backend_CacheTools.cachePackerAtlas.h["weeb/weebTrees"] = atlas;
+				dge_backend_CacheTools.cachePackerAtlas.h[Paths.currentModDirectory + "weeb/weebTrees"] = atlas;
 				tmp = atlas;
 			} else {
-				tmp = dge_backend_CacheTools.cachePackerAtlas.h["weeb/weebTrees"];
+				tmp = dge_backend_CacheTools.cachePackerAtlas.h[Paths.currentModDirectory + "weeb/weebTrees"];
 			}
 			bgTrees.set_frames(tmp);
 			bgTrees.animation.add("treeLoop",[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],12);
@@ -62540,13 +62545,13 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		var senpaiEvil1 = senpaiEvil;
 		var library = null;
 		var tmp;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"weeb/senpaiCrazy")) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "weeb/senpaiCrazy")) {
 			var returnAsset = Paths.returnGraphic("weeb/senpaiCrazy",library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "weeb/senpaiCrazy" + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h["weeb/senpaiCrazy"] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/senpaiCrazy"] = atlas;
 			tmp = atlas;
 		} else {
-			tmp = dge_backend_CacheTools.cacheAtlas.h["weeb/senpaiCrazy"];
+			tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "weeb/senpaiCrazy"];
 		}
 		senpaiEvil1.set_frames(tmp);
 		senpaiEvil.animation.addByPrefix("idle","Senpai Pre Explosion",24,false);
@@ -62646,13 +62651,13 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		var key = "cutscenes/" + songName;
 		var library = null;
 		var tmp;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 			var returnAsset = Paths.returnGraphic(key,library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 			tmp = atlas;
 		} else {
-			tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+			tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 		}
 		tankman1.set_frames(tmp);
 		tankman.set_antialiasing(ClientPrefs.globalAntialiasing);
@@ -62735,13 +62740,13 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			var tankman21 = tankman2;
 			var library = null;
 			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"cutscenes/stress2")) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "cutscenes/stress2")) {
 				var returnAsset = Paths.returnGraphic("cutscenes/stress2",library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "cutscenes/stress2" + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h["cutscenes/stress2"] = atlas;
+				dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "cutscenes/stress2"] = atlas;
 				tmp = atlas;
 			} else {
-				tmp = dge_backend_CacheTools.cacheAtlas.h["cutscenes/stress2"];
+				tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "cutscenes/stress2"];
 			}
 			tankman21.set_frames(tmp);
 			this.addBehindDad(tankman2);
@@ -62749,13 +62754,13 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var gfDance1 = gfDance;
 				var library = null;
 				var tmp;
-				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"characters/gfTankmen")) {
+				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "characters/gfTankmen")) {
 					var returnAsset = Paths.returnGraphic("characters/gfTankmen",library);
 					var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "characters/gfTankmen" + ".xml","TEXT",library));
-					dge_backend_CacheTools.cacheAtlas.h["characters/gfTankmen"] = atlas;
+					dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "characters/gfTankmen"] = atlas;
 					tmp = atlas;
 				} else {
-					tmp = dge_backend_CacheTools.cacheAtlas.h["characters/gfTankmen"];
+					tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "characters/gfTankmen"];
 				}
 				gfDance1.set_frames(tmp);
 				gfDance.animation.addByPrefix("dance","GF Dancing at Gunpoint",24,true);
@@ -62765,13 +62770,13 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			var gfCutscene1 = gfCutscene;
 			var library = null;
 			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"cutscenes/stressGF")) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "cutscenes/stressGF")) {
 				var returnAsset = Paths.returnGraphic("cutscenes/stressGF",library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "cutscenes/stressGF" + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h["cutscenes/stressGF"] = atlas;
+				dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "cutscenes/stressGF"] = atlas;
 				tmp = atlas;
 			} else {
-				tmp = dge_backend_CacheTools.cacheAtlas.h["cutscenes/stressGF"];
+				tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "cutscenes/stressGF"];
 			}
 			gfCutscene1.set_frames(tmp);
 			gfCutscene.animation.addByPrefix("dieBitch","GF STARTS TO TURN PART 1",24,false);
@@ -62792,13 +62797,13 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			var boyfriendCutscene1 = boyfriendCutscene;
 			var library = null;
 			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"characters/BOYFRIEND")) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "characters/BOYFRIEND")) {
 				var returnAsset = Paths.returnGraphic("characters/BOYFRIEND",library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "characters/BOYFRIEND" + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h["characters/BOYFRIEND"] = atlas;
+				dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "characters/BOYFRIEND"] = atlas;
 				tmp = atlas;
 			} else {
-				tmp = dge_backend_CacheTools.cacheAtlas.h["characters/BOYFRIEND"];
+				tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "characters/BOYFRIEND"];
 			}
 			boyfriendCutscene1.set_frames(tmp);
 			boyfriendCutscene.animation.addByPrefix("idle","BF idle dance",24,false);
@@ -65764,7 +65769,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						actualState.toStoryMode = true;
 						MusicBeatState.switchState(actualState);
 					} else {
-						MusicBeatState.switchState(new StoryMenuState());
+						MusicBeatState.switchState(new StoryMenuState(),true);
 						var tmp = flixel_FlxG.sound;
 						var file = Paths.returnSound("music","freakyMenu",null);
 						tmp.playMusic(file);
@@ -69006,13 +69011,13 @@ StoryMenuState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var library = null;
 		var ui_tex;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"campaign_menu_UI_assets")) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "campaign_menu_UI_assets")) {
 			var returnAsset = Paths.returnGraphic("campaign_menu_UI_assets",library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "campaign_menu_UI_assets" + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h["campaign_menu_UI_assets"] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "campaign_menu_UI_assets"] = atlas;
 			ui_tex = atlas;
 		} else {
-			ui_tex = dge_backend_CacheTools.cacheAtlas.h["campaign_menu_UI_assets"];
+			ui_tex = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "campaign_menu_UI_assets"];
 		}
 		var bgYellow = new flixel_FlxSprite(0,56).makeGraphic(flixel_FlxG.width,386,-405679);
 		this.bgSprite = new flixel_FlxSprite(0,56);
@@ -69820,13 +69825,13 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			try {
 				var library = null;
 				var tmp;
-				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,image)) {
+				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + image)) {
 					var returnAsset = Paths.returnGraphic(image,library);
 					var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + image + ".xml","TEXT",library));
-					dge_backend_CacheTools.cacheAtlas.h[image] = atlas;
+					dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + image] = atlas;
 					tmp = atlas;
 				} else {
-					tmp = dge_backend_CacheTools.cacheAtlas.h[image];
+					tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + image];
 				}
 				this.set_frames(tmp);
 			} catch( _g ) {
@@ -69834,13 +69839,13 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 				var key = ClientPrefs.dflnoteskin;
 				var library = null;
 				var tmp;
-				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 					var returnAsset = Paths.returnGraphic(key,library);
 					var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-					dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+					dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 					tmp = atlas;
 				} else {
-					tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+					tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 				}
 				this.set_frames(tmp);
 			}
@@ -70003,13 +70008,13 @@ var TankmenBG = function(x,y,facingRight) {
 	flixel_FlxSprite.call(this,x,y);
 	var library = null;
 	var tmp;
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"tankmanKilled1")) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "tankmanKilled1")) {
 		var returnAsset = Paths.returnGraphic("tankmanKilled1",library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "tankmanKilled1" + ".xml","TEXT",library));
-		dge_backend_CacheTools.cacheAtlas.h["tankmanKilled1"] = atlas;
+		dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "tankmanKilled1"] = atlas;
 		tmp = atlas;
 	} else {
-		tmp = dge_backend_CacheTools.cacheAtlas.h["tankmanKilled1"];
+		tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "tankmanKilled1"];
 	}
 	this.set_frames(tmp);
 	this.animation.addByPrefix("run","tankman running",24,true);
@@ -70159,13 +70164,13 @@ TitleState.prototype = $extend(MusicBeatState.prototype,{
 		var tmp = this.logoBl;
 		var library = null;
 		var tmp1;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"logoBumpin")) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "logoBumpin")) {
 			var returnAsset = Paths.returnGraphic("logoBumpin",library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "logoBumpin" + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h["logoBumpin"] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "logoBumpin"] = atlas;
 			tmp1 = atlas;
 		} else {
-			tmp1 = dge_backend_CacheTools.cacheAtlas.h["logoBumpin"];
+			tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "logoBumpin"];
 		}
 		tmp.set_frames(tmp1);
 		this.logoBl.set_antialiasing(ClientPrefs.globalAntialiasing);
@@ -70182,13 +70187,13 @@ TitleState.prototype = $extend(MusicBeatState.prototype,{
 		var tmp = this.gfDance;
 		var library = null;
 		var tmp1;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"gfDanceTitle")) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "gfDanceTitle")) {
 			var returnAsset = Paths.returnGraphic("gfDanceTitle",library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "gfDanceTitle" + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h["gfDanceTitle"] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "gfDanceTitle"] = atlas;
 			tmp1 = atlas;
 		} else {
-			tmp1 = dge_backend_CacheTools.cacheAtlas.h["gfDanceTitle"];
+			tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "gfDanceTitle"];
 		}
 		tmp.set_frames(tmp1);
 		this.gfDance.animation.addByIndices("danceLeft","gfDance",[30,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14],"",24,false);
@@ -70202,13 +70207,13 @@ TitleState.prototype = $extend(MusicBeatState.prototype,{
 		var tmp = this.titleText;
 		var library = null;
 		var tmp1;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"titleEnter")) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "titleEnter")) {
 			var returnAsset = Paths.returnGraphic("titleEnter",library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "titleEnter" + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h["titleEnter"] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "titleEnter"] = atlas;
 			tmp1 = atlas;
 		} else {
-			tmp1 = dge_backend_CacheTools.cacheAtlas.h["titleEnter"];
+			tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "titleEnter"];
 		}
 		tmp.set_frames(tmp1);
 		var animFrames = [];
@@ -75935,6 +75940,7 @@ var dge_obj_Keypress = function(x,y,color) {
 	this.set_color(color);
 	this.set_shaderType("swap");
 	this.set_alpha(this.alphaKey);
+	this.set_antialiasing(ClientPrefs.globalAntialiasing);
 };
 $hxClasses["dge.obj.Keypress"] = dge_obj_Keypress;
 dge_obj_Keypress.__name__ = "dge.obj.Keypress";
@@ -76474,6 +76480,7 @@ var dge_obj_lua_Button = function(x,y,image,width,height) {
 	this.set_texture(image);
 	this.set_sizeWidth(width);
 	this.set_sizeHeight(height);
+	this.set_antialiasing(ClientPrefs.globalAntialiasing);
 };
 $hxClasses["dge.obj.lua.Button"] = dge_obj_lua_Button;
 dge_obj_lua_Button.__name__ = "dge.obj.lua.Button";
@@ -76556,6 +76563,7 @@ var dge_obj_lua_Toggle = function(x,y,image,width,height,initialState) {
 	this.set_sizeWidth(width);
 	this.set_sizeHeight(height);
 	this.updateGraphic();
+	this.set_antialiasing(ClientPrefs.globalAntialiasing);
 };
 $hxClasses["dge.obj.lua.Toggle"] = dge_obj_lua_Toggle;
 dge_obj_lua_Toggle.__name__ = "dge.obj.lua.Toggle";
@@ -77343,6 +77351,7 @@ var dge_obj_mobile_Hitbox = function(x,y) {
 	this.set_alpha(ClientPrefs.hitboxAlpha);
 	this.set_shaderType("swap");
 	this.set_blend(FunkinLua.blendModeFromString(ClientPrefs.hitboxBlend));
+	this.set_antialiasing(ClientPrefs.globalAntialiasing);
 };
 $hxClasses["dge.obj.mobile.Hitbox"] = dge_obj_mobile_Hitbox;
 dge_obj_mobile_Hitbox.__name__ = "dge.obj.mobile.Hitbox";
@@ -77438,6 +77447,7 @@ var dge_obj_mobile_VirtualButton = function(x,y,image) {
 	});
 	this.set_texture(image);
 	this.set_alpha(ClientPrefs.virtualButtonAlpha);
+	this.set_antialiasing(ClientPrefs.globalAntialiasing);
 };
 $hxClasses["dge.obj.mobile.VirtualButton"] = dge_obj_mobile_VirtualButton;
 dge_obj_mobile_VirtualButton.__name__ = "dge.obj.mobile.VirtualButton";
@@ -77498,6 +77508,7 @@ var dge_obj_mobile_ToggleButton = function(x,y,image,startEnable) {
 	dge_obj_mobile_VirtualButton.call(this,x,y,image);
 	this.set_enable(startEnable);
 	this.updateGraphic();
+	this.set_antialiasing(ClientPrefs.globalAntialiasing);
 };
 $hxClasses["dge.obj.mobile.ToggleButton"] = dge_obj_mobile_ToggleButton;
 dge_obj_mobile_ToggleButton.__name__ = "dge.obj.mobile.ToggleButton";
@@ -78103,6 +78114,7 @@ var options_BaseOptionsMenu = function() {
 	this.holdValue = 0;
 	this.holdTime = 0;
 	this.nextAccept = 5;
+	this.keyBroker = false;
 	this.arrayTE_c = [];
 	this.arrayTE = [];
 	this.isShowNote = false;
@@ -78154,13 +78166,13 @@ var options_BaseOptionsMenu = function() {
 		var key = ClientPrefs.dflnoteskin;
 		var library = null;
 		var tmp;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 			var returnAsset = Paths.returnGraphic(key,library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 			tmp = atlas;
 		} else {
-			tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+			tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 		}
 		note.set_frames(tmp);
 		note.scale.set(0.7,0.7);
@@ -78175,13 +78187,13 @@ var options_BaseOptionsMenu = function() {
 	var key = ClientPrefs.dflnoteskin;
 	var library = null;
 	var tmp;
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 		var returnAsset = Paths.returnGraphic(key,library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-		dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+		dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 		tmp = atlas;
 	} else {
-		tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+		tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 	}
 	note_c.set_frames(tmp);
 	note_c.scale.set(0.7,0.7);
@@ -78194,13 +78206,13 @@ var options_BaseOptionsMenu = function() {
 	var key = ClientPrefs.dflnoteskin;
 	var library = null;
 	var tmp;
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 		var returnAsset = Paths.returnGraphic(key,library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-		dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+		dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 		tmp = atlas;
 	} else {
-		tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+		tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 	}
 	note_c.set_frames(tmp);
 	note_c.scale.set(0.7,0.7);
@@ -78213,13 +78225,13 @@ var options_BaseOptionsMenu = function() {
 	var key = ClientPrefs.dflnoteskin;
 	var library = null;
 	var tmp;
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 		var returnAsset = Paths.returnGraphic(key,library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-		dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+		dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 		tmp = atlas;
 	} else {
-		tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+		tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 	}
 	note_c.set_frames(tmp);
 	note_c.scale.set(0.7,0.7);
@@ -78232,13 +78244,13 @@ var options_BaseOptionsMenu = function() {
 	var key = ClientPrefs.dflnoteskin;
 	var library = null;
 	var tmp;
-	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+	if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 		var returnAsset = Paths.returnGraphic(key,library);
 		var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-		dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+		dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 		tmp = atlas;
 	} else {
-		tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+		tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 	}
 	note_c.set_frames(tmp);
 	note_c.scale.set(0.7,0.7);
@@ -78302,6 +78314,7 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 	,bgPublic: null
 	,arrayTE: null
 	,arrayTE_c: null
+	,keyBroker: null
 	,leftButton: null
 	,rightButton: null
 	,enterButton: null
@@ -78364,13 +78377,13 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 			_this.origin.set(_this.frameWidth * 0.5,_this.frameHeight * 0.5);
 			this.spriteNote[3].centerOffsets();
 		}
-		if(PlayerSettings.player1.controls._ui_upP.check()) {
+		if(PlayerSettings.player1.controls._ui_upP.check() && !this.keyBroker) {
 			this.changeSelection(-1);
 		}
-		if(PlayerSettings.player1.controls._ui_downP.check()) {
+		if(PlayerSettings.player1.controls._ui_downP.check() && !this.keyBroker) {
 			this.changeSelection(1);
 		}
-		if(PlayerSettings.player1.controls._back.check()) {
+		if(PlayerSettings.player1.controls._back.check() && !this.keyBroker) {
 			this.close();
 			flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
 		}
@@ -78380,13 +78393,13 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 				usesCheckbox = false;
 			}
 			if(usesCheckbox) {
-				if(PlayerSettings.player1.controls._accept.check()) {
+				if(PlayerSettings.player1.controls._accept.check() && !this.keyBroker) {
 					flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 					this.curOption.setValue(this.curOption.getValue() == true ? false : true);
 					this.curOption.change();
 					this.reloadCheckboxes();
 				}
-			} else if(PlayerSettings.player1.controls._ui_left.check() || PlayerSettings.player1.controls._ui_right.check()) {
+			} else if((PlayerSettings.player1.controls._ui_left.check() || PlayerSettings.player1.controls._ui_right.check()) && !this.keyBroker) {
 				var pressed = PlayerSettings.player1.controls._ui_leftP.check() || PlayerSettings.player1.controls._ui_rightP.check();
 				if(this.holdTime > 0.5 || pressed) {
 					if(pressed) {
@@ -78454,10 +78467,10 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 				if(this.curOption.get_type() != "string") {
 					this.holdTime += elapsed;
 				}
-			} else if(PlayerSettings.player1.controls._ui_leftR.check() || PlayerSettings.player1.controls._ui_rightR.check()) {
+			} else if((PlayerSettings.player1.controls._ui_leftR.check() || PlayerSettings.player1.controls._ui_rightR.check()) && !this.keyBroker) {
 				this.clearHold();
 			}
-			if(PlayerSettings.player1.controls._reset.check()) {
+			if(PlayerSettings.player1.controls._reset.check() && !this.keyBroker) {
 				var _g = 0;
 				var _g1 = this.optionsArray.length;
 				while(_g < _g1) {
@@ -78717,13 +78730,13 @@ dge_states_options_MiscSubState.prototype = $extend(options_BaseOptionsMenu.prot
 			var key = ClientPrefs.dflnoteskin;
 			var library = null;
 			var tmp1;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 				var returnAsset = Paths.returnGraphic(key,library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+				dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 				tmp1 = atlas;
 			} else {
-				tmp1 = dge_backend_CacheTools.cacheAtlas.h[key];
+				tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 			}
 			tmp.set_frames(tmp1);
 			this.spriteNote[i].animation.addByPrefix("idle","arrow" + this.arrowDir[i].toUpperCase(),ClientPrefs.fpsStrumAnim,true);
@@ -78741,13 +78754,13 @@ dge_states_options_MiscSubState.prototype = $extend(options_BaseOptionsMenu.prot
 			var key = ClientPrefs.dflnoteskin;
 			var library = null;
 			var tmp1;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 				var returnAsset = Paths.returnGraphic(key,library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+				dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 				tmp1 = atlas;
 			} else {
-				tmp1 = dge_backend_CacheTools.cacheAtlas.h[key];
+				tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 			}
 			tmp.set_frames(tmp1);
 			this.spriteNote_c[i].animation.addByPrefix("idle",this.noteColor[i].toLowerCase() + "0",ClientPrefs.fpsStrumAnim,true);
@@ -78784,7 +78797,6 @@ dge_states_options_MobileSubState.prototype = $extend(options_BaseOptionsMenu.pr
 	,__class__: dge_states_options_MobileSubState
 });
 var dge_states_options_VisualUISubState = function() {
-	this.isRestart = false;
 	var _gthis = this;
 	this.title = "Visual & UI Settings";
 	this.rpcTitle = "Visual & UI Settings Menu";
@@ -78814,9 +78826,7 @@ var dge_states_options_VisualUISubState = function() {
 	this.addOption(option);
 	var option = new options_Option("Dark Mode","Dark Mode.","darkmode","bool",false);
 	option.onChange = function() {
-		if(_gthis.isRestart) {
-			return;
-		}
+		_gthis.keyBroker = true;
 		ClientPrefs.saveSettings();
 		TitleState.initialized = false;
 		TitleState.closedState = false;
@@ -78842,7 +78852,6 @@ var dge_states_options_VisualUISubState = function() {
 			FreeplayState.vocals = null;
 		}
 		flixel_FlxG.camera.fade(-16777216,0.5,false,flixel_FlxG.resetGame,false);
-		_gthis.isRestart = true;
 	};
 	this.addOption(option);
 	var option = new options_Option("Opponent Note Splashes","Show Opponent Note Splash","noteSplashesOpt","bool",true);
@@ -78879,8 +78888,7 @@ $hxClasses["dge.states.options.VisualUISubState"] = dge_states_options_VisualUIS
 dge_states_options_VisualUISubState.__name__ = "dge.states.options.VisualUISubState";
 dge_states_options_VisualUISubState.__super__ = options_BaseOptionsMenu;
 dge_states_options_VisualUISubState.prototype = $extend(options_BaseOptionsMenu.prototype,{
-	isRestart: null
-	,close: function() {
+	close: function() {
 		options_BaseOptionsMenu.prototype.close.call(this);
 		ClientPrefs.saveSettings();
 	}
@@ -79099,13 +79107,13 @@ editors_CharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 			var bgTrees = new flixel_FlxSprite(repositionShit - 380,-800 - playerYDifference);
 			var library = null;
 			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cachePackerAtlas.h,"weeb/weebTrees")) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cachePackerAtlas.h,Paths.currentModDirectory + "weeb/weebTrees")) {
 				var returnAsset = Paths.returnGraphic("weeb/weebTrees",library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + "weeb/weebTrees" + ".txt","TEXT",library));
-				dge_backend_CacheTools.cachePackerAtlas.h["weeb/weebTrees"] = atlas;
+				dge_backend_CacheTools.cachePackerAtlas.h[Paths.currentModDirectory + "weeb/weebTrees"] = atlas;
 				tmp = atlas;
 			} else {
-				tmp = dge_backend_CacheTools.cachePackerAtlas.h["weeb/weebTrees"];
+				tmp = dge_backend_CacheTools.cachePackerAtlas.h[Paths.currentModDirectory + "weeb/weebTrees"];
 			}
 			bgTrees.set_frames(tmp);
 			bgTrees.animation.add("treeLoop",[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],12);
@@ -79593,13 +79601,13 @@ editors_CharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 			var key = this.char.imageFile;
 			var library = null;
 			var tmp1;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cachePackerAtlas.h,key)) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cachePackerAtlas.h,Paths.currentModDirectory + key)) {
 				var returnAsset = Paths.returnGraphic(key,library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSpriteSheetPacker(returnAsset,Paths.getPath("images/" + key + ".txt","TEXT",library));
-				dge_backend_CacheTools.cachePackerAtlas.h[key] = atlas;
+				dge_backend_CacheTools.cachePackerAtlas.h[Paths.currentModDirectory + key] = atlas;
 				tmp1 = atlas;
 			} else {
-				tmp1 = dge_backend_CacheTools.cachePackerAtlas.h[key];
+				tmp1 = dge_backend_CacheTools.cachePackerAtlas.h[Paths.currentModDirectory + key];
 			}
 			tmp.set_frames(tmp1);
 		} else {
@@ -79607,13 +79615,13 @@ editors_CharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 			var key = this.char.imageFile;
 			var library = null;
 			var tmp1;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 				var returnAsset = Paths.returnGraphic(key,library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+				dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 				tmp1 = atlas;
 			} else {
-				tmp1 = dge_backend_CacheTools.cacheAtlas.h[key];
+				tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 			}
 			tmp.set_frames(tmp1);
 		}
@@ -80352,13 +80360,13 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		var tmp = this.optChar;
 		var library = null;
 		var tmp1;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"characters/MintEnderDragon")) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "characters/MintEnderDragon")) {
 			var returnAsset = Paths.returnGraphic("characters/MintEnderDragon",library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "characters/MintEnderDragon" + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h["characters/MintEnderDragon"] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "characters/MintEnderDragon"] = atlas;
 			tmp1 = atlas;
 		} else {
-			tmp1 = dge_backend_CacheTools.cacheAtlas.h["characters/MintEnderDragon"];
+			tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "characters/MintEnderDragon"];
 		}
 		tmp.set_frames(tmp1);
 		this.optChar.animation.addByPrefix("idle","MintEnderDragon Idle",null,true);
@@ -80378,13 +80386,13 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		var tmp = this.plyChar;
 		var library = null;
 		var tmp1;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"characters/DubEnderDragon")) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "characters/DubEnderDragon")) {
 			var returnAsset = Paths.returnGraphic("characters/DubEnderDragon",library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "characters/DubEnderDragon" + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h["characters/DubEnderDragon"] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "characters/DubEnderDragon"] = atlas;
 			tmp1 = atlas;
 		} else {
-			tmp1 = dge_backend_CacheTools.cacheAtlas.h["characters/DubEnderDragon"];
+			tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "characters/DubEnderDragon"];
 		}
 		tmp.set_frames(tmp1);
 		this.plyChar.animation.addByPrefix("idle","DubEnderDragon Idle",null,true);
@@ -83397,13 +83405,13 @@ editors_DialogueCharacterEditorState.prototype = $extend(MusicBeatState.prototyp
 		var tmp = this.box;
 		var library = null;
 		var tmp1;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"speech_bubble")) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "speech_bubble")) {
 			var returnAsset = Paths.returnGraphic("speech_bubble",library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "speech_bubble" + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h["speech_bubble"] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "speech_bubble"] = atlas;
 			tmp1 = atlas;
 		} else {
-			tmp1 = dge_backend_CacheTools.cacheAtlas.h["speech_bubble"];
+			tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "speech_bubble"];
 		}
 		tmp.set_frames(tmp1);
 		this.box.scrollFactor.set();
@@ -83684,13 +83692,13 @@ editors_DialogueCharacterEditorState.prototype = $extend(MusicBeatState.prototyp
 			var key = "dialogue/" + this.character.jsonFile.image;
 			var library = null;
 			var tmp;
-			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+			if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 				var returnAsset = Paths.returnGraphic(key,library);
 				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-				dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+				dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 				tmp = atlas;
 			} else {
-				tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+				tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 			}
 			char.set_frames(tmp);
 			char.jsonFile = this.character.jsonFile;
@@ -84241,13 +84249,13 @@ editors_DialogueEditorState.prototype = $extend(MusicBeatState.prototype,{
 		var tmp = this.box;
 		var library = null;
 		var tmp1;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"speech_bubble")) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "speech_bubble")) {
 			var returnAsset = Paths.returnGraphic("speech_bubble",library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "speech_bubble" + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h["speech_bubble"] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "speech_bubble"] = atlas;
 			tmp1 = atlas;
 		} else {
-			tmp1 = dge_backend_CacheTools.cacheAtlas.h["speech_bubble"];
+			tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "speech_bubble"];
 		}
 		tmp.set_frames(tmp1);
 		this.box.scrollFactor.set();
@@ -84360,13 +84368,13 @@ editors_DialogueEditorState.prototype = $extend(MusicBeatState.prototype,{
 		var key = "dialogue/" + this.character.jsonFile.image;
 		var library = null;
 		var tmp1;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 			var returnAsset = Paths.returnGraphic(key,library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 			tmp1 = atlas;
 		} else {
-			tmp1 = dge_backend_CacheTools.cacheAtlas.h[key];
+			tmp1 = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 		}
 		tmp.set_frames(tmp1);
 		this.character.jsonFile = this.character.jsonFile;
@@ -86148,13 +86156,13 @@ editors_MenuCharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 		var key = "menucharacters/" + this.characterFile.image;
 		var library = null;
 		var tmp;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 			var returnAsset = Paths.returnGraphic(key,library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 			tmp = atlas;
 		} else {
-			tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+			tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 		}
 		char.set_frames(tmp);
 		char.animation.addByPrefix("idle",this.characterFile.idle_anim,24);
@@ -86418,13 +86426,13 @@ editors_WeekEditorState.prototype = $extend(MusicBeatState.prototype,{
 		this.txtWeekTitle.set_alpha(0.7);
 		var library = null;
 		var ui_tex;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,"campaign_menu_UI_assets")) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + "campaign_menu_UI_assets")) {
 			var returnAsset = Paths.returnGraphic("campaign_menu_UI_assets",library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + "campaign_menu_UI_assets" + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h["campaign_menu_UI_assets"] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "campaign_menu_UI_assets"] = atlas;
 			ui_tex = atlas;
 		} else {
-			ui_tex = dge_backend_CacheTools.cacheAtlas.h["campaign_menu_UI_assets"];
+			ui_tex = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + "campaign_menu_UI_assets"];
 		}
 		var bgYellow = new flixel_FlxSprite(0,56).makeGraphic(flixel_FlxG.width,386,-405679);
 		this.bgSprite = new flixel_FlxSprite(0,56);
@@ -165205,7 +165213,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 642126;
+	this.version = 16623;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -215083,7 +215091,7 @@ var options_GraphicsSettingsSubState = function() {
 	option.showBoyfriend = true;
 	option.onChange = $bind(this,this.onChangeAntiAliasing);
 	this.addOption(option);
-	var option = new options_Option("Shaders","If unchecked, disables shaders.\nIt's used for some visual effects, and also CPU intensive for weaker PCs.","shaders","bool",true);
+	var option = new options_Option("Shaders","If unchecked, disables shaders.\nIt's used for some visual effects, and also CPU intensive for weaker Devices.","shaders","bool",true);
 	this.addOption(option);
 	options_BaseOptionsMenu.call(this);
 };
@@ -215836,13 +215844,13 @@ var options_NotesSubState = function() {
 		var key = ClientPrefs.dflnoteskin;
 		var library = null;
 		var tmp;
-		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,key)) {
+		if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + key)) {
 			var returnAsset = Paths.returnGraphic(key,library);
 			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
-			dge_backend_CacheTools.cacheAtlas.h[key] = atlas;
+			dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key] = atlas;
 			tmp = atlas;
 		} else {
-			tmp = dge_backend_CacheTools.cacheAtlas.h[key];
+			tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + key];
 		}
 		note.set_frames(tmp);
 		var animations = ["purple0","blue0","green0","red0"];
