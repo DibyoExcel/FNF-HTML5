@@ -6592,12 +6592,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "321";
+	app.meta.h["build"] = "323";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.3.3";
+	app.meta.h["version"] = "26.4.0";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -52060,7 +52060,7 @@ FunkinLua.prototype = {
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3694, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3768, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -56644,7 +56644,6 @@ GameOverSubstate.prototype = $extend(MusicBeatSubstate.prototype,{
 			PlayState.deathCounter = 0;
 			PlayState.seenCutscene = false;
 			PlayState.chartingMode = false;
-			WeekData.loadTheFirstEnabledMod();
 			if(PlayState.isStoryMode) {
 				MusicBeatState.switchState(new StoryMenuState(),true);
 			} else {
@@ -60654,7 +60653,6 @@ PauseSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 			case "Exit to menu":
 				PlayState.deathCounter = 0;
 				PlayState.seenCutscene = false;
-				WeekData.loadTheFirstEnabledMod();
 				if(PlayState.isStoryMode) {
 					MusicBeatState.switchState(new StoryMenuState(),true);
 				} else {
@@ -60687,7 +60685,6 @@ PauseSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 			case "Return to Lair":
 				PlayState.deathCounter = 0;
 				PlayState.seenCutscene = false;
-				WeekData.loadTheFirstEnabledMod();
 				if(PlayState.isStoryMode) {
 					MusicBeatState.switchState(new StoryMenuState());
 				} else {
@@ -65759,7 +65756,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				PlayState.campaignPercent += this.ratingPercent;
 				HxOverrides.remove(PlayState.storyPlaylist,PlayState.storyPlaylist[0]);
 				if(PlayState.storyPlaylist.length <= 0) {
-					WeekData.loadTheFirstEnabledMod();
 					PlayState.cancelMusicFadeTween();
 					if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 						CustomFadeTransition.nextCamera = null;
@@ -65838,7 +65834,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				}
 			} else {
 				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4814, className : "PlayState", methodName : "endSong"});
-				WeekData.loadTheFirstEnabledMod();
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 					CustomFadeTransition.nextCamera = null;
@@ -78120,6 +78115,8 @@ var options_BaseOptionsMenu = function() {
 	this.isShowNote = false;
 	this.noteColor = ["purple","blue","green","red"];
 	this.arrowDir = ["left","down","up","right"];
+	this.spriteNote_c = [];
+	this.spriteNote = [];
 	this.boyfriend = null;
 	this.curSelected = 0;
 	this.curOption = null;
@@ -78129,6 +78126,15 @@ var options_BaseOptionsMenu = function() {
 	}
 	if(this.rpcTitle == null) {
 		this.rpcTitle = "Options Menu";
+	}
+	if(this.optionsArray == null) {
+		this.optionsArray = [];
+	}
+	if(this.spriteNote == null) {
+		this.spriteNote = [];
+	}
+	if(this.spriteNote_c == null) {
+		this.spriteNote_c = [];
 	}
 	var bg = new flixel_FlxSprite();
 	var returnAsset = Paths.returnGraphic("menuDesat",null);
@@ -78337,45 +78343,47 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 		var downNR = PlayerSettings.player1.controls._note_downR.check();
 		var upNR = PlayerSettings.player1.controls._note_upR.check();
 		var rightNR = PlayerSettings.player1.controls._note_rightR.check();
-		if(this.spriteNote[0] != null) {
-			if(leftN) {
-				this.spriteNote[0].animation.play("confirm");
-			} else if(leftNR) {
-				this.spriteNote[0].animation.play("idle");
+		if(this.spriteNote != null && this.spriteNote.length < 3) {
+			if(this.spriteNote[0] != null) {
+				if(leftN) {
+					this.spriteNote[0].animation.play("confirm");
+				} else if(leftNR) {
+					this.spriteNote[0].animation.play("idle");
+				}
+				var _this = this.spriteNote[0];
+				_this.origin.set(_this.frameWidth * 0.5,_this.frameHeight * 0.5);
+				this.spriteNote[0].centerOffsets();
 			}
-			var _this = this.spriteNote[0];
-			_this.origin.set(_this.frameWidth * 0.5,_this.frameHeight * 0.5);
-			this.spriteNote[0].centerOffsets();
-		}
-		if(this.spriteNote[1] != null) {
-			if(downN) {
-				this.spriteNote[1].animation.play("confirm");
-			} else if(downNR) {
-				this.spriteNote[1].animation.play("idle");
+			if(this.spriteNote[1] != null) {
+				if(downN) {
+					this.spriteNote[1].animation.play("confirm");
+				} else if(downNR) {
+					this.spriteNote[1].animation.play("idle");
+				}
+				var _this = this.spriteNote[1];
+				_this.origin.set(_this.frameWidth * 0.5,_this.frameHeight * 0.5);
+				this.spriteNote[1].centerOffsets();
 			}
-			var _this = this.spriteNote[1];
-			_this.origin.set(_this.frameWidth * 0.5,_this.frameHeight * 0.5);
-			this.spriteNote[1].centerOffsets();
-		}
-		if(this.spriteNote[2] != null) {
-			if(upN) {
-				this.spriteNote[2].animation.play("confirm");
-			} else if(upNR) {
-				this.spriteNote[2].animation.play("idle");
+			if(this.spriteNote[2] != null) {
+				if(upN) {
+					this.spriteNote[2].animation.play("confirm");
+				} else if(upNR) {
+					this.spriteNote[2].animation.play("idle");
+				}
+				var _this = this.spriteNote[2];
+				_this.origin.set(_this.frameWidth * 0.5,_this.frameHeight * 0.5);
+				this.spriteNote[2].centerOffsets();
 			}
-			var _this = this.spriteNote[2];
-			_this.origin.set(_this.frameWidth * 0.5,_this.frameHeight * 0.5);
-			this.spriteNote[2].centerOffsets();
-		}
-		if(this.spriteNote[3] != null) {
-			if(rightN) {
-				this.spriteNote[3].animation.play("confirm");
-			} else if(rightNR) {
-				this.spriteNote[3].animation.play("idle");
+			if(this.spriteNote[3] != null) {
+				if(rightN) {
+					this.spriteNote[3].animation.play("confirm");
+				} else if(rightNR) {
+					this.spriteNote[3].animation.play("idle");
+				}
+				var _this = this.spriteNote[3];
+				_this.origin.set(_this.frameWidth * 0.5,_this.frameHeight * 0.5);
+				this.spriteNote[3].centerOffsets();
 			}
-			var _this = this.spriteNote[3];
-			_this.origin.set(_this.frameWidth * 0.5,_this.frameHeight * 0.5);
-			this.spriteNote[3].centerOffsets();
 		}
 		if(PlayerSettings.player1.controls._ui_upP.check() && !this.keyBroker) {
 			this.changeSelection(-1);
@@ -78388,28 +78396,66 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 			flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
 		}
 		if(this.nextAccept <= 0) {
-			var usesCheckbox = true;
-			if(this.curOption.get_type() != "bool") {
-				usesCheckbox = false;
-			}
-			if(usesCheckbox) {
-				if(PlayerSettings.player1.controls._accept.check() && !this.keyBroker) {
-					flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
-					this.curOption.setValue(this.curOption.getValue() == true ? false : true);
-					this.curOption.change();
-					this.reloadCheckboxes();
+			if(this.curOption != null) {
+				var usesCheckbox = true;
+				if(this.curOption.get_type() != "bool") {
+					usesCheckbox = false;
 				}
-			} else if((PlayerSettings.player1.controls._ui_left.check() || PlayerSettings.player1.controls._ui_right.check()) && !this.keyBroker) {
-				var pressed = PlayerSettings.player1.controls._ui_leftP.check() || PlayerSettings.player1.controls._ui_rightP.check();
-				if(this.holdTime > 0.5 || pressed) {
-					if(pressed) {
-						var add = null;
-						if(this.curOption.get_type() != "string") {
-							add = PlayerSettings.player1.controls._ui_left.check() ? -this.curOption.changeValue : this.curOption.changeValue;
-						}
-						switch(this.curOption.get_type()) {
-						case "float":case "int":case "percent":
-							this.holdValue = this.curOption.getValue() + add;
+				if(usesCheckbox) {
+					if(PlayerSettings.player1.controls._accept.check() && !this.keyBroker) {
+						flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
+						this.curOption.setValue(this.curOption.getValue() == true ? false : true);
+						this.curOption.change();
+						this.reloadCheckboxes();
+					}
+				} else if((PlayerSettings.player1.controls._ui_left.check() || PlayerSettings.player1.controls._ui_right.check()) && !this.keyBroker) {
+					var pressed = PlayerSettings.player1.controls._ui_leftP.check() || PlayerSettings.player1.controls._ui_rightP.check();
+					if(this.holdTime > 0.5 || pressed) {
+						if(pressed) {
+							var add = null;
+							if(this.curOption.get_type() != "string") {
+								add = PlayerSettings.player1.controls._ui_left.check() ? -this.curOption.changeValue : this.curOption.changeValue;
+							}
+							switch(this.curOption.get_type()) {
+							case "float":case "int":case "percent":
+								this.holdValue = this.curOption.getValue() + add;
+								if(this.holdValue < this.curOption.minValue) {
+									this.holdValue = this.curOption.minValue;
+								} else if(this.holdValue > this.curOption.maxValue) {
+									this.holdValue = this.curOption.maxValue;
+								}
+								switch(this.curOption.get_type()) {
+								case "int":
+									this.holdValue = Math.round(this.holdValue);
+									this.curOption.setValue(this.holdValue);
+									break;
+								case "float":case "percent":
+									this.holdValue = flixel_math_FlxMath.roundDecimal(this.holdValue,this.curOption.decimals);
+									this.curOption.setValue(this.holdValue);
+									break;
+								}
+								break;
+							case "string":
+								var num = this.curOption.curOption;
+								if(PlayerSettings.player1.controls._ui_leftP.check()) {
+									--num;
+								} else {
+									++num;
+								}
+								if(num < 0) {
+									num = this.curOption.options.length - 1;
+								} else if(num >= this.curOption.options.length) {
+									num = 0;
+								}
+								this.curOption.curOption = num;
+								this.curOption.setValue(this.curOption.options[num]);
+								break;
+							}
+							this.updateTextFrom(this.curOption);
+							this.curOption.change();
+							flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
+						} else if(this.curOption.get_type() != "string") {
+							this.holdValue += this.curOption.scrollSpeed * elapsed * (PlayerSettings.player1.controls._ui_left.check() ? -1 : 1);
 							if(this.holdValue < this.curOption.minValue) {
 								this.holdValue = this.curOption.minValue;
 							} else if(this.holdValue > this.curOption.maxValue) {
@@ -78417,76 +78463,40 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 							}
 							switch(this.curOption.get_type()) {
 							case "int":
-								this.holdValue = Math.round(this.holdValue);
-								this.curOption.setValue(this.holdValue);
+								this.curOption.setValue(Math.round(this.holdValue));
 								break;
 							case "float":case "percent":
-								this.holdValue = flixel_math_FlxMath.roundDecimal(this.holdValue,this.curOption.decimals);
-								this.curOption.setValue(this.holdValue);
+								this.curOption.setValue(flixel_math_FlxMath.roundDecimal(this.holdValue,this.curOption.decimals));
 								break;
 							}
-							break;
-						case "string":
-							var num = this.curOption.curOption;
-							if(PlayerSettings.player1.controls._ui_leftP.check()) {
-								--num;
-							} else {
-								++num;
-							}
-							if(num < 0) {
-								num = this.curOption.options.length - 1;
-							} else if(num >= this.curOption.options.length) {
-								num = 0;
-							}
-							this.curOption.curOption = num;
-							this.curOption.setValue(this.curOption.options[num]);
-							break;
+							this.updateTextFrom(this.curOption);
+							this.curOption.change();
 						}
-						this.updateTextFrom(this.curOption);
-						this.curOption.change();
-						flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
-					} else if(this.curOption.get_type() != "string") {
-						this.holdValue += this.curOption.scrollSpeed * elapsed * (PlayerSettings.player1.controls._ui_left.check() ? -1 : 1);
-						if(this.holdValue < this.curOption.minValue) {
-							this.holdValue = this.curOption.minValue;
-						} else if(this.holdValue > this.curOption.maxValue) {
-							this.holdValue = this.curOption.maxValue;
-						}
-						switch(this.curOption.get_type()) {
-						case "int":
-							this.curOption.setValue(Math.round(this.holdValue));
-							break;
-						case "float":case "percent":
-							this.curOption.setValue(flixel_math_FlxMath.roundDecimal(this.holdValue,this.curOption.decimals));
-							break;
-						}
-						this.updateTextFrom(this.curOption);
-						this.curOption.change();
 					}
-				}
-				if(this.curOption.get_type() != "string") {
-					this.holdTime += elapsed;
-				}
-			} else if((PlayerSettings.player1.controls._ui_leftR.check() || PlayerSettings.player1.controls._ui_rightR.check()) && !this.keyBroker) {
-				this.clearHold();
-			}
-			if(PlayerSettings.player1.controls._reset.check() && !this.keyBroker) {
-				var _g = 0;
-				var _g1 = this.optionsArray.length;
-				while(_g < _g1) {
-					var i = _g++;
-					var leOption = this.optionsArray[i];
-					leOption.setValue(leOption.defaultValue);
-					if(leOption.get_type() != "bool") {
-						if(leOption.get_type() == "string") {
-							leOption.curOption = leOption.options.indexOf(leOption.getValue());
-						}
-						this.updateTextFrom(leOption);
+					if(this.curOption.get_type() != "string") {
+						this.holdTime += elapsed;
 					}
-					leOption.change();
+				} else if((PlayerSettings.player1.controls._ui_leftR.check() || PlayerSettings.player1.controls._ui_rightR.check()) && !this.keyBroker) {
+					this.clearHold();
 				}
-				flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
-				this.reloadCheckboxes();
+				if(PlayerSettings.player1.controls._reset.check() && !this.keyBroker) {
+					var _g = 0;
+					var _g1 = this.optionsArray.length;
+					while(_g < _g1) {
+						var i = _g++;
+						var leOption = this.optionsArray[i];
+						leOption.setValue(leOption.defaultValue);
+						if(leOption.get_type() != "bool") {
+							if(leOption.get_type() == "string") {
+								leOption.curOption = leOption.options.indexOf(leOption.getValue());
+							}
+							this.updateTextFrom(leOption);
+						}
+						leOption.change();
+					}
+					flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
+					this.reloadCheckboxes();
+				}
 			}
 		}
 		if(this.boyfriend != null && this.boyfriend.animation._curAnim.finished) {
@@ -78516,114 +78526,116 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 		if(change == null) {
 			change = 0;
 		}
-		this.curSelected += change;
-		if(this.curSelected < 0) {
-			this.curSelected = this.optionsArray.length - 1;
-		}
-		if(this.curSelected >= this.optionsArray.length) {
-			this.curSelected = 0;
-		}
-		this.descText.set_text(this.optionsArray[this.curSelected].description);
-		var _this = this.descText;
-		var axes = flixel_util_FlxAxes.XY;
-		var tmp;
-		switch(axes._hx_index) {
-		case 0:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			_this.set_x((flixel_FlxG.width - _this.get_width()) / 2);
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 1:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
-		}
-		var fh = this.descText;
-		fh.set_y(fh.y + 270);
-		var bullShit = 0;
-		var _g = 0;
-		var _g1 = this.grpOptions.members;
-		while(_g < _g1.length) {
-			var item = _g1[_g];
-			++_g;
-			item.targetY = bullShit - this.curSelected;
-			++bullShit;
-			item.set_alpha(0.6);
-			if(item.targetY == 0) {
-				item.set_alpha(1);
+		if(this.optionsArray != null && this.optionsArray.length > 0) {
+			this.curSelected += change;
+			if(this.curSelected < 0) {
+				this.curSelected = this.optionsArray.length - 1;
 			}
-		}
-		var text = new flixel_group_FlxTypedGroupIterator(this.grpTexts.members,null);
-		while(text.hasNext()) {
-			var text1 = text.next();
-			text1.set_alpha(0.6);
-			if(text1.ID == this.curSelected) {
-				text1.set_alpha(1);
+			if(this.curSelected >= this.optionsArray.length) {
+				this.curSelected = 0;
 			}
-		}
-		this.descBox.setPosition(this.descText.x - 10,this.descText.y - 10);
-		this.descBox.setGraphicSize(this.descText.get_width() + 20 | 0,this.descText.get_height() + 25 | 0);
-		this.descBox.updateHitbox();
-		if(this.boyfriend != null) {
-			this.boyfriend.set_visible(this.optionsArray[this.curSelected].showBoyfriend);
-		}
-		if(this.isShowNote == false && this.optionsArray[this.curSelected].showNote) {
-			this.isShowNote = true;
+			this.descText.set_text(this.optionsArray[this.curSelected].description);
+			var _this = this.descText;
+			var axes = flixel_util_FlxAxes.XY;
+			var tmp;
+			switch(axes._hx_index) {
+			case 0:case 2:
+				tmp = true;
+				break;
+			default:
+				tmp = false;
+			}
+			if(tmp) {
+				_this.set_x((flixel_FlxG.width - _this.get_width()) / 2);
+			}
+			var tmp;
+			switch(axes._hx_index) {
+			case 1:case 2:
+				tmp = true;
+				break;
+			default:
+				tmp = false;
+			}
+			if(tmp) {
+				_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
+			}
+			var fh = this.descText;
+			fh.set_y(fh.y + 270);
+			var bullShit = 0;
 			var _g = 0;
-			var _g1 = this.spriteNote.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(this.arrayTE[i] != null) {
-					this.arrayTE[i].cancel();
+			var _g1 = this.grpOptions.members;
+			while(_g < _g1.length) {
+				var item = _g1[_g];
+				++_g;
+				item.targetY = bullShit - this.curSelected;
+				++bullShit;
+				item.set_alpha(0.6);
+				if(item.targetY == 0) {
+					item.set_alpha(1);
 				}
-				this.spriteNote[i].set_visible(true);
-				this.spriteNote[i].set_y(-205);
-				this.arrayTE[i] = flixel_tweens_FlxTween.tween(this.spriteNote[i],{ y : 0},1,{ ease : flixel_tweens_FlxEase.quadOut});
 			}
-			var _g = 0;
-			var _g1 = this.spriteNote_c.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(this.arrayTE_c[i] != null) {
-					this.arrayTE_c[i].cancel();
+			var text = new flixel_group_FlxTypedGroupIterator(this.grpTexts.members,null);
+			while(text.hasNext()) {
+				var text1 = text.next();
+				text1.set_alpha(0.6);
+				if(text1.ID == this.curSelected) {
+					text1.set_alpha(1);
 				}
-				this.spriteNote_c[i].set_y(-205);
-				this.arrayTE_c[i] = flixel_tweens_FlxTween.tween(this.spriteNote_c[i],{ y : 112},1,{ ease : flixel_tweens_FlxEase.quadOut});
-				this.spriteNote_c[i].set_visible(true);
 			}
-		} else {
-			this.isShowNote = false;
-			var _g = 0;
-			var _g1 = this.spriteNote.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(this.arrayTE[i] != null) {
-					this.arrayTE[i].cancel();
+			this.descBox.setPosition(this.descText.x - 10,this.descText.y - 10);
+			this.descBox.setGraphicSize(this.descText.get_width() + 20 | 0,this.descText.get_height() + 25 | 0);
+			this.descBox.updateHitbox();
+			if(this.boyfriend != null) {
+				this.boyfriend.set_visible(this.optionsArray[this.curSelected].showBoyfriend);
+			}
+			if(this.isShowNote == false && this.optionsArray[this.curSelected].showNote) {
+				this.isShowNote = true;
+				var _g = 0;
+				var _g1 = this.spriteNote.length;
+				while(_g < _g1) {
+					var i = _g++;
+					if(this.arrayTE[i] != null) {
+						this.arrayTE[i].cancel();
+					}
+					this.spriteNote[i].set_visible(true);
+					this.spriteNote[i].set_y(-205);
+					this.arrayTE[i] = flixel_tweens_FlxTween.tween(this.spriteNote[i],{ y : 0},1,{ ease : flixel_tweens_FlxEase.quadOut});
 				}
-				this.spriteNote[i].set_visible(false);
-			}
-			var _g = 0;
-			var _g1 = this.spriteNote_c.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(this.arrayTE_c[i] != null) {
-					this.arrayTE_c[i].cancel();
+				var _g = 0;
+				var _g1 = this.spriteNote_c.length;
+				while(_g < _g1) {
+					var i = _g++;
+					if(this.arrayTE_c[i] != null) {
+						this.arrayTE_c[i].cancel();
+					}
+					this.spriteNote_c[i].set_y(-205);
+					this.arrayTE_c[i] = flixel_tweens_FlxTween.tween(this.spriteNote_c[i],{ y : 112},1,{ ease : flixel_tweens_FlxEase.quadOut});
+					this.spriteNote_c[i].set_visible(true);
 				}
-				this.spriteNote_c[i].set_visible(false);
+			} else {
+				this.isShowNote = false;
+				var _g = 0;
+				var _g1 = this.spriteNote.length;
+				while(_g < _g1) {
+					var i = _g++;
+					if(this.arrayTE[i] != null) {
+						this.arrayTE[i].cancel();
+					}
+					this.spriteNote[i].set_visible(false);
+				}
+				var _g = 0;
+				var _g1 = this.spriteNote_c.length;
+				while(_g < _g1) {
+					var i = _g++;
+					if(this.arrayTE_c[i] != null) {
+						this.arrayTE_c[i].cancel();
+					}
+					this.spriteNote_c[i].set_visible(false);
+				}
 			}
+			this.curOption = this.optionsArray[this.curSelected];
+			flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 		}
-		this.curOption = this.optionsArray[this.curSelected];
-		flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 	}
 	,reloadBoyfriend: function() {
 		var wasVisible = false;
@@ -78772,7 +78784,7 @@ dge_states_options_MiscSubState.prototype = $extend(options_BaseOptionsMenu.prot
 var dge_states_options_MobileSubState = function() {
 	this.title = "Mobile Settings";
 	this.rpcTitle = "Mobile Settings Menu";
-	lime_app_Application.current.__window.alert("what ur doing here lol? you're even not in mobile.");
+	lime_app_Application.current.__window.alert("what ur doing here lol? you're even not in mobile.","DubEnderDragon");
 	this.close();
 	options_BaseOptionsMenu.call(this);
 	this.changeBGColor(-65536);
@@ -80324,10 +80336,10 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.add(this.leftIcon);
 		this.add(this.gfIcon);
 		this.add(this.rightIcon);
-		this.eventIcon.setPosition(-editors_ChartingState.GRID_SIZE - 5,7.5);
-		this.leftIcon.setPosition(editors_ChartingState.GRID_SIZE + 10,0);
-		this.rightIcon.setPosition(editors_ChartingState.GRID_SIZE * 5.2,0);
-		this.gfIcon.setPosition(editors_ChartingState.GRID_SIZE * 5.2 + editors_ChartingState.GRID_SIZE * 4,0);
+		this.eventIcon.setPosition(editors_ChartingState.GRID_SIZE / 2 - this.eventIcon.get_width() / 2,7.5);
+		this.leftIcon.setPosition(editors_ChartingState.GRID_SIZE + (editors_ChartingState.GRID_SIZE * 2 - this.leftIcon.get_width() / 2),0);
+		this.rightIcon.setPosition(editors_ChartingState.GRID_SIZE + (editors_ChartingState.GRID_SIZE * 6 - this.leftIcon.get_width() / 2),0);
+		this.gfIcon.setPosition(editors_ChartingState.GRID_SIZE + (editors_ChartingState.GRID_SIZE * 10 - this.gfIcon.get_width() / 2),0);
 		var tabs = [{ name : "Song", label : "Song"},{ name : "Section", label : "Section"},{ name : "Note", label : "Note"},{ name : "Events", label : "Events"},{ name : "Charting", label : "Charting"}];
 		this.UI_box = new flixel_addons_ui_FlxUITabMenu(null,null,tabs,null,true);
 		this.UI_box.resize(300,550);
@@ -82171,18 +82183,6 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.gridLayer.add(this.prevGridBG);
 		this.gridLayer.add(this.nextGridBG);
 		this.gridLayer.add(this.gridBG);
-		if(this.eventIcon != null) {
-			this.eventIcon.set_x(this.gridBG.x + editors_ChartingState.GRID_SIZE / 2 - this.eventIcon.get_width() / 2);
-		}
-		if(this.leftIcon != null) {
-			this.leftIcon.set_x(this.gridBG.x + editors_ChartingState.GRID_SIZE + (editors_ChartingState.GRID_SIZE * 2 - this.leftIcon.get_width() / 2));
-		}
-		if(this.rightIcon != null) {
-			this.rightIcon.set_x(this.gridBG.x + editors_ChartingState.GRID_SIZE + (editors_ChartingState.GRID_SIZE * 6 - this.leftIcon.get_width() / 2));
-		}
-		if(this.gfIcon != null) {
-			this.gfIcon.set_x(this.gridBG.x + editors_ChartingState.GRID_SIZE + (editors_ChartingState.GRID_SIZE * 10 - this.gfIcon.get_width() / 2));
-		}
 		if(foundNextSec) {
 			var gridBlack = new flixel_FlxSprite(0,this.gridBG.get_height()).makeGraphic(editors_ChartingState.GRID_SIZE * 13 | 0,this.nextGridBG.get_height() | 0,-16777216);
 			gridBlack.set_alpha(0.4);
@@ -82810,7 +82810,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
 		var noteDataToCheck = actualNoteData;
-		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3371, className : "editors.ChartingState", methodName : "deleteNote"});
+		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3366, className : "editors.ChartingState", methodName : "deleteNote"});
 		if(note.noteData > -1) {
 			var _g = 0;
 			var _g1 = this._song.notes[editors_ChartingState.curSec].sectionNotes;
@@ -82875,7 +82875,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var noteStrum = this.getStrumTime(this.dummyArrow.y * (this.getSectionBeats() / 4),false) + this.sectionStartTime();
 		var noteData = Math.floor((pos - editors_ChartingState.GRID_SIZE) / editors_ChartingState.GRID_SIZE);
-		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3443, className : "editors.ChartingState", methodName : "addNote"});
+		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3438, className : "editors.ChartingState", methodName : "addNote"});
 		var noteSus = 0;
 		var daAlt = false;
 		var daType = this.currentType;
@@ -165213,7 +165213,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 16623;
+	this.version = 893770;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -215124,6 +215124,7 @@ options_GraphicsSettingsSubState.prototype = $extend(options_BaseOptionsMenu.pro
 	,__class__: options_GraphicsSettingsSubState
 });
 var options_MainOptionsState = function(TransIn,TransOut) {
+	this.settingName = "Global Setting";
 	this.options = ["DGE Settings","Psych Settings"];
 	MusicBeatState.call(this,TransIn,TransOut);
 };
@@ -215135,6 +215136,7 @@ options_MainOptionsState.prototype = $extend(MusicBeatState.prototype,{
 	options: null
 	,grpOptions: null
 	,enterButton: null
+	,settingName: null
 	,openSelectedSubstate: function(label) {
 		switch(label) {
 		case "DGE Settings":
