@@ -1948,7 +1948,7 @@ flixel_FlxSprite.prototype = $extend(flixel_FlxObject.prototype,{
 			if(value == null || value.length < 1) {
 				value = shouldUse[0];
 			}
-			value = value.toLowerCase();
+			value = StringTools.trim(value.toLowerCase());
 			if(shouldUse.indexOf(value) == -1) {
 				value = shouldUse[0];
 			}
@@ -6612,12 +6612,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "354";
+	app.meta.h["build"] = "357";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.6.0";
+	app.meta.h["version"] = "26.7.0";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -48601,6 +48601,34 @@ CoolUtil.colorToGrayscale = function(color) {
 	var gray = 0.2126 * r + 0.7152 * g + 0.0722 * b | 0;
 	return gray << 16 | gray << 8 | gray;
 };
+CoolUtil.addSpecialAnimation = function(sprite,anim,xmlName,defaultXmlName,loop,framerate) {
+	if(framerate == null) {
+		framerate = 24;
+	}
+	if(loop == null) {
+		loop = true;
+	}
+	if(sprite != null && anim.length > 0 && xmlName.length > 0 && defaultXmlName.length > 0) {
+		var hasFound = false;
+		if(sprite.frames.frames != null) {
+			var _g = 0;
+			var _g1 = sprite.frames.frames;
+			while(_g < _g1.length) {
+				var frame = _g1[_g];
+				++_g;
+				if(frame.name != null && StringTools.startsWith(frame.name,xmlName)) {
+					hasFound = true;
+					break;
+				}
+			}
+		}
+		if(hasFound) {
+			sprite.animation.addByPrefix(anim,xmlName,framerate,loop);
+		} else {
+			sprite.animation.addByPrefix(anim,defaultXmlName,framerate,loop);
+		}
+	}
+};
 var CreditsState = function(TransIn,TransOut) {
 	this.moveTween = null;
 	this.holdTime = 0;
@@ -48625,10 +48653,6 @@ CreditsState.prototype = $extend(MusicBeatState.prototype,{
 	,colorTween: null
 	,descBox: null
 	,offsetThing: null
-	,upButton: null
-	,downButton: null
-	,enterButton: null
-	,shiftButton: null
 	,create: function() {
 		this.persistentUpdate = true;
 		var tmp = new flixel_FlxSprite();
@@ -50241,9 +50265,7 @@ $hxClasses["FlashingState"] = FlashingState;
 FlashingState.__name__ = "FlashingState";
 FlashingState.__super__ = MusicBeatState;
 FlashingState.prototype = $extend(MusicBeatState.prototype,{
-	backButton: null
-	,enterButton: null
-	,warnText: null
+	warnText: null
 	,create: function() {
 		MusicBeatState.prototype.create.call(this);
 		var bg = new flixel_FlxSprite().makeGraphic(flixel_FlxG.width,flixel_FlxG.height,-16777216);
@@ -51053,11 +51075,6 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 	,bg: null
 	,intendedColor: null
 	,colorTween: null
-	,spaceButton: null
-	,ctrlButton: null
-	,shiftButton: null
-	,resetButton: null
-	,enterButton: null
 	,create: function() {
 		this.persistentUpdate = true;
 		PlayState.isStoryMode = false;
@@ -51320,13 +51337,13 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 			var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
 			var songLowercase = hideChars.split(path1).join("").toLowerCase();
 			var poop = Highscore.formatSong(songLowercase,this.curDifficulty);
-			haxe_Log.trace(poop,{ fileName : "source/FreeplayState.hx", lineNumber : 416, className : "FreeplayState", methodName : "update"});
+			haxe_Log.trace(poop,{ fileName : "source/FreeplayState.hx", lineNumber : 420, className : "FreeplayState", methodName : "update"});
 			var songData = Song.loadFromJson(poop,songLowercase);
 			if(songData != null) {
 				PlayState.SONG = songData;
 				PlayState.isStoryMode = false;
 				PlayState.storyDifficulty = this.curDifficulty;
-				haxe_Log.trace("CURRENT WEEK: " + WeekData.getWeekFileName(),{ fileName : "source/FreeplayState.hx", lineNumber : 423, className : "FreeplayState", methodName : "update"});
+				haxe_Log.trace("CURRENT WEEK: " + WeekData.getWeekFileName(),{ fileName : "source/FreeplayState.hx", lineNumber : 427, className : "FreeplayState", methodName : "update"});
 				if(this.colorTween != null) {
 					this.colorTween.cancel();
 				}
@@ -56690,7 +56707,6 @@ GameOverSubstate.prototype = $extend(MusicBeatSubstate.prototype,{
 	,playingDeathSound: null
 	,stageSuffix: null
 	,camC: null
-	,enterButton: null
 	,create: function() {
 		GameOverSubstate.instance = this;
 		PlayState.instance.callOnLuas("onGameOverStart",[]);
@@ -56870,10 +56886,6 @@ GameplayChangersSubstate.prototype = $extend(MusicBeatSubstate.prototype,{
 	,grpTexts: null
 	,gamemodeMap: null
 	,gamemodeArray: null
-	,leftButton: null
-	,rightButton: null
-	,enterButton: null
-	,resetButton: null
 	,getOptions: function() {
 		var goption = new GameplayOption("Scroll Type","scrolltype","string","multiplicative",["multiplicative","constant"]);
 		this.optionsArray.push(goption);
@@ -58404,7 +58416,7 @@ ManifestResources.init = function(config) {
 	lime_utils_Assets.libraryPaths.h["week6"] = v;
 	var v = ManifestResources.rootPath + "manifest/week7.json";
 	lime_utils_Assets.libraryPaths.h["week7"] = v;
-	var data = "{\"name\":null,\"assets\":\"aoy4:pathy33:assets%2Fcharacters%2Fbf-car.jsony4:sizei2527y4:typey4:TEXTy2:idR1y7:preloadtgoR0y39:assets%2Fcharacters%2Fbf-christmas.jsonR2i1747R3R4R5R7R6tgoR0y34:assets%2Fcharacters%2Fbf-dead.jsonR2i709R3R4R5R8R6tgoR0y45:assets%2Fcharacters%2Fbf-holding-gf-dead.jsonR2i740R3R4R5R9R6tgoR0y40:assets%2Fcharacters%2Fbf-holding-gf.jsonR2i1751R3R4R5R10R6tgoR0y40:assets%2Fcharacters%2Fbf-pixel-dead.jsonR2i721R3R4R5R11R6tgoR0y44:assets%2Fcharacters%2Fbf-pixel-opponent.jsonR2i1567R3R4R5R12R6tgoR0y35:assets%2Fcharacters%2Fbf-pixel.jsonR2i1563R3R4R5R13R6tgoR0y29:assets%2Fcharacters%2Fbf.jsonR2i2467R3R4R5R14R6tgoR0y30:assets%2Fcharacters%2Fdad.jsonR2i1762R3R4R5R15R6tgoR0y41:assets%2Fcharacters%2FDubEnderDragon.jsonR2i1039R3R4R5R16R6tgoR0y33:assets%2Fcharacters%2Fgf-car.jsonR2i993R3R4R5R17R6tgoR0y39:assets%2Fcharacters%2Fgf-christmas.jsonR2i2137R3R4R5R18R6tgoR0y35:assets%2Fcharacters%2Fgf-pixel.jsonR2i937R3R4R5R19R6tgoR0y37:assets%2Fcharacters%2Fgf-tankmen.jsonR2i1066R3R4R5R20R6tgoR0y29:assets%2Fcharacters%2Fgf.jsonR2i2326R3R4R5R21R6tgoR0y42:assets%2Fcharacters%2FMintEnderDragon.jsonR2i1044R3R4R5R22R6tgoR0y34:assets%2Fcharacters%2Fmom-car.jsonR2i1892R3R4R5R23R6tgoR0y30:assets%2Fcharacters%2Fmom.jsonR2i988R3R4R5R24R6tgoR0y44:assets%2Fcharacters%2Fmonster-christmas.jsonR2i1905R3R4R5R25R6tgoR0y34:assets%2Fcharacters%2Fmonster.jsonR2i1904R3R4R5R26R6tgoR0y44:assets%2Fcharacters%2Fparents-christmas.jsonR2i3427R3R4R5R27R6tgoR0y38:assets%2Fcharacters%2Fpico-player.jsonR2i1635R3R4R5R28R6tgoR0y39:assets%2Fcharacters%2Fpico-speaker.jsonR2i1554R3R4R5R29R6tgoR0y31:assets%2Fcharacters%2Fpico.jsonR2i1636R3R4R5R30R6tgoR0y39:assets%2Fcharacters%2Fsenpai-angry.jsonR2i1039R3R4R5R31R6tgoR0y33:assets%2Fcharacters%2Fsenpai.jsonR2i1009R3R4R5R32R6tgoR0y33:assets%2Fcharacters%2Fspirit.jsonR2i992R3R4R5R33R6tgoR0y33:assets%2Fcharacters%2Fspooky.jsonR2i1384R3R4R5R34R6tgoR0y41:assets%2Fcharacters%2Ftankman-player.jsonR2i1976R3R4R5R35R6tgoR0y34:assets%2Fcharacters%2Ftankman.jsonR2i1974R3R4R5R36R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-easy.jsonR2i8488R3R4R5R37R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-hard.jsonR2i12097R3R4R5R38R6tgoR0y38:assets%2Fdata%2Fblammed%2Fblammed.jsonR2i9687R3R4R5R39R6tgoR0y37:assets%2Fdata%2Fblammed%2Fevents.jsonR2i10344R3R4R5R40R6tgoR0y44:assets%2Fdata%2Fbopeebo%2Fbopeebo-boobs.jsonR2i4140R3R4R5R41R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-easy.jsonR2i9178R3R4R5R42R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-hard.jsonR2i4140R3R4R5R43R6tgoR0y38:assets%2Fdata%2Fbopeebo%2Fbopeebo.jsonR2i9542R3R4R5R44R6tgoR0y37:assets%2Fdata%2Fbopeebo%2Fevents.jsonR2i5047R3R4R5R45R6tgoR0y33:assets%2Fdata%2FcharacterList.txtR2i284R3R4R5R46R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-easy.jsonR2i7062R3R4R5R47R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-hard.jsonR2i10443R3R4R5R48R6tgoR0y34:assets%2Fdata%2Fcocoa%2Fcocoa.jsonR2i8278R3R4R5R49R6tgoR0y35:assets%2Fdata%2Fcocoa%2Fevents.jsonR2i3644R3R4R5R50R6tgoR0y32:assets%2Fdata%2FcrashConfig.jsonR2i739R3R4R5R51R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-easy.jsonR2i7937R3R4R5R52R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-hard.jsonR2i9756R3R4R5R53R6tgoR0y44:assets%2Fdata%2Fdad-battle%2Fdad-battle.jsonR2i8913R3R4R5R54R6tgoR0y40:assets%2Fdata%2Fdad-battle%2Fevents.jsonR2i2614R3R4R5R55R6tgoR0y34:assets%2Fdata%2Fdata-goes-here.txtR2zR3R4R5R56R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-easy.jsonR2i9239R3R4R5R57R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-hard.jsonR2i11689R3R4R5R58R6tgoR0y36:assets%2Fdata%2Feggnog%2Feggnog.jsonR2i10333R3R4R5R59R6tgoR0y36:assets%2Fdata%2Feggnog%2Fevents.jsonR2i4881R3R4R5R60R6tgoR0y34:assets%2Fdata%2FfreeplayColors.txtR2i76R3R4R5R61R6tgoR0y35:assets%2Fdata%2Ffresh%2Fevents.jsonR2i3201R3R4R5R62R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-easy.jsonR2i5857R3R4R5R63R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-hard.jsonR2i6905R3R4R5R64R6tgoR0y34:assets%2Fdata%2Ffresh%2Ffresh.jsonR2i6493R3R4R5R65R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-easy.jsonR2i15146R3R4R5R66R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-hard.jsonR2i23500R3R4R5R67R6tgoR0y32:assets%2Fdata%2Fguns%2Fguns.jsonR2i20620R3R4R5R68R6tgoR0y34:assets%2Fdata%2Fhigh%2Fevents.jsonR2i4558R3R4R5R69R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-easy.jsonR2i8563R3R4R5R70R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-hard.jsonR2i11553R3R4R5R71R6tgoR0y32:assets%2Fdata%2Fhigh%2Fhigh.jsonR2i9757R3R4R5R72R6tgoR0y29:assets%2Fdata%2FintroText.txtR2i2103R3R4R5R73R6tgoR0y29:assets%2Fdata%2Fmain-view.xmlR2i123R3R4R5R74R6tgoR0y34:assets%2Fdata%2Fmilf%2Fevents.jsonR2i7488R3R4R5R75R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-easy.jsonR2i13522R3R4R5R76R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-hard.jsonR2i18135R3R4R5R77R6tgoR0y32:assets%2Fdata%2Fmilf%2Fmilf.jsonR2i15192R3R4R5R78R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-easy.jsonR2i12175R3R4R5R79R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-hard.jsonR2i14163R3R4R5R80R6tgoR0y38:assets%2Fdata%2Fmonster%2Fmonster.jsonR2i13445R3R4R5R81R6tgoR0y41:assets%2Fdata%2Fphilly-nice%2Fevents.jsonR2i5191R3R4R5R82R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-easy.jsonR2i8067R3R4R5R83R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-hard.jsonR2i12556R3R4R5R84R6tgoR0y46:assets%2Fdata%2Fphilly-nice%2Fphilly-nice.jsonR2i10103R3R4R5R85R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-easy.jsonR2i6089R3R4R5R86R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-hard.jsonR2i8768R3R4R5R87R6tgoR0y32:assets%2Fdata%2Fpico%2Fpico.jsonR2i7493R3R4R5R88R6tgoR0y34:assets%2Fdata%2Fridge%2Fridge.jsonR2i34473R3R4R5R89R6tgoR0y35:assets%2Fdata%2Froses%2Fevents.jsonR2i8786R3R4R5R90R6tgoR0y39:assets%2Fdata%2Froses%2Froses-easy.jsonR2i6725R3R4R5R91R6tgoR0y39:assets%2Fdata%2Froses%2Froses-hard.jsonR2i10432R3R4R5R92R6tgoR0y34:assets%2Fdata%2Froses%2Froses.jsonR2i8609R3R4R5R93R6tgoR0y41:assets%2Fdata%2Froses%2FrosesDialogue.txtR2i153R3R4R5R94R6tgoR0y43:assets%2Fdata%2Fsatin-panties%2Fevents.jsonR2i3177R3R4R5R95R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-easy.jsonR2i8817R3R4R5R96R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-hard.jsonR2i12704R3R4R5R97R6tgoR0y50:assets%2Fdata%2Fsatin-panties%2Fsatin-panties.jsonR2i10725R3R4R5R98R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-easy.jsonR2i9027R3R4R5R99R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-hard.jsonR2i10778R3R4R5R100R6tgoR0y36:assets%2Fdata%2Fsenpai%2Fsenpai.jsonR2i10016R3R4R5R101R6tgoR0y43:assets%2Fdata%2Fsenpai%2FsenpaiDialogue.txtR2i162R3R4R5R102R6tgoR0y34:assets%2Fdata%2Fsmash%2Fsmash.jsonR2i23961R3R4R5R103R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-easy.jsonR2i8435R3R4R5R104R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-hard.jsonR2i10170R3R4R5R105R6tgoR0y34:assets%2Fdata%2Fsouth%2Fsouth.jsonR2i10097R3R4R5R106R6tgoR0y33:assets%2Fdata%2FspecialThanks.txtR2i300R3R4R5R107R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-easy.jsonR2i7965R3R4R5R108R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-hard.jsonR2i9429R3R4R5R109R6tgoR0y40:assets%2Fdata%2Fspookeez%2Fspookeez.jsonR2i8875R3R4R5R110R6tgoR0y29:assets%2Fdata%2FstageList.txtR2i61R3R4R5R111R6tgoR0y36:assets%2Fdata%2Fstress%2Fevents.jsonR2i747R3R4R5R112R6tgoR0y41:assets%2Fdata%2Fstress%2Fpicospeaker.jsonR2i18286R3R4R5R113R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-easy.jsonR2i33455R3R4R5R114R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-hard.jsonR2i53679R3R4R5R115R6tgoR0y36:assets%2Fdata%2Fstress%2Fstress.jsonR2i45928R3R4R5R116R6tgoR0y32:assets%2Fdata%2Ftest%2Ftest.jsonR2i75208R3R4R5R117R6tgoR0y40:assets%2Fdata%2Ftest-dev%2Ftest-dev.jsonR2i49834R3R4R5R118R6tgoR0y36:assets%2Fdata%2Fthorns%2Fevents.jsonR2i8104R3R4R5R119R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-easy.jsonR2i10437R3R4R5R120R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-hard.jsonR2i15444R3R4R5R121R6tgoR0y36:assets%2Fdata%2Fthorns%2Fthorns.jsonR2i12691R3R4R5R122R6tgoR0y43:assets%2Fdata%2Fthorns%2FthornsDialogue.txtR2i305R3R4R5R123R6tgoR0y38:assets%2Fdata%2Ftutorial%2Fevents.jsonR2i2702R3R4R5R124R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-easy.jsonR2i5739R3R4R5R125R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-hard.jsonR2i6335R3R4R5R126R6tgoR0y40:assets%2Fdata%2Ftutorial%2Ftutorial.jsonR2i5739R3R4R5R127R6tgoR0y33:assets%2Fdata%2Fugh%2Fevents.jsonR2i1345R3R4R5R128R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-easy.jsonR2i8550R3R4R5R129R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-hard.jsonR2i12496R3R4R5R130R6tgoR0y30:assets%2Fdata%2Fugh%2Fugh.jsonR2i11354R3R4R5R131R6tgoR0y47:assets%2Fdata%2Fwinter-horrorland%2Fevents.jsonR2i6197R3R4R5R132R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-easy.jsonR2i11846R3R4R5R133R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-hard.jsonR2i14558R3R4R5R134R6tgoR0y58:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland.jsonR2i12808R3R4R5R135R6tgoR0y45:assets%2Fimages%2Fachievements%2Fbirthday.pngR2i10948R3y5:IMAGER5R136R6tgoR0y45:assets%2Fimages%2Fachievements%2Fdebugger.pngR2i7554R3R137R5R138R6tgoR0y54:assets%2Fimages%2Fachievements%2Ffriday_night_play.pngR2i7661R3R137R5R139R6tgoR0y41:assets%2Fimages%2Fachievements%2Fhype.pngR2i23694R3R137R5R140R6tgoR0y54:assets%2Fimages%2Fachievements%2Flockedachievement.pngR2i1709R3R137R5R141R6tgoR0y48:assets%2Fimages%2Fachievements%2Foversinging.pngR2i19900R3R137R5R142R6tgoR0y56:assets%2Fimages%2Fachievements%2Froadkill_enthusiast.pngR2i5996R3R137R5R143R6tgoR0y44:assets%2Fimages%2Fachievements%2Ftoastie.pngR2i3094R3R137R5R144R6tgoR0y45:assets%2Fimages%2Fachievements%2Ftwo_keys.pngR2i27127R3R137R5R145R6tgoR0y43:assets%2Fimages%2Fachievements%2Fur_bad.pngR2i22017R3R137R5R146R6tgoR0y44:assets%2Fimages%2Fachievements%2Fur_good.pngR2i3467R3R137R5R147R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek1_nomiss.pngR2i20155R3R137R5R148R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek2_nomiss.pngR2i9304R3R137R5R149R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek3_nomiss.pngR2i21984R3R137R5R150R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek4_nomiss.pngR2i13430R3R137R5R151R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek5_nomiss.pngR2i21894R3R137R5R152R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek6_nomiss.pngR2i552R3R137R5R153R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek7_nomiss.pngR2i7249R3R137R5R154R6tgoR0y30:assets%2Fimages%2Falphabet.pngR2i177267R3R137R5R155R6tgoR0y30:assets%2Fimages%2Falphabet.xmlR2i57385R3R4R5R156R6tgoR0y34:assets%2Fimages%2FalphabetDark.pngR2i120330R3R137R5R157R6tgoR0y34:assets%2Fimages%2FalphabetDark.xmlR2i57389R3R4R5R158R6tgoR0y33:assets%2Fimages%2FalphabetOld.pngR2i90070R3R137R5R159R6tgoR0y33:assets%2Fimages%2FalphabetOld.xmlR2i52093R3R4R5R160R6tgoR0y38:assets%2Fimages%2Fbutton%2Fa-hover.pngR2i9818R3R137R5R161R6tgoR0y42:assets%2Fimages%2Fbutton%2Fa-hoverDark.pngR2i9677R3R137R5R162R6tgoR0y32:assets%2Fimages%2Fbutton%2Fa.pngR2i8053R3R137R5R163R6tgoR0y36:assets%2Fimages%2Fbutton%2FaDark.pngR2i7859R3R137R5R164R6tgoR0y40:assets%2Fimages%2Fbutton%2Falt-hover.pngR2i10795R3R137R5R165R6tgoR0y44:assets%2Fimages%2Fbutton%2Falt-hoverDark.pngR2i10294R3R137R5R166R6tgoR0y34:assets%2Fimages%2Fbutton%2Falt.pngR2i9075R3R137R5R167R6tgoR0y38:assets%2Fimages%2Fbutton%2FaltDark.pngR2i8397R3R137R5R168R6tgoR0y41:assets%2Fimages%2Fbutton%2Fback-hover.pngR2i10662R3R137R5R169R6tgoR0y45:assets%2Fimages%2Fbutton%2Fback-hoverDark.pngR2i10381R3R137R5R170R6tgoR0y35:assets%2Fimages%2Fbutton%2Fback.pngR2i9279R3R137R5R171R6tgoR0y39:assets%2Fimages%2Fbutton%2FbackDark.pngR2i8503R3R137R5R172R6tgoR0y41:assets%2Fimages%2Fbutton%2Fctrl-hover.pngR2i11612R3R137R5R173R6tgoR0y45:assets%2Fimages%2Fbutton%2Fctrl-hoverDark.pngR2i11311R3R137R5R174R6tgoR0y35:assets%2Fimages%2Fbutton%2Fctrl.pngR2i9607R3R137R5R175R6tgoR0y39:assets%2Fimages%2Fbutton%2FctrlDark.pngR2i8838R3R137R5R176R6tgoR0y38:assets%2Fimages%2Fbutton%2Fd-hover.pngR2i11142R3R137R5R177R6tgoR0y42:assets%2Fimages%2Fbutton%2Fd-hoverDark.pngR2i10476R3R137R5R178R6tgoR0y32:assets%2Fimages%2Fbutton%2Fd.pngR2i9363R3R137R5R179R6tgoR0y36:assets%2Fimages%2Fbutton%2FdDark.pngR2i8614R3R137R5R180R6tgoR0y41:assets%2Fimages%2Fbutton%2Fdown-hover.pngR2i11291R3R137R5R181R6tgoR0y45:assets%2Fimages%2Fbutton%2Fdown-hoverDark.pngR2i10758R3R137R5R182R6tgoR0y35:assets%2Fimages%2Fbutton%2Fdown.pngR2i9327R3R137R5R183R6tgoR0y39:assets%2Fimages%2Fbutton%2FdownDark.pngR2i8715R3R137R5R184R6tgoR0y38:assets%2Fimages%2Fbutton%2Fe-hover.pngR2i10420R3R137R5R185R6tgoR0y42:assets%2Fimages%2Fbutton%2Fe-hoverDark.pngR2i10032R3R137R5R186R6tgoR0y32:assets%2Fimages%2Fbutton%2Fe.pngR2i8707R3R137R5R187R6tgoR0y36:assets%2Fimages%2Fbutton%2FeDark.pngR2i8132R3R137R5R188R6tgoR0y42:assets%2Fimages%2Fbutton%2Fenter-hover.pngR2i11879R3R137R5R189R6tgoR0y46:assets%2Fimages%2Fbutton%2Fenter-hoverDark.pngR2i10628R3R137R5R190R6tgoR0y36:assets%2Fimages%2Fbutton%2Fenter.pngR2i9976R3R137R5R191R6tgoR0y40:assets%2Fimages%2Fbutton%2FenterDark.pngR2i8756R3R137R5R192R6tgoR0y41:assets%2Fimages%2Fbutton%2Fhand-hover.pngR2i12156R3R137R5R193R6tgoR0y45:assets%2Fimages%2Fbutton%2Fhand-hoverDark.pngR2i11520R3R137R5R194R6tgoR0y35:assets%2Fimages%2Fbutton%2Fhand.pngR2i10176R3R137R5R195R6tgoR0y39:assets%2Fimages%2Fbutton%2FhandDark.pngR2i9169R3R137R5R196R6tgoR0y41:assets%2Fimages%2Fbutton%2Fleft-hover.pngR2i11243R3R137R5R197R6tgoR0y45:assets%2Fimages%2Fbutton%2Fleft-hoverDark.pngR2i10491R3R137R5R198R6tgoR0y35:assets%2Fimages%2Fbutton%2Fleft.pngR2i9441R3R137R5R199R6tgoR0y39:assets%2Fimages%2Fbutton%2FleftDark.pngR2i8311R3R137R5R200R6tgoR0y49:assets%2Fimages%2Fbutton%2Fleft_bracket-hover.pngR2i9250R3R137R5R201R6tgoR0y53:assets%2Fimages%2Fbutton%2Fleft_bracket-hoverDark.pngR2i9022R3R137R5R202R6tgoR0y43:assets%2Fimages%2Fbutton%2Fleft_bracket.pngR2i8192R3R137R5R203R6tgoR0y47:assets%2Fimages%2Fbutton%2Fleft_bracketDark.pngR2i7672R3R137R5R204R6tgoR0y38:assets%2Fimages%2Fbutton%2Fo-hover.pngR2i9783R3R137R5R205R6tgoR0y42:assets%2Fimages%2Fbutton%2Fo-hoverDark.pngR2i9417R3R137R5R206R6tgoR0y32:assets%2Fimages%2Fbutton%2Fo.pngR2i8136R3R137R5R207R6tgoR0y36:assets%2Fimages%2Fbutton%2FoDark.pngR2i7730R3R137R5R208R6tgoR0y38:assets%2Fimages%2Fbutton%2Fp-hover.pngR2i9654R3R137R5R209R6tgoR0y42:assets%2Fimages%2Fbutton%2Fp-hoverDark.pngR2i9311R3R137R5R210R6tgoR0y32:assets%2Fimages%2Fbutton%2Fp.pngR2i8326R3R137R5R211R6tgoR0y36:assets%2Fimages%2Fbutton%2FpDark.pngR2i7859R3R137R5R212R6tgoR0y38:assets%2Fimages%2Fbutton%2Fq-hover.pngR2i10269R3R137R5R213R6tgoR0y42:assets%2Fimages%2Fbutton%2Fq-hoverDark.pngR2i9768R3R137R5R214R6tgoR0y32:assets%2Fimages%2Fbutton%2Fq.pngR2i8629R3R137R5R215R6tgoR0y36:assets%2Fimages%2Fbutton%2FqDark.pngR2i8082R3R137R5R216R6tgoR0y38:assets%2Fimages%2Fbutton%2Fr-hover.pngR2i10374R3R137R5R217R6tgoR0y42:assets%2Fimages%2Fbutton%2Fr-hoverDark.pngR2i9831R3R137R5R218R6tgoR0y32:assets%2Fimages%2Fbutton%2Fr.pngR2i8742R3R137R5R219R6tgoR0y36:assets%2Fimages%2Fbutton%2FrDark.pngR2i7920R3R137R5R220R6tgoR0y42:assets%2Fimages%2Fbutton%2Fright-hover.pngR2i11204R3R137R5R221R6tgoR0y46:assets%2Fimages%2Fbutton%2Fright-hoverDark.pngR2i10494R3R137R5R222R6tgoR0y36:assets%2Fimages%2Fbutton%2Fright.pngR2i9386R3R137R5R223R6tgoR0y40:assets%2Fimages%2Fbutton%2FrightDark.pngR2i8278R3R137R5R224R6tgoR0y50:assets%2Fimages%2Fbutton%2Fright_bracket-hover.pngR2i9415R3R137R5R225R6tgoR0y54:assets%2Fimages%2Fbutton%2Fright_bracket-hoverDark.pngR2i9003R3R137R5R226R6tgoR0y44:assets%2Fimages%2Fbutton%2Fright_bracket.pngR2i8203R3R137R5R227R6tgoR0y48:assets%2Fimages%2Fbutton%2Fright_bracketDark.pngR2i7685R3R137R5R228R6tgoR0y38:assets%2Fimages%2Fbutton%2Fs-hover.pngR2i10516R3R137R5R229R6tgoR0y42:assets%2Fimages%2Fbutton%2Fs-hoverDark.pngR2i10006R3R137R5R230R6tgoR0y32:assets%2Fimages%2Fbutton%2Fs.pngR2i8744R3R137R5R231R6tgoR0y36:assets%2Fimages%2Fbutton%2FsDark.pngR2i8061R3R137R5R232R6tgoR0y42:assets%2Fimages%2Fbutton%2Fshift-hover.pngR2i11227R3R137R5R233R6tgoR0y46:assets%2Fimages%2Fbutton%2Fshift-hoverDark.pngR2i10498R3R137R5R234R6tgoR0y36:assets%2Fimages%2Fbutton%2Fshift.pngR2i9321R3R137R5R235R6tgoR0y40:assets%2Fimages%2Fbutton%2FshiftDark.pngR2i8423R3R137R5R236R6tgoR0y42:assets%2Fimages%2Fbutton%2Fspace-hover.pngR2i9210R3R137R5R237R6tgoR0y46:assets%2Fimages%2Fbutton%2Fspace-hoverDark.pngR2i8760R3R137R5R238R6tgoR0y36:assets%2Fimages%2Fbutton%2Fspace.pngR2i7893R3R137R5R239R6tgoR0y40:assets%2Fimages%2Fbutton%2FspaceDark.pngR2i7277R3R137R5R240R6tgoR0y38:assets%2Fimages%2Fbutton%2Ft-hover.pngR2i9341R3R137R5R241R6tgoR0y42:assets%2Fimages%2Fbutton%2Ft-hoverDark.pngR2i8860R3R137R5R242R6tgoR0y32:assets%2Fimages%2Fbutton%2Ft.pngR2i7916R3R137R5R243R6tgoR0y45:assets%2Fimages%2Fbutton%2Ftamplate-hover.pngR2i7778R3R137R5R244R6tgoR0y49:assets%2Fimages%2Fbutton%2Ftamplate-hoverDark.pngR2i7442R3R137R5R245R6tgoR0y39:assets%2Fimages%2Fbutton%2Ftamplate.pngR2i6924R3R137R5R246R6tgoR0y43:assets%2Fimages%2Fbutton%2FtamplateDark.pngR2i6617R3R137R5R247R6tgoR0y36:assets%2Fimages%2Fbutton%2FtDark.pngR2i7683R3R137R5R248R6tgoR0y39:assets%2Fimages%2Fbutton%2Fup-hover.pngR2i11312R3R137R5R249R6tgoR0y43:assets%2Fimages%2Fbutton%2Fup-hoverDark.pngR2i10783R3R137R5R250R6tgoR0y33:assets%2Fimages%2Fbutton%2Fup.pngR2i9306R3R137R5R251R6tgoR0y37:assets%2Fimages%2Fbutton%2FupDark.pngR2i8745R3R137R5R252R6tgoR0y38:assets%2Fimages%2Fbutton%2Fw-hover.pngR2i9805R3R137R5R253R6tgoR0y42:assets%2Fimages%2Fbutton%2Fw-hoverDark.pngR2i9561R3R137R5R254R6tgoR0y32:assets%2Fimages%2Fbutton%2Fw.pngR2i8235R3R137R5R255R6tgoR0y36:assets%2Fimages%2Fbutton%2FwDark.pngR2i7738R3R137R5R256R6tgoR0y38:assets%2Fimages%2Fbutton%2Fx-hover.pngR2i12388R3R137R5R257R6tgoR0y42:assets%2Fimages%2Fbutton%2Fx-hoverDark.pngR2i11499R3R137R5R258R6tgoR0y32:assets%2Fimages%2Fbutton%2Fx.pngR2i10418R3R137R5R259R6tgoR0y36:assets%2Fimages%2Fbutton%2FxDark.pngR2i9356R3R137R5R260R6tgoR0y87:assets%2Fimages%2Fbutton%2Fyou%20can%20use%20any%20resolution%20of%20image%20button.txtR2zR3R4R5R261R6tgoR0y38:assets%2Fimages%2Fbutton%2Fz-hover.pngR2i10489R3R137R5R262R6tgoR0y42:assets%2Fimages%2Fbutton%2Fz-hoverDark.pngR2i9825R3R137R5R263R6tgoR0y32:assets%2Fimages%2Fbutton%2Fz.pngR2i8703R3R137R5R264R6tgoR0y36:assets%2Fimages%2Fbutton%2FzDark.pngR2i8115R3R137R5R265R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.pngR2i3044R3R137R5R266R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.xmlR2i597R3R4R5R267R6tgoR0y33:assets%2Fimages%2Fchart_quant.pngR2i3143R3R137R5R268R6tgoR0y33:assets%2Fimages%2Fchart_quant.xmlR2i1028R3R4R5R269R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.pngR2i16546R3R137R5R270R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.xmlR2i1976R3R4R5R271R6tgoR0y34:assets%2Fimages%2Fcredits%2Fbb.pngR2i5485R3R137R5R272R6tgoR0y39:assets%2Fimages%2Fcredits%2Fdiscord.pngR2i1510R3R137R5R273R6tgoR0y35:assets%2Fimages%2Fcredits%2Fdub.pngR2i1153R3R137R5R274R6tgoR0y40:assets%2Fimages%2Fcredits%2Fevilsk8r.pngR2i7497R3R137R5R275R6tgoR0y38:assets%2Fimages%2Fcredits%2Fflicky.pngR2i6462R3R137R5R276R6tgoR0y36:assets%2Fimages%2Fcredits%2Fkade.pngR2i9684R3R137R5R277R6tgoR0y43:assets%2Fimages%2Fcredits%2Fkawaisprite.pngR2i3953R3R137R5R278R6tgoR0y38:assets%2Fimages%2Fcredits%2Fkeoiki.pngR2i3918R3R137R5R279R6tgoR0y42:assets%2Fimages%2Fcredits%2Fmastereric.pngR2i11899R3R137R5R280R6tgoR0y38:assets%2Fimages%2Fcredits%2Fnebula.pngR2i5644R3R137R5R281R6tgoR0y45:assets%2Fimages%2Fcredits%2Fninjamuffin99.pngR2i5850R3R137R5R282R6tgoR0y45:assets%2Fimages%2Fcredits%2Fphantomarcade.pngR2i9615R3R137R5R283R6tgoR0y37:assets%2Fimages%2Fcredits%2Fproxy.pngR2i7645R3R137R5R284R6tgoR0y37:assets%2Fimages%2Fcredits%2Friver.pngR2i8283R3R137R5R285R6tgoR0y43:assets%2Fimages%2Fcredits%2Fshadowmario.pngR2i3679R3R137R5R286R6tgoR0y37:assets%2Fimages%2Fcredits%2Fshubs.pngR2i6829R3R137R5R287R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsmokey.pngR2i9145R3R137R5R288R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsqirra.pngR2i8258R3R137R5R289R6tgoR0y34:assets%2Fimages%2Fcry_about_it.pngR2i380631R3R137R5R290R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fbf.jsonR2i987R3R4R5R291R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fgf.jsonR2i807R3R4R5R292R6tgoR0y28:assets%2Fimages%2Ffunkay.pngR2i135548R3R137R5R293R6tgoR0y35:assets%2Fimages%2FgfDanceTitle.jsonR2i124R3R4R5R294R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.pngR2i745426R3R137R5R295R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.xmlR2i4259R3R4R5R296R6tgoR0y30:assets%2Fimages%2Fhahadumb.pngR2i16097R3R137R5R297R6tgoR0y28:assets%2Fimages%2Fhitbox.pngR2i620R3R137R5R298R6tgoR0y27:assets%2Fimages%2FhugeW.pngR2i18069R3R137R5R299R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-bf-old.pngR2i4101R3R137R5R300R6tgoR0y43:assets%2Fimages%2Ficons%2Ficon-bf-pixel.pngR2i538R3R137R5R301R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-bf.pngR2i22287R3R137R5R302R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-dad.pngR2i12384R3R137R5R303R6tgoR0y49:assets%2Fimages%2Ficons%2Ficon-dubenderdragon.pngR2i8798R3R137R5R304R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-face.pngR2i3549R3R137R5R305R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-gf.pngR2i10205R3R137R5R306R6tgoR0y50:assets%2Fimages%2Ficons%2Ficon-mintenderdragon.pngR2i9431R3R137R5R307R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-mom.pngR2i9237R3R137R5R308R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-monster.pngR2i17792R3R137R5R309R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-parents.pngR2i15547R3R137R5R310R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-pico.pngR2i14208R3R137R5R311R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-senpai-pixel.pngR2i622R3R137R5R312R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-spirit-pixel.pngR2i509R3R137R5R313R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-spooky.pngR2i6907R3R137R5R314R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-tankman.pngR2i3493R3R137R5R315R6tgoR0y26:assets%2Fimages%2Flogo.pngR2i86924R3R137R5R316R6tgoR0y32:assets%2Fimages%2FlogoBumpin.pngR2i578147R3R137R5R317R6tgoR0y32:assets%2Fimages%2FlogoBumpin.xmlR2i2177R3R4R5R318R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.pngR2i28858R3R137R5R319R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.xmlR2i1380R3R4R5R320R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.pngR2i28734R3R137R5R321R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.xmlR2i1385R3R4R5R322R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.pngR2i24842R3R137R5R323R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.xmlR2i1375R3R4R5R324R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.pngR2i30316R3R137R5R325R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.xmlR2i1399R3R4R5R326R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.pngR2i22741R3R137R5R327R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.xmlR2i1644R3R4R5R328R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.pngR2i27299R3R137R5R329R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.xmlR2i1332R3R4R5R330R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.pngR2i54659R3R137R5R331R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.xmlR2i1444R3R4R5R332R6tgoR0y38:assets%2Fimages%2FMCButton%2Fhover.pngR2i906R3R137R5R333R6tgoR0y39:assets%2Fimages%2FMCButton%2Fnormal.pngR2i908R3R137R5R334R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_christmas.pngR2i16696R3R137R5R335R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_halloween.pngR2i7474R3R137R5R336R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_limo.pngR2i6842R3R137R5R337R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_philly.pngR2i19689R3R137R5R338R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_school.pngR2i1963R3R137R5R339R6tgoR0y50:assets%2Fimages%2Fmenubackgrounds%2Fmenu_stage.pngR2i21287R3R137R5R340R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_tank.pngR2i21289R3R137R5R341R6tgoR0y28:assets%2Fimages%2FmenuBG.pngR2i474435R3R137R5R342R6tgoR0y32:assets%2Fimages%2FmenuBGBlue.pngR2i454823R3R137R5R343R6tgoR0y35:assets%2Fimages%2FmenuBGMagenta.pngR2i446604R3R137R5R344R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fbf.jsonR2i125R3R4R5R345R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fdad.jsonR2i126R3R4R5R346R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fgf.jsonR2i125R3R4R5R347R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.pngR2i231974R3R137R5R348R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.xmlR2i5582R3R4R5R349R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.pngR2i111851R3R137R5R350R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.xmlR2i2115R3R4R5R351R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.pngR2i314273R3R137R5R352R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.xmlR2i3802R3R4R5R353R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.pngR2i152414R3R137R5R354R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.xmlR2i2113R3R4R5R355R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.pngR2i335745R3R137R5R356R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.xmlR2i2188R3R4R5R357R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.pngR2i109825R3R137R5R358R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.xmlR2i2142R3R4R5R359R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.pngR2i64463R3R137R5R360R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.xmlR2i1348R3R4R5R361R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.pngR2i80071R3R137R5R362R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.xmlR2i2543R3R4R5R363R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.pngR2i117065R3R137R5R364R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.xmlR2i2164R3R4R5R365R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fmom.jsonR2i125R3R4R5R366R6tgoR0y57:assets%2Fimages%2Fmenucharacters%2Fparents-christmas.jsonR2i135R3R4R5R367R6tgoR0y44:assets%2Fimages%2Fmenucharacters%2Fpico.jsonR2i129R3R4R5R368R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fsenpai.jsonR2i133R3R4R5R369R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fspooky.jsonR2i142R3R4R5R370R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2Ftankman.jsonR2i134R3R4R5R371R6tgoR0y31:assets%2Fimages%2FmenuDesat.pngR2i215613R3R137R5R372R6tgoR0y35:assets%2Fimages%2FmenuDesatDark.pngR2i455541R3R137R5R373R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Feasy.pngR2i3453R3R137R5R374R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Fhard.pngR2i3880R3R137R5R375R6tgoR0y47:assets%2Fimages%2Fmenudifficulties%2Fnormal.pngR2i4853R3R137R5R376R6tgoR0y33:assets%2Fimages%2FMenu_Tracks.pngR2i1254R3R137R5R377R6tgoR0y37:assets%2Fimages%2Fnewgrounds_logo.pngR2i40016R3R137R5R378R6tgoR0y26:assets%2Fimages%2Fnum0.pngR2i1816R3R137R5R379R6tgoR0y26:assets%2Fimages%2Fnum1.pngR2i1639R3R137R5R380R6tgoR0y26:assets%2Fimages%2Fnum2.pngR2i1985R3R137R5R381R6tgoR0y26:assets%2Fimages%2Fnum3.pngR2i1990R3R137R5R382R6tgoR0y26:assets%2Fimages%2Fnum4.pngR2i1955R3R137R5R383R6tgoR0y26:assets%2Fimages%2Fnum5.pngR2i2023R3R137R5R384R6tgoR0y26:assets%2Fimages%2Fnum6.pngR2i2082R3R137R5R385R6tgoR0y26:assets%2Fimages%2Fnum7.pngR2i1881R3R137R5R386R6tgoR0y26:assets%2Fimages%2Fnum8.pngR2i2024R3R137R5R387R6tgoR0y26:assets%2Fimages%2Fnum9.pngR2i1851R3R137R5R388R6tgoR0y42:assets%2Fimages%2Fstorymenu%2Ftutorial.pngR2i7056R3R137R5R389R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek1.pngR2i6261R3R137R5R390R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek2.pngR2i6517R3R137R5R391R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek3.pngR2i7148R3R137R5R392R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek4.pngR2i6262R3R137R5R393R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek5.pngR2i6440R3R137R5R394R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek6.pngR2i8979R3R137R5R395R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek7.pngR2i7349R3R137R5R396R6tgoR0y32:assets%2Fimages%2FtitleEnter.pngR2i26291R3R137R5R397R6tgoR0y32:assets%2Fimages%2FtitleEnter.xmlR2i518R3R4R5R398R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_1.pngR2i51758R3R137R5R399R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_2.pngR2i11238R3R137R5R400R6tgoR0y32:assets%2Fimages%2FunknownMod.pngR2i2387R3R137R5R401R6tgoR2i2309657R3y5:MUSICR5y31:assets%2Fmusic%2FfreakyMenu.mp3y9:pathGroupaR403hR6tgoR2i2402257R3R402R5y31:assets%2Fmusic%2FoffsetSong.mp3R404aR405hR6tgoR2i17762R3R402R5y32:assets%2Fsounds%2FcancelMenu.mp3R404aR406hR6tgoR2i91950R3R402R5y33:assets%2Fsounds%2FconfirmMenu.mp3R404aR407hR6tgoR2i9155R3R402R5y34:assets%2Fsounds%2Fintro1-pixel.mp3R404aR408hR6tgoR2i9912R3R402R5y34:assets%2Fsounds%2Fintro2-pixel.mp3R404aR409hR6tgoR2i9128R3R402R5y34:assets%2Fsounds%2Fintro3-pixel.mp3R404aR410hR6tgoR2i21651R3R402R5y35:assets%2Fsounds%2FintroGo-pixel.mp3R404aR411hR6tgoR2i17762R3R402R5y32:assets%2Fsounds%2FscrollMenu.mp3R404aR412hR6tgoR0y27:assets%2Fstages%2Flimo.jsonR2i289R3R4R5R413R6tgoR0y27:assets%2Fstages%2Fmall.jsonR2i287R3R4R5R414R6tgoR0y31:assets%2Fstages%2FmallEvil.jsonR2i285R3R4R5R415R6tgoR0y29:assets%2Fstages%2Fphilly.jsonR2i285R3R4R5R416R6tgoR0y29:assets%2Fstages%2Fschool.jsonR2i290R3R4R5R417R6tgoR0y33:assets%2Fstages%2FschoolEvil.jsonR2i290R3R4R5R418R6tgoR0y29:assets%2Fstages%2Fspooky.jsonR2i285R3R4R5R419R6tgoR0y28:assets%2Fstages%2Fstage.jsonR2i279R3R4R5R420R6tgoR0y27:assets%2Fstages%2Ftank.jsonR2i147R3R4R5R421R6tgoR0y30:assets%2Fweeks%2Ftutorial.jsonR2i274R3R4R5R422R6tgoR0y27:assets%2Fweeks%2Fweek1.jsonR2i369R3R4R5R423R6tgoR0y27:assets%2Fweeks%2Fweek2.jsonR2i371R3R4R5R424R6tgoR0y27:assets%2Fweeks%2Fweek3.jsonR2i356R3R4R5R425R6tgoR0y27:assets%2Fweeks%2Fweek4.jsonR2i369R3R4R5R426R6tgoR0y27:assets%2Fweeks%2Fweek5.jsonR2i397R3R4R5R427R6tgoR0y27:assets%2Fweeks%2Fweek6.jsonR2i408R3R4R5R428R6tgoR0y27:assets%2Fweeks%2Fweek7.jsonR2i491R3R4R5R429R6tgoR0y29:assets%2Fweeks%2FweekList.txtR2i50R3R4R5R430R6tgoR0y21:do%20NOT%20readme.txtR2i4326R3R4R5R431R6tgoR0y34:assets%2Ffonts%2Ffonts-go-here.txtR2zR3R4R5R432R6tgoR2i14656R3y4:FONTy9:classNamey31:__ASSET__assets_fonts_pixel_otfR5y26:assets%2Ffonts%2Fpixel.otfR6tgoR2i75864R3R433R434y29:__ASSET__assets_fonts_vcr_ttfR5y24:assets%2Ffonts%2Fvcr.ttfR6tgoR2i2114R3R402R5y26:flixel%2Fsounds%2Fbeep.mp3R404aR439y26:flixel%2Fsounds%2Fbeep.ogghR6tgoR2i39706R3R402R5y28:flixel%2Fsounds%2Fflixel.mp3R404aR441y28:flixel%2Fsounds%2Fflixel.ogghR6tgoR2i5794R3y5:SOUNDR5R440R404aR439R440hgoR2i33629R3R443R5R442R404aR441R442hgoR2i15744R3R433R434y35:__ASSET__flixel_fonts_nokiafc22_ttfR5y30:flixel%2Ffonts%2Fnokiafc22.ttfR6tgoR2i29724R3R433R434y36:__ASSET__flixel_fonts_monsterrat_ttfR5y31:flixel%2Ffonts%2Fmonsterrat.ttfR6tgoR0y33:flixel%2Fimages%2Fui%2Fbutton.pngR2i519R3R137R5R448R6tgoR0y36:flixel%2Fimages%2Flogo%2Fdefault.pngR2i3280R3R137R5R449R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Fbox.pngR2i912R3R137R5R450R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fbutton.pngR2i433R3R137R5R451R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_down.pngR2i446R3R137R5R452R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_left.pngR2i459R3R137R5R453R6tgoR0y49:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_right.pngR2i511R3R137R5R454R6tgoR0y46:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_up.pngR2i493R3R137R5R455R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fbutton_thin.pngR2i247R3R137R5R456R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fbutton_toggle.pngR2i534R3R137R5R457R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fcheck_box.pngR2i922R3R137R5R458R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fcheck_mark.pngR2i946R3R137R5R459R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fchrome.pngR2i253R3R137R5R460R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fchrome_flat.pngR2i212R3R137R5R461R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_inset.pngR2i192R3R137R5R462R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_light.pngR2i214R3R137R5R463R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fdropdown_mark.pngR2i156R3R137R5R464R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Ffinger_big.pngR2i1724R3R137R5R465R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Ffinger_small.pngR2i294R3R137R5R466R6tgoR0y38:flixel%2Fflixel-ui%2Fimg%2Fhilight.pngR2i129R3R137R5R467R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Finvis.pngR2i128R3R137R5R468R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fminus_mark.pngR2i136R3R137R5R469R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fplus_mark.pngR2i147R3R137R5R470R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Fradio.pngR2i191R3R137R5R471R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fradio_dot.pngR2i153R3R137R5R472R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fswatch.pngR2i185R3R137R5R473R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Ftab.pngR2i201R3R137R5R474R6tgoR0y39:flixel%2Fflixel-ui%2Fimg%2Ftab_back.pngR2i210R3R137R5R475R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Ftooltip_arrow.pngR2i18509R3R137R5R476R6tgoR0y39:flixel%2Fflixel-ui%2Fxml%2Fdefaults.xmlR2i1263R3R4R5R477R6tgoR0y53:flixel%2Fflixel-ui%2Fxml%2Fdefault_loading_screen.xmlR2i1953R3R4R5R478R6tgoR0y44:flixel%2Fflixel-ui%2Fxml%2Fdefault_popup.xmlR2i1848R3R4R5R479R6tgh\",\"rootPath\":null,\"version\":2,\"libraryArgs\":[],\"libraryType\":null}";
+	var data = "{\"name\":null,\"assets\":\"aoy4:pathy33:assets%2Fcharacters%2Fbf-car.jsony4:sizei2527y4:typey4:TEXTy2:idR1y7:preloadtgoR0y39:assets%2Fcharacters%2Fbf-christmas.jsonR2i1747R3R4R5R7R6tgoR0y34:assets%2Fcharacters%2Fbf-dead.jsonR2i709R3R4R5R8R6tgoR0y45:assets%2Fcharacters%2Fbf-holding-gf-dead.jsonR2i740R3R4R5R9R6tgoR0y40:assets%2Fcharacters%2Fbf-holding-gf.jsonR2i1751R3R4R5R10R6tgoR0y40:assets%2Fcharacters%2Fbf-pixel-dead.jsonR2i721R3R4R5R11R6tgoR0y44:assets%2Fcharacters%2Fbf-pixel-opponent.jsonR2i1567R3R4R5R12R6tgoR0y35:assets%2Fcharacters%2Fbf-pixel.jsonR2i1563R3R4R5R13R6tgoR0y29:assets%2Fcharacters%2Fbf.jsonR2i2467R3R4R5R14R6tgoR0y30:assets%2Fcharacters%2Fdad.jsonR2i1762R3R4R5R15R6tgoR0y41:assets%2Fcharacters%2FDubEnderDragon.jsonR2i1039R3R4R5R16R6tgoR0y33:assets%2Fcharacters%2Fgf-car.jsonR2i993R3R4R5R17R6tgoR0y39:assets%2Fcharacters%2Fgf-christmas.jsonR2i2137R3R4R5R18R6tgoR0y35:assets%2Fcharacters%2Fgf-pixel.jsonR2i937R3R4R5R19R6tgoR0y37:assets%2Fcharacters%2Fgf-tankmen.jsonR2i1066R3R4R5R20R6tgoR0y29:assets%2Fcharacters%2Fgf.jsonR2i2326R3R4R5R21R6tgoR0y42:assets%2Fcharacters%2FMintEnderDragon.jsonR2i1044R3R4R5R22R6tgoR0y34:assets%2Fcharacters%2Fmom-car.jsonR2i1892R3R4R5R23R6tgoR0y30:assets%2Fcharacters%2Fmom.jsonR2i988R3R4R5R24R6tgoR0y44:assets%2Fcharacters%2Fmonster-christmas.jsonR2i1905R3R4R5R25R6tgoR0y34:assets%2Fcharacters%2Fmonster.jsonR2i1904R3R4R5R26R6tgoR0y44:assets%2Fcharacters%2Fparents-christmas.jsonR2i3427R3R4R5R27R6tgoR0y38:assets%2Fcharacters%2Fpico-player.jsonR2i1635R3R4R5R28R6tgoR0y39:assets%2Fcharacters%2Fpico-speaker.jsonR2i1554R3R4R5R29R6tgoR0y31:assets%2Fcharacters%2Fpico.jsonR2i1636R3R4R5R30R6tgoR0y39:assets%2Fcharacters%2Fsenpai-angry.jsonR2i1039R3R4R5R31R6tgoR0y33:assets%2Fcharacters%2Fsenpai.jsonR2i1009R3R4R5R32R6tgoR0y33:assets%2Fcharacters%2Fspirit.jsonR2i992R3R4R5R33R6tgoR0y33:assets%2Fcharacters%2Fspooky.jsonR2i1384R3R4R5R34R6tgoR0y41:assets%2Fcharacters%2Ftankman-player.jsonR2i1976R3R4R5R35R6tgoR0y34:assets%2Fcharacters%2Ftankman.jsonR2i1974R3R4R5R36R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-easy.jsonR2i8488R3R4R5R37R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-hard.jsonR2i12097R3R4R5R38R6tgoR0y38:assets%2Fdata%2Fblammed%2Fblammed.jsonR2i9687R3R4R5R39R6tgoR0y37:assets%2Fdata%2Fblammed%2Fevents.jsonR2i10344R3R4R5R40R6tgoR0y44:assets%2Fdata%2Fbopeebo%2Fbopeebo-boobs.jsonR2i4140R3R4R5R41R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-easy.jsonR2i9178R3R4R5R42R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-hard.jsonR2i4140R3R4R5R43R6tgoR0y38:assets%2Fdata%2Fbopeebo%2Fbopeebo.jsonR2i9542R3R4R5R44R6tgoR0y37:assets%2Fdata%2Fbopeebo%2Fevents.jsonR2i5047R3R4R5R45R6tgoR0y33:assets%2Fdata%2FcharacterList.txtR2i284R3R4R5R46R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-easy.jsonR2i7062R3R4R5R47R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-hard.jsonR2i10443R3R4R5R48R6tgoR0y34:assets%2Fdata%2Fcocoa%2Fcocoa.jsonR2i8278R3R4R5R49R6tgoR0y35:assets%2Fdata%2Fcocoa%2Fevents.jsonR2i3644R3R4R5R50R6tgoR0y32:assets%2Fdata%2FcrashConfig.jsonR2i739R3R4R5R51R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-easy.jsonR2i7937R3R4R5R52R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-hard.jsonR2i9756R3R4R5R53R6tgoR0y44:assets%2Fdata%2Fdad-battle%2Fdad-battle.jsonR2i8913R3R4R5R54R6tgoR0y40:assets%2Fdata%2Fdad-battle%2Fevents.jsonR2i2614R3R4R5R55R6tgoR0y34:assets%2Fdata%2Fdata-goes-here.txtR2zR3R4R5R56R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-easy.jsonR2i9239R3R4R5R57R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-hard.jsonR2i11689R3R4R5R58R6tgoR0y36:assets%2Fdata%2Feggnog%2Feggnog.jsonR2i10333R3R4R5R59R6tgoR0y36:assets%2Fdata%2Feggnog%2Fevents.jsonR2i4881R3R4R5R60R6tgoR0y34:assets%2Fdata%2FfreeplayColors.txtR2i76R3R4R5R61R6tgoR0y35:assets%2Fdata%2Ffresh%2Fevents.jsonR2i3201R3R4R5R62R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-easy.jsonR2i5857R3R4R5R63R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-hard.jsonR2i6905R3R4R5R64R6tgoR0y34:assets%2Fdata%2Ffresh%2Ffresh.jsonR2i6493R3R4R5R65R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-easy.jsonR2i15146R3R4R5R66R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-hard.jsonR2i23500R3R4R5R67R6tgoR0y32:assets%2Fdata%2Fguns%2Fguns.jsonR2i20620R3R4R5R68R6tgoR0y34:assets%2Fdata%2Fhigh%2Fevents.jsonR2i4558R3R4R5R69R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-easy.jsonR2i8563R3R4R5R70R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-hard.jsonR2i11553R3R4R5R71R6tgoR0y32:assets%2Fdata%2Fhigh%2Fhigh.jsonR2i9757R3R4R5R72R6tgoR0y29:assets%2Fdata%2FintroText.txtR2i2103R3R4R5R73R6tgoR0y29:assets%2Fdata%2Fmain-view.xmlR2i123R3R4R5R74R6tgoR0y34:assets%2Fdata%2Fmilf%2Fevents.jsonR2i7488R3R4R5R75R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-easy.jsonR2i13522R3R4R5R76R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-hard.jsonR2i18135R3R4R5R77R6tgoR0y32:assets%2Fdata%2Fmilf%2Fmilf.jsonR2i15192R3R4R5R78R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-easy.jsonR2i12175R3R4R5R79R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-hard.jsonR2i14163R3R4R5R80R6tgoR0y38:assets%2Fdata%2Fmonster%2Fmonster.jsonR2i13445R3R4R5R81R6tgoR0y41:assets%2Fdata%2Fphilly-nice%2Fevents.jsonR2i5191R3R4R5R82R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-easy.jsonR2i8067R3R4R5R83R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-hard.jsonR2i12556R3R4R5R84R6tgoR0y46:assets%2Fdata%2Fphilly-nice%2Fphilly-nice.jsonR2i10103R3R4R5R85R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-easy.jsonR2i6089R3R4R5R86R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-hard.jsonR2i8768R3R4R5R87R6tgoR0y32:assets%2Fdata%2Fpico%2Fpico.jsonR2i7493R3R4R5R88R6tgoR0y34:assets%2Fdata%2Fridge%2Fridge.jsonR2i34473R3R4R5R89R6tgoR0y35:assets%2Fdata%2Froses%2Fevents.jsonR2i8786R3R4R5R90R6tgoR0y39:assets%2Fdata%2Froses%2Froses-easy.jsonR2i6725R3R4R5R91R6tgoR0y39:assets%2Fdata%2Froses%2Froses-hard.jsonR2i10432R3R4R5R92R6tgoR0y34:assets%2Fdata%2Froses%2Froses.jsonR2i8609R3R4R5R93R6tgoR0y41:assets%2Fdata%2Froses%2FrosesDialogue.txtR2i153R3R4R5R94R6tgoR0y43:assets%2Fdata%2Fsatin-panties%2Fevents.jsonR2i3177R3R4R5R95R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-easy.jsonR2i8817R3R4R5R96R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-hard.jsonR2i12704R3R4R5R97R6tgoR0y50:assets%2Fdata%2Fsatin-panties%2Fsatin-panties.jsonR2i10725R3R4R5R98R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-easy.jsonR2i9027R3R4R5R99R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-hard.jsonR2i10778R3R4R5R100R6tgoR0y36:assets%2Fdata%2Fsenpai%2Fsenpai.jsonR2i10016R3R4R5R101R6tgoR0y43:assets%2Fdata%2Fsenpai%2FsenpaiDialogue.txtR2i162R3R4R5R102R6tgoR0y34:assets%2Fdata%2Fsmash%2Fsmash.jsonR2i23961R3R4R5R103R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-easy.jsonR2i8435R3R4R5R104R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-hard.jsonR2i10170R3R4R5R105R6tgoR0y34:assets%2Fdata%2Fsouth%2Fsouth.jsonR2i10097R3R4R5R106R6tgoR0y33:assets%2Fdata%2FspecialThanks.txtR2i300R3R4R5R107R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-easy.jsonR2i7965R3R4R5R108R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-hard.jsonR2i9429R3R4R5R109R6tgoR0y40:assets%2Fdata%2Fspookeez%2Fspookeez.jsonR2i8875R3R4R5R110R6tgoR0y29:assets%2Fdata%2FstageList.txtR2i61R3R4R5R111R6tgoR0y36:assets%2Fdata%2Fstress%2Fevents.jsonR2i747R3R4R5R112R6tgoR0y41:assets%2Fdata%2Fstress%2Fpicospeaker.jsonR2i18286R3R4R5R113R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-easy.jsonR2i33455R3R4R5R114R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-hard.jsonR2i53679R3R4R5R115R6tgoR0y36:assets%2Fdata%2Fstress%2Fstress.jsonR2i45928R3R4R5R116R6tgoR0y32:assets%2Fdata%2Ftest%2Ftest.jsonR2i75208R3R4R5R117R6tgoR0y40:assets%2Fdata%2Ftest-dev%2Ftest-dev.jsonR2i49834R3R4R5R118R6tgoR0y36:assets%2Fdata%2Fthorns%2Fevents.jsonR2i8104R3R4R5R119R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-easy.jsonR2i10437R3R4R5R120R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-hard.jsonR2i15444R3R4R5R121R6tgoR0y36:assets%2Fdata%2Fthorns%2Fthorns.jsonR2i12691R3R4R5R122R6tgoR0y43:assets%2Fdata%2Fthorns%2FthornsDialogue.txtR2i305R3R4R5R123R6tgoR0y38:assets%2Fdata%2Ftutorial%2Fevents.jsonR2i2702R3R4R5R124R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-easy.jsonR2i5739R3R4R5R125R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-hard.jsonR2i6335R3R4R5R126R6tgoR0y40:assets%2Fdata%2Ftutorial%2Ftutorial.jsonR2i5739R3R4R5R127R6tgoR0y33:assets%2Fdata%2Fugh%2Fevents.jsonR2i1345R3R4R5R128R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-easy.jsonR2i8550R3R4R5R129R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-hard.jsonR2i12496R3R4R5R130R6tgoR0y30:assets%2Fdata%2Fugh%2Fugh.jsonR2i11354R3R4R5R131R6tgoR0y47:assets%2Fdata%2Fwinter-horrorland%2Fevents.jsonR2i6197R3R4R5R132R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-easy.jsonR2i11846R3R4R5R133R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-hard.jsonR2i14558R3R4R5R134R6tgoR0y58:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland.jsonR2i12808R3R4R5R135R6tgoR0y45:assets%2Fimages%2Fachievements%2Fbirthday.pngR2i10948R3y5:IMAGER5R136R6tgoR0y45:assets%2Fimages%2Fachievements%2Fdebugger.pngR2i7554R3R137R5R138R6tgoR0y54:assets%2Fimages%2Fachievements%2Ffriday_night_play.pngR2i7661R3R137R5R139R6tgoR0y41:assets%2Fimages%2Fachievements%2Fhype.pngR2i23694R3R137R5R140R6tgoR0y54:assets%2Fimages%2Fachievements%2Flockedachievement.pngR2i1709R3R137R5R141R6tgoR0y48:assets%2Fimages%2Fachievements%2Foversinging.pngR2i19900R3R137R5R142R6tgoR0y56:assets%2Fimages%2Fachievements%2Froadkill_enthusiast.pngR2i5996R3R137R5R143R6tgoR0y44:assets%2Fimages%2Fachievements%2Ftoastie.pngR2i3094R3R137R5R144R6tgoR0y45:assets%2Fimages%2Fachievements%2Ftwo_keys.pngR2i27127R3R137R5R145R6tgoR0y43:assets%2Fimages%2Fachievements%2Fur_bad.pngR2i22017R3R137R5R146R6tgoR0y44:assets%2Fimages%2Fachievements%2Fur_good.pngR2i3467R3R137R5R147R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek1_nomiss.pngR2i20155R3R137R5R148R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek2_nomiss.pngR2i9304R3R137R5R149R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek3_nomiss.pngR2i21984R3R137R5R150R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek4_nomiss.pngR2i13430R3R137R5R151R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek5_nomiss.pngR2i21894R3R137R5R152R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek6_nomiss.pngR2i552R3R137R5R153R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek7_nomiss.pngR2i7249R3R137R5R154R6tgoR0y30:assets%2Fimages%2Falphabet.pngR2i177267R3R137R5R155R6tgoR0y30:assets%2Fimages%2Falphabet.xmlR2i57385R3R4R5R156R6tgoR0y34:assets%2Fimages%2FalphabetDark.pngR2i120330R3R137R5R157R6tgoR0y34:assets%2Fimages%2FalphabetDark.xmlR2i57389R3R4R5R158R6tgoR0y33:assets%2Fimages%2FalphabetOld.pngR2i90070R3R137R5R159R6tgoR0y33:assets%2Fimages%2FalphabetOld.xmlR2i52093R3R4R5R160R6tgoR0y38:assets%2Fimages%2Fbutton%2Fa-hover.pngR2i9818R3R137R5R161R6tgoR0y42:assets%2Fimages%2Fbutton%2Fa-hoverDark.pngR2i9677R3R137R5R162R6tgoR0y32:assets%2Fimages%2Fbutton%2Fa.pngR2i8053R3R137R5R163R6tgoR0y36:assets%2Fimages%2Fbutton%2FaDark.pngR2i7859R3R137R5R164R6tgoR0y40:assets%2Fimages%2Fbutton%2Falt-hover.pngR2i10795R3R137R5R165R6tgoR0y44:assets%2Fimages%2Fbutton%2Falt-hoverDark.pngR2i10294R3R137R5R166R6tgoR0y34:assets%2Fimages%2Fbutton%2Falt.pngR2i9075R3R137R5R167R6tgoR0y38:assets%2Fimages%2Fbutton%2FaltDark.pngR2i8397R3R137R5R168R6tgoR0y41:assets%2Fimages%2Fbutton%2Fback-hover.pngR2i10662R3R137R5R169R6tgoR0y45:assets%2Fimages%2Fbutton%2Fback-hoverDark.pngR2i10381R3R137R5R170R6tgoR0y35:assets%2Fimages%2Fbutton%2Fback.pngR2i9279R3R137R5R171R6tgoR0y39:assets%2Fimages%2Fbutton%2FbackDark.pngR2i8503R3R137R5R172R6tgoR0y41:assets%2Fimages%2Fbutton%2Fctrl-hover.pngR2i11612R3R137R5R173R6tgoR0y45:assets%2Fimages%2Fbutton%2Fctrl-hoverDark.pngR2i11311R3R137R5R174R6tgoR0y35:assets%2Fimages%2Fbutton%2Fctrl.pngR2i9607R3R137R5R175R6tgoR0y39:assets%2Fimages%2Fbutton%2FctrlDark.pngR2i8838R3R137R5R176R6tgoR0y38:assets%2Fimages%2Fbutton%2Fd-hover.pngR2i11142R3R137R5R177R6tgoR0y42:assets%2Fimages%2Fbutton%2Fd-hoverDark.pngR2i10476R3R137R5R178R6tgoR0y32:assets%2Fimages%2Fbutton%2Fd.pngR2i9363R3R137R5R179R6tgoR0y36:assets%2Fimages%2Fbutton%2FdDark.pngR2i8614R3R137R5R180R6tgoR0y41:assets%2Fimages%2Fbutton%2Fdown-hover.pngR2i11291R3R137R5R181R6tgoR0y45:assets%2Fimages%2Fbutton%2Fdown-hoverDark.pngR2i10758R3R137R5R182R6tgoR0y35:assets%2Fimages%2Fbutton%2Fdown.pngR2i9327R3R137R5R183R6tgoR0y39:assets%2Fimages%2Fbutton%2FdownDark.pngR2i8715R3R137R5R184R6tgoR0y38:assets%2Fimages%2Fbutton%2Fe-hover.pngR2i10420R3R137R5R185R6tgoR0y42:assets%2Fimages%2Fbutton%2Fe-hoverDark.pngR2i10032R3R137R5R186R6tgoR0y32:assets%2Fimages%2Fbutton%2Fe.pngR2i8707R3R137R5R187R6tgoR0y36:assets%2Fimages%2Fbutton%2FeDark.pngR2i8132R3R137R5R188R6tgoR0y42:assets%2Fimages%2Fbutton%2Fenter-hover.pngR2i11879R3R137R5R189R6tgoR0y46:assets%2Fimages%2Fbutton%2Fenter-hoverDark.pngR2i10628R3R137R5R190R6tgoR0y36:assets%2Fimages%2Fbutton%2Fenter.pngR2i9976R3R137R5R191R6tgoR0y40:assets%2Fimages%2Fbutton%2FenterDark.pngR2i8756R3R137R5R192R6tgoR0y41:assets%2Fimages%2Fbutton%2Fhand-hover.pngR2i12156R3R137R5R193R6tgoR0y45:assets%2Fimages%2Fbutton%2Fhand-hoverDark.pngR2i11520R3R137R5R194R6tgoR0y35:assets%2Fimages%2Fbutton%2Fhand.pngR2i10176R3R137R5R195R6tgoR0y39:assets%2Fimages%2Fbutton%2FhandDark.pngR2i9169R3R137R5R196R6tgoR0y41:assets%2Fimages%2Fbutton%2Fleft-hover.pngR2i11243R3R137R5R197R6tgoR0y45:assets%2Fimages%2Fbutton%2Fleft-hoverDark.pngR2i10491R3R137R5R198R6tgoR0y35:assets%2Fimages%2Fbutton%2Fleft.pngR2i9441R3R137R5R199R6tgoR0y39:assets%2Fimages%2Fbutton%2FleftDark.pngR2i8311R3R137R5R200R6tgoR0y49:assets%2Fimages%2Fbutton%2Fleft_bracket-hover.pngR2i9250R3R137R5R201R6tgoR0y53:assets%2Fimages%2Fbutton%2Fleft_bracket-hoverDark.pngR2i9022R3R137R5R202R6tgoR0y43:assets%2Fimages%2Fbutton%2Fleft_bracket.pngR2i8192R3R137R5R203R6tgoR0y47:assets%2Fimages%2Fbutton%2Fleft_bracketDark.pngR2i7672R3R137R5R204R6tgoR0y38:assets%2Fimages%2Fbutton%2Fo-hover.pngR2i9783R3R137R5R205R6tgoR0y42:assets%2Fimages%2Fbutton%2Fo-hoverDark.pngR2i9417R3R137R5R206R6tgoR0y32:assets%2Fimages%2Fbutton%2Fo.pngR2i8136R3R137R5R207R6tgoR0y36:assets%2Fimages%2Fbutton%2FoDark.pngR2i7730R3R137R5R208R6tgoR0y38:assets%2Fimages%2Fbutton%2Fp-hover.pngR2i9654R3R137R5R209R6tgoR0y42:assets%2Fimages%2Fbutton%2Fp-hoverDark.pngR2i9311R3R137R5R210R6tgoR0y32:assets%2Fimages%2Fbutton%2Fp.pngR2i8326R3R137R5R211R6tgoR0y36:assets%2Fimages%2Fbutton%2FpDark.pngR2i7859R3R137R5R212R6tgoR0y38:assets%2Fimages%2Fbutton%2Fq-hover.pngR2i10269R3R137R5R213R6tgoR0y42:assets%2Fimages%2Fbutton%2Fq-hoverDark.pngR2i9768R3R137R5R214R6tgoR0y32:assets%2Fimages%2Fbutton%2Fq.pngR2i8629R3R137R5R215R6tgoR0y36:assets%2Fimages%2Fbutton%2FqDark.pngR2i8082R3R137R5R216R6tgoR0y38:assets%2Fimages%2Fbutton%2Fr-hover.pngR2i10374R3R137R5R217R6tgoR0y42:assets%2Fimages%2Fbutton%2Fr-hoverDark.pngR2i9831R3R137R5R218R6tgoR0y32:assets%2Fimages%2Fbutton%2Fr.pngR2i8742R3R137R5R219R6tgoR0y36:assets%2Fimages%2Fbutton%2FrDark.pngR2i7920R3R137R5R220R6tgoR0y42:assets%2Fimages%2Fbutton%2Fright-hover.pngR2i11204R3R137R5R221R6tgoR0y46:assets%2Fimages%2Fbutton%2Fright-hoverDark.pngR2i10494R3R137R5R222R6tgoR0y36:assets%2Fimages%2Fbutton%2Fright.pngR2i9386R3R137R5R223R6tgoR0y40:assets%2Fimages%2Fbutton%2FrightDark.pngR2i8278R3R137R5R224R6tgoR0y50:assets%2Fimages%2Fbutton%2Fright_bracket-hover.pngR2i9415R3R137R5R225R6tgoR0y54:assets%2Fimages%2Fbutton%2Fright_bracket-hoverDark.pngR2i9003R3R137R5R226R6tgoR0y44:assets%2Fimages%2Fbutton%2Fright_bracket.pngR2i8203R3R137R5R227R6tgoR0y48:assets%2Fimages%2Fbutton%2Fright_bracketDark.pngR2i7685R3R137R5R228R6tgoR0y38:assets%2Fimages%2Fbutton%2Fs-hover.pngR2i10516R3R137R5R229R6tgoR0y42:assets%2Fimages%2Fbutton%2Fs-hoverDark.pngR2i10006R3R137R5R230R6tgoR0y32:assets%2Fimages%2Fbutton%2Fs.pngR2i8744R3R137R5R231R6tgoR0y36:assets%2Fimages%2Fbutton%2FsDark.pngR2i8061R3R137R5R232R6tgoR0y42:assets%2Fimages%2Fbutton%2Fshift-hover.pngR2i11227R3R137R5R233R6tgoR0y46:assets%2Fimages%2Fbutton%2Fshift-hoverDark.pngR2i10498R3R137R5R234R6tgoR0y36:assets%2Fimages%2Fbutton%2Fshift.pngR2i9321R3R137R5R235R6tgoR0y40:assets%2Fimages%2Fbutton%2FshiftDark.pngR2i8423R3R137R5R236R6tgoR0y42:assets%2Fimages%2Fbutton%2Fspace-hover.pngR2i9210R3R137R5R237R6tgoR0y46:assets%2Fimages%2Fbutton%2Fspace-hoverDark.pngR2i8760R3R137R5R238R6tgoR0y36:assets%2Fimages%2Fbutton%2Fspace.pngR2i7893R3R137R5R239R6tgoR0y40:assets%2Fimages%2Fbutton%2FspaceDark.pngR2i7277R3R137R5R240R6tgoR0y38:assets%2Fimages%2Fbutton%2Ft-hover.pngR2i9341R3R137R5R241R6tgoR0y42:assets%2Fimages%2Fbutton%2Ft-hoverDark.pngR2i8860R3R137R5R242R6tgoR0y32:assets%2Fimages%2Fbutton%2Ft.pngR2i7916R3R137R5R243R6tgoR0y45:assets%2Fimages%2Fbutton%2Ftamplate-hover.pngR2i7778R3R137R5R244R6tgoR0y49:assets%2Fimages%2Fbutton%2Ftamplate-hoverDark.pngR2i7442R3R137R5R245R6tgoR0y39:assets%2Fimages%2Fbutton%2Ftamplate.pngR2i6924R3R137R5R246R6tgoR0y43:assets%2Fimages%2Fbutton%2FtamplateDark.pngR2i6617R3R137R5R247R6tgoR0y36:assets%2Fimages%2Fbutton%2FtDark.pngR2i7683R3R137R5R248R6tgoR0y39:assets%2Fimages%2Fbutton%2Fup-hover.pngR2i11312R3R137R5R249R6tgoR0y43:assets%2Fimages%2Fbutton%2Fup-hoverDark.pngR2i10783R3R137R5R250R6tgoR0y33:assets%2Fimages%2Fbutton%2Fup.pngR2i9306R3R137R5R251R6tgoR0y37:assets%2Fimages%2Fbutton%2FupDark.pngR2i8745R3R137R5R252R6tgoR0y38:assets%2Fimages%2Fbutton%2Fw-hover.pngR2i9805R3R137R5R253R6tgoR0y42:assets%2Fimages%2Fbutton%2Fw-hoverDark.pngR2i9561R3R137R5R254R6tgoR0y32:assets%2Fimages%2Fbutton%2Fw.pngR2i8235R3R137R5R255R6tgoR0y36:assets%2Fimages%2Fbutton%2FwDark.pngR2i7738R3R137R5R256R6tgoR0y38:assets%2Fimages%2Fbutton%2Fx-hover.pngR2i12388R3R137R5R257R6tgoR0y42:assets%2Fimages%2Fbutton%2Fx-hoverDark.pngR2i11499R3R137R5R258R6tgoR0y32:assets%2Fimages%2Fbutton%2Fx.pngR2i10418R3R137R5R259R6tgoR0y36:assets%2Fimages%2Fbutton%2FxDark.pngR2i9356R3R137R5R260R6tgoR0y87:assets%2Fimages%2Fbutton%2Fyou%20can%20use%20any%20resolution%20of%20image%20button.txtR2zR3R4R5R261R6tgoR0y38:assets%2Fimages%2Fbutton%2Fz-hover.pngR2i10489R3R137R5R262R6tgoR0y42:assets%2Fimages%2Fbutton%2Fz-hoverDark.pngR2i9825R3R137R5R263R6tgoR0y32:assets%2Fimages%2Fbutton%2Fz.pngR2i8703R3R137R5R264R6tgoR0y36:assets%2Fimages%2Fbutton%2FzDark.pngR2i8115R3R137R5R265R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.pngR2i3044R3R137R5R266R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.xmlR2i597R3R4R5R267R6tgoR0y33:assets%2Fimages%2Fchart_quant.pngR2i3143R3R137R5R268R6tgoR0y33:assets%2Fimages%2Fchart_quant.xmlR2i1028R3R4R5R269R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.pngR2i16546R3R137R5R270R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.xmlR2i1976R3R4R5R271R6tgoR0y34:assets%2Fimages%2Fcredits%2Fbb.pngR2i5485R3R137R5R272R6tgoR0y39:assets%2Fimages%2Fcredits%2Fdiscord.pngR2i1510R3R137R5R273R6tgoR0y35:assets%2Fimages%2Fcredits%2Fdub.pngR2i1153R3R137R5R274R6tgoR0y40:assets%2Fimages%2Fcredits%2Fevilsk8r.pngR2i7497R3R137R5R275R6tgoR0y38:assets%2Fimages%2Fcredits%2Fflicky.pngR2i6462R3R137R5R276R6tgoR0y36:assets%2Fimages%2Fcredits%2Fkade.pngR2i9684R3R137R5R277R6tgoR0y43:assets%2Fimages%2Fcredits%2Fkawaisprite.pngR2i3953R3R137R5R278R6tgoR0y38:assets%2Fimages%2Fcredits%2Fkeoiki.pngR2i3918R3R137R5R279R6tgoR0y42:assets%2Fimages%2Fcredits%2Fmastereric.pngR2i11899R3R137R5R280R6tgoR0y38:assets%2Fimages%2Fcredits%2Fnebula.pngR2i5644R3R137R5R281R6tgoR0y45:assets%2Fimages%2Fcredits%2Fninjamuffin99.pngR2i5850R3R137R5R282R6tgoR0y45:assets%2Fimages%2Fcredits%2Fphantomarcade.pngR2i9615R3R137R5R283R6tgoR0y37:assets%2Fimages%2Fcredits%2Fproxy.pngR2i7645R3R137R5R284R6tgoR0y37:assets%2Fimages%2Fcredits%2Friver.pngR2i8283R3R137R5R285R6tgoR0y43:assets%2Fimages%2Fcredits%2Fshadowmario.pngR2i3679R3R137R5R286R6tgoR0y37:assets%2Fimages%2Fcredits%2Fshubs.pngR2i6829R3R137R5R287R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsmokey.pngR2i9145R3R137R5R288R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsqirra.pngR2i8258R3R137R5R289R6tgoR0y34:assets%2Fimages%2Fcry_about_it.pngR2i380631R3R137R5R290R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fbf.jsonR2i987R3R4R5R291R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fgf.jsonR2i807R3R4R5R292R6tgoR0y28:assets%2Fimages%2Ffunkay.pngR2i135548R3R137R5R293R6tgoR0y35:assets%2Fimages%2FgfDanceTitle.jsonR2i124R3R4R5R294R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.pngR2i745426R3R137R5R295R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.xmlR2i4259R3R4R5R296R6tgoR0y30:assets%2Fimages%2Fhahadumb.pngR2i16097R3R137R5R297R6tgoR0y28:assets%2Fimages%2Fhitbox.pngR2i620R3R137R5R298R6tgoR0y27:assets%2Fimages%2FhugeW.pngR2i18069R3R137R5R299R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-bf-old.pngR2i4101R3R137R5R300R6tgoR0y43:assets%2Fimages%2Ficons%2Ficon-bf-pixel.pngR2i538R3R137R5R301R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-bf.pngR2i22287R3R137R5R302R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-dad.pngR2i12384R3R137R5R303R6tgoR0y49:assets%2Fimages%2Ficons%2Ficon-dubenderdragon.pngR2i8798R3R137R5R304R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-face.pngR2i3549R3R137R5R305R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-gf.pngR2i10205R3R137R5R306R6tgoR0y50:assets%2Fimages%2Ficons%2Ficon-mintenderdragon.pngR2i9431R3R137R5R307R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-mom.pngR2i9237R3R137R5R308R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-monster.pngR2i17792R3R137R5R309R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-parents.pngR2i15547R3R137R5R310R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-pico.pngR2i14208R3R137R5R311R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-senpai-pixel.pngR2i622R3R137R5R312R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-spirit-pixel.pngR2i509R3R137R5R313R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-spooky.pngR2i6907R3R137R5R314R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-tankman.pngR2i3493R3R137R5R315R6tgoR0y26:assets%2Fimages%2Flogo.pngR2i86924R3R137R5R316R6tgoR0y32:assets%2Fimages%2FlogoBumpin.pngR2i578147R3R137R5R317R6tgoR0y32:assets%2Fimages%2FlogoBumpin.xmlR2i2177R3R4R5R318R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.pngR2i28858R3R137R5R319R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.xmlR2i1380R3R4R5R320R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.pngR2i28734R3R137R5R321R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.xmlR2i1385R3R4R5R322R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.pngR2i24842R3R137R5R323R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.xmlR2i1375R3R4R5R324R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.pngR2i30316R3R137R5R325R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.xmlR2i1399R3R4R5R326R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.pngR2i22741R3R137R5R327R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.xmlR2i1644R3R4R5R328R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.pngR2i27299R3R137R5R329R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.xmlR2i1332R3R4R5R330R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.pngR2i54659R3R137R5R331R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.xmlR2i1444R3R4R5R332R6tgoR0y38:assets%2Fimages%2FMCButton%2Fhover.pngR2i906R3R137R5R333R6tgoR0y39:assets%2Fimages%2FMCButton%2Fnormal.pngR2i908R3R137R5R334R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_christmas.pngR2i16696R3R137R5R335R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_halloween.pngR2i7474R3R137R5R336R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_limo.pngR2i6842R3R137R5R337R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_philly.pngR2i19689R3R137R5R338R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_school.pngR2i1963R3R137R5R339R6tgoR0y50:assets%2Fimages%2Fmenubackgrounds%2Fmenu_stage.pngR2i21287R3R137R5R340R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_tank.pngR2i21289R3R137R5R341R6tgoR0y28:assets%2Fimages%2FmenuBG.pngR2i474435R3R137R5R342R6tgoR0y32:assets%2Fimages%2FmenuBGBlue.pngR2i454823R3R137R5R343R6tgoR0y35:assets%2Fimages%2FmenuBGMagenta.pngR2i446604R3R137R5R344R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fbf.jsonR2i125R3R4R5R345R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fdad.jsonR2i126R3R4R5R346R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fgf.jsonR2i125R3R4R5R347R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.pngR2i231974R3R137R5R348R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.xmlR2i5582R3R4R5R349R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.pngR2i111851R3R137R5R350R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.xmlR2i2115R3R4R5R351R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.pngR2i314273R3R137R5R352R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.xmlR2i3802R3R4R5R353R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.pngR2i152414R3R137R5R354R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.xmlR2i2113R3R4R5R355R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.pngR2i335745R3R137R5R356R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.xmlR2i2188R3R4R5R357R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.pngR2i109825R3R137R5R358R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.xmlR2i2142R3R4R5R359R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.pngR2i64463R3R137R5R360R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.xmlR2i1348R3R4R5R361R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.pngR2i80071R3R137R5R362R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.xmlR2i2543R3R4R5R363R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.pngR2i117065R3R137R5R364R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.xmlR2i2164R3R4R5R365R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fmom.jsonR2i125R3R4R5R366R6tgoR0y57:assets%2Fimages%2Fmenucharacters%2Fparents-christmas.jsonR2i135R3R4R5R367R6tgoR0y44:assets%2Fimages%2Fmenucharacters%2Fpico.jsonR2i129R3R4R5R368R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fsenpai.jsonR2i133R3R4R5R369R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fspooky.jsonR2i142R3R4R5R370R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2Ftankman.jsonR2i134R3R4R5R371R6tgoR0y31:assets%2Fimages%2FmenuDesat.pngR2i215613R3R137R5R372R6tgoR0y35:assets%2Fimages%2FmenuDesatDark.pngR2i455541R3R137R5R373R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Feasy.pngR2i3453R3R137R5R374R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Fhard.pngR2i3880R3R137R5R375R6tgoR0y47:assets%2Fimages%2Fmenudifficulties%2Fnormal.pngR2i4853R3R137R5R376R6tgoR0y33:assets%2Fimages%2FMenu_Tracks.pngR2i1254R3R137R5R377R6tgoR0y37:assets%2Fimages%2Fnewgrounds_logo.pngR2i40016R3R137R5R378R6tgoR0y26:assets%2Fimages%2Fnum0.pngR2i1816R3R137R5R379R6tgoR0y26:assets%2Fimages%2Fnum1.pngR2i1639R3R137R5R380R6tgoR0y26:assets%2Fimages%2Fnum2.pngR2i1985R3R137R5R381R6tgoR0y26:assets%2Fimages%2Fnum3.pngR2i1990R3R137R5R382R6tgoR0y26:assets%2Fimages%2Fnum4.pngR2i1955R3R137R5R383R6tgoR0y26:assets%2Fimages%2Fnum5.pngR2i2023R3R137R5R384R6tgoR0y26:assets%2Fimages%2Fnum6.pngR2i2082R3R137R5R385R6tgoR0y26:assets%2Fimages%2Fnum7.pngR2i1881R3R137R5R386R6tgoR0y26:assets%2Fimages%2Fnum8.pngR2i2024R3R137R5R387R6tgoR0y26:assets%2Fimages%2Fnum9.pngR2i1851R3R137R5R388R6tgoR0y42:assets%2Fimages%2Fstorymenu%2Ftutorial.pngR2i7056R3R137R5R389R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek1.pngR2i6261R3R137R5R390R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek2.pngR2i6517R3R137R5R391R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek3.pngR2i7148R3R137R5R392R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek4.pngR2i6262R3R137R5R393R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek5.pngR2i6440R3R137R5R394R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek6.pngR2i8979R3R137R5R395R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek7.pngR2i7349R3R137R5R396R6tgoR0y32:assets%2Fimages%2FtitleEnter.pngR2i26291R3R137R5R397R6tgoR0y32:assets%2Fimages%2FtitleEnter.xmlR2i518R3R4R5R398R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_1.pngR2i51758R3R137R5R399R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_2.pngR2i11238R3R137R5R400R6tgoR0y32:assets%2Fimages%2FunknownMod.pngR2i2387R3R137R5R401R6tgoR2i2309657R3y5:MUSICR5y31:assets%2Fmusic%2FfreakyMenu.mp3y9:pathGroupaR403hR6tgoR2i2402257R3R402R5y31:assets%2Fmusic%2FoffsetSong.mp3R404aR405hR6tgoR2i17762R3R402R5y32:assets%2Fsounds%2FcancelMenu.mp3R404aR406hR6tgoR2i2114R3R402R5y34:assets%2Fsounds%2FchangeVolume.mp3R404aR407hR6tgoR2i91950R3R402R5y33:assets%2Fsounds%2FconfirmMenu.mp3R404aR408hR6tgoR2i9155R3R402R5y34:assets%2Fsounds%2Fintro1-pixel.mp3R404aR409hR6tgoR2i9912R3R402R5y34:assets%2Fsounds%2Fintro2-pixel.mp3R404aR410hR6tgoR2i9128R3R402R5y34:assets%2Fsounds%2Fintro3-pixel.mp3R404aR411hR6tgoR2i21651R3R402R5y35:assets%2Fsounds%2FintroGo-pixel.mp3R404aR412hR6tgoR2i17762R3R402R5y32:assets%2Fsounds%2FscrollMenu.mp3R404aR413hR6tgoR0y27:assets%2Fstages%2Flimo.jsonR2i289R3R4R5R414R6tgoR0y27:assets%2Fstages%2Fmall.jsonR2i287R3R4R5R415R6tgoR0y31:assets%2Fstages%2FmallEvil.jsonR2i285R3R4R5R416R6tgoR0y29:assets%2Fstages%2Fphilly.jsonR2i285R3R4R5R417R6tgoR0y29:assets%2Fstages%2Fschool.jsonR2i290R3R4R5R418R6tgoR0y33:assets%2Fstages%2FschoolEvil.jsonR2i290R3R4R5R419R6tgoR0y29:assets%2Fstages%2Fspooky.jsonR2i285R3R4R5R420R6tgoR0y28:assets%2Fstages%2Fstage.jsonR2i279R3R4R5R421R6tgoR0y27:assets%2Fstages%2Ftank.jsonR2i147R3R4R5R422R6tgoR0y30:assets%2Fweeks%2Ftutorial.jsonR2i274R3R4R5R423R6tgoR0y27:assets%2Fweeks%2Fweek1.jsonR2i369R3R4R5R424R6tgoR0y27:assets%2Fweeks%2Fweek2.jsonR2i371R3R4R5R425R6tgoR0y27:assets%2Fweeks%2Fweek3.jsonR2i356R3R4R5R426R6tgoR0y27:assets%2Fweeks%2Fweek4.jsonR2i369R3R4R5R427R6tgoR0y27:assets%2Fweeks%2Fweek5.jsonR2i397R3R4R5R428R6tgoR0y27:assets%2Fweeks%2Fweek6.jsonR2i408R3R4R5R429R6tgoR0y27:assets%2Fweeks%2Fweek7.jsonR2i491R3R4R5R430R6tgoR0y29:assets%2Fweeks%2FweekList.txtR2i50R3R4R5R431R6tgoR0y21:do%20NOT%20readme.txtR2i4326R3R4R5R432R6tgoR0y34:assets%2Ffonts%2Ffonts-go-here.txtR2zR3R4R5R433R6tgoR2i14656R3y4:FONTy9:classNamey31:__ASSET__assets_fonts_pixel_otfR5y26:assets%2Ffonts%2Fpixel.otfR6tgoR2i75864R3R434R435y29:__ASSET__assets_fonts_vcr_ttfR5y24:assets%2Ffonts%2Fvcr.ttfR6tgoR2i2114R3R402R5y26:flixel%2Fsounds%2Fbeep.mp3R404aR440y26:flixel%2Fsounds%2Fbeep.ogghR6tgoR2i39706R3R402R5y28:flixel%2Fsounds%2Fflixel.mp3R404aR442y28:flixel%2Fsounds%2Fflixel.ogghR6tgoR2i5794R3y5:SOUNDR5R441R404aR440R441hgoR2i33629R3R444R5R443R404aR442R443hgoR2i15744R3R434R435y35:__ASSET__flixel_fonts_nokiafc22_ttfR5y30:flixel%2Ffonts%2Fnokiafc22.ttfR6tgoR2i29724R3R434R435y36:__ASSET__flixel_fonts_monsterrat_ttfR5y31:flixel%2Ffonts%2Fmonsterrat.ttfR6tgoR0y33:flixel%2Fimages%2Fui%2Fbutton.pngR2i519R3R137R5R449R6tgoR0y36:flixel%2Fimages%2Flogo%2Fdefault.pngR2i3280R3R137R5R450R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Fbox.pngR2i912R3R137R5R451R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fbutton.pngR2i433R3R137R5R452R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_down.pngR2i446R3R137R5R453R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_left.pngR2i459R3R137R5R454R6tgoR0y49:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_right.pngR2i511R3R137R5R455R6tgoR0y46:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_up.pngR2i493R3R137R5R456R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fbutton_thin.pngR2i247R3R137R5R457R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fbutton_toggle.pngR2i534R3R137R5R458R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fcheck_box.pngR2i922R3R137R5R459R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fcheck_mark.pngR2i946R3R137R5R460R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fchrome.pngR2i253R3R137R5R461R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fchrome_flat.pngR2i212R3R137R5R462R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_inset.pngR2i192R3R137R5R463R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_light.pngR2i214R3R137R5R464R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fdropdown_mark.pngR2i156R3R137R5R465R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Ffinger_big.pngR2i1724R3R137R5R466R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Ffinger_small.pngR2i294R3R137R5R467R6tgoR0y38:flixel%2Fflixel-ui%2Fimg%2Fhilight.pngR2i129R3R137R5R468R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Finvis.pngR2i128R3R137R5R469R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fminus_mark.pngR2i136R3R137R5R470R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fplus_mark.pngR2i147R3R137R5R471R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Fradio.pngR2i191R3R137R5R472R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fradio_dot.pngR2i153R3R137R5R473R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fswatch.pngR2i185R3R137R5R474R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Ftab.pngR2i201R3R137R5R475R6tgoR0y39:flixel%2Fflixel-ui%2Fimg%2Ftab_back.pngR2i210R3R137R5R476R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Ftooltip_arrow.pngR2i18509R3R137R5R477R6tgoR0y39:flixel%2Fflixel-ui%2Fxml%2Fdefaults.xmlR2i1263R3R4R5R478R6tgoR0y53:flixel%2Fflixel-ui%2Fxml%2Fdefault_loading_screen.xmlR2i1953R3R4R5R479R6tgoR0y44:flixel%2Fflixel-ui%2Fxml%2Fdefault_popup.xmlR2i1848R3R4R5R480R6tgh\",\"rootPath\":null,\"version\":2,\"libraryArgs\":[],\"libraryType\":null}";
 	var manifest = lime_utils_AssetManifest.parse(data,ManifestResources.rootPath);
 	var library = lime_utils_AssetLibrary.fromManifest(manifest);
 	lime_utils_Assets.registerLibrary("default",library);
@@ -59419,6 +59431,9 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	}
 	,set_multSpeed: function(value) {
 		this.resizeByRatio(value / this.multSpeed);
+		if((this.multSpeed < 0 && value >= 0 || (this.multSpeed >= 0 || value < 0)) && this.downScroll == null) {
+			this.reloadNoteSkin();
+		}
 		this.multSpeed = value;
 		return value;
 	}
@@ -59672,8 +59687,14 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		var _g1 = this.colArray.length;
 		while(_g < _g1) {
 			var i = _g++;
-			this.animation.addByPrefix(this.colArray[i] + "Scroll",this.colArray[i] + "0");
-			if(this.isSustainNote) {
+			if(this.getActualDownscroll()) {
+				var addAnimThingy = CoolUtil.addSpecialAnimation;
+				addAnimThingy(this,this.colArray[i] + "Scroll",this.colArray[i] + "_DownScroll0",this.colArray[i] + "0",true,ClientPrefs.fpsStrumAnim);
+				addAnimThingy(this,"purpleholdend","pruple end hold_DownScroll","pruple end hold",true,ClientPrefs.fpsStrumAnim);
+				addAnimThingy(this,this.colArray[i] + "holdend",this.colArray[i] + " hold end_DownScroll",this.colArray[i] + " hold end",true,ClientPrefs.fpsStrumAnim);
+				addAnimThingy(this,this.colArray[i] + "hold",this.colArray[i] + " hold piece_DownScroll",this.colArray[i] + " hold piece",true,ClientPrefs.fpsStrumAnim);
+			} else {
+				this.animation.addByPrefix(this.colArray[i] + "Scroll",this.colArray[i] + "0");
 				this.animation.addByPrefix("purpleholdend","pruple end hold");
 				this.animation.addByPrefix(this.colArray[i] + "holdend",this.colArray[i] + " hold end");
 				this.animation.addByPrefix(this.colArray[i] + "hold",this.colArray[i] + " hold piece");
@@ -59685,12 +59706,9 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		var _g1 = this.colArray.length;
 		while(_g < _g1) {
 			var i = _g++;
-			if(this.isSustainNote) {
-				this.animation.add(this.colArray[i % this.colArray.length] + "holdend",[this.pixelInt[i % this.pixelInt.length] + 4]);
-				this.animation.add(this.colArray[i % this.colArray.length] + "hold",[this.pixelInt[i % this.pixelInt.length]]);
-			} else {
-				this.animation.add(this.colArray[i % this.colArray.length] + "Scroll",[this.pixelInt[i % this.pixelInt.length] + 4]);
-			}
+			this.animation.add(this.colArray[i % this.colArray.length] + "Scroll",[this.pixelInt[i % this.pixelInt.length] + 4]);
+			this.animation.add(this.colArray[i % this.colArray.length] + "holdend",[this.pixelInt[i % this.pixelInt.length] + 4]);
+			this.animation.add(this.colArray[i % this.colArray.length] + "hold",[this.pixelInt[i % this.pixelInt.length]]);
 		}
 	}
 	,update: function(elapsed) {
@@ -59716,6 +59734,9 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		if(this.flipScroll != value) {
 			if(this.isSustainNote) {
 				this.set_flipY(!this.flipY);
+			}
+			if(this.downScroll == null) {
+				this.reloadNoteSkin();
 			}
 		}
 		this.flipScroll = value;
@@ -59832,9 +59853,12 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		return value;
 	}
 	,set_downScroll: function(value) {
-		if(value != null && this.downScroll != value) {
+		if(this.downScroll != value) {
 			this.downScroll = value;
-			this.set_flipY(value);
+			if(value != null) {
+				this.set_flipY(value);
+			}
+			this.reloadNoteSkin();
 		}
 		return value;
 	}
@@ -60030,6 +60054,23 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 		return value;
 	}
+	,getActualDownscroll: function() {
+		if(this.downScroll != null) {
+			return this.downScroll;
+		} else {
+			var down = ClientPrefs.downScroll;
+			if(this.flipScroll) {
+				down = !down;
+			}
+			if(PlayState.instance != null && PlayState.instance.songSpeed < 0) {
+				down = !down;
+			}
+			if(this.multSpeed < 0) {
+				down = !down;
+			}
+			return down;
+		}
+	}
 	,__class__: Note
 	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_holdCoverTexture:"set_holdCoverTexture",set_holdCover:"set_holdCover",set_downScroll:"set_downScroll",set_flipScroll:"set_flipScroll",set_hitsound:"set_hitsound",set_alignSustainNote:"set_alignSustainNote",set_camTarget:"set_camTarget",set_scrollFactorCam:"set_scrollFactorCam",set_noteScale:"set_noteScale",set_texture:"set_texture",set_multSpeed:"set_multSpeed",set_noteSplashTexture:"set_noteSplashTexture",set_gfNote:"set_gfNote",set_noteType:"set_noteType",set_noteData:"set_noteData",set_mustPress:"set_mustPress"})
 });
@@ -60049,21 +60090,30 @@ var NoteSplash = function(x,y,note,type) {
 	this.note = null;
 	this.strum = null;
 	flixel_FlxSprite.call(this,x,y);
-	var skin = "noteSplashes";
-	if(type == "bf") {
-		if(PlayState.SONG.splashSkin != null && PlayState.SONG.splashSkin.length > 0) {
-			skin = PlayState.SONG.splashSkin;
-		}
-	} else if(type == "opt") {
-		if(PlayState.SONG.splashSkinOpt != null && PlayState.SONG.splashSkinOpt.length > 0) {
-			skin = PlayState.SONG.splashSkinOpt;
-		}
-	} else if(type == "gf") {
-		if(PlayState.SONG.splashSkinSec != null && PlayState.SONG.splashSkinSec.length > 0) {
-			skin = PlayState.SONG.splashSkinSec;
-		}
+	var texture = "";
+	var skin = PlayState.SONG.splashSkin;
+	var skinOpt = PlayState.SONG.splashSkinOpt;
+	var skinSec = PlayState.SONG.splashSkinSec;
+	if(skin == null || skin.length < 1) {
+		skin = "noteSplashes";
 	}
-	this.loadAnims(skin);
+	if(skinOpt == null || skinOpt.length < 1) {
+		skinOpt = skin;
+	}
+	if(skinSec == null || skinSec.length < 1) {
+		if(skinOpt == null || skinOpt.length < 1) {
+			skinOpt = skin;
+		}
+		skinSec = skinOpt;
+	}
+	if(type == "bg") {
+		texture = skin;
+	} else if(type == "gf") {
+		texture = skinSec;
+	} else {
+		texture = skinOpt;
+	}
+	this.loadAnims(texture);
 	this.set_shaderType("swap");
 	this.setupNoteSplash(x,y,note);
 	this.set_antialiasing(ClientPrefs.globalAntialiasing);
@@ -60141,8 +60191,6 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 			this.set_cameras(FunkinLua.cameraArrayFromString(realCam));
 		}
 		this.scrollFactor.set(sfX,sfY);
-		this.loadAnims(texture);
-		this.setGraphicSize(this.get_width() * scale | 0,this.get_height() * scale | 0);
 		var noteWidth = Note.swagWidth;
 		var noteHeight = Note.swagWidth;
 		var noteSplashOffsetX = 0.0;
@@ -60208,6 +60256,8 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 			noteSplashOffsetOriginX = oriNote.noteSplashOffsetOriginX;
 			noteSplashOffsetOriginY = oriNote.noteSplashOffsetOriginY;
 		}
+		this.loadAnims(texture);
+		this.setGraphicSize(this.get_width() * scale | 0,this.get_height() * scale | 0);
 		this.setPosition(x + noteWidth / 2 - this.get_width() / 2 + noteSplashOffsetX,y + noteHeight / 2 - this.get_height() / 2 + noteSplashOffsetY);
 		var animNum = flixel_FlxG.random.int(1,2);
 		this.animation.play("note" + note % 4 + "-" + animNum,true);
@@ -60252,8 +60302,16 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 		var _g1 = col.length;
 		while(_g < _g1) {
 			var color = _g++;
-			this.animation.addByPrefix("note" + color + "-" + 1,"note splash " + col[color] + " " + 1,ClientPrefs.fpsStrumAnim,false);
-			this.animation.addByPrefix("note" + color + "-" + 2,"note splash " + col[color] + " " + 2,ClientPrefs.fpsStrumAnim,false);
+			if(this.note != null && this.note.getActualDownscroll()) {
+				CoolUtil.addSpecialAnimation(this,"note" + color + "-" + 1,"note splash " + col[color] + " " + 1 + "_DownScroll","note splash " + col[color] + " " + 1,false,ClientPrefs.fpsStrumAnim);
+			} else {
+				this.animation.addByPrefix("note" + color + "-" + 1,"note splash " + col[color] + " " + 1,ClientPrefs.fpsStrumAnim,false);
+			}
+			if(this.note != null && this.note.getActualDownscroll()) {
+				CoolUtil.addSpecialAnimation(this,"note" + color + "-" + 2,"note splash " + col[color] + " " + 2 + "_DownScroll","note splash " + col[color] + " " + 2,false,ClientPrefs.fpsStrumAnim);
+			} else {
+				this.animation.addByPrefix("note" + color + "-" + 2,"note splash " + col[color] + " " + 2,ClientPrefs.fpsStrumAnim,false);
+			}
 		}
 	}
 	,update: function(elapsed) {
@@ -60279,8 +60337,6 @@ OutdatedState.__name__ = "OutdatedState";
 OutdatedState.__super__ = MusicBeatState;
 OutdatedState.prototype = $extend(MusicBeatState.prototype,{
 	warnText: null
-	,backButton: null
-	,enterButton: null
 	,create: function() {
 		MusicBeatState.prototype.create.call(this);
 		var bg = new flixel_FlxSprite();
@@ -60561,6 +60617,9 @@ Paths.getTextFromFile = function(key,ignoreMods,forceFromDisk) {
 Paths.font = function(key) {
 	return "assets/fonts/" + key;
 };
+Paths.textFormatFont = function(key) {
+	return "_sans";
+};
 Paths.fileExists = function(key,type,ignoreMods,library) {
 	if(ignoreMods == null) {
 		ignoreMods = false;
@@ -60607,7 +60666,7 @@ Paths.returnGraphic = function(key,library) {
 			dge_backend_CacheTools.cacheImage.h[Paths.currentModDirectory + key] = Paths.currentTrackedAssets.h[path];
 			return Paths.currentTrackedAssets.h[path];
 		}
-		haxe_Log.trace("Missing image asset: " + key + ". Using Checkerboard placeholder.",{ fileName : "source/Paths.hx", lineNumber : 484, className : "Paths", methodName : "returnGraphic"});
+		haxe_Log.trace("Missing image asset: " + key + ". Using Checkerboard placeholder.",{ fileName : "source/Paths.hx", lineNumber : 495, className : "Paths", methodName : "returnGraphic"});
 		var checkBoard = CoolUtil.makeCheckerboardGraphic();
 		checkBoard.persist = true;
 		dge_backend_CacheTools.cacheImage.h[Paths.currentModDirectory + key] = checkBoard;
@@ -60796,9 +60855,6 @@ PauseSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 	,skipTimeTracker: null
 	,curTime: null
 	,skinPly: null
-	,leftButton: null
-	,rightButton: null
-	,enterButton: null
 	,pauseOverlay: null
 	,holdTime: null
 	,cantUnpause: null
@@ -60889,9 +60945,9 @@ PauseSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 							Chance = 50;
 						}
 						if(flixel_FlxG.random.float(0,100) < Chance) {
-							haxe_Log.trace("PAUSE MENU REFUSE CHANGE DIFFICULT BECAUSE YOU DIDT GAVE A JSON FILE",{ fileName : "source/PauseSubState.hx", lineNumber : 267, className : "PauseSubState", methodName : "update"});
+							haxe_Log.trace("PAUSE MENU REFUSE CHANGE DIFFICULT BECAUSE YOU DIDT GAVE A JSON FILE",{ fileName : "source/PauseSubState.hx", lineNumber : 271, className : "PauseSubState", methodName : "update"});
 						} else {
-							haxe_Log.trace("PAUSE MENU HAS BEEN CRASHED BECAUSE OF MISSING SONG DATA",{ fileName : "source/PauseSubState.hx", lineNumber : 269, className : "PauseSubState", methodName : "update"});
+							haxe_Log.trace("PAUSE MENU HAS BEEN CRASHED BECAUSE OF MISSING SONG DATA",{ fileName : "source/PauseSubState.hx", lineNumber : 273, className : "PauseSubState", methodName : "update"});
 						}
 						this.close();
 					}
@@ -61558,9 +61614,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,showHintPlayableField: null
 	,hintColorStrums: null
 	,keyCount: null
-	,hitboxCam: null
-	,hitbox: null
-	,hitboxSpace: null
 	,cacheRating: null
 	,camGameMult: null
 	,limitCamZoom: null
@@ -62405,11 +62458,15 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.add(this.grpNoteSplashesOpt);
 		this.add(this.grpNoteSplashesGf);
 		this.add(this.grpNoteSplashes);
-		var holdCover = new dge_obj_game_HoldCover(100,100);
+		var holdCover = new dge_obj_game_HoldCover(100,100,"bf");
 		holdCover.set_alpha(0);
 		this.grpHoldCover.add(holdCover);
-		this.grpHoldCoverOpt.add(holdCover);
-		this.grpHoldCoverGf.add(holdCover);
+		var holdCoverOpt = new dge_obj_game_HoldCover(100,100,"opt");
+		holdCoverOpt.set_alpha(0);
+		this.grpHoldCoverOpt.add(holdCoverOpt);
+		var holdCoverGf = new dge_obj_game_HoldCover(100,100,"gf");
+		holdCoverGf.set_alpha(0);
+		this.grpHoldCoverGf.add(holdCoverGf);
 		var splash = new NoteSplash(100,100,0);
 		this.grpNoteSplashes.add(splash);
 		var splashOpt = new NoteSplash(100,100,0,"opt");
@@ -62590,12 +62647,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.keyPressUI.add(notePressUISpr);
 			}
 		}
-		this.hitbox = new flixel_group_FlxTypedGroup();
-		this.add(this.hitbox);
-		this.hitboxCam = new flixel_FlxCamera();
-		this.hitboxCam.bgColor &= 16777215;
-		this.hitboxCam.bgColor |= 0;
-		flixel_FlxG.cameras.add(this.hitboxCam,false);
 		this.cachePopUpScore();
 		this.cacheCountdown();
 		this.callOnLuas("onCreatePost",[]);
@@ -62647,6 +62698,24 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				++_g;
 				note.resizeByRatio(Math.abs(ratio));
 			}
+			if(this.songSpeed < 0 && value >= 0 || this.songSpeed >= 0 && value < 0) {
+				var note = new flixel_group_FlxTypedGroupIterator(this.notes.members,null);
+				while(note.hasNext()) {
+					var note1 = note.next();
+					if(note1.downScroll == null) {
+						note1.reloadNoteSkin();
+					}
+				}
+				var _g = 0;
+				var _g1 = this.unspawnNotes;
+				while(_g < _g1.length) {
+					var note = _g1[_g];
+					++_g;
+					if(note.downScroll == null) {
+						note.reloadNoteSkin();
+					}
+				}
+			}
 		}
 		this.songSpeed = value;
 		return value;
@@ -62660,7 +62729,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.playbackRate = value;
 		flixel_animation_FlxAnimationController.globalSpeed = value;
-		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1712, className : "PlayState", methodName : "set_playbackRate"});
+		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1725, className : "PlayState", methodName : "set_playbackRate"});
 		Conductor.safeZoneOffset = ClientPrefs.safeFrames / 60 * 1000 * value;
 		this.setOnLuas("playbackRate",this.playbackRate);
 		return value;
@@ -64638,7 +64707,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3700, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3713, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
@@ -64750,17 +64819,20 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.notes.forEachAlive(function(daNote) {
 					var strumGroup = _gthis.playerStrums;
 					var actualStrum;
-					if(daNote.customField) {
+					if(daNote.fieldTarget != null && daNote.fieldTarget.length > 0) {
 						if(Object.prototype.hasOwnProperty.call(_gthis.strumGroupMap.h,daNote.fieldTarget) && Object.prototype.hasOwnProperty.call(_gthis.notesGroupMap.h,daNote.fieldTarget)) {
 							strumGroup = _gthis.strumGroupMap.h[daNote.fieldTarget];
 						} else {
-							daNote.customField = false;
+							daNote.fieldTarget = "";
 						}
-					} else if(!daNote.mustPress) {
-						if((daNote.gfNote || daNote.secondOpponent) && PlayState.SONG.secOpt) {
-							strumGroup = _gthis.gfStrums;
-						} else {
-							strumGroup = _gthis.opponentStrums;
+					} else {
+						var tmp = daNote.fieldTarget == null;
+						if(!daNote.mustPress) {
+							if((daNote.gfNote || daNote.secondOpponent) && PlayState.SONG.secOpt) {
+								strumGroup = _gthis.gfStrums;
+							} else {
+								strumGroup = _gthis.opponentStrums;
+							}
 						}
 					}
 					if(strumGroup != null && daNote.noteData < strumGroup.length && daNote.noteData >= 0 && daNote.attachStrum) {
@@ -64879,7 +64951,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						daNote.strumNote = null;
 					}
 					if(daNote != null) {
-						if(daNote.customField && Object.prototype.hasOwnProperty.call(_gthis.notesGroupMap.h,daNote.fieldTarget)) {
+						if(daNote.fieldTarget != null && daNote.fieldTarget.length > 0 && Object.prototype.hasOwnProperty.call(_gthis.notesGroupMap.h,daNote.fieldTarget)) {
 							var specialGroup = [_gthis.opponentNotes,_gthis.playerNotes,_gthis.gfNotes];
 							var _g = 0;
 							while(_g < specialGroup.length) {
@@ -64931,20 +65003,20 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						}
 					}
 					var botCanHit = daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime < Conductor.songPosition + Conductor.safeZoneOffset * daNote.earlyHitMult || !daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime <= Conductor.songPosition;
-					if((_gthis.gamemode == "opponent" ? !daNote.blockHit && !daNote.canFreeze && daNote.mustPress : !daNote.mustPress) && (!daNote.ignoreNote && !daNote.canFreeze) && !daNote.customField && !(_gthis.gamemode == "bothside v2" || _gthis.gamemode == "bothside") && botCanHit) {
+					if((daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null) && (_gthis.gamemode == "opponent" ? !daNote.blockHit && !daNote.canFreeze && daNote.mustPress : !daNote.mustPress) && (!daNote.ignoreNote && !daNote.canFreeze) && daNote.fieldTarget.length < 1 && !(_gthis.gamemode == "bothside v2" || _gthis.gamemode == "bothside") && botCanHit) {
 						_gthis.opponentNoteHit(daNote);
 					}
-					if((_gthis.gamemode == "opponent" ? !daNote.blockHit && !daNote.canFreeze && daNote.mustPress : !daNote.mustPress) && (!daNote.ignoreNote && !daNote.canFreeze) && daNote.customField && botCanHit) {
+					if((daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null) && (_gthis.gamemode == "opponent" ? !daNote.blockHit && !daNote.canFreeze && daNote.mustPress : !daNote.mustPress) && (!daNote.ignoreNote && !daNote.canFreeze) && daNote.fieldTarget.length > 0 && botCanHit) {
 						_gthis.opponentNoteHit(daNote);
 					}
-					if((_gthis.gamemode != "opponent" ? !daNote.blockHit && !daNote.canFreeze && (_gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress) : !daNote.mustPress) && _gthis.cpuControlled && !(daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.customField : _gthis.playableField.indexOf(daNote.fieldTarget) == -1)) && botCanHit) {
+					if((daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null) && (_gthis.gamemode != "opponent" ? !daNote.blockHit && !daNote.canFreeze && (_gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress) : !daNote.mustPress) && _gthis.cpuControlled && !(daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.fieldTarget.length > 0 : _gthis.playableField.indexOf(daNote.fieldTarget) == -1)) && botCanHit) {
 						_gthis.goodNoteHit(daNote);
 					}
-					if((_gthis.gamemode != "opponent" ? !daNote.blockHit && !daNote.canFreeze && (_gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress) : !daNote.mustPress) && (daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.customField : _gthis.playableField.indexOf(daNote.fieldTarget) == -1)) && botCanHit) {
+					if(daNote.strumNote != null && !daNote.strumNote.isLocked && (_gthis.gamemode != "opponent" ? !daNote.blockHit && !daNote.canFreeze && (_gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress) : !daNote.mustPress) && (daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.fieldTarget.length > 0 : _gthis.playableField.indexOf(daNote.fieldTarget) == -1)) && botCanHit) {
 						_gthis.goodNoteHit(daNote);
 					}
 					if(Conductor.songPosition > _gthis.noteKillOffset / Math.abs(_gthis.songSpeed * daNote.multSpeed) + (daNote.strumTime + daNote.offsetStrumTime)) {
-						if((_gthis.gamemode != "opponent" ? _gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress : !daNote.mustPress) && !_gthis.cpuControlled && !daNote.ignoreNote && !_gthis.endingSong && (daNote.tooLate || !daNote.wasGoodHit) && !(daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.customField : _gthis.playableField.indexOf(daNote.fieldTarget) == -1))) {
+						if((_gthis.gamemode != "opponent" ? _gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress : !daNote.mustPress) && !_gthis.cpuControlled && !daNote.ignoreNote && !_gthis.endingSong && (daNote.tooLate || !daNote.wasGoodHit) && !(daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.fieldTarget.length > 0 : _gthis.playableField.indexOf(daNote.fieldTarget) == -1))) {
 							_gthis.noteMiss(daNote);
 						}
 						_gthis.destroyNote(daNote);
@@ -66076,12 +66148,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4793, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4807, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4794, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4808, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -66117,7 +66189,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 4827, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 4841, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -66128,7 +66200,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4838, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4852, className : "PlayState", methodName : "endSong"});
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 					CustomFadeTransition.nextCamera = null;
@@ -66151,7 +66223,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4862, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4876, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -66222,119 +66294,16 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,ratingTween: null
 	,comboTween: null
 	,numRatingTween: null
-	,popUpScore: function(note) {
-		var noteDiff = Math.abs(note.strumTime + note.offsetStrumTime - Conductor.songPosition + ClientPrefs.ratingOffset);
-		var noteIdx = this.notes.members.indexOf(note);
-		this.vocals.set_volume(1);
-		var placement = Std.string(this.combo);
-		var coolTextX = flixel_FlxG.width * 0.35;
-		if(!ClientPrefs.comboStacking) {
-			var _g = 0;
-			var _g1 = this.ratingGroup.members;
-			while(_g < _g1.length) {
-				var i = _g1[_g];
-				++_g;
-				if(i != null) {
-					i.kill();
-				}
-			}
-			if(this.ratingTween != null) {
-				this.ratingTween.cancel();
-			}
+	,spawnRatingSprite: function(note,image) {
+		if(image == null) {
+			image = "shit";
 		}
-		var rating = this.ratingGroup.recycle(flixel_FlxSprite);
-		rating.reset(0,0);
-		rating.set_alpha(1);
-		var score = 350;
-		var daRating = Conductor.judgeNote(note,noteDiff / this.playbackRate);
-		if(!this.practiceMode && !this.cpuControlled && !note.autoPress && !note.customField) {
-			this.totalNotesHit += daRating.ratingMod;
-		}
-		note.ratingMod = daRating.ratingMod;
-		if(!note.ratingDisabled) {
-			daRating.increase();
-		}
-		note.rating = daRating.name;
-		score = daRating.score;
-		if(daRating.noteSplash && !note.noteSplashDisabled && !note.fakeNoHit || note.forceNoteSplash) {
-			this.spawnNoteSplashOnNote(note,note.mustPress);
-		}
-		if(!this.practiceMode && !this.cpuControlled && !note.autoPress && !note.customField) {
-			this.songScore += score;
-			if(!note.ratingDisabled) {
-				this.songHits++;
-				this.totalPlayed++;
-				this.RecalculateRating(false);
-			}
-		}
-		var pixelShitPart1 = "";
-		var pixelShitPart2 = "";
-		if(PlayState.isPixelStage) {
-			pixelShitPart1 = "pixelUI/";
-			pixelShitPart2 = "-pixel";
-		}
-		rating.loadGraphic(this.cacheRating.h[daRating.image]);
-		rating.set_cameras([this.camHUD]);
-		var axes = flixel_util_FlxAxes.XY;
-		var tmp;
-		switch(axes._hx_index) {
-		case 0:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			rating.set_x((flixel_FlxG.width - rating.get_width()) / 2);
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 1:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			rating.set_y((flixel_FlxG.height - rating.get_height()) / 2);
-		}
-		rating.set_x(coolTextX - 40);
-		rating.set_y(rating.y - 60);
-		rating.velocity.set_x(0);
-		rating.velocity.set_y(0);
-		rating.acceleration.set_y(550 * this.playbackRate * this.playbackRate);
-		var fh = rating.velocity;
-		fh.set_y(fh.y - flixel_FlxG.random.int(140,175) * this.playbackRate);
-		var fh = rating.velocity;
-		fh.set_x(fh.x - flixel_FlxG.random.int(0,10) * this.playbackRate);
-		rating.set_visible(!ClientPrefs.hideHud && this.showRating);
-		rating.set_x(rating.x + ClientPrefs.comboOffset[0]);
-		rating.set_y(rating.y - ClientPrefs.comboOffset[1]);
-		this.ratingGroup.remove(rating,true);
-		this.ratingGroup.add(rating);
-		if(!PlayState.isPixelStage) {
-			rating.setGraphicSize(rating.get_width() * 0.7 | 0);
-			rating.set_antialiasing(ClientPrefs.globalAntialiasing);
-		} else {
-			rating.setGraphicSize(rating.get_width() * PlayState.daPixelZoom * 0.85 | 0);
-		}
-		rating.updateHitbox();
-		if(!ClientPrefs.comboStacking) {
-			this.ratingTween = flixel_tweens_FlxTween.tween(rating,{ alpha : 0},0.2 / this.playbackRate,{ onComplete : function(tween) {
-				rating.kill();
-			}, startDelay : Conductor.crochet * 0.001 / this.playbackRate});
-		} else {
-			flixel_tweens_FlxTween.tween(rating,{ alpha : 0},0.2 / this.playbackRate,{ onComplete : function(tween) {
-				rating.kill();
-			}, startDelay : Conductor.crochet * 0.001 / this.playbackRate});
-		}
-		var ratingSprOrder = this.ratingGroup.members.indexOf(rating);
-		this.callOnLuas("onRatingPopUp",[noteIdx,ratingSprOrder,note.noteData,note.noteType]);
-		var xThing = 0;
-		if(this.showCombo) {
+		if(note != null) {
+			var noteIdx = this.notes.members.indexOf(note);
+			var coolTextX = flixel_FlxG.width * 0.35;
 			if(!ClientPrefs.comboStacking) {
 				var _g = 0;
-				var _g1 = this.comboGroup.members;
+				var _g1 = this.ratingGroup.members;
 				while(_g < _g1.length) {
 					var i = _g1[_g];
 					++_g;
@@ -66342,15 +66311,21 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						i.kill();
 					}
 				}
-				if(this.comboTween != null) {
-					this.comboTween.cancel();
+				if(this.ratingTween != null) {
+					this.ratingTween.cancel();
 				}
 			}
-			var comboSpr = this.comboGroup.recycle(flixel_FlxSprite);
-			comboSpr.reset(0,0);
-			comboSpr.set_alpha(1);
-			comboSpr.loadGraphic(this.cacheRating.h["combo"]);
-			comboSpr.set_cameras([this.camHUD]);
+			var rating = this.ratingGroup.recycle(flixel_FlxSprite);
+			rating.reset(0,0);
+			rating.set_alpha(1);
+			var pixelShitPart1 = "";
+			var pixelShitPart2 = "";
+			if(PlayState.isPixelStage) {
+				pixelShitPart1 = "pixelUI/";
+				pixelShitPart2 = "-pixel";
+			}
+			rating.loadGraphic(this.cacheRating.h[image]);
+			rating.set_cameras([this.camHUD]);
 			var axes = flixel_util_FlxAxes.XY;
 			var tmp;
 			switch(axes._hx_index) {
@@ -66361,7 +66336,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				tmp = false;
 			}
 			if(tmp) {
-				comboSpr.set_x((flixel_FlxG.width - comboSpr.get_width()) / 2);
+				rating.set_x((flixel_FlxG.width - rating.get_width()) / 2);
 			}
 			var tmp;
 			switch(axes._hx_index) {
@@ -66372,77 +66347,61 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				tmp = false;
 			}
 			if(tmp) {
-				comboSpr.set_y((flixel_FlxG.height - comboSpr.get_height()) / 2);
+				rating.set_y((flixel_FlxG.height - rating.get_height()) / 2);
 			}
-			comboSpr.set_x(coolTextX);
-			comboSpr.acceleration.set_y(flixel_FlxG.random.int(200,300) * this.playbackRate * this.playbackRate);
-			var fh = comboSpr.velocity;
-			fh.set_y(fh.y - flixel_FlxG.random.int(140,160) * this.playbackRate);
+			rating.set_x(coolTextX - 40);
+			rating.set_y(rating.y - 60);
+			rating.velocity.set_x(0);
+			rating.velocity.set_y(0);
+			rating.acceleration.set_y(550 * this.playbackRate * this.playbackRate);
+			var fh = rating.velocity;
+			fh.set_y(fh.y - flixel_FlxG.random.int(140,175) * this.playbackRate);
+			var fh = rating.velocity;
+			fh.set_x(fh.x - flixel_FlxG.random.int(0,10) * this.playbackRate);
+			rating.set_visible(!ClientPrefs.hideHud && this.showRating);
+			rating.set_x(rating.x + ClientPrefs.comboOffset[0]);
+			rating.set_y(rating.y - ClientPrefs.comboOffset[1]);
+			this.ratingGroup.remove(rating,true);
+			this.ratingGroup.add(rating);
 			if(!PlayState.isPixelStage) {
-				comboSpr.setGraphicSize(comboSpr.get_width() * 0.7 | 0);
-				comboSpr.set_antialiasing(ClientPrefs.globalAntialiasing);
+				rating.setGraphicSize(rating.get_width() * 0.7 | 0);
+				rating.set_antialiasing(ClientPrefs.globalAntialiasing);
 			} else {
-				comboSpr.setGraphicSize(comboSpr.get_width() * PlayState.daPixelZoom * 0.85 | 0);
+				rating.setGraphicSize(rating.get_width() * PlayState.daPixelZoom * 0.85 | 0);
 			}
-			comboSpr.set_visible(!ClientPrefs.hideHud && this.showCombo);
-			comboSpr.set_x(comboSpr.x + ClientPrefs.comboOffset[0]);
-			comboSpr.set_y(comboSpr.y - ClientPrefs.comboOffset[1]);
-			comboSpr.set_y(comboSpr.y + 60);
-			var fh = comboSpr.velocity;
-			fh.set_x(fh.x + flixel_FlxG.random.int(1,10) * this.playbackRate);
-			this.comboGroup.remove(comboSpr,true);
-			this.comboGroup.add(comboSpr);
-			comboSpr.updateHitbox();
-			comboSpr.set_x(xThing + 50);
+			rating.updateHitbox();
 			if(!ClientPrefs.comboStacking) {
-				this.comboTween = flixel_tweens_FlxTween.tween(comboSpr,{ alpha : 0},0.2 / this.playbackRate,{ onComplete : function(tween) {
-					comboSpr.kill();
-				}, startDelay : Conductor.crochet * 0.002 / this.playbackRate});
+				this.ratingTween = flixel_tweens_FlxTween.tween(rating,{ alpha : 0},0.2 / this.playbackRate,{ onComplete : function(tween) {
+					rating.kill();
+				}, startDelay : Conductor.crochet * 0.001 / this.playbackRate});
 			} else {
-				flixel_tweens_FlxTween.tween(comboSpr,{ alpha : 0},0.2 / this.playbackRate,{ onComplete : function(tween) {
-					comboSpr.kill();
-				}, startDelay : Conductor.crochet * 0.002 / this.playbackRate});
+				flixel_tweens_FlxTween.tween(rating,{ alpha : 0},0.2 / this.playbackRate,{ onComplete : function(tween) {
+					rating.kill();
+				}, startDelay : Conductor.crochet * 0.001 / this.playbackRate});
 			}
-			var comboSprOrder = this.comboGroup.members.indexOf(comboSpr);
-			this.callOnLuas("onComboPopUp",[noteIdx,comboSprOrder,note.noteData,note.noteType]);
-		}
-		var seperatedScore = [];
-		var comboNumSplit = StringTools.lpad(Std.string(Math.abs(this.combo)),"0",3).split("");
-		var _g = 0;
-		while(_g < comboNumSplit.length) {
-			var enter = comboNumSplit[_g];
-			++_g;
-			seperatedScore.push(Std.parseInt(enter));
-		}
-		var daLoop = 0;
-		if(!ClientPrefs.comboStacking) {
-			var _g = 0;
-			var _g1 = this.numRatingGroup.members;
-			while(_g < _g1.length) {
-				var i = _g1[_g];
-				++_g;
-				if(i != null) {
-					i.kill();
+			var ratingSprOrder = this.ratingGroup.members.indexOf(rating);
+			this.callOnLuas("onRatingPopUp",[noteIdx,ratingSprOrder,note.noteData,note.noteType]);
+			var xThing = 0;
+			if(this.showCombo) {
+				if(!ClientPrefs.comboStacking) {
+					var _g = 0;
+					var _g1 = this.comboGroup.members;
+					while(_g < _g1.length) {
+						var i = _g1[_g];
+						++_g;
+						if(i != null) {
+							i.kill();
+						}
+					}
+					if(this.comboTween != null) {
+						this.comboTween.cancel();
+					}
 				}
-			}
-			while(this.numRatingTween.length > 0) {
-				var tween = this.numRatingTween[0];
-				if(tween != null) {
-					tween.cancel();
-					HxOverrides.remove(this.numRatingTween,tween);
-				}
-			}
-		}
-		if(this.showComboNum) {
-			var _g = 0;
-			while(_g < seperatedScore.length) {
-				var i = seperatedScore[_g];
-				++_g;
-				var numScore = [this.numRatingGroup.recycle(flixel_FlxSprite)];
-				numScore[0].reset(0,0);
-				numScore[0].set_alpha(1);
-				numScore[0].loadGraphic(this.cacheRating.h[i == null ? "null" : "" + i]);
-				numScore[0].set_cameras([this.camHUD]);
+				var comboSpr = this.comboGroup.recycle(flixel_FlxSprite);
+				comboSpr.reset(0,0);
+				comboSpr.set_alpha(1);
+				comboSpr.loadGraphic(this.cacheRating.h["combo"]);
+				comboSpr.set_cameras([this.camHUD]);
 				var axes = flixel_util_FlxAxes.XY;
 				var tmp;
 				switch(axes._hx_index) {
@@ -66453,62 +66412,192 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					tmp = false;
 				}
 				if(tmp) {
-					numScore[0].set_x((flixel_FlxG.width - numScore[0].get_width()) / 2);
+					comboSpr.set_x((flixel_FlxG.width - comboSpr.get_width()) / 2);
 				}
-				var tmp1;
+				var tmp;
 				switch(axes._hx_index) {
 				case 1:case 2:
-					tmp1 = true;
+					tmp = true;
 					break;
 				default:
-					tmp1 = false;
+					tmp = false;
 				}
-				if(tmp1) {
-					numScore[0].set_y((flixel_FlxG.height - numScore[0].get_height()) / 2);
+				if(tmp) {
+					comboSpr.set_y((flixel_FlxG.height - comboSpr.get_height()) / 2);
 				}
-				numScore[0].set_x(coolTextX + 43 * daLoop - 90);
-				numScore[0].set_y(numScore[0].y + 80);
-				numScore[0].set_x(numScore[0].x + ClientPrefs.comboOffset[2]);
-				numScore[0].set_y(numScore[0].y - ClientPrefs.comboOffset[3]);
-				numScore[0].set_x(numScore[0].x - 43 * (seperatedScore.length - 3) / 2);
-				if(!ClientPrefs.comboStacking) {
-					PlayState.lastScore.push(numScore[0]);
-				}
-				if(!PlayState.isPixelStage) {
-					numScore[0].set_antialiasing(ClientPrefs.globalAntialiasing);
-					numScore[0].setGraphicSize(numScore[0].get_width() * 0.5 | 0);
-				} else {
-					numScore[0].setGraphicSize(numScore[0].get_width() * PlayState.daPixelZoom | 0);
-				}
-				numScore[0].updateHitbox();
-				numScore[0].acceleration.set_y(flixel_FlxG.random.int(200,300) * this.playbackRate * this.playbackRate);
-				var fh = numScore[0].velocity;
+				comboSpr.set_x(coolTextX);
+				comboSpr.acceleration.set_y(flixel_FlxG.random.int(200,300) * this.playbackRate * this.playbackRate);
+				var fh = comboSpr.velocity;
 				fh.set_y(fh.y - flixel_FlxG.random.int(140,160) * this.playbackRate);
-				numScore[0].velocity.set_x(flixel_FlxG.random.float(-5,5) * this.playbackRate);
-				numScore[0].set_visible(!ClientPrefs.hideHud);
-				this.numRatingGroup.remove(numScore[0],true);
-				this.numRatingGroup.add(numScore[0]);
-				if(!ClientPrefs.comboStacking) {
-					var tmp2 = Conductor.crochet * 0.002;
-					this.numRatingTween.push(flixel_tweens_FlxTween.tween(numScore[0],{ alpha : 0},0.2 / this.playbackRate,{ onComplete : (function(numScore) {
-						return function(tween) {
-							numScore[0].kill();
-						};
-					})(numScore), startDelay : tmp2 / this.playbackRate}));
+				if(!PlayState.isPixelStage) {
+					comboSpr.setGraphicSize(comboSpr.get_width() * 0.7 | 0);
+					comboSpr.set_antialiasing(ClientPrefs.globalAntialiasing);
 				} else {
-					var tmp3 = Conductor.crochet * 0.002;
-					flixel_tweens_FlxTween.tween(numScore[0],{ alpha : 0},0.2 / this.playbackRate,{ onComplete : (function(numScore) {
-						return function(tween) {
-							numScore[0].kill();
-						};
-					})(numScore), startDelay : tmp3 / this.playbackRate});
+					comboSpr.setGraphicSize(comboSpr.get_width() * PlayState.daPixelZoom * 0.85 | 0);
 				}
-				++daLoop;
-				if(numScore[0].x > xThing) {
-					xThing = numScore[0].x;
+				comboSpr.set_visible(!ClientPrefs.hideHud && this.showCombo);
+				comboSpr.set_x(comboSpr.x + ClientPrefs.comboOffset[0]);
+				comboSpr.set_y(comboSpr.y - ClientPrefs.comboOffset[1]);
+				comboSpr.set_y(comboSpr.y + 60);
+				var fh = comboSpr.velocity;
+				fh.set_x(fh.x + flixel_FlxG.random.int(1,10) * this.playbackRate);
+				this.comboGroup.remove(comboSpr,true);
+				this.comboGroup.add(comboSpr);
+				comboSpr.updateHitbox();
+				comboSpr.set_x(xThing + 50);
+				if(!ClientPrefs.comboStacking) {
+					this.comboTween = flixel_tweens_FlxTween.tween(comboSpr,{ alpha : 0},0.2 / this.playbackRate,{ onComplete : function(tween) {
+						comboSpr.kill();
+					}, startDelay : Conductor.crochet * 0.002 / this.playbackRate});
+				} else {
+					flixel_tweens_FlxTween.tween(comboSpr,{ alpha : 0},0.2 / this.playbackRate,{ onComplete : function(tween) {
+						comboSpr.kill();
+					}, startDelay : Conductor.crochet * 0.002 / this.playbackRate});
 				}
-				var numSprOrder = this.numRatingGroup.members.indexOf(numScore[0]);
-				this.callOnLuas("onNumPopUp",[noteIdx,numSprOrder,note.noteData,note.noteType]);
+				var comboSprOrder = this.comboGroup.members.indexOf(comboSpr);
+				this.callOnLuas("onComboPopUp",[noteIdx,comboSprOrder,note.noteData,note.noteType]);
+			}
+			var seperatedScore = [];
+			var comboNumSplit = StringTools.lpad(Std.string(Math.abs(this.combo)),"0",3).split("");
+			var _g = 0;
+			while(_g < comboNumSplit.length) {
+				var enter = comboNumSplit[_g];
+				++_g;
+				seperatedScore.push(Std.parseInt(enter));
+			}
+			var daLoop = 0;
+			if(!ClientPrefs.comboStacking) {
+				var _g = 0;
+				var _g1 = this.numRatingGroup.members;
+				while(_g < _g1.length) {
+					var i = _g1[_g];
+					++_g;
+					if(i != null) {
+						i.kill();
+					}
+				}
+				while(this.numRatingTween.length > 0) {
+					var tween = this.numRatingTween[0];
+					if(tween != null) {
+						tween.cancel();
+						HxOverrides.remove(this.numRatingTween,tween);
+					}
+				}
+			}
+			if(this.showComboNum) {
+				var _g = 0;
+				while(_g < seperatedScore.length) {
+					var i = seperatedScore[_g];
+					++_g;
+					var numScore = [this.numRatingGroup.recycle(flixel_FlxSprite)];
+					numScore[0].reset(0,0);
+					numScore[0].set_alpha(1);
+					numScore[0].loadGraphic(this.cacheRating.h[i == null ? "null" : "" + i]);
+					numScore[0].set_cameras([this.camHUD]);
+					var axes = flixel_util_FlxAxes.XY;
+					var tmp;
+					switch(axes._hx_index) {
+					case 0:case 2:
+						tmp = true;
+						break;
+					default:
+						tmp = false;
+					}
+					if(tmp) {
+						numScore[0].set_x((flixel_FlxG.width - numScore[0].get_width()) / 2);
+					}
+					var tmp1;
+					switch(axes._hx_index) {
+					case 1:case 2:
+						tmp1 = true;
+						break;
+					default:
+						tmp1 = false;
+					}
+					if(tmp1) {
+						numScore[0].set_y((flixel_FlxG.height - numScore[0].get_height()) / 2);
+					}
+					numScore[0].set_x(coolTextX + 43 * daLoop - 90);
+					numScore[0].set_y(numScore[0].y + 80);
+					numScore[0].set_x(numScore[0].x + ClientPrefs.comboOffset[2]);
+					numScore[0].set_y(numScore[0].y - ClientPrefs.comboOffset[3]);
+					numScore[0].set_x(numScore[0].x - 43 * (seperatedScore.length - 3) / 2);
+					if(!ClientPrefs.comboStacking) {
+						PlayState.lastScore.push(numScore[0]);
+					}
+					if(!PlayState.isPixelStage) {
+						numScore[0].set_antialiasing(ClientPrefs.globalAntialiasing);
+						numScore[0].setGraphicSize(numScore[0].get_width() * 0.5 | 0);
+					} else {
+						numScore[0].setGraphicSize(numScore[0].get_width() * PlayState.daPixelZoom | 0);
+					}
+					numScore[0].updateHitbox();
+					numScore[0].acceleration.set_y(flixel_FlxG.random.int(200,300) * this.playbackRate * this.playbackRate);
+					var fh = numScore[0].velocity;
+					fh.set_y(fh.y - flixel_FlxG.random.int(140,160) * this.playbackRate);
+					numScore[0].velocity.set_x(flixel_FlxG.random.float(-5,5) * this.playbackRate);
+					numScore[0].set_visible(!ClientPrefs.hideHud);
+					this.numRatingGroup.remove(numScore[0],true);
+					this.numRatingGroup.add(numScore[0]);
+					if(!ClientPrefs.comboStacking) {
+						var tmp2 = Conductor.crochet * 0.002;
+						this.numRatingTween.push(flixel_tweens_FlxTween.tween(numScore[0],{ alpha : 0},0.2 / this.playbackRate,{ onComplete : (function(numScore) {
+							return function(tween) {
+								numScore[0].kill();
+							};
+						})(numScore), startDelay : tmp2 / this.playbackRate}));
+					} else {
+						var tmp3 = Conductor.crochet * 0.002;
+						flixel_tweens_FlxTween.tween(numScore[0],{ alpha : 0},0.2 / this.playbackRate,{ onComplete : (function(numScore) {
+							return function(tween) {
+								numScore[0].kill();
+							};
+						})(numScore), startDelay : tmp3 / this.playbackRate});
+					}
+					++daLoop;
+					if(numScore[0].x > xThing) {
+						xThing = numScore[0].x;
+					}
+					var numSprOrder = this.numRatingGroup.members.indexOf(numScore[0]);
+					this.callOnLuas("onNumPopUp",[noteIdx,numSprOrder,note.noteData,note.noteType]);
+				}
+			}
+		}
+	}
+	,popUpScore: function(note) {
+		var noteDiff = Math.abs(note.strumTime + note.offsetStrumTime - Conductor.songPosition + ClientPrefs.ratingOffset);
+		this.vocals.set_volume(1);
+		var score = 350;
+		var daRating = Conductor.judgeNote(note,noteDiff / this.playbackRate);
+		var isPlayer = !note.autoPress && !(this.playableField.length > 0 ? this.playableField.indexOf(note.fieldTarget) == -1 : note.fieldTarget.length > 0);
+		note.ratingMod = daRating.ratingMod;
+		if(!note.ratingDisabled && isPlayer && !this.cpuControlled) {
+			daRating.increase();
+		}
+		note.rating = daRating.name;
+		score = daRating.score;
+		if(isPlayer) {
+			if(this.combo < 0) {
+				this.combo = 0;
+			}
+			this.combo += 1;
+			if(this.combo > 2147483646) {
+				this.combo = 2147483646;
+			}
+			this.spawnRatingSprite(note,daRating.image);
+			if(!note.ratingDisabled) {
+				this.totalNotesHit += daRating.ratingMod;
+			}
+		}
+		if(daRating.noteSplash && !note.noteSplashDisabled && !note.fakeNoHit || note.forceNoteSplash) {
+			this.spawnNoteSplashOnNote(note,note.mustPress);
+		}
+		if(isPlayer && !this.cpuControlled) {
+			this.songScore += score;
+			if(!note.ratingDisabled) {
+				this.songHits++;
+				this.totalPlayed++;
+				this.RecalculateRating(false);
 			}
 		}
 	}
@@ -66525,7 +66614,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			if(!this.boyfriend.stunned && this.generatedMusic && !this.endingSong) {
 				if(this.playableField.length < 1) {
 					var spr = this.gamemode != "opponent" ? this.gamemode == "bothside v2" && key > 3 ? this.opponentStrums.members[key - this.playerStrums.length] : this.playerStrums.members[key] : this.opponentStrums.members[key];
-					if(spr != null) {
+					if(spr != null && !spr.isLocked) {
 						spr.playAnim("pressed");
 						spr.resetAnim = 0;
 					}
@@ -66541,7 +66630,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						} else if(Object.prototype.hasOwnProperty.call(this.strumGroupMap.h,field)) {
 							spr = this.strumGroupMap.h[field].members[key];
 						}
-						if(spr != null) {
+						if(spr != null && !spr.isLocked) {
 							spr.playAnim("pressed");
 							spr.resetAnim = 0;
 						}
@@ -66554,7 +66643,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var notesStopped = false;
 				var sortedNotesList = [];
 				this.notes.forEachAlive(function(daNote) {
-					if(_gthis.strumsBlocked[daNote.noteData + ((_gthis.gamemode == "bothside v2" && !daNote.mustPress ? _gthis.keyCount : 0) + (!daNote.mustPress && (daNote.gfNote || daNote.secondOpponent) && PlayState.SONG.secOpt ? _gthis.keyCount : 0))] != true && (daNote.canBeHit && (_gthis.gamemode == "opponent" || _gthis.gamemode == "bothside v2" && key >= _gthis.keyCount ? !daNote.mustPress : _gthis.gamemode == "bothside" ? true : daNote.mustPress) && !daNote.tooLate && !daNote.wasGoodHit && !daNote.isSustainNote && (_gthis.gamemode == "opponent" ? !daNote.ignoreNote && !daNote.canFreeze : !daNote.blockHit && !daNote.canFreeze) && !daNote.autoPress) && !(_gthis.playableField.length < 1 ? daNote.customField : _gthis.playableField.indexOf(daNote.fieldTarget) == -1)) {
+					if(_gthis.strumsBlocked[daNote.noteData + ((_gthis.gamemode == "bothside v2" && !daNote.mustPress ? _gthis.keyCount : 0) + (!daNote.mustPress && (daNote.gfNote || daNote.secondOpponent) && PlayState.SONG.secOpt ? _gthis.keyCount : 0))] != true && (daNote.canBeHit && (_gthis.gamemode == "opponent" || _gthis.gamemode == "bothside v2" && key >= _gthis.keyCount ? !daNote.mustPress : _gthis.gamemode == "bothside" ? true : daNote.mustPress) && !daNote.tooLate && !daNote.wasGoodHit && !daNote.isSustainNote && (_gthis.gamemode == "opponent" ? !daNote.ignoreNote && !daNote.canFreeze : !daNote.blockHit && !daNote.canFreeze) && !daNote.autoPress) && !(_gthis.playableField.length < 1 ? daNote.fieldTarget.length > 0 : _gthis.playableField.indexOf(daNote.fieldTarget) == -1) && (daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null)) {
 						if(daNote.noteData == key - (((daNote.gfNote || daNote.secondOpponent) && !daNote.mustPress && PlayState.SONG.secOpt ? _gthis.keyCount : 0) + (daNote.mustPress && _gthis.gamemode == "bothside v2" ? _gthis.keyCount : 0))) {
 							sortedNotesList.push(daNote);
 						}
@@ -66624,7 +66713,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(!this.cpuControlled && this.startedCountdown && !this.paused && key > -1) {
 			if(this.playableField.length < 1) {
 				var spr = this.gamemode != "opponent" ? this.gamemode == "bothside v2" && key > 3 ? this.opponentStrums.members[key - this.playerStrums.length] : this.playerStrums.members[key] : this.opponentStrums.members[key];
-				if(spr != null) {
+				if(spr != null && !spr.isLocked) {
 					spr.playAnim("static");
 					spr.resetAnim = 0;
 				}
@@ -66640,7 +66729,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					} else if(Object.prototype.hasOwnProperty.call(this.strumGroupMap.h,field)) {
 						spr = this.strumGroupMap.h[field].members[key];
 					}
-					if(spr != null) {
+					if(spr != null && !spr.isLocked) {
 						spr.playAnim("static");
 						spr.resetAnim = 0;
 					}
@@ -66691,7 +66780,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(this.startedCountdown && !this.boyfriend.stunned && this.generatedMusic) {
 			this.notes.forEachAlive(function(daNote) {
 				if(_gthis.strumsBlocked[daNote.noteData + ((_gthis.gamemode == "bothside v2" && !daNote.mustPress ? _gthis.keyCount : 0) + (!daNote.mustPress && (daNote.gfNote || daNote.secondOpponent) && PlayState.SONG.secOpt ? _gthis.keyCount : 0))] != true && daNote.isSustainNote && parsedHoldArray[daNote.noteData + ((_gthis.gamemode == "bothside v2" && !daNote.mustPress ? _gthis.keyCount : 0) + (!daNote.mustPress && (daNote.gfNote || daNote.secondOpponent) && PlayState.SONG.secOpt ? _gthis.keyCount : 0))] && daNote.canBeHit && (_gthis.gamemode != "opponent" ? _gthis.gamemode == "bothside v2" || _gthis.gamemode == "bothside" ? true : daNote.mustPress : !daNote.mustPress) && !daNote.tooLate && !daNote.wasGoodHit && (_gthis.gamemode == "opponent" || (_gthis.gamemode == "bothside v2" || _gthis.gamemode == "bothside") && !daNote.mustPress ? !daNote.ignoreNote && !daNote.canFreeze : !daNote.blockHit && !daNote.canFreeze)) {
-					_gthis.goodNoteHit(daNote);
+					if(daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null) {
+						_gthis.goodNoteHit(daNote);
+					}
 				}
 			});
 			if(parsedHoldArray.indexOf(true) != -1 && !this.endingSong) {
@@ -66880,9 +66971,13 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				time += timeAdd;
 			}
 			if(note.playStrumAnim && !note.fakeNoHit && !ClientPrefs.clsstrum) {
-				this.StrumPlayAnim(this.gamemode == "opponent" || (this.gamemode == "bothside v2" || this.gamemode == "bothside") && note.mustPress ? false : true,Math.abs(note.noteData) | 0,time,note.customField,note.fieldTarget,note);
+				this.StrumPlayAnim(this.gamemode == "opponent" || (this.gamemode == "bothside v2" || this.gamemode == "bothside") && note.mustPress ? false : true,Math.abs(note.noteData) | 0,time,true,note.fieldTarget,note);
 			}
-			this.callOnLuas(note.mustPress ? "goodNoteHit" : "opponentNoteHit",[this.notes.members.indexOf(note),Math.abs(note.noteData),note.noteType,note.isSustainNote]);
+			if(note.fieldTarget.length > 0) {
+				this.callOnLuas("fieldNoteHit",[note.fieldTarget,this.notes.members.indexOf(note),Math.abs(note.noteData),note.noteType,note.isSustainNote]);
+			} else {
+				this.callOnLuas(note.mustPress ? "goodNoteHit" : "opponentNoteHit",[this.notes.members.indexOf(note),Math.abs(note.noteData),note.noteType,note.isSustainNote]);
+			}
 			if(!note.holdCoverDisabled && ClientPrefs.holdCoverOpt && !note.fakeNoHit && note.playStrumAnim) {
 				this.spawnHoldCover(note);
 			}
@@ -66902,7 +66997,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(note != null) {
 			if(!note.isSustainNote && (note.sustainLength + (note.strumTime + note.offsetStrumTime - Conductor.songPosition)) / 1000 + note.holdCoverDelaySplash > 0 && (note.tail != null && note.tail.length > 0)) {
 				var groupTarget = this.grpHoldCover;
-				if(note.customField && Object.prototype.hasOwnProperty.call(this.holdCoverGroupMap.h,note.fieldTarget)) {
+				if(note.fieldTarget != null && note.fieldTarget.length > 0 && Object.prototype.hasOwnProperty.call(this.holdCoverGroupMap.h,note.fieldTarget)) {
 					groupTarget = this.holdCoverGroupMap.h[note.fieldTarget];
 				} else if(!note.mustPress) {
 					groupTarget = this.grpHoldCoverOpt;
@@ -66930,7 +67025,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,goodNoteHit: function(note) {
 		if(!note.wasGoodHit) {
-			if((this.cpuControlled || note.autoPress || (this.playableField.length < 1 ? note.customField : this.playableField.indexOf(note.fieldTarget) == -1)) && (note.ignoreNote || note.canFreeze || note.hitCausesMiss)) {
+			if((this.cpuControlled || note.autoPress || (this.playableField.length < 1 ? note.fieldTarget.length > 0 : this.playableField.indexOf(note.fieldTarget) == -1)) && (note.ignoreNote || note.canFreeze || note.hitCausesMiss)) {
 				return;
 			}
 			if(ClientPrefs.hitsoundVolume > 0 && !note.hitsoundDisabled || note.forceHitsound) {
@@ -66975,14 +67070,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				}
 				return;
 			}
-			if(!note.isSustainNote) {
-				if(this.combo < 0) {
-					this.combo = 0;
-				}
-				this.combo += 1;
-				if(this.combo > 2147483646) {
-					this.combo = 2147483646;
-				}
+			if(!note.isSustainNote && !note.ratingDisabled) {
 				this.popUpScore(note);
 			}
 			if(!note.mustPress || note.mustPress && note.isDad) {
@@ -67061,9 +67149,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					time += timeAdd;
 				}
 				if(note.playStrumAnim && !note.fakeNoHit && !ClientPrefs.clsstrum) {
-					this.StrumPlayAnim(!note.mustPress,Math.abs(note.noteData) | 0,time,note.customField,note.fieldTarget,note);
+					this.StrumPlayAnim(!note.mustPress,Math.abs(note.noteData) | 0,time,true,note.fieldTarget,note);
 				}
-			} else if(note.autoPress || (this.playableField.length < 1 ? note.customField : this.playableField.indexOf(note.fieldTarget) == -1)) {
+			} else if(note.autoPress || (this.playableField.length < 1 ? note.fieldTarget.length > 0 : this.playableField.indexOf(note.fieldTarget) == -1)) {
 				var time = 0.2;
 				if(note.strumNote != null) {
 					time = note.strumNote.resetTime;
@@ -67082,20 +67170,24 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					time += timeAdd;
 				}
 				if(note.playStrumAnim && !note.fakeNoHit && !ClientPrefs.clsstrum) {
-					this.StrumPlayAnim(!note.mustPress,Math.abs(note.noteData) | 0,time,note.customField,note.fieldTarget,note);
+					this.StrumPlayAnim(!note.mustPress,Math.abs(note.noteData) | 0,time,true,note.fieldTarget,note);
 				}
 			} else {
 				var spr = note.strumNote;
 				if(spr != null) {
 					if(note.playStrumAnim && !note.fakeNoHit) {
-						spr.playAnim(note.animConfirm == null || note.animConfirm.length < 1 ? spr.animConfirm == null || spr.animConfirm.length < 1 ? "confirm" : spr.animConfirm : note.animConfirm,true,note.isSustainNote);
+						spr.playAnim(note.animConfirm == null || note.animConfirm.length < 1 ? spr.animConfirm == null || spr.animConfirm.length < 1 ? "confirm" : spr.animConfirm : note.animConfirm,true,note.isSustainNote,note,true);
 					}
 				}
 			}
 			var isSus = note.isSustainNote;
 			var leData = Math.round(Math.abs(note.noteData));
 			var leType = note.noteType;
-			this.callOnLuas(!note.mustPress || note.isDad ? "opponentNoteHit" : "goodNoteHit",[this.notes.members.indexOf(note),leData,leType,isSus]);
+			if(note.fieldTarget.length > 0) {
+				this.callOnLuas("fieldNoteHit",[note.fieldTarget,this.notes.members.indexOf(note),leData,leType,isSus]);
+			} else {
+				this.callOnLuas(!note.mustPress || note.isDad ? "opponentNoteHit" : "goodNoteHit",[this.notes.members.indexOf(note),leData,leType,isSus]);
+			}
 			if(!note.holdCoverDisabled && ClientPrefs.holdCover && !note.fakeNoHit && note.playStrumAnim) {
 				this.spawnHoldCover(note);
 			}
@@ -67139,7 +67231,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(note != null) {
 			var groupTarget = this.grpNoteSplashes;
-			if(note.customField && Object.prototype.hasOwnProperty.call(this.noteSplashGroupMap.h,note.fieldTarget)) {
+			if(note.fieldTarget != null && note.fieldTarget.length > 0 && Object.prototype.hasOwnProperty.call(this.noteSplashGroupMap.h,note.fieldTarget)) {
 				groupTarget = this.noteSplashGroupMap.h[note.fieldTarget];
 			} else if(!note.mustPress) {
 				groupTarget = this.grpNoteSplashesOpt;
@@ -67527,7 +67619,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			spr = note.strumNote;
 		}
 		if(spr != null) {
-			spr.playAnim(note.animConfirm == null || note.animConfirm.length < 1 ? spr.animConfirm == null || spr.animConfirm.length < 1 ? "confirm" : spr.animConfirm : note.animConfirm,true,note.isSustainNote);
+			spr.playAnim(note.animConfirm == null || note.animConfirm.length < 1 ? spr.animConfirm == null || spr.animConfirm.length < 1 ? "confirm" : spr.animConfirm : note.animConfirm,true,note.isSustainNote,note,true);
 			spr.resetAnim = time;
 		}
 	}
@@ -68101,7 +68193,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7015, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7043, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -68127,7 +68219,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7028, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7056, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -69034,7 +69126,6 @@ ResetScoreSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 	,song: null
 	,difficulty: null
 	,week: null
-	,enterButton: null
 	,update: function(elapsed) {
 		var fh = this.bg;
 		fh.set_alpha(fh.alpha + elapsed * 1.5);
@@ -69355,9 +69446,6 @@ StoryMenuState.prototype = $extend(MusicBeatState.prototype,{
 	,leftArrow: null
 	,rightArrow: null
 	,loadedWeeks: null
-	,ctrlButton: null
-	,resetButton: null
-	,enterButton: null
 	,create: function() {
 		Paths.clearStoredMemory();
 		Paths.clearUnusedMemory();
@@ -70078,6 +70166,8 @@ var StrumNote = function(x,y,leData,player,gf) {
 	if(gf == null) {
 		gf = false;
 	}
+	this.reloadAnimation = true;
+	this.isLocked = false;
 	this.classicAnim = ClientPrefs.classicAnim;
 	this.resetTime = 0.2;
 	this.sustainReducePoint = 0.5;
@@ -70133,6 +70223,8 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 	,sustainReducePoint: null
 	,resetTime: null
 	,classicAnim: null
+	,isLocked: null
+	,reloadAnimation: null
 	,set_texture: function(value) {
 		if(value == null) {
 			value = "";
@@ -70147,6 +70239,128 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 		if(image == null) {
 			image = "";
 		}
+		var lastAnim = null;
+		if(this.animation._curAnim != null) {
+			lastAnim = this.animation._curAnim.name;
+		}
+		this.reloadAnims(image);
+		if(lastAnim != null) {
+			this.playAnim(lastAnim,true);
+		}
+	}
+	,postAddedToGroup: function() {
+		this.playAnim("static");
+		this.ID = this.noteData;
+	}
+	,update: function(elapsed) {
+		if(this.resetAnim > 0) {
+			this.resetAnim -= elapsed;
+			if(this.resetAnim <= 0) {
+				this.playAnim("static");
+				this.resetAnim = 0;
+			}
+		}
+		if(this.animation != null && this.animation._curAnim != null) {
+			if(this.animation._curAnim.name == this.animConfirm && !PlayState.isPixelStage) {
+				this.origin.set(this.frameWidth * 0.5,this.frameHeight * 0.5);
+			}
+		}
+		flixel_FlxSprite.prototype.update.call(this,elapsed);
+	}
+	,playAnim: function(anim,force,sustainNote,note,reloadAnim) {
+		if(reloadAnim == null) {
+			reloadAnim = false;
+		}
+		if(sustainNote == null) {
+			sustainNote = false;
+		}
+		if(force == null) {
+			force = false;
+		}
+		if(this.animation != null && this.animation._curAnim != null && this.animation._curAnim.name == anim && sustainNote && !this.classicAnim) {
+			return;
+		}
+		if(reloadAnim && this.reloadAnimation) {
+			this.reloadAnims(this.texture,note);
+		}
+		this.animation.play(anim,force);
+		this.origin.set(this.frameWidth * 0.5,this.frameHeight * 0.5);
+		this.centerOffsets();
+		if(this.animation._curAnim == null || this.animation._curAnim.name == "static") {
+			this.get_colorSwap().set_hue(0);
+			this.get_colorSwap().set_saturation(0);
+			this.get_colorSwap().set_brightness(0);
+		} else {
+			if(this.noteData > -1) {
+				this.get_colorSwap().set_hue(ClientPrefs.arrowHSV[this.noteData % 4][0] / 360);
+				this.get_colorSwap().set_saturation(ClientPrefs.arrowHSV[this.noteData % 4][1] / 100);
+				this.get_colorSwap().set_brightness(ClientPrefs.arrowHSV[this.noteData % 4][2] / 100);
+			}
+			if(this.animation._curAnim.name == this.animConfirm && !PlayState.isPixelStage) {
+				this.origin.set(this.frameWidth * 0.5,this.frameHeight * 0.5);
+			}
+		}
+	}
+	,set_camTarget: function(value) {
+		if(this.camTarget != value && ((flixel_FlxG.game._state) instanceof PlayState)) {
+			if(value != "") {
+				var camArray = value.split(",");
+				var realCam = [];
+				var _g = 0;
+				var _g1 = camArray.length;
+				while(_g < _g1) {
+					var i = _g++;
+					realCam[i] = StringTools.trim(camArray[i]);
+				}
+				this.set_cameras(FunkinLua.cameraArrayFromString(realCam));
+			} else {
+				this.set_cameras(null);
+			}
+		}
+		this.camTarget = value;
+		return value;
+	}
+	,set_scrollFactorCam: function(value) {
+		if(this.scrollFactorCam[0] != value[0] || this.scrollFactorCam[1] != value[1]) {
+			this.scrollFactor.set(value[0],value[1]);
+		}
+		this.scrollFactorCam[0] = value[0];
+		this.scrollFactorCam[1] = value[1];
+		return value;
+	}
+	,set_y: function(value) {
+		if(this.snapY > 0) {
+			var dist = value - this.y;
+			var snapped = Math.round(dist / this.snapY) * this.snapY;
+			return flixel_FlxSprite.prototype.set_y.call(this,this.y + snapped);
+		}
+		return flixel_FlxSprite.prototype.set_y.call(this,value);
+	}
+	,set_x: function(value) {
+		if(this.snapX > 0) {
+			var dist = value - this.x;
+			var snapped = Math.round(dist / this.snapX) * this.snapX;
+			return flixel_FlxSprite.prototype.set_x.call(this,this.x + snapped);
+		}
+		return flixel_FlxSprite.prototype.set_x.call(this,value);
+	}
+	,set_angle: function(value) {
+		if(this.snapAngle > 0) {
+			var dist = value - this.angle;
+			var snapped = Math.round(dist / this.snapAngle) * this.snapAngle;
+			return flixel_FlxSprite.prototype.set_angle.call(this,this.angle + snapped);
+		}
+		return flixel_FlxSprite.prototype.set_angle.call(this,value);
+	}
+	,set_alpha: function(value) {
+		if(this.snapAlpha > 0) {
+			var dist = value - this.alpha;
+			var snapped = Math.round(dist / this.snapAlpha) * this.snapAlpha;
+			return flixel_FlxSprite.prototype.set_alpha.call(this,this.alpha + snapped);
+		}
+		return flixel_FlxSprite.prototype.set_alpha.call(this,value);
+	}
+	,reloadAnims: function(image,note) {
 		var skin = PlayState.SONG.arrowSkin;
 		var skinOpt = PlayState.SONG.arrowSkinOpt;
 		var skinSec = PlayState.SONG.arrowSkinSec;
@@ -70170,10 +70384,6 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			} else {
 				image = skinOpt;
 			}
-		}
-		var lastAnim = null;
-		if(this.animation._curAnim != null) {
-			lastAnim = this.animation._curAnim.name;
 		}
 		if(PlayState.isPixelStage) {
 			var returnAsset = Paths.returnGraphic("pixelUI/" + image,null);
@@ -70262,30 +70472,59 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			this.animation.addByPrefix("red","arrowRIGHT");
 			this.setGraphicSize(this.get_width() * ClientPrefs.strumsize | 0);
 			this.set_antialiasing(ClientPrefs.globalAntialiasing);
+			var addAnimThingy = CoolUtil.addSpecialAnimation;
 			switch(Math.abs(this.noteData) % 4) {
 			case 0:
-				this.animation.addByPrefix("static","arrowLEFT");
-				this.animation.addByPrefix("pressed","left press",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm","left confirm",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes","purple0",ClientPrefs.fpsStrumAnim,false);
+				if(note != null && note.getActualDownscroll()) {
+					addAnimThingy(this,"static","arrowLEFT_DownScroll","arrowLEFT",true,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"pressed","left press_DownScroll","left press",false,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"confirm","left confirm_DownScroll","left confirm",false,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"notes","purple Downscroll0","purple0",false,ClientPrefs.fpsStrumAnim);
+				} else {
+					this.animation.addByPrefix("static","arrowLEFT");
+					this.animation.addByPrefix("pressed","left press",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("confirm","left confirm",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("notes","purple0",ClientPrefs.fpsStrumAnim,false);
+				}
 				break;
 			case 1:
-				this.animation.addByPrefix("static","arrowDOWN");
-				this.animation.addByPrefix("pressed","down press",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm","down confirm",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes","blue0",ClientPrefs.fpsStrumAnim,false);
+				if(note != null && note.getActualDownscroll()) {
+					addAnimThingy(this,"static","arrowDOWN_DownScroll","arrowDOWN",true,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"pressed","down press_DownScroll","down press",false,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"confirm","down confirm_DownScroll","down confirm",false,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"notes","blue Downscroll0","blue0",false,ClientPrefs.fpsStrumAnim);
+				} else {
+					this.animation.addByPrefix("static","arrowDOWN");
+					this.animation.addByPrefix("pressed","down press",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("confirm","down confirm",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("notes","blue0",ClientPrefs.fpsStrumAnim,false);
+				}
 				break;
 			case 2:
-				this.animation.addByPrefix("static","arrowUP");
-				this.animation.addByPrefix("pressed","up press",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm","up confirm",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes","green0",ClientPrefs.fpsStrumAnim,false);
+				if(note != null && note.getActualDownscroll()) {
+					addAnimThingy(this,"static","arrowUP_DownScroll","arrowUP",true,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"pressed","up press_DownScroll","up press",false,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"confirm","up confirm_DownScroll","up confirm",false,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"notes","green Downscroll0","green0",false,ClientPrefs.fpsStrumAnim);
+				} else {
+					this.animation.addByPrefix("static","arrowUP");
+					this.animation.addByPrefix("pressed","up press",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("confirm","up confirm",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("notes","green0",ClientPrefs.fpsStrumAnim,false);
+				}
 				break;
 			case 3:
-				this.animation.addByPrefix("static","arrowRIGHT");
-				this.animation.addByPrefix("pressed","right press",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm","right confirm",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes","red0",ClientPrefs.fpsStrumAnim,false);
+				if(note != null && note.getActualDownscroll()) {
+					addAnimThingy(this,"static","arrowRIGHT_DownScroll","arrowRIGHT",true,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"pressed","right press_DownScroll","right press",false,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"confirm","right confirm_DownScroll","right confirm",false,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"notes","red Downscroll0","red0",false,ClientPrefs.fpsStrumAnim);
+				} else {
+					this.animation.addByPrefix("static","arrowRIGHT");
+					this.animation.addByPrefix("pressed","right press",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("confirm","right confirm",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("notes","red0",ClientPrefs.fpsStrumAnim,false);
+				}
 				break;
 			}
 		}
@@ -70296,115 +70535,6 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			var fh = this.scale;
 			fh.set_y(fh.y * 0.75);
 		}
-		if(lastAnim != null) {
-			this.playAnim(lastAnim,true);
-		}
-	}
-	,postAddedToGroup: function() {
-		this.playAnim("static");
-		this.ID = this.noteData;
-	}
-	,update: function(elapsed) {
-		if(this.resetAnim > 0) {
-			this.resetAnim -= elapsed;
-			if(this.resetAnim <= 0) {
-				this.playAnim("static");
-				this.resetAnim = 0;
-			}
-		}
-		if(this.animation != null && this.animation._curAnim != null) {
-			if(this.animation._curAnim.name == this.animConfirm && !PlayState.isPixelStage) {
-				this.origin.set(this.frameWidth * 0.5,this.frameHeight * 0.5);
-			}
-		}
-		flixel_FlxSprite.prototype.update.call(this,elapsed);
-	}
-	,playAnim: function(anim,force,sustainNote) {
-		if(sustainNote == null) {
-			sustainNote = false;
-		}
-		if(force == null) {
-			force = false;
-		}
-		if(this.animation != null && this.animation._curAnim != null && this.animation._curAnim.name == anim && sustainNote && !this.classicAnim) {
-			return;
-		}
-		this.animation.play(anim,force);
-		this.origin.set(this.frameWidth * 0.5,this.frameHeight * 0.5);
-		this.centerOffsets();
-		if(this.animation._curAnim == null || this.animation._curAnim.name == "static") {
-			this.get_colorSwap().set_hue(0);
-			this.get_colorSwap().set_saturation(0);
-			this.get_colorSwap().set_brightness(0);
-		} else {
-			if(this.noteData > -1) {
-				this.get_colorSwap().set_hue(ClientPrefs.arrowHSV[this.noteData % 4][0] / 360);
-				this.get_colorSwap().set_saturation(ClientPrefs.arrowHSV[this.noteData % 4][1] / 100);
-				this.get_colorSwap().set_brightness(ClientPrefs.arrowHSV[this.noteData % 4][2] / 100);
-			}
-			if(this.animation._curAnim.name == this.animConfirm && !PlayState.isPixelStage) {
-				this.origin.set(this.frameWidth * 0.5,this.frameHeight * 0.5);
-			}
-		}
-	}
-	,set_camTarget: function(value) {
-		if(this.camTarget != value && ((flixel_FlxG.game._state) instanceof PlayState)) {
-			if(value != "") {
-				var camArray = value.split(",");
-				var realCam = [];
-				var _g = 0;
-				var _g1 = camArray.length;
-				while(_g < _g1) {
-					var i = _g++;
-					realCam[i] = StringTools.trim(camArray[i]);
-				}
-				this.set_cameras(FunkinLua.cameraArrayFromString(realCam));
-			} else {
-				this.set_cameras(null);
-			}
-		}
-		this.camTarget = value;
-		return value;
-	}
-	,set_scrollFactorCam: function(value) {
-		if(this.scrollFactorCam[0] != value[0] || this.scrollFactorCam[1] != value[1]) {
-			this.scrollFactor.set(value[0],value[1]);
-		}
-		this.scrollFactorCam[0] = value[0];
-		this.scrollFactorCam[1] = value[1];
-		return value;
-	}
-	,set_y: function(value) {
-		if(this.snapY > 0) {
-			var dist = value - this.y;
-			var snapped = Math.round(dist / this.snapY) * this.snapY;
-			return flixel_FlxSprite.prototype.set_y.call(this,this.y + snapped);
-		}
-		return flixel_FlxSprite.prototype.set_y.call(this,value);
-	}
-	,set_x: function(value) {
-		if(this.snapX > 0) {
-			var dist = value - this.x;
-			var snapped = Math.round(dist / this.snapX) * this.snapX;
-			return flixel_FlxSprite.prototype.set_x.call(this,this.x + snapped);
-		}
-		return flixel_FlxSprite.prototype.set_x.call(this,value);
-	}
-	,set_angle: function(value) {
-		if(this.snapAngle > 0) {
-			var dist = value - this.angle;
-			var snapped = Math.round(dist / this.snapAngle) * this.snapAngle;
-			return flixel_FlxSprite.prototype.set_angle.call(this,this.angle + snapped);
-		}
-		return flixel_FlxSprite.prototype.set_angle.call(this,value);
-	}
-	,set_alpha: function(value) {
-		if(this.snapAlpha > 0) {
-			var dist = value - this.alpha;
-			var snapped = Math.round(dist / this.snapAlpha) * this.snapAlpha;
-			return flixel_FlxSprite.prototype.set_alpha.call(this,this.alpha + snapped);
-		}
-		return flixel_FlxSprite.prototype.set_alpha.call(this,value);
 	}
 	,__class__: StrumNote
 	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_scrollFactorCam:"set_scrollFactorCam",set_camTarget:"set_camTarget",set_texture:"set_texture"})
@@ -76448,9 +76578,33 @@ dge_obj_Keypress.prototype = $extend(flixel_FlxSprite.prototype,{
 	,__class__: dge_obj_Keypress
 	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_alphaKeyPress:"set_alphaKeyPress",set_alphaKey:"set_alphaKey",set_colorKeyPress:"set_colorKeyPress",set_colorKey:"set_colorKey"})
 });
-var dge_obj_game_HoldCover = function(x,y) {
+var dge_obj_game_HoldCover = function(x,y,type) {
 	this.timer = 0;
 	flixel_FlxSprite.call(this,x,y);
+	var texture = "";
+	var skin = PlayState.SONG.holdCoverSkin;
+	var skinOpt = PlayState.SONG.holdCoverSkinOpt;
+	var skinSec = PlayState.SONG.holdCoverSkinSec;
+	if(skin == null || skin.length < 1) {
+		skin = "holdCover";
+	}
+	if(skinOpt == null || skinOpt.length < 1) {
+		skinOpt = skin;
+	}
+	if(skinSec == null || skinSec.length < 1) {
+		if(skinOpt == null || skinOpt.length < 1) {
+			skinOpt = skin;
+		}
+		skinSec = skinOpt;
+	}
+	if(type == "bg") {
+		texture = skin;
+	} else if(type == "gf") {
+		texture = skinSec;
+	} else {
+		texture = skinOpt;
+	}
+	this.loadAnims(texture);
 	this.set_shaderType("swap");
 	this.setupThis(x,y,0);
 	this.set_antialiasing(ClientPrefs.globalAntialiasing);
@@ -76495,8 +76649,14 @@ dge_obj_game_HoldCover.prototype = $extend(flixel_FlxSprite.prototype,{
 		while(_g < _g1) {
 			var i = _g++;
 			var nameColor = colors[i];
-			this.animation.addByPrefix("hold" + i,"hold cover " + nameColor + "0",ClientPrefs.fpsStrumAnim,false);
-			this.animation.addByPrefix("end" + i,"hold cover " + nameColor + " end0",ClientPrefs.fpsStrumAnim,false);
+			if(this.note != null && this.note.getActualDownscroll()) {
+				var specialAnim = CoolUtil.addSpecialAnimation;
+				specialAnim(this,"hold" + i,"hold cover " + nameColor + "_DownScroll0","hold cover " + nameColor + "0",false,ClientPrefs.fpsStrumAnim);
+				specialAnim(this,"end" + i,"hold cover " + nameColor + " end_DownScroll0","hold cover " + nameColor + " end0",false,ClientPrefs.fpsStrumAnim);
+			} else {
+				this.animation.addByPrefix("hold" + i,"hold cover " + nameColor + "0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("end" + i,"hold cover " + nameColor + " end0",ClientPrefs.fpsStrumAnim,false);
+			}
 		}
 	}
 	,setupThis: function(x,y,noteData,strum,note) {
@@ -76541,7 +76701,6 @@ dge_obj_game_HoldCover.prototype = $extend(flixel_FlxSprite.prototype,{
 				texture = "holdCover";
 			}
 		}
-		this.loadAnims(texture);
 		if(note != null) {
 			this.timer = (note.sustainLength + (note.strumTime + note.offsetStrumTime - Conductor.songPosition)) / 1000 + note.holdCoverDelaySplash;
 			if(note.holdCoverCopyAlpha && strum != null) {
@@ -76554,6 +76713,7 @@ dge_obj_game_HoldCover.prototype = $extend(flixel_FlxSprite.prototype,{
 		if(strum != null) {
 			this.setPosition(x + strum.get_width() / 2 - this.get_width() / 2,y + strum.get_height() / 2 - this.get_height() / 2);
 		}
+		this.loadAnims(texture);
 		this.playAnim("hold" + noteData % 4);
 	}
 	,playAnim: function(anim) {
@@ -77945,106 +78105,6 @@ dge_obj_mobile__$FlxButton_FlxButtonEvent.prototype = {
 	}
 	,__class__: dge_obj_mobile__$FlxButton_FlxButtonEvent
 };
-var dge_obj_mobile_Hitbox = function(x,y) {
-	this.sizeHeight = 0;
-	this.sizeWidth = 0;
-	this.snapAlpha = 0;
-	this.snapAngle = 0;
-	this.snapY = 0;
-	this.snapX = 0;
-	this.texture = null;
-	dge_obj_mobile_FlxButton.call(this,x,y);
-	this.set_texture("");
-	this.set_alpha(ClientPrefs.hitboxAlpha);
-	this.set_shaderType("swap");
-	this.set_blend(FunkinLua.blendModeFromString(ClientPrefs.hitboxBlend));
-	this.set_antialiasing(ClientPrefs.globalAntialiasing);
-};
-$hxClasses["dge.obj.mobile.Hitbox"] = dge_obj_mobile_Hitbox;
-dge_obj_mobile_Hitbox.__name__ = "dge.obj.mobile.Hitbox";
-dge_obj_mobile_Hitbox.__super__ = dge_obj_mobile_FlxButton;
-dge_obj_mobile_Hitbox.prototype = $extend(dge_obj_mobile_FlxButton.prototype,{
-	texture: null
-	,snapX: null
-	,snapY: null
-	,snapAngle: null
-	,snapAlpha: null
-	,sizeWidth: null
-	,sizeHeight: null
-	,update: function(elapsed) {
-		dge_obj_mobile_FlxButton.prototype.update.call(this,elapsed);
-		if(this.input.current == 2) {
-			this.set_alpha(ClientPrefs.hitboxPressAlpha);
-		} else if(this.input.current == -1) {
-			this.set_alpha(ClientPrefs.hitboxAlpha);
-		}
-	}
-	,set_texture: function(value) {
-		if(this.texture != value) {
-			if(value == null || value.length < 1) {
-				value = "hitbox";
-			}
-			this.texture = value;
-			var lastColor = this.color;
-			var returnAsset = Paths.returnGraphic(value,null);
-			this.loadGraphic(returnAsset);
-			this.setGraphicSize(this.sizeWidth,this.sizeHeight);
-			this.updateHitbox();
-			this.set_color(lastColor);
-		}
-		return value;
-	}
-	,set_y: function(value) {
-		if(this.snapY > 0) {
-			var dist = value - this.y;
-			var snapped = Math.round(dist / this.snapY) * this.snapY;
-			return dge_obj_mobile_FlxButton.prototype.set_y.call(this,this.y + snapped);
-		}
-		return dge_obj_mobile_FlxButton.prototype.set_y.call(this,value);
-	}
-	,set_x: function(value) {
-		if(this.snapX > 0) {
-			var dist = value - this.x;
-			var snapped = Math.round(dist / this.snapX) * this.snapX;
-			return dge_obj_mobile_FlxButton.prototype.set_x.call(this,this.x + snapped);
-		}
-		return dge_obj_mobile_FlxButton.prototype.set_x.call(this,value);
-	}
-	,set_angle: function(value) {
-		if(this.snapAngle > 0) {
-			var dist = value - this.angle;
-			var snapped = Math.round(dist / this.snapAngle) * this.snapAngle;
-			return dge_obj_mobile_FlxButton.prototype.set_angle.call(this,this.angle + snapped);
-		}
-		return dge_obj_mobile_FlxButton.prototype.set_angle.call(this,value);
-	}
-	,set_alpha: function(value) {
-		if(this.snapAlpha > 0) {
-			var dist = value - this.alpha;
-			var snapped = Math.round(dist / this.snapAlpha) * this.snapAlpha;
-			return dge_obj_mobile_FlxButton.prototype.set_alpha.call(this,this.alpha + snapped);
-		}
-		return dge_obj_mobile_FlxButton.prototype.set_alpha.call(this,value);
-	}
-	,set_sizeWidth: function(value) {
-		if(this.sizeWidth != value) {
-			this.sizeWidth = value;
-			this.setGraphicSize(value,this.sizeHeight);
-			this.updateHitbox();
-		}
-		return value;
-	}
-	,set_sizeHeight: function(value) {
-		if(this.sizeHeight != value) {
-			this.sizeHeight = value;
-			this.setGraphicSize(this.sizeWidth,value);
-			this.updateHitbox();
-		}
-		return value;
-	}
-	,__class__: dge_obj_mobile_Hitbox
-	,__properties__: $extend(dge_obj_mobile_FlxButton.prototype.__properties__,{set_sizeHeight:"set_sizeHeight",set_sizeWidth:"set_sizeWidth",set_texture:"set_texture"})
-});
 var dge_obj_mobile_VirtualButton = function(x,y,image) {
 	if(image == null) {
 		image = "";
@@ -78097,67 +78157,6 @@ dge_obj_mobile_VirtualButton.prototype = $extend(dge_obj_mobile_FlxButton.protot
 	}
 	,__class__: dge_obj_mobile_VirtualButton
 	,__properties__: $extend(dge_obj_mobile_FlxButton.prototype.__properties__,{set_texture:"set_texture"})
-});
-var dge_obj_mobile_ToggleButton = function(x,y,image,startEnable) {
-	if(startEnable == null) {
-		startEnable = false;
-	}
-	if(image == null) {
-		image = "";
-	}
-	if(y == null) {
-		y = 0;
-	}
-	if(x == null) {
-		x = 0;
-	}
-	this.enable = false;
-	dge_obj_mobile_VirtualButton.call(this,x,y,image);
-	this.set_enable(startEnable);
-	this.updateGraphic();
-	this.set_antialiasing(ClientPrefs.globalAntialiasing);
-};
-$hxClasses["dge.obj.mobile.ToggleButton"] = dge_obj_mobile_ToggleButton;
-dge_obj_mobile_ToggleButton.__name__ = "dge.obj.mobile.ToggleButton";
-dge_obj_mobile_ToggleButton.__super__ = dge_obj_mobile_VirtualButton;
-dge_obj_mobile_ToggleButton.prototype = $extend(dge_obj_mobile_VirtualButton.prototype,{
-	enable: null
-	,update: function(e) {
-		dge_obj_mobile_VirtualButton.prototype.update.call(this,e);
-		if(this.input.current == -1) {
-			this.set_enable(!this.enable);
-			this.updateGraphic();
-		}
-	}
-	,set_texture: function(value) {
-		if(this.texture != value) {
-			if(value.length > 0) {
-				this.texture = value;
-				this.updateGraphic();
-			}
-		}
-		return value;
-	}
-	,set_enable: function(value) {
-		if(this.enable != value) {
-			this.enable = value;
-			this.updateGraphic();
-		}
-		return value;
-	}
-	,updateGraphic: function() {
-		if(this.enable) {
-			var returnAsset = Paths.returnGraphic("button/" + this.texture + "-hover",null);
-			this.loadGraphic(returnAsset);
-		} else {
-			var returnAsset = Paths.returnGraphic("button/" + this.texture,null);
-			this.loadGraphic(returnAsset);
-		}
-		this.setGraphicSize(125,125);
-		this.updateHitbox();
-	}
-	,__class__: dge_obj_mobile_ToggleButton
-	,__properties__: $extend(dge_obj_mobile_VirtualButton.prototype.__properties__,{set_enable:"set_enable"})
 });
 var dge_shaders_BlackAndWhite = function() {
 	this.shader = new dge_shaders_BlackAndWhiteShader();
@@ -78654,7 +78653,6 @@ dge_states_ResultScreen.__super__ = MusicBeatState;
 dge_states_ResultScreen.prototype = $extend(MusicBeatState.prototype,{
 	toStoryMode: null
 	,ForceFreePlay: null
-	,enterButton: null
 	,update: function(elapsed) {
 		if(PlayerSettings.player1.controls._accept.check()) {
 			if(this.toStoryMode) {
@@ -78683,7 +78681,6 @@ dge_states_options_DragonOptionsState.__super__ = MusicBeatState;
 dge_states_options_DragonOptionsState.prototype = $extend(MusicBeatState.prototype,{
 	options: null
 	,grpOptions: null
-	,enterButton: null
 	,openSelectedSubstate: function(label) {
 		switch(label) {
 		case "Editor Setting":
@@ -79014,10 +79011,6 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 	,arrayTE: null
 	,arrayTE_c: null
 	,keyBroker: null
-	,leftButton: null
-	,rightButton: null
-	,enterButton: null
-	,resetButton: null
 	,addOption: function(option) {
 		if(this.optionsArray == null || this.optionsArray.length < 1) {
 			this.optionsArray = [];
@@ -79928,17 +79921,6 @@ editors_CharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 	,characterList: null
 	,cameraFollowPointer: null
 	,healthBarBG: null
-	,handButton: null
-	,leftButton: null
-	,downButton: null
-	,upButton: null
-	,rightButton: null
-	,spaceButton: null
-	,shiftButton: null
-	,rButton: null
-	,tButton: null
-	,wButton: null
-	,sButton: null
 	,create: function() {
 		var _gthis = this;
 		this.camEditor = new flixel_FlxCamera();
@@ -80421,7 +80403,7 @@ editors_CharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 			}
 			_gthis.reloadAnimationDropDown();
 			_gthis.genBoyOffsets();
-			haxe_Log.trace("Added/Updated animation: " + _gthis.animationInputText.text,{ fileName : "source/editors/CharacterEditorState.hx", lineNumber : 785, className : "editors.CharacterEditorState", methodName : "addAnimationsUI"});
+			haxe_Log.trace("Added/Updated animation: " + _gthis.animationInputText.text,{ fileName : "source/editors/CharacterEditorState.hx", lineNumber : 789, className : "editors.CharacterEditorState", methodName : "addAnimationsUI"});
 		});
 		var removeButton = new flixel_ui_FlxButton(180,this.animationIndicesInputText.y + 30,"Remove",function() {
 			var _g = 0;
@@ -80450,7 +80432,7 @@ editors_CharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 					}
 					_gthis.reloadAnimationDropDown();
 					_gthis.genBoyOffsets();
-					haxe_Log.trace("Removed animation: " + _gthis.animationInputText.text,{ fileName : "source/editors/CharacterEditorState.hx", lineNumber : 807, className : "editors.CharacterEditorState", methodName : "addAnimationsUI"});
+					haxe_Log.trace("Removed animation: " + _gthis.animationInputText.text,{ fileName : "source/editors/CharacterEditorState.hx", lineNumber : 811, className : "editors.CharacterEditorState", methodName : "addAnimationsUI"});
 					break;
 				}
 			}
@@ -81177,21 +81159,6 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 	,quantizations: null
 	,text: null
 	,mouseQuant: null
-	,handButton: null
-	,enterButton: null
-	,backButton: null
-	,shiftButton: null
-	,spaceButton: null
-	,leftButton: null
-	,rightButton: null
-	,upButton: null
-	,downButton: null
-	,xButton: null
-	,zButton: null
-	,leftBracketButton: null
-	,rightBracketButton: null
-	,altButton: null
-	,ctrlButton: null
 	,create: function() {
 		if(PlayState.SONG != null) {
 			this._song = PlayState.SONG;
@@ -83819,7 +83786,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
 		var noteDataToCheck = actualNoteData;
-		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3402, className : "editors.ChartingState", methodName : "deleteNote"});
+		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3405, className : "editors.ChartingState", methodName : "deleteNote"});
 		if(note.noteData > -1) {
 			var _g = 0;
 			var _g1 = this._song.notes[editors_ChartingState.curSec].sectionNotes;
@@ -83884,7 +83851,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var noteStrum = this.getStrumTime(this.dummyArrow.y * (this.getSectionBeats() / 4),false) + this.sectionStartTime();
 		var noteData = Math.floor((pos - editors_ChartingState.GRID_SIZE) / editors_ChartingState.GRID_SIZE);
-		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3474, className : "editors.ChartingState", methodName : "addNote"});
+		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3477, className : "editors.ChartingState", methodName : "addNote"});
 		var noteSus = 0;
 		var daAlt = false;
 		var daType = this.currentType;
@@ -85124,8 +85091,6 @@ editors_DialogueEditorState.prototype = $extend(MusicBeatState.prototype,{
 	,animText: null
 	,defaultLine: null
 	,dialogueFile: null
-	,oButton: null
-	,pButton: null
 	,create: function() {
 		this.persistentUpdate = this.persistentDraw = true;
 		var Lightness = ClientPrefs.darkmode ? 0.25 : 0.5;
@@ -85661,13 +85626,13 @@ editors_DialogueEditorState.prototype = $extend(MusicBeatState.prototype,{
 		this._file.removeEventListener("select",$bind(this,this.onLoadComplete));
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
-		haxe_Log.trace("File couldn't be loaded! You aren't on Desktop, are you?",{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 512, className : "editors.DialogueEditorState", methodName : "onLoadComplete"});
+		haxe_Log.trace("File couldn't be loaded! You aren't on Desktop, are you?",{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 515, className : "editors.DialogueEditorState", methodName : "onLoadComplete"});
 	}
 	,dialogueCode: function(name,rawJson) {
 		var loadedDialog = JSON.parse(rawJson);
 		if(loadedDialog.dialogue != null && loadedDialog.dialogue.length > 0) {
 			var cutName = HxOverrides.substr(name,0,name.length - 5);
-			haxe_Log.trace("Successfully loaded file: " + cutName,{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 520, className : "editors.DialogueEditorState", methodName : "dialogueCode"});
+			haxe_Log.trace("Successfully loaded file: " + cutName,{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 523, className : "editors.DialogueEditorState", methodName : "dialogueCode"});
 			this.dialogueFile = loadedDialog;
 			this.changeText();
 			name = null;
@@ -85679,14 +85644,14 @@ editors_DialogueEditorState.prototype = $extend(MusicBeatState.prototype,{
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
 		this._file = null;
-		haxe_Log.trace("Cancelled file loading.",{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 537, className : "editors.DialogueEditorState", methodName : "onLoadCancel"});
+		haxe_Log.trace("Cancelled file loading.",{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 540, className : "editors.DialogueEditorState", methodName : "onLoadCancel"});
 	}
 	,onLoadError: function(_) {
 		this._file.removeEventListener("select",$bind(this,this.onLoadComplete));
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
 		this._file = null;
-		haxe_Log.trace("Problem loading file",{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 549, className : "editors.DialogueEditorState", methodName : "onLoadError"});
+		haxe_Log.trace("Problem loading file",{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 552, className : "editors.DialogueEditorState", methodName : "onLoadError"});
 	}
 	,saveDialogue: function() {
 		var data = JSON.stringify(this.dialogueFile,null,ClientPrefs.minEditorJson ? null : "\t");
@@ -85762,8 +85727,6 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 	,vocals: null
 	,startOffset: null
 	,startPos: null
-	,hitbox: null
-	,hitboxCam: null
 	,cacheRating: null
 	,scoreTxt: null
 	,stepTxt: null
@@ -85850,12 +85813,6 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 			openfl_Lib.get_current().stage.addEventListener("keyDown",$bind(this,this.onKeyPress));
 			openfl_Lib.get_current().stage.addEventListener("keyUp",$bind(this,this.onKeyRelease));
 		}
-		this.hitbox = new flixel_group_FlxTypedGroup();
-		this.add(this.hitbox);
-		this.hitboxCam = new flixel_FlxCamera();
-		this.hitboxCam.bgColor &= 16777215;
-		this.hitboxCam.bgColor |= 0;
-		flixel_FlxG.cameras.add(this.hitboxCam,false);
 		MusicBeatState.prototype.create.call(this);
 		this.cachePopUpScore();
 		Paths.clearUnusedMemory();
@@ -86432,7 +86389,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 			}
 			this.playerStrums.forEach(function(spr) {
 				if(Math.abs(note.noteData) == spr.ID) {
-					spr.playAnim(note.animConfirm.length < 1 ? spr.animConfirm : note.animConfirm,true);
+					spr.playAnim(note.animConfirm.length < 1 ? spr.animConfirm : note.animConfirm,true,note.isSustainNote,note,true);
 				}
 			});
 			if(note.multiPress <= 0) {
@@ -86759,7 +86716,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var spr = note.strumNote;
 		if(spr != null) {
-			spr.playAnim(note.animConfirm.length < 1 ? spr.animConfirm : note.animConfirm,true);
+			spr.playAnim(note.animConfirm.length < 1 ? spr.animConfirm : note.animConfirm,true,note.isSustainNote,note);
 			spr.resetAnim = time;
 		}
 	}
@@ -86825,7 +86782,6 @@ editors_MasterEditorMenu.prototype = $extend(MusicBeatState.prototype,{
 	,curSelected: null
 	,curDirectory: null
 	,directoryTxt: null
-	,enterButton: null
 	,create: function() {
 		flixel_FlxG.camera.bgColor = -16777216;
 		var bg = new flixel_FlxSprite();
@@ -86946,8 +86902,6 @@ editors_MenuCharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 	,characterFile: null
 	,txtOffsets: null
 	,defaultCharacters: null
-	,shiftButton: null
-	,spaceButton: null
 	,create: function() {
 		this.characterFile = { image : "Menu_Dad", scale : 1, position : [0,0], idle_anim : "M Dad Idle", confirm_anim : "M Dad Idle", flipX : false};
 		this.grpWeekCharacters = new flixel_group_FlxTypedGroup();
@@ -87284,13 +87238,13 @@ editors_MenuCharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 		this._file.removeEventListener("select",$bind(this,this.onLoadComplete));
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
-		haxe_Log.trace("File couldn't be loaded! You aren't on Desktop, are you?",{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 398, className : "editors.MenuCharacterEditorState", methodName : "onLoadComplete"});
+		haxe_Log.trace("File couldn't be loaded! You aren't on Desktop, are you?",{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 402, className : "editors.MenuCharacterEditorState", methodName : "onLoadComplete"});
 	}
 	,menuCharCode: function(name,rawJson) {
 		var loadedChar = JSON.parse(rawJson);
 		if(loadedChar.idle_anim != null && loadedChar.confirm_anim != null) {
 			var cutName = HxOverrides.substr(name,0,name.length - 5);
-			haxe_Log.trace("Successfully loaded file: " + cutName,{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 407, className : "editors.MenuCharacterEditorState", methodName : "menuCharCode"});
+			haxe_Log.trace("Successfully loaded file: " + cutName,{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 411, className : "editors.MenuCharacterEditorState", methodName : "menuCharCode"});
 			this.characterFile = loadedChar;
 			this.reloadSelectedCharacter();
 			this.imageInputText.set_text(this.characterFile.image);
@@ -87307,14 +87261,14 @@ editors_MenuCharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
 		this._file = null;
-		haxe_Log.trace("Cancelled file loading.",{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 429, className : "editors.MenuCharacterEditorState", methodName : "onLoadCancel"});
+		haxe_Log.trace("Cancelled file loading.",{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 433, className : "editors.MenuCharacterEditorState", methodName : "onLoadCancel"});
 	}
 	,onLoadError: function(_) {
 		this._file.removeEventListener("select",$bind(this,this.onLoadComplete));
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
 		this._file = null;
-		haxe_Log.trace("Problem loading file",{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 441, className : "editors.MenuCharacterEditorState", methodName : "onLoadError"});
+		haxe_Log.trace("Problem loading file",{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 445, className : "editors.MenuCharacterEditorState", methodName : "onLoadError"});
 	}
 	,saveCharacter: function() {
 		var data = JSON.stringify(this.characterFile,null,ClientPrefs.minEditorJson ? null : "\t");
@@ -89472,7 +89426,7 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 			if(value == null || value.length < 1) {
 				value = shouldUse[0];
 			}
-			value = value.toLowerCase();
+			value = StringTools.trim(value.toLowerCase());
 			if(shouldUse.indexOf(value) == -1) {
 				value = shouldUse[0];
 			}
@@ -136396,42 +136350,41 @@ flixel_system_replay_MouseRecord.prototype = {
 	,__class__: flixel_system_replay_MouseRecord
 };
 var flixel_system_ui_FlxSoundTray = function() {
+	this.text = new openfl_text_TextField();
 	this._defaultScale = 2.0;
 	this._width = 80;
 	openfl_display_Sprite.call(this);
+	Paths.sound("changeVolume");
 	this.set_visible(false);
 	this.set_scaleX(this._defaultScale);
 	this.set_scaleY(this._defaultScale);
-	var tmp = new openfl_display_Bitmap(new openfl_display_BitmapData(this._width,30,true,2130706432));
+	var tmp = new openfl_display_Bitmap(new openfl_display_BitmapData(this._width,30,true,-16777216));
 	this.screenCenter();
 	this.addChild(tmp);
-	var text = new openfl_text_TextField();
-	text.set_width(tmp.get_width());
-	text.set_height(tmp.get_height());
-	text.set_multiline(true);
-	text.set_wordWrap(true);
-	text.set_selectable(false);
-	var dtf = new openfl_text_TextFormat(flixel_system_FlxAssets.FONT_DEFAULT,10,16777215);
+	this.text.set_width(tmp.get_width());
+	this.text.set_height(tmp.get_height());
+	this.text.set_multiline(true);
+	this.text.set_wordWrap(true);
+	this.text.set_selectable(false);
+	var dtf = new openfl_text_TextFormat("_sans",10,16711680);
 	dtf.align = 0;
-	text.set_defaultTextFormat(dtf);
-	this.addChild(text);
-	text.set_text("VOLUME");
-	text.set_y(16);
+	this.text.set_defaultTextFormat(dtf);
+	this.addChild(this.text);
+	this.text.set_text("VOLUME");
+	this.text.set_y(16);
 	var bx = 10;
-	var by = 14;
 	this._bars = [];
 	var _g = 0;
 	while(_g < 10) {
 		var i = _g++;
-		tmp = new openfl_display_Bitmap(new openfl_display_BitmapData(4,i + 1,false,-1));
+		tmp = new openfl_display_Bitmap(new openfl_display_BitmapData(6,10,false,16711680));
 		tmp.set_x(bx);
-		tmp.set_y(by);
+		tmp.set_y(5);
 		this.addChild(tmp);
 		this._bars.push(tmp);
 		bx += 6;
-		--by;
 	}
-	this.set_y(-this.get_height());
+	this.set_alpha(0);
 	this.set_visible(false);
 };
 $hxClasses["flixel.system.ui.FlxSoundTray"] = flixel_system_ui_FlxSoundTray;
@@ -136443,17 +136396,15 @@ flixel_system_ui_FlxSoundTray.prototype = $extend(openfl_display_Sprite.prototyp
 	,_bars: null
 	,_width: null
 	,_defaultScale: null
+	,text: null
 	,update: function(MS) {
 		if(this._timer > 0) {
 			this._timer -= MS / 1000;
-		} else if(this.get_y() > -this.get_height()) {
-			this.set_y(this.get_y() - MS / 1000 * flixel_FlxG.height * 2);
-			if(this.get_y() <= -this.get_height()) {
+		} else if(this.get_alpha() > 0) {
+			this.set_alpha(this.get_alpha() - MS / 1000);
+			if(this.get_alpha() <= 0) {
 				this.set_visible(false);
 				this.active = false;
-				flixel_FlxG.save.data.mute = flixel_FlxG.sound.muted;
-				flixel_FlxG.save.data.volume = flixel_FlxG.sound.volume;
-				flixel_FlxG.save.flush();
 			}
 		}
 	}
@@ -136461,16 +136412,17 @@ flixel_system_ui_FlxSoundTray.prototype = $extend(openfl_display_Sprite.prototyp
 		if(Silent == null) {
 			Silent = false;
 		}
+		var dtf = new openfl_text_TextFormat("_sans",10,16711680);
+		dtf.align = 0;
+		this.text.set_defaultTextFormat(dtf);
 		if(!Silent) {
-			var extension = "";
-			extension = ".ogg";
-			var sound = openfl_utils_Assets.getSound("flixel/sounds/beep" + extension);
+			var sound = Paths.sound("changeVolume");
 			if(sound != null) {
 				flixel_FlxG.sound.load(sound).play();
 			}
 		}
 		this._timer = 1;
-		this.set_y(0);
+		this.set_alpha(1);
 		this.set_visible(true);
 		this.active = true;
 		var globalVolume = Math.round(flixel_FlxG.sound.volume * 10);
@@ -136484,9 +136436,12 @@ flixel_system_ui_FlxSoundTray.prototype = $extend(openfl_display_Sprite.prototyp
 			if(i < globalVolume) {
 				this._bars[i].set_alpha(1);
 			} else {
-				this._bars[i].set_alpha(0.5);
+				this._bars[i].set_alpha(0.25);
 			}
 		}
+		flixel_FlxG.save.data.mute = flixel_FlxG.sound.muted;
+		flixel_FlxG.save.data.volume = flixel_FlxG.sound.volume;
+		flixel_FlxG.save.flush();
 	}
 	,screenCenter: function() {
 		this.set_scaleX(this._defaultScale);
@@ -166338,7 +166293,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 894699;
+	this.version = 978880;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -216260,7 +216215,6 @@ options_MainOptionsState.__super__ = MusicBeatState;
 options_MainOptionsState.prototype = $extend(MusicBeatState.prototype,{
 	options: null
 	,grpOptions: null
-	,enterButton: null
 	,settingName: null
 	,openSelectedSubstate: function(label) {
 		switch(label) {
@@ -216405,10 +216359,6 @@ options_NoteOffsetState.prototype = $extend(MusicBeatState.prototype,{
 	,beatText: null
 	,beatTween: null
 	,changeModeText: null
-	,enterButton: null
-	,resetButton: null
-	,leftButton: null
-	,rightButton: null
 	,create: function() {
 		this.camGame = new flixel_FlxCamera();
 		this.camHUD = new flixel_FlxCamera();
@@ -217011,10 +216961,6 @@ options_NotesSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 	,blackBG: null
 	,hsbText: null
 	,posX: null
-	,leftButton: null
-	,rightButton: null
-	,enterButton: null
-	,resetButton: null
 	,changingNote: null
 	,update: function(elapsed) {
 		if(this.changingNote) {
@@ -217418,7 +217364,6 @@ options_PsychOptionsState.__super__ = MusicBeatState;
 options_PsychOptionsState.prototype = $extend(MusicBeatState.prototype,{
 	options: null
 	,grpOptions: null
-	,enterButton: null
 	,openSelectedSubstate: function(label) {
 		switch(label) {
 		case "Adjust Delay and Combo":
