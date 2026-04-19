@@ -6612,12 +6612,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "357";
+	app.meta.h["build"] = "359";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.7.0";
+	app.meta.h["version"] = "26.8.0";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -9972,6 +9972,7 @@ ClientPrefs.loadDefaultKeys = function() {
 	ClientPrefs.defaultKeys = haxe_ds_StringMap.createCopy(ClientPrefs.keyBinds.h);
 };
 ClientPrefs.saveSettings = function() {
+	flixel_FlxG.save.data.legacyNoteLayer = ClientPrefs.legacyNoteLayer;
 	flixel_FlxG.save.data.holdCoverAlpha = ClientPrefs.holdCoverAlpha;
 	flixel_FlxG.save.data.holdCover = ClientPrefs.holdCover;
 	flixel_FlxG.save.data.holdCoverOpt = ClientPrefs.holdCoverOpt;
@@ -10006,7 +10007,6 @@ ClientPrefs.saveSettings = function() {
 	flixel_FlxG.save.data.extUI = ClientPrefs.extUI;
 	flixel_FlxG.save.data.darkmode = ClientPrefs.darkmode;
 	flixel_FlxG.save.data.dragonW = ClientPrefs.dragonW;
-	flixel_FlxG.save.data.ofhb = ClientPrefs.ofhb;
 	flixel_FlxG.save.data.strumsize = ClientPrefs.strumsize;
 	flixel_FlxG.save.data.dflnoteskin = ClientPrefs.dflnoteskin;
 	flixel_FlxG.save.data.clsstrum = ClientPrefs.clsstrum;
@@ -10056,6 +10056,9 @@ ClientPrefs.saveSettings = function() {
 ClientPrefs.loadPrefs = function() {
 	if(flixel_FlxG.save.data.downScroll != null) {
 		ClientPrefs.downScroll = flixel_FlxG.save.data.downScroll;
+	}
+	if(flixel_FlxG.save.data.legacyNoteLayer != null) {
+		ClientPrefs.legacyNoteLayer = flixel_FlxG.save.data.legacyNoteLayer;
 	}
 	if(flixel_FlxG.save.data.holdCoverAlpha != null) {
 		ClientPrefs.holdCoverAlpha = flixel_FlxG.save.data.holdCoverAlpha;
@@ -10152,9 +10155,6 @@ ClientPrefs.loadPrefs = function() {
 	}
 	if(flixel_FlxG.save.data.dragonW != null) {
 		ClientPrefs.dragonW = flixel_FlxG.save.data.dragonW;
-	}
-	if(flixel_FlxG.save.data.ofhb != null) {
-		ClientPrefs.ofhb = flixel_FlxG.save.data.ofhb;
 	}
 	if(flixel_FlxG.save.data.dflnoteskin != null) {
 		ClientPrefs.dflnoteskin = flixel_FlxG.save.data.dflnoteskin;
@@ -48608,6 +48608,7 @@ CoolUtil.addSpecialAnimation = function(sprite,anim,xmlName,defaultXmlName,loop,
 	if(loop == null) {
 		loop = true;
 	}
+	var hasAnim = false;
 	if(sprite != null && anim.length > 0 && xmlName.length > 0 && defaultXmlName.length > 0) {
 		var hasFound = false;
 		if(sprite.frames.frames != null) {
@@ -48618,6 +48619,7 @@ CoolUtil.addSpecialAnimation = function(sprite,anim,xmlName,defaultXmlName,loop,
 				++_g;
 				if(frame.name != null && StringTools.startsWith(frame.name,xmlName)) {
 					hasFound = true;
+					hasAnim = true;
 					break;
 				}
 			}
@@ -48628,6 +48630,7 @@ CoolUtil.addSpecialAnimation = function(sprite,anim,xmlName,defaultXmlName,loop,
 			sprite.animation.addByPrefix(anim,defaultXmlName,framerate,loop);
 		}
 	}
+	return hasAnim;
 };
 var CreditsState = function(TransIn,TransOut) {
 	this.moveTween = null;
@@ -57309,6 +57312,8 @@ var HealthIcon = function(char,isPlayer,full) {
 		char = "bf";
 	}
 	this.iconOffsets = [0,0];
+	this.offsetMap = new haxe_ds_StringMap();
+	this.spriteSheet = false;
 	this.fullIcon = false;
 	this.isCustom = false;
 	this.winIcon = false;
@@ -57332,6 +57337,8 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 	,winIcon: null
 	,isCustom: null
 	,fullIcon: null
+	,spriteSheet: null
+	,offsetMap: null
 	,update: function(elapsed) {
 		flixel_FlxSprite.prototype.update.call(this,elapsed);
 		if(this.sprTracker != null) {
@@ -57351,6 +57358,7 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 			full = false;
 		}
 		if(this.char != char) {
+			this.offsetMap = new haxe_ds_StringMap();
 			var name = "icons/" + char;
 			if(!openfl_utils_Assets.exists(Paths.getPath("images/" + name + ".png","IMAGE"))) {
 				name = "icons/icon-" + char;
@@ -57358,29 +57366,64 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 			if(!openfl_utils_Assets.exists(Paths.getPath("images/" + name + ".png","IMAGE"))) {
 				name = "icons/icon-face";
 			}
-			var returnAsset = Paths.returnGraphic(name,null);
-			var file = returnAsset;
-			this.loadGraphic(file);
-			if(!full) {
-				var frameArray = [];
-				var flipbook = Math.round(this.get_width() / this.get_height());
-				this.loadGraphic(file,true,Math.floor(this.get_width() / flipbook),Math.floor(this.get_height()));
-				var _g = 0;
-				var _g1 = flipbook;
-				while(_g < _g1) {
-					var i = _g++;
-					frameArray.push(i);
+			if(openfl_utils_Assets.exists(Paths.getPath("images/" + name + ".json","TEXT"))) {
+				this.spriteSheet = true;
+			} else {
+				this.spriteSheet = false;
+			}
+			if(!this.spriteSheet) {
+				var returnAsset = Paths.returnGraphic(name,null);
+				var file = returnAsset;
+				this.loadGraphic(file);
+				if(!full) {
+					var frameArray = [];
+					var flipbook = Math.round(this.get_width() / this.get_height());
+					this.loadGraphic(file,true,Math.floor(this.get_width() / flipbook),Math.floor(this.get_height()));
+					var _g = 0;
+					var _g1 = flipbook;
+					while(_g < _g1) {
+						var i = _g++;
+						frameArray.push(i);
+					}
+					this.iconOffsets[0] = (this.get_width() - 150) / flipbook;
+					this.iconOffsets[1] = (this.get_width() - 150) / flipbook;
+					this.updateHitbox();
+					this.animation.add(char,frameArray,0,false,this.isPlayer);
+					this.animation.play(char);
+					if(flipbook >= 3) {
+						this.winIcon = true;
+					} else {
+						this.winIcon = false;
+					}
 				}
-				this.iconOffsets[0] = (this.get_width() - 150) / flipbook;
-				this.iconOffsets[1] = (this.get_width() - 150) / flipbook;
-				this.updateHitbox();
-				this.animation.add(char,frameArray,0,false,this.isPlayer);
-				this.animation.play(char);
-				if(flipbook >= 3) {
-					this.winIcon = true;
+			} else {
+				var json = Paths.getTextFromFile("images/" + name + ".json");
+				var data = this.initJsonLoad(json);
+				var library = null;
+				var tmp;
+				if(!Object.prototype.hasOwnProperty.call(dge_backend_CacheTools.cacheAtlas.h,Paths.currentModDirectory + name)) {
+					var returnAsset = Paths.returnGraphic(name,library);
+					var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + name + ".xml","TEXT",library));
+					dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + name] = atlas;
+					tmp = atlas;
 				} else {
-					this.winIcon = false;
+					tmp = dge_backend_CacheTools.cacheAtlas.h[Paths.currentModDirectory + name];
 				}
+				this.set_frames(tmp);
+				this.initFrames(data);
+				if(!full) {
+					this.animation.play("netral");
+				} else {
+					this.animation.play("full");
+				}
+				this.iconOffsets[0] = this.get_width() - 150 + data.netral.offset[0];
+				this.iconOffsets[1] = this.get_height() - 150 + data.netral.offset[1];
+				this.offsetMap.h["netral"] = data.netral.offset;
+				this.offsetMap.h["lose"] = data.lose.offset;
+				if(data.win != null) {
+					this.offsetMap.h["win"] = data.win.offset;
+				}
+				this.updateHitbox();
 			}
 			this.char = char;
 			this.set_antialiasing(ClientPrefs.globalAntialiasing);
@@ -57391,8 +57434,7 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 	}
 	,updateHitbox: function() {
 		flixel_FlxSprite.prototype.updateHitbox.call(this);
-		this.offset.set_x(this.iconOffsets[0]);
-		this.offset.set_y(this.iconOffsets[1]);
+		this.changeOffsets();
 	}
 	,getCharacter: function() {
 		return this.char;
@@ -57403,6 +57445,134 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 			this.changeIcon(this.char,value);
 		}
 		return value;
+	}
+	,initJsonLoad: function(jsonRaw) {
+		var jsonDataRaw = JSON.parse(jsonRaw);
+		var jsonData = jsonDataRaw;
+		if(jsonData.netral == null) {
+			jsonData.netral = { xmlName : "netral", offset : [0,0], fps : 24, loop : true, flipX : false, flipY : false};
+		} else {
+			if(jsonData.netral.xmlName == null) {
+				jsonData.netral.xmlName = "netral";
+			}
+			if(jsonData.netral.offset == null || jsonData.netral.offset.length < 2) {
+				jsonData.netral.offset = [0,0];
+			}
+			if(jsonData.netral.fps == null) {
+				jsonData.netral.fps = 24;
+			}
+			if(jsonData.netral.loop == null) {
+				jsonData.netral.loop = true;
+			}
+			if(jsonData.netral.flipX == null) {
+				jsonData.netral.flipX = false;
+			}
+			if(jsonData.netral.flipY == null) {
+				jsonData.netral.flipY = false;
+			}
+		}
+		if(jsonData.lose == null) {
+			jsonData.lose = jsonData.netral;
+		} else {
+			if(jsonData.lose.xmlName == null) {
+				jsonData.lose.xmlName = "lose";
+			}
+			if(jsonData.lose.offset == null || jsonData.lose.offset.length < 2) {
+				jsonData.lose.offset = [0,0];
+			}
+			if(jsonData.lose.fps == null) {
+				jsonData.lose.fps = 24;
+			}
+			if(jsonData.lose.loop == null) {
+				jsonData.lose.loop = true;
+			}
+			if(jsonData.lose.flipX == null) {
+				jsonData.lose.flipX = false;
+			}
+			if(jsonData.lose.flipY == null) {
+				jsonData.lose.flipY = false;
+			}
+		}
+		if(jsonData.full == null) {
+			jsonData.full = jsonData.netral;
+		} else {
+			if(jsonData.full.xmlName == null) {
+				jsonData.full.xmlName = "full";
+			}
+			if(jsonData.full.offset == null || jsonData.lose.offset.length < 2) {
+				jsonData.full.offset = [0,0];
+			}
+			if(jsonData.full.fps == null) {
+				jsonData.full.fps = 24;
+			}
+			if(jsonData.full.loop == null) {
+				jsonData.full.loop = true;
+			}
+			if(jsonData.full.flipX == null) {
+				jsonData.full.flipX = false;
+			}
+			if(jsonData.full.flipY == null) {
+				jsonData.full.flipY = false;
+			}
+		}
+		return jsonData;
+	}
+	,initFrames: function(Data) {
+		var isFlip = this.isPlayer;
+		if(Data.netral.flipX) {
+			isFlip = !isFlip;
+		}
+		this.animation.addByPrefix("netral",Data.netral.xmlName,Data.netral.fps,Data.netral.loop,isFlip,Data.netral.flipY);
+		var isFlip = this.isPlayer;
+		if(Data.lose.flipX) {
+			isFlip = !isFlip;
+		}
+		this.animation.addByPrefix("lose",Data.lose.xmlName,Data.lose.fps,Data.lose.loop,isFlip,Data.lose.flipY);
+		if(Data.win != null) {
+			var isFlip = this.isPlayer;
+			if(Data.win.flipX) {
+				isFlip = !isFlip;
+			}
+			this.winIcon = true;
+			this.animation.addByPrefix("win",Data.win.xmlName,Data.win.fps,Data.win.loop,isFlip,Data.win.flipY);
+		}
+		if(Data.full != null) {
+			var isFlip = this.isPlayer;
+			if(Data.full.flipX) {
+				isFlip = !isFlip;
+			}
+			this.animation.addByPrefix("full",Data.full.xmlName,Data.full.fps,Data.full.loop,isFlip,Data.full.flipY);
+		} else {
+			var isFlip = this.isPlayer;
+			if(Data.netral.flipX) {
+				isFlip = !isFlip;
+			}
+			this.animation.addByPrefix("full",Data.netral.xmlName,Data.netral.fps,Data.netral.loop,isFlip,Data.netral.flipY);
+		}
+		this.updateHitbox();
+	}
+	,playAnim: function(name,force) {
+		if(force == null) {
+			force = false;
+		}
+		if(this.animation != null && this.animation._curAnim != null && this.animation._curAnim.name != name || force) {
+			this.animation.play(name);
+			if(Object.prototype.hasOwnProperty.call(this.offsetMap.h,name)) {
+				this.iconOffsets[0] = this.get_width() - 150 + this.offsetMap.h[name][0];
+				this.iconOffsets[1] = this.get_height() - 150 + this.offsetMap.h[name][1];
+			} else if(Object.prototype.hasOwnProperty.call(this.offsetMap.h,"netral")) {
+				this.iconOffsets[0] = this.get_width() - 150 + this.offsetMap.h["netral"][0];
+				this.iconOffsets[1] = this.get_height() - 150 + this.offsetMap.h["netral"][1];
+			} else {
+				this.iconOffsets[0] = this.get_width() - 150;
+				this.iconOffsets[1] = this.get_height() - 150;
+			}
+			this.changeOffsets();
+		}
+	}
+	,changeOffsets: function() {
+		this.offset.set_x(this.iconOffsets[0]);
+		this.offset.set_y(this.iconOffsets[1]);
 	}
 	,__class__: HealthIcon
 	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_fullIcon:"set_fullIcon"})
@@ -59063,6 +59233,7 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	this.copyScrollFactor = true;
 	this.copyCam = true;
 	this.opponentRating = false;
+	this.strumNote = null;
 	this.attachStrum = true;
 	this.strumTimeOffsetMultiPress = 500;
 	this.multiPress = 0;
@@ -59690,14 +59861,14 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			if(this.getActualDownscroll()) {
 				var addAnimThingy = CoolUtil.addSpecialAnimation;
 				addAnimThingy(this,this.colArray[i] + "Scroll",this.colArray[i] + "_DownScroll0",this.colArray[i] + "0",true,ClientPrefs.fpsStrumAnim);
-				addAnimThingy(this,"purpleholdend","pruple end hold_DownScroll","pruple end hold",true,ClientPrefs.fpsStrumAnim);
-				addAnimThingy(this,this.colArray[i] + "holdend",this.colArray[i] + " hold end_DownScroll",this.colArray[i] + " hold end",true,ClientPrefs.fpsStrumAnim);
-				addAnimThingy(this,this.colArray[i] + "hold",this.colArray[i] + " hold piece_DownScroll",this.colArray[i] + " hold piece",true,ClientPrefs.fpsStrumAnim);
+				addAnimThingy(this,"purpleholdend","pruple end hold_DownScroll0","pruple end hold0",true,ClientPrefs.fpsStrumAnim);
+				addAnimThingy(this,this.colArray[i] + "holdend",this.colArray[i] + " hold end_DownScroll0",this.colArray[i] + " hold end0",true,ClientPrefs.fpsStrumAnim);
+				addAnimThingy(this,this.colArray[i] + "hold",this.colArray[i] + " hold piece_DownScroll0",this.colArray[i] + " hold piece0",true,ClientPrefs.fpsStrumAnim);
 			} else {
 				this.animation.addByPrefix(this.colArray[i] + "Scroll",this.colArray[i] + "0");
-				this.animation.addByPrefix("purpleholdend","pruple end hold");
-				this.animation.addByPrefix(this.colArray[i] + "holdend",this.colArray[i] + " hold end");
-				this.animation.addByPrefix(this.colArray[i] + "hold",this.colArray[i] + " hold piece");
+				this.animation.addByPrefix("purpleholdend","pruple end hold0");
+				this.animation.addByPrefix(this.colArray[i] + "holdend",this.colArray[i] + " hold end0");
+				this.animation.addByPrefix(this.colArray[i] + "hold",this.colArray[i] + " hold piece0");
 			}
 		}
 	}
@@ -60049,6 +60220,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		if(this.holdCover != value) {
 			if(this.holdCover != null) {
 				this.holdCover.kill();
+				value = null;
 			}
 			this.holdCover = value;
 		}
@@ -60345,16 +60517,16 @@ OutdatedState.prototype = $extend(MusicBeatState.prototype,{
 		bg1.set_color(-8388480);
 		CoolUtil.fitBackground(bg1);
 		this.add(bg1);
-		var splitVersion = lime_app_Application.current.meta.h["version"].split(".");
-		var getMinotAndMajor = splitVersion[0] + "." + splitVersion[1] + ".X";
-		var warnTxt = "Sup bro, i think you currently running a\n\n\t\t\toutdated version of Dragon Engine (" + getMinotAndMajor + "),\n\n\t\t\tplease update to " + TitleState.updateVersion + "!";
+		var currentVersion = lime_app_Application.current.meta.h["version"];
+		var intCurVer = Std.parseInt(currentVersion.split(".").join(""));
+		var warnTxt = "Sup bro, i think you currently running a\n\n\t\toutdated version of Dragon Engine (" + currentVersion + "),\n\n\t\tplease update to " + TitleState.updateVersion + "!";
 		if(TitleState.confusedLOL) {
-			warnTxt = "Sup bro, i think you currently running a\n\n\t\t\tversion of Dragon Engine (" + getMinotAndMajor + ") this version did't even exists yet lmao\n\n\t\t\tplease be sure this version ever exists!(unless you're dev lol)";
+			warnTxt = "Sup bro, i think you currently running a\n\n\t\t\tversion of Dragon Engine (" + currentVersion + ") this version did't even exists yet lmao\n\n\t\t\tplease be sure this version ever exists!(unless you're dev lol)";
 		}
 		if(ClientPrefs.dragonW) {
-			warnTxt = "Greetings, noble warrior! it appears that you are currently utilizing an\n\n\t\t\toutdated version of Dragon Engine (" + getMinotAndMajor + ").\n\n\t\t\tFor a more powerful and enhanced experience, please update to " + TitleState.updateVersion + "!";
+			warnTxt = "Greetings, noble warrior! it appears that you are currently utilizing an\n\n\t\t\toutdated version of Dragon Engine (" + currentVersion + ").\n\n\t\t\tFor a more powerful and enhanced experience, please update to " + TitleState.updateVersion + "!";
 			if(TitleState.confusedLOL) {
-				warnTxt = "Greetings, noble warrior! it appears that you are currently utilizing a\n\n\t\t\t\tversion of Dragon Engine (" + getMinotAndMajor + ") this not even exists yet..\n\n\t\t\t\tplease be sure this version ever exists!(unless you're dev lol)";
+				warnTxt = "Greetings, noble warrior! it appears that you are currently utilizing a\n\n\t\t\t\tversion of Dragon Engine (" + currentVersion + ") this not even exists yet..\n\n\t\t\t\tplease be sure this version ever exists!(unless you're dev lol)";
 			}
 		}
 		this.warnText = new flixel_text_FlxText(0,0,flixel_FlxG.width,warnTxt + "\n\n\n\t\t\tPress ESCAPE to proceed anyway.\n\n\t\t\t\n\n\t\t\tThank you for using the Engine.",32);
@@ -61637,6 +61809,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,tempSecOpt: null
 	,create: function() {
 		var _gthis = this;
+		if(PlayState.SONG == null) {
+			PlayState.SONG = Song.loadFromJson("tutorial");
+		}
 		dge_backend_CacheTools.clearCache();
 		Paths.clearStoredMemory();
 		PlayState.instance = this;
@@ -61715,9 +61890,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		CustomFadeTransition.nextCamera = this.camOther;
 		this.persistentUpdate = true;
 		this.persistentDraw = true;
-		if(PlayState.SONG == null) {
-			PlayState.SONG = Song.loadFromJson("tutorial");
-		}
 		Conductor.mapBPMChanges(PlayState.SONG);
 		Conductor.changeBPM(PlayState.SONG.bpm);
 		GameOverSubstate.resetVariables();
@@ -62729,7 +62901,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.playbackRate = value;
 		flixel_animation_FlxAnimationController.globalSpeed = value;
-		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1725, className : "PlayState", methodName : "set_playbackRate"});
+		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1724, className : "PlayState", methodName : "set_playbackRate"});
 		Conductor.safeZoneOffset = ClientPrefs.safeFrames / 60 * 1000 * value;
 		this.setOnLuas("playbackRate",this.playbackRate);
 		return value;
@@ -64011,13 +64183,29 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		return 0;
 	}
 	,sortNoteLayer: function(Order,Obj1,Obj2) {
+		if(Obj1 == null || Obj2 == null) {
+			return 0;
+		}
 		if(!Obj1.topLayer && Obj2.topLayer || !Obj1.attachStrum && Obj2.attachStrum) {
 			return -1;
 		} else if(Obj1.topLayer && !Obj2.topLayer || Obj1.attachStrum && !Obj2.attachStrum) {
 			return 1;
 		}
-		var Value1 = (Obj1.strumTime + Obj1.offsetStrumTime - Conductor.songPosition) * Obj1.multSpeed;
-		var Value2 = (Obj2.strumTime + Obj2.offsetStrumTime - Conductor.songPosition) * Obj2.multSpeed;
+		var time1 = (Obj1.isSustainNote && Obj1.parent != null && Obj1.parent.multSpeed == Obj1.multSpeed && !ClientPrefs.legacyNoteLayer ? Obj1.parent.strumTime + (Obj1.strumTime - Obj1.parent.strumTime) * 0.001 : Obj1.strumTime) + Obj1.offsetStrumTime;
+		var time2 = (Obj2.isSustainNote && Obj2.parent != null && Obj2.parent.multSpeed == Obj2.multSpeed && !ClientPrefs.legacyNoteLayer ? Obj2.parent.strumTime + (Obj2.strumTime - Obj2.parent.strumTime) * 0.001 : Obj2.strumTime) + Obj2.offsetStrumTime;
+		var Value1 = time1 * Obj1.multSpeed;
+		var Value2 = time2 * Obj2.multSpeed;
+		var result = 0;
+		if(Value1 < Value2) {
+			result = Order;
+		} else if(Value1 > Value2) {
+			result = -Order;
+		}
+		return result;
+	}
+	,sortNoteTime: function(Order,Obj1,Obj2) {
+		var Value1 = Obj1.strumTime + Obj1.offsetStrumTime;
+		var Value2 = Obj2.strumTime + Obj2.offsetStrumTime;
 		var result = 0;
 		if(Value1 < Value2) {
 			result = Order;
@@ -64589,57 +64777,85 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.iconP3.updateHitbox();
 		}
 		var iconOffset = 26;
-		if(ClientPrefs.ofhb) {
-			this.iconP1.set_x(this.healthBar.x + this.healthBar.get_width() * (flixel_math_FlxMath.remapToRange(this.health * 50,0,100,100,0) * 0.01) + (150 * this.iconP1.scale.x - 150) / 2 - iconOffset);
-			this.iconP2.set_x(this.healthBar.x + this.healthBar.get_width() * (flixel_math_FlxMath.remapToRange(this.health * 50,0,100,100,0) * 0.01) - 150 * this.iconP2.scale.x / 2 - iconOffset * 2);
-			if(this.iconP3 != null) {
-				this.iconP3.set_x(this.healthBar.x + this.healthBar.get_width() * (flixel_math_FlxMath.remapToRange(this.health * 50,0,100,100,0) * 0.01) - 150 * this.iconP3.scale.x / 2 - iconOffset * 2 - 50);
-			}
-		} else {
-			this.iconP1.set_x(this.healthBar.x + this.healthBar.get_width() * (flixel_math_FlxMath.remapToRange(this.healthBar.get_percent(),0,100,100,0) * 0.01) + (150 * this.iconP1.scale.x - 150) / 2 - iconOffset);
-			this.iconP2.set_x(this.healthBar.x + this.healthBar.get_width() * (flixel_math_FlxMath.remapToRange(this.healthBar.get_percent(),0,100,100,0) * 0.01) - 150 * this.iconP2.scale.x / 2 - iconOffset * 2);
-			if(this.iconP3 != null) {
-				this.iconP3.set_x(this.healthBar.x + this.healthBar.get_width() * (flixel_math_FlxMath.remapToRange(this.healthBar.get_percent(),0,100,100,0) * 0.01) - 150 * this.iconP3.scale.x / 2 - iconOffset * 2 - 50);
-			}
+		this.iconP1.set_x(this.healthBar.x + this.healthBar.get_width() * (flixel_math_FlxMath.remapToRange(this.healthBar.get_percent(),0,100,100,0) * 0.01) + (150 * this.iconP1.scale.x - 150) / 2 - iconOffset);
+		this.iconP2.set_x(this.healthBar.x + this.healthBar.get_width() * (flixel_math_FlxMath.remapToRange(this.healthBar.get_percent(),0,100,100,0) * 0.01) - 150 * this.iconP2.scale.x / 2 - iconOffset * 2);
+		if(this.iconP3 != null) {
+			this.iconP3.set_x(this.healthBar.x + this.healthBar.get_width() * (flixel_math_FlxMath.remapToRange(this.healthBar.get_percent(),0,100,100,0) * 0.01) - 150 * this.iconP3.scale.x / 2 - iconOffset * 2 - 50);
 		}
 		if(this.health > 2) {
-			this.health -= (this.health - 2) * 0.25;
+			this.health = 2;
 		}
 		if(this.healthBar.get_percent() < 20) {
 			if(!this.iconP1.isCustom) {
-				this.iconP1.animation._curAnim.set_curFrame(1);
+				if(!this.iconP1.spriteSheet) {
+					this.iconP1.animation._curAnim.set_curFrame(1);
+				} else {
+					this.iconP1.playAnim("lose");
+				}
 			}
 			if(this.iconP2.winIcon == true && !this.iconP2.isCustom) {
-				this.iconP2.animation._curAnim.set_curFrame(2);
+				if(!this.iconP2.spriteSheet) {
+					this.iconP2.animation._curAnim.set_curFrame(2);
+				} else {
+					this.iconP2.playAnim("win");
+				}
 			}
 			if(this.iconP3 != null) {
 				if(this.iconP3.winIcon == true && !this.iconP3.isCustom) {
-					this.iconP3.animation._curAnim.set_curFrame(2);
+					if(!this.iconP3.spriteSheet) {
+						this.iconP3.animation._curAnim.set_curFrame(2);
+					} else {
+						this.iconP3.playAnim("win");
+					}
 				}
 			}
 		} else if(this.healthBar.get_percent() > 80) {
 			if(!this.iconP2.isCustom) {
-				this.iconP2.animation._curAnim.set_curFrame(1);
+				if(!this.iconP2.spriteSheet) {
+					this.iconP2.animation._curAnim.set_curFrame(1);
+				} else {
+					this.iconP2.playAnim("lose");
+				}
 			}
 			if(this.iconP3 != null) {
 				if(!this.iconP3.isCustom) {
-					this.iconP3.animation._curAnim.set_curFrame(1);
+					if(!this.iconP3.spriteSheet) {
+						this.iconP3.animation._curAnim.set_curFrame(1);
+					} else {
+						this.iconP3.playAnim("lose");
+					}
 				}
 			}
 			if(this.iconP1.winIcon == true && !this.iconP1.isCustom) {
-				this.iconP1.animation._curAnim.set_curFrame(2);
+				if(!this.iconP1.spriteSheet) {
+					this.iconP1.animation._curAnim.set_curFrame(2);
+				} else {
+					this.iconP1.playAnim("win");
+				}
 			}
 		} else {
 			if(!this.iconP2.isCustom) {
-				this.iconP2.animation._curAnim.set_curFrame(0);
+				if(!this.iconP2.spriteSheet) {
+					this.iconP2.animation._curAnim.set_curFrame(0);
+				} else {
+					this.iconP2.playAnim("netral");
+				}
 			}
 			if(this.iconP3 != null) {
 				if(!this.iconP3.isCustom) {
-					this.iconP3.animation._curAnim.set_curFrame(0);
+					if(!this.iconP3.spriteSheet) {
+						this.iconP3.animation._curAnim.set_curFrame(0);
+					} else {
+						this.iconP3.playAnim("netral");
+					}
 				}
 			}
 			if(!this.iconP1.isCustom) {
-				this.iconP1.animation._curAnim.set_curFrame(0);
+				if(!this.iconP1.spriteSheet) {
+					this.iconP1.animation._curAnim.set_curFrame(0);
+				} else {
+					this.iconP1.playAnim("netral");
+				}
 			}
 		}
 		if(flixel_FlxG.keys.checkKeyArrayState(this.debugKeysCharacter,2) && !this.endingSong && !this.inCutscene) {
@@ -64707,7 +64923,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3713, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3746, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
@@ -64760,20 +64976,34 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			}
 		}
 		if(this.generatedMusic) {
-			var groupToSort = [this.playerNotes,this.gfNotes,this.opponentNotes];
-			var _g = 0;
-			while(_g < groupToSort.length) {
-				var group = groupToSort[_g];
-				++_g;
-				var Order = 1;
+			if(this.notes.length > 0) {
+				var Order = -1;
 				if(Order == null) {
 					Order = -1;
 				}
-				group.members.sort((function(a1,_g) {
-					return function(a2,a3) {
-						return _g[0](a1[0],a2,a3);
-					};
-				})([Order],[$bind(this,this.sortNoteLayer)]));
+				var _g = $bind(this,this.sortNoteTime);
+				var a1 = Order;
+				var tmp = function(a2,a3) {
+					return _g(a1,a2,a3);
+				};
+				this.notes.members.sort(tmp);
+			}
+			var groupToSort = [this.playerNotes,this.gfNotes,this.opponentNotes];
+			var _g1 = 0;
+			while(_g1 < groupToSort.length) {
+				var group = groupToSort[_g1];
+				++_g1;
+				if(group.length > 0) {
+					var Order = 1;
+					if(Order == null) {
+						Order = -1;
+					}
+					group.members.sort((function(a1,_g) {
+						return function(a2,a3) {
+							return _g[0](a1[0],a2,a3);
+						};
+					})([Order],[$bind(this,this.sortNoteLayer)]));
+				}
 			}
 			var h = this.notesGroupMap.h;
 			var i_h = h;
@@ -64783,15 +65013,17 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			while(i_current < i_length) {
 				var i = i_keys[i_current++];
 				var group = this.notesGroupMap.h[i];
-				var Order = 1;
-				if(Order == null) {
-					Order = -1;
+				if(group.length > 0) {
+					var Order = 1;
+					if(Order == null) {
+						Order = -1;
+					}
+					group.members.sort((function(a1,_g) {
+						return function(a2,a3) {
+							return _g[0](a1[0],a2,a3);
+						};
+					})([Order],[$bind(this,this.sortNoteLayer)]));
 				}
-				group.members.sort((function(a1,_g) {
-					return function(a2,a3) {
-						return _g[0](a1[0],a2,a3);
-					};
-				})([Order],[$bind(this,this.sortNoteLayer)]));
 			}
 		}
 		if(this.generatedMusic && !this.inCutscene) {
@@ -64825,14 +65057,11 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						} else {
 							daNote.fieldTarget = "";
 						}
-					} else {
-						var tmp = daNote.fieldTarget == null;
-						if(!daNote.mustPress) {
-							if((daNote.gfNote || daNote.secondOpponent) && PlayState.SONG.secOpt) {
-								strumGroup = _gthis.gfStrums;
-							} else {
-								strumGroup = _gthis.opponentStrums;
-							}
+					} else if(!daNote.mustPress) {
+						if((daNote.gfNote || daNote.secondOpponent) && PlayState.SONG.secOpt) {
+							strumGroup = _gthis.gfStrums;
+						} else {
+							strumGroup = _gthis.opponentStrums;
 						}
 					}
 					if(strumGroup != null && daNote.noteData < strumGroup.length && daNote.noteData >= 0 && daNote.attachStrum) {
@@ -66148,12 +66377,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4807, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4843, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4808, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4844, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -66189,7 +66418,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 4841, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 4877, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -66200,7 +66429,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4852, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4888, className : "PlayState", methodName : "endSong"});
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 					CustomFadeTransition.nextCamera = null;
@@ -66223,7 +66452,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4876, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4912, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -66994,7 +67223,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 	}
 	,spawnHoldCover: function(note) {
-		if(note != null) {
+		if(note != null && !ClientPrefs.clsstrum) {
 			if(!note.isSustainNote && (note.sustainLength + (note.strumTime + note.offsetStrumTime - Conductor.songPosition)) / 1000 + note.holdCoverDelaySplash > 0 && (note.tail != null && note.tail.length > 0)) {
 				var groupTarget = this.grpHoldCover;
 				if(note.fieldTarget != null && note.fieldTarget.length > 0 && Object.prototype.hasOwnProperty.call(this.holdCoverGroupMap.h,note.fieldTarget)) {
@@ -67017,6 +67246,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						var holdCover = noteP.holdCover;
 						holdCover.strum = note.strumNote;
 						holdCover.note = note;
+						note.set_holdCover(holdCover);
 						holdCover.playAnim("hold" + note.noteData % 4);
 					}
 				}
@@ -68193,7 +68423,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7043, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7081, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -68219,7 +68449,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7056, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7094, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -68338,6 +68568,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this1.h["freezeNote"] = value;
 	}
 	,destroyNote: function(note) {
+		if(note == null) {
+			return;
+		}
 		note.set_visible(false);
 		note.set_active(false);
 		note.kill();
@@ -68346,8 +68579,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		while(_g < specialGroup.length) {
 			var group = specialGroup[_g];
 			++_g;
-			if(group.members.indexOf(note) != -1) {
-				group.remove(note,true);
+			if(group.length > 0) {
+				if(group.members.indexOf(note) != -1) {
+					group.remove(note,true);
+				}
 			}
 		}
 		var h = this.notesGroupMap.h;
@@ -68358,15 +68593,21 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		while(group_current < group_length) {
 			var group = group_keys[group_current++];
 			var obj = this.notesGroupMap.h[group];
-			if(obj.members.indexOf(note) != -1) {
-				obj.remove(note,true);
+			if(obj.length > 0) {
+				if(obj.members.indexOf(note) != -1) {
+					obj.remove(note,true);
+				}
 			}
 		}
-		if(this.unspawnNotes.indexOf(note) != -1) {
-			HxOverrides.remove(this.unspawnNotes,note);
+		if(this.unspawnNotes.length > 0) {
+			if(this.unspawnNotes.indexOf(note) != -1) {
+				HxOverrides.remove(this.unspawnNotes,note);
+			}
 		}
-		if(this.notes.members.indexOf(note) != -1) {
-			this.notes.remove(note,true);
+		if(this.notes.length > 0) {
+			if(this.notes.members.indexOf(note) != -1) {
+				this.notes.remove(note,true);
+			}
 		}
 		note.destroy();
 	}
@@ -69173,7 +69414,15 @@ ResetScoreSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 		this.noText.set_alpha(alphas[1 - confirmInt]);
 		this.noText.scale.set(scales[1 - confirmInt],scales[1 - confirmInt]);
 		if(this.week == -1) {
-			this.icon.animation._curAnim.set_curFrame(confirmInt);
+			if(this.icon.spriteSheet) {
+				if(confirmInt == 0) {
+					this.icon.playAnim("netral");
+				} else if(confirmInt == 1) {
+					this.icon.playAnim("lose");
+				}
+			} else {
+				this.icon.animation._curAnim.set_curFrame(confirmInt);
+			}
 		}
 	}
 	,__class__: ResetScoreSubState
@@ -70475,54 +70724,54 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			var addAnimThingy = CoolUtil.addSpecialAnimation;
 			switch(Math.abs(this.noteData) % 4) {
 			case 0:
-				if(note != null && note.getActualDownscroll()) {
-					addAnimThingy(this,"static","arrowLEFT_DownScroll","arrowLEFT",true,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"pressed","left press_DownScroll","left press",false,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"confirm","left confirm_DownScroll","left confirm",false,ClientPrefs.fpsStrumAnim);
+				if(note != null && note.getActualDownscroll() || ClientPrefs.downScroll) {
+					addAnimThingy(this,"static","arrowLEFT_DownScroll0","arrowLEFT0",true,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"pressed","left press_DownScroll0","left press0",false,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"confirm","left confirm_DownScroll0","left confirm0",false,ClientPrefs.fpsStrumAnim);
 					addAnimThingy(this,"notes","purple Downscroll0","purple0",false,ClientPrefs.fpsStrumAnim);
 				} else {
-					this.animation.addByPrefix("static","arrowLEFT");
-					this.animation.addByPrefix("pressed","left press",ClientPrefs.fpsStrumAnim,false);
-					this.animation.addByPrefix("confirm","left confirm",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("static","arrowLEFT0");
+					this.animation.addByPrefix("pressed","left press0",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("confirm","left confirm0",ClientPrefs.fpsStrumAnim,false);
 					this.animation.addByPrefix("notes","purple0",ClientPrefs.fpsStrumAnim,false);
 				}
 				break;
 			case 1:
-				if(note != null && note.getActualDownscroll()) {
-					addAnimThingy(this,"static","arrowDOWN_DownScroll","arrowDOWN",true,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"pressed","down press_DownScroll","down press",false,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"confirm","down confirm_DownScroll","down confirm",false,ClientPrefs.fpsStrumAnim);
+				if(note != null && note.getActualDownscroll() || ClientPrefs.downScroll) {
+					addAnimThingy(this,"static","arrowDOWN_DownScroll0","arrowDOWN0",true,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"pressed","down press_DownScroll0","down press0",false,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"confirm","down confirm_DownScroll0","down confirm0",false,ClientPrefs.fpsStrumAnim);
 					addAnimThingy(this,"notes","blue Downscroll0","blue0",false,ClientPrefs.fpsStrumAnim);
 				} else {
-					this.animation.addByPrefix("static","arrowDOWN");
-					this.animation.addByPrefix("pressed","down press",ClientPrefs.fpsStrumAnim,false);
-					this.animation.addByPrefix("confirm","down confirm",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("static","arrowDOWN0");
+					this.animation.addByPrefix("pressed","down press0",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("confirm","down confirm0",ClientPrefs.fpsStrumAnim,false);
 					this.animation.addByPrefix("notes","blue0",ClientPrefs.fpsStrumAnim,false);
 				}
 				break;
 			case 2:
-				if(note != null && note.getActualDownscroll()) {
-					addAnimThingy(this,"static","arrowUP_DownScroll","arrowUP",true,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"pressed","up press_DownScroll","up press",false,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"confirm","up confirm_DownScroll","up confirm",false,ClientPrefs.fpsStrumAnim);
+				if(note != null && note.getActualDownscroll() || ClientPrefs.downScroll) {
+					addAnimThingy(this,"static","arrowUP_DownScroll0","arrowUP0",true,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"pressed","up press_DownScroll0","up press0",false,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"confirm","up confirm_DownScroll0","up confirm0",false,ClientPrefs.fpsStrumAnim);
 					addAnimThingy(this,"notes","green Downscroll0","green0",false,ClientPrefs.fpsStrumAnim);
 				} else {
-					this.animation.addByPrefix("static","arrowUP");
-					this.animation.addByPrefix("pressed","up press",ClientPrefs.fpsStrumAnim,false);
-					this.animation.addByPrefix("confirm","up confirm",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("static","arrowUP0");
+					this.animation.addByPrefix("pressed","up press0",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("confirm","up confirm0",ClientPrefs.fpsStrumAnim,false);
 					this.animation.addByPrefix("notes","green0",ClientPrefs.fpsStrumAnim,false);
 				}
 				break;
 			case 3:
-				if(note != null && note.getActualDownscroll()) {
-					addAnimThingy(this,"static","arrowRIGHT_DownScroll","arrowRIGHT",true,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"pressed","right press_DownScroll","right press",false,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"confirm","right confirm_DownScroll","right confirm",false,ClientPrefs.fpsStrumAnim);
+				if(note != null && note.getActualDownscroll() || ClientPrefs.downScroll) {
+					addAnimThingy(this,"static","arrowRIGHT_DownScroll0","arrowRIGHT0",true,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"pressed","right press_DownScroll0","right press0",false,ClientPrefs.fpsStrumAnim);
+					addAnimThingy(this,"confirm","right confirm_DownScroll0","right confirm0",false,ClientPrefs.fpsStrumAnim);
 					addAnimThingy(this,"notes","red Downscroll0","red0",false,ClientPrefs.fpsStrumAnim);
 				} else {
-					this.animation.addByPrefix("static","arrowRIGHT");
-					this.animation.addByPrefix("pressed","right press",ClientPrefs.fpsStrumAnim,false);
-					this.animation.addByPrefix("confirm","right confirm",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("static","arrowRIGHT0");
+					this.animation.addByPrefix("pressed","right press0",ClientPrefs.fpsStrumAnim,false);
+					this.animation.addByPrefix("confirm","right confirm0",ClientPrefs.fpsStrumAnim,false);
 					this.animation.addByPrefix("notes","red0",ClientPrefs.fpsStrumAnim,false);
 				}
 				break;
@@ -78671,7 +78920,7 @@ dge_states_ResultScreen.prototype = $extend(MusicBeatState.prototype,{
 	,__class__: dge_states_ResultScreen
 });
 var dge_states_options_DragonOptionsState = function(TransIn,TransOut) {
-	this.options = ["Miscellaneous","Visuals & UI","Editor Setting"];
+	this.options = ["Miscellaneous","Visuals & UI","Gameplay","Editor Setting"];
 	MusicBeatState.call(this,TransIn,TransOut);
 };
 $hxClasses["dge.states.options.DragonOptionsState"] = dge_states_options_DragonOptionsState;
@@ -78686,11 +78935,11 @@ dge_states_options_DragonOptionsState.prototype = $extend(MusicBeatState.prototy
 		case "Editor Setting":
 			this.openSubState(new dge_states_options_EditorSubState());
 			break;
+		case "Gameplay":
+			this.openSubState(new dge_states_options_GameplaySubState());
+			break;
 		case "Miscellaneous":
 			this.openSubState(new dge_states_options_MiscSubState());
-			break;
-		case "Mobile Setting":
-			this.openSubState(new dge_states_options_MobileSubState());
 			break;
 		case "Visuals & UI":
 			this.openSubState(new dge_states_options_VisualUISubState());
@@ -79361,8 +79610,8 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 	,__class__: options_BaseOptionsMenu
 });
 var dge_states_options_EditorSubState = function() {
-	this.title = "Editor Settings";
-	this.rpcTitle = "Editor Settings Menu";
+	this.title = "DGE Editor Settings";
+	this.rpcTitle = "DGE Editor Settings Menu";
 	var option = new options_Option("Minified Json","Save Editor Json without Newlines and Spaces","minEditorJson","bool",false);
 	this.addOption(option);
 	options_BaseOptionsMenu.call(this);
@@ -79378,14 +79627,10 @@ dge_states_options_EditorSubState.prototype = $extend(options_BaseOptionsMenu.pr
 	}
 	,__class__: dge_states_options_EditorSubState
 });
-var dge_states_options_MiscSubState = function() {
-	this.title = "Miscellaneous Settings";
-	this.rpcTitle = "Miscellaneous Settings Menu";
+var dge_states_options_GameplaySubState = function() {
+	this.title = "DGE Gameplay Settings";
+	this.rpcTitle = "DGE Gameplay Settings Menu";
 	var option = new options_Option("Start Pause","Start Pause After Load Song.","startPause","bool",false);
-	this.addOption(option);
-	var option = new options_Option("Dragon Word","Dragon's Word.","dragonW","bool",false);
-	this.addOption(option);
-	var option = new options_Option("Hide Original Credits","If Checked The Original Credits Will Hide.","disableOGCredit","bool",false);
 	this.addOption(option);
 	var option = new options_Option("Limit Notes Spawn","Should Note has limit to spawn?","limitSpawn","bool",false);
 	this.addOption(option);
@@ -79395,20 +79640,34 @@ var dge_states_options_MiscSubState = function() {
 	this.addOption(option);
 	var option = new options_Option("Result Screen","If Checked The Result screen will show after end song.","useResultScr","bool",false);
 	this.addOption(option);
-	var option = new options_Option("FPS Font Size","FPS Counter Font Size.","fpsFontSize","int",14);
-	option.minValue = 5;
-	option.scrollSpeed = 15;
-	option.onChange = function() {
-		if(Main.fpsVar != null) {
-			Main.fpsVar.set_defaultTextFormat(new openfl_text_TextFormat("_sans",ClientPrefs.fpsFontSize));
-		}
-	};
-	this.addOption(option);
 	var option = new options_Option("Classic Spawn Note","If Checked It Will Use Classic Note Spawn.(Might Reduce Lag)","classicNoteSpawn","bool",false);
 	this.addOption(option);
 	var option = new options_Option("Modchart","If Checked It Enabled Modchart.(For Mods)","modchart","bool",true);
 	this.addOption(option);
 	var option = new options_Option("Note Mechanic","If Checked It Enabled Note Mechanic.(For Mods)","noteMechanic","bool",true);
+	this.addOption(option);
+	options_BaseOptionsMenu.call(this);
+	this.changeBGColor(-65536);
+};
+$hxClasses["dge.states.options.GameplaySubState"] = dge_states_options_GameplaySubState;
+dge_states_options_GameplaySubState.__name__ = "dge.states.options.GameplaySubState";
+dge_states_options_GameplaySubState.__super__ = options_BaseOptionsMenu;
+dge_states_options_GameplaySubState.prototype = $extend(options_BaseOptionsMenu.prototype,{
+	close: function() {
+		options_BaseOptionsMenu.prototype.close.call(this);
+		ClientPrefs.saveSettings();
+	}
+	,changeAutoPause: function() {
+		flixel_FlxG.autoPause = ClientPrefs.autopause;
+	}
+	,__class__: dge_states_options_GameplaySubState
+});
+var dge_states_options_MiscSubState = function() {
+	this.title = "DGE Miscellaneous Settings";
+	this.rpcTitle = "DGE Miscellaneous Settings Menu";
+	var option = new options_Option("Dragon Word","Dragon's Word.","dragonW","bool",false);
+	this.addOption(option);
+	var option = new options_Option("Hide Original Credits","If Checked The Original Credits Will Hide.","disableOGCredit","bool",false);
 	this.addOption(option);
 	options_BaseOptionsMenu.call(this);
 	this.changeBGColor(-65536);
@@ -79425,33 +79684,6 @@ dge_states_options_MiscSubState.prototype = $extend(options_BaseOptionsMenu.prot
 		flixel_FlxG.autoPause = ClientPrefs.autopause;
 	}
 	,__class__: dge_states_options_MiscSubState
-});
-var dge_states_options_MobileSubState = function() {
-	this.title = "Mobile Settings";
-	this.rpcTitle = "Mobile Settings Menu";
-	lime_app_Application.current.__window.alert("what ur doing here lol? you're even not in mobile.","DubEnderDragon");
-	this.close();
-	options_BaseOptionsMenu.call(this);
-	this.changeBGColor(-65536);
-};
-$hxClasses["dge.states.options.MobileSubState"] = dge_states_options_MobileSubState;
-dge_states_options_MobileSubState.__name__ = "dge.states.options.MobileSubState";
-dge_states_options_MobileSubState.__super__ = options_BaseOptionsMenu;
-dge_states_options_MobileSubState.prototype = $extend(options_BaseOptionsMenu.prototype,{
-	close: function() {
-		options_BaseOptionsMenu.prototype.close.call(this);
-		ClientPrefs.saveSettings();
-	}
-	,changeButtonAlpha: function() {
-	}
-	,reloadSubstate: function() {
-		ClientPrefs.saveSettings();
-		var nextState = Type.createInstance(js_Boot.getClass(flixel_FlxG.game._state),[]);
-		if(flixel_FlxG.game._state.switchTo(nextState)) {
-			flixel_FlxG.game._requestedState = nextState;
-		}
-	}
-	,__class__: dge_states_options_MobileSubState
 });
 var dge_states_options_TypedValueSubState = function(instance,object) {
 	this.nextAccept = 5;
@@ -79673,8 +79905,8 @@ dge_states_options_TypedValueSubState.prototype = $extend(MusicBeatSubstate.prot
 var dge_states_options_VisualUISubState = function() {
 	this.colorKeyPress = ["FF00FF","00FFFF","00FF00","0000FF"];
 	var _gthis = this;
-	this.title = "Visual & UI Settings";
-	this.rpcTitle = "Visual & UI Settings Menu";
+	this.title = "DGE Visual & UI Settings";
+	this.rpcTitle = "DGE Visual & UI Settings Menu";
 	var option = new options_Option("Long Note Transparency","How much transparent should the Long Notes be.","longNoteAlpha","percent",0.6);
 	option.scrollSpeed = 1.6;
 	option.minValue = 0.25;
@@ -79731,9 +79963,7 @@ var dge_states_options_VisualUISubState = function() {
 	this.addOption(option);
 	var option = new options_Option("Opponent Note Splashes","Show Opponent Note Splash","noteSplashesOpt","bool",true);
 	this.addOption(option);
-	var option = new options_Option("Classic Strums","The FNF Classic Strum(Note Splash Will Disable).","clsstrum","bool",false);
-	this.addOption(option);
-	var option = new options_Option("Overfill Health Bar","Messed Up Health Bar With Spammy.","ofhb","bool",true);
+	var option = new options_Option("Classic Strums","The FNF Classic Strum(Note Splash & Hold Cover Will Disable).","clsstrum","bool",false);
 	this.addOption(option);
 	var option = new options_Option("Default Note Skin","Change Default Noteskin.","dflnoteskin","stringfree","NOTE_assets");
 	option.showNote = true;
@@ -79779,6 +80009,17 @@ var dge_states_options_VisualUISubState = function() {
 	option.maxValue = 1;
 	option.changeValue = 0.01;
 	option.decimals = 2;
+	this.addOption(option);
+	var option = new options_Option("FPS Font Size","FPS Counter Font Size.","fpsFontSize","int",14);
+	option.minValue = 5;
+	option.scrollSpeed = 15;
+	option.onChange = function() {
+		if(Main.fpsVar != null) {
+			Main.fpsVar.set_defaultTextFormat(new openfl_text_TextFormat("_sans",ClientPrefs.fpsFontSize));
+		}
+	};
+	this.addOption(option);
+	var option = new options_Option("Legacy Note Layer","Use legacy Note Layer.","legacyNoteLayer","bool",false);
 	this.addOption(option);
 	options_BaseOptionsMenu.call(this);
 	this.changeBGColor(-65536);
@@ -81265,6 +81506,10 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.leftIcon.setGraphicSize(0,45);
 		this.gfIcon.setGraphicSize(0,45);
 		this.rightIcon.setGraphicSize(0,45);
+		this.eventIcon.updateHitbox();
+		this.rightIcon.updateHitbox();
+		this.gfIcon.updateHitbox();
+		this.leftIcon.updateHitbox();
 		this.add(this.prevRenderedNotes);
 		this.add(this.prevRenderedSustains);
 		this.add(this.curRenderedSustains);
@@ -81276,10 +81521,17 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.add(this.leftIcon);
 		this.add(this.gfIcon);
 		this.add(this.rightIcon);
-		this.eventIcon.setPosition(editors_ChartingState.GRID_SIZE / 2 - this.eventIcon.get_width() / 2,7.5);
-		this.leftIcon.setPosition(editors_ChartingState.GRID_SIZE + (editors_ChartingState.GRID_SIZE * 2 - this.leftIcon.get_width() / 2),0);
-		this.rightIcon.setPosition(editors_ChartingState.GRID_SIZE + (editors_ChartingState.GRID_SIZE * 6 - this.leftIcon.get_width() / 2),0);
-		this.gfIcon.setPosition(editors_ChartingState.GRID_SIZE + (editors_ChartingState.GRID_SIZE * 10 - this.gfIcon.get_width() / 2),0);
+		this.eventIcon.setPosition(editors_ChartingState.GRID_SIZE / 2 - this.eventIcon.get_width() / 2 - editors_ChartingState.GRID_SIZE,25);
+		this.eventIcon.offset.set(0,0);
+		this.leftIcon.offset.set(0,0);
+		this.rightIcon.offset.set(0,0);
+		this.gfIcon.offset.set(0,0);
+		this.leftIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 2);
+		this.rightIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 6);
+		this.gfIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 10);
+		this.leftIcon.set_y(this.eventIcon.y);
+		this.rightIcon.set_y(this.eventIcon.y);
+		this.gfIcon.set_y(this.eventIcon.y);
 		var tabs = [{ name : "Song", label : "Song"},{ name : "Section", label : "Section"},{ name : "Note", label : "Note"},{ name : "Events", label : "Events"},{ name : "Charting", label : "Charting"}];
 		this.UI_box = new flixel_addons_ui_FlxUITabMenu(null,null,tabs,null,true);
 		this.UI_box.resize(325,550);
@@ -83383,6 +83635,9 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			this.rightIcon.changeIcon(healthIconP1);
 			this.gfIcon.changeIcon(healthIconP3);
 		}
+		this.leftIcon.offset.set(0,0);
+		this.rightIcon.offset.set(0,0);
+		this.gfIcon.offset.set(0,0);
 	}
 	,loadHealthIconFromCharacter: function(char) {
 		var characterPath = "characters/" + char + ".json";
@@ -83786,7 +84041,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
 		var noteDataToCheck = actualNoteData;
-		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3405, className : "editors.ChartingState", methodName : "deleteNote"});
+		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3419, className : "editors.ChartingState", methodName : "deleteNote"});
 		if(note.noteData > -1) {
 			var _g = 0;
 			var _g1 = this._song.notes[editors_ChartingState.curSec].sectionNotes;
@@ -83851,7 +84106,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var noteStrum = this.getStrumTime(this.dummyArrow.y * (this.getSectionBeats() / 4),false) + this.sectionStartTime();
 		var noteData = Math.floor((pos - editors_ChartingState.GRID_SIZE) / editors_ChartingState.GRID_SIZE);
-		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3477, className : "editors.ChartingState", methodName : "addNote"});
+		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3491, className : "editors.ChartingState", methodName : "addNote"});
 		var noteSus = 0;
 		var daAlt = false;
 		var daType = this.currentType;
@@ -86387,11 +86642,9 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.popUpScore(note);
 				this.songHits++;
 			}
-			this.playerStrums.forEach(function(spr) {
-				if(Math.abs(note.noteData) == spr.ID) {
-					spr.playAnim(note.animConfirm.length < 1 ? spr.animConfirm : note.animConfirm,true,note.isSustainNote,note,true);
-				}
-			});
+			if(note.strumNote != null) {
+				note.strumNote.playAnim(note.animConfirm.length < 1 ? note.strumNote.animConfirm : note.animConfirm,true,note.isSustainNote,note,true);
+			}
 			if(note.multiPress <= 0) {
 				note.wasGoodHit = true;
 				this.vocals.set_volume(1);
@@ -166293,7 +166546,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 978880;
+	this.version = 847513;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -218252,6 +218505,7 @@ openfl_display_DisplayObject.__tempStack = new lime_utils_ObjectPool(function() 
 	stack.set_length(0);
 });
 Character.DEFAULT_CHARACTER = "bf";
+ClientPrefs.legacyNoteLayer = false;
 ClientPrefs.holdCoverAlpha = 1;
 ClientPrefs.holdCover = true;
 ClientPrefs.holdCoverOpt = true;
@@ -218277,7 +218531,6 @@ ClientPrefs.extUI = false;
 ClientPrefs.autopause = true;
 ClientPrefs.dragonW = false;
 ClientPrefs.darkmode = false;
-ClientPrefs.ofhb = false;
 ClientPrefs.dflnoteskin = "NOTE_assets";
 ClientPrefs.longNoteAlpha = 0.6;
 ClientPrefs.strumsize = 0.7;
