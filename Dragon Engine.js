@@ -6612,12 +6612,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "359";
+	app.meta.h["build"] = "361";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.8.0";
+	app.meta.h["version"] = "26.8.1";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -49011,6 +49011,10 @@ var CustomFadeTransition = function(duration,isTransIn,grp) {
 	var fh = this.transGradient;
 	fh.set_x(fh.x - (width - flixel_FlxG.width) / 2);
 	this.transBlack.set_x(this.transGradient.x);
+	var offsetScreenX = -(flixel_FlxG.height * 16 / 9 - flixel_FlxG.width) / 2;
+	if(flixel_FlxG.width >= flixel_FlxG.height * 16 / 9) {
+		offsetScreenX = 0;
+	}
 	if(isTransIn) {
 		this.transGradient.set_y(this.transBlack.y - this.transBlack.get_height());
 		flixel_tweens_FlxTween.tween(this.transGradient,{ y : this.transGradient.get_height() + 50},duration,{ onComplete : function(twn) {
@@ -52152,7 +52156,7 @@ FunkinLua.prototype = {
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3788, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 3807, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -67200,7 +67204,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				time += timeAdd;
 			}
 			if(note.playStrumAnim && !note.fakeNoHit && !ClientPrefs.clsstrum) {
-				this.StrumPlayAnim(this.gamemode == "opponent" || (this.gamemode == "bothside v2" || this.gamemode == "bothside") && note.mustPress ? false : true,Math.abs(note.noteData) | 0,time,true,note.fieldTarget,note);
+				this.StrumPlayAnim(time,note);
 			}
 			if(note.fieldTarget.length > 0) {
 				this.callOnLuas("fieldNoteHit",[note.fieldTarget,this.notes.members.indexOf(note),Math.abs(note.noteData),note.noteType,note.isSustainNote]);
@@ -67379,7 +67383,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					time += timeAdd;
 				}
 				if(note.playStrumAnim && !note.fakeNoHit && !ClientPrefs.clsstrum) {
-					this.StrumPlayAnim(!note.mustPress,Math.abs(note.noteData) | 0,time,true,note.fieldTarget,note);
+					this.StrumPlayAnim(time,note);
 				}
 			} else if(note.autoPress || (this.playableField.length < 1 ? note.fieldTarget.length > 0 : this.playableField.indexOf(note.fieldTarget) == -1)) {
 				var time = 0.2;
@@ -67400,7 +67404,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					time += timeAdd;
 				}
 				if(note.playStrumAnim && !note.fakeNoHit && !ClientPrefs.clsstrum) {
-					this.StrumPlayAnim(!note.mustPress,Math.abs(note.noteData) | 0,time,true,note.fieldTarget,note);
+					this.StrumPlayAnim(time,note);
 				}
 			} else {
 				var spr = note.strumNote;
@@ -67837,19 +67841,20 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,setOnLuas: function(variable,arg) {
 	}
-	,StrumPlayAnim: function(isDad,id,time,custom,ft,note) {
-		if(ft == null) {
-			ft = "";
-		}
-		if(custom == null) {
-			custom = false;
-		}
+	,StrumPlayAnim: function(time,note) {
 		var spr = null;
 		if(note != null) {
 			spr = note.strumNote;
 		}
-		if(spr != null) {
-			spr.playAnim(note.animConfirm == null || note.animConfirm.length < 1 ? spr.animConfirm == null || spr.animConfirm.length < 1 ? "confirm" : spr.animConfirm : note.animConfirm,true,note.isSustainNote,note,true);
+		if(spr != null && note != null) {
+			var anim = "confirm";
+			if(spr.animConfirm != null && spr.animConfirm.length > 1) {
+				anim = spr.animConfirm;
+			}
+			if(note.animConfirm != null && note.animConfirm.length > 1) {
+				anim = note.animConfirm;
+			}
+			spr.playAnim(anim,true,note.isSustainNote,note,true);
 			spr.resetAnim = time;
 		}
 	}
@@ -68423,7 +68428,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7081, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7082, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -68449,7 +68454,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7094, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7095, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -166546,7 +166551,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 847513;
+	this.version = 637340;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
