@@ -6612,12 +6612,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "361";
+	app.meta.h["build"] = "362";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.8.1";
+	app.meta.h["version"] = "26.8.2";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -57420,8 +57420,8 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 				} else {
 					this.animation.play("full");
 				}
-				this.iconOffsets[0] = this.get_width() - 150 + data.netral.offset[0];
-				this.iconOffsets[1] = this.get_height() - 150 + data.netral.offset[1];
+				this.iconOffsets[0] = data.netral.offset[0];
+				this.iconOffsets[1] = data.netral.offset[1];
 				this.offsetMap.h["netral"] = data.netral.offset;
 				this.offsetMap.h["lose"] = data.lose.offset;
 				if(data.win != null) {
@@ -57460,7 +57460,7 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 				jsonData.netral.xmlName = "netral";
 			}
 			if(jsonData.netral.offset == null || jsonData.netral.offset.length < 2) {
-				jsonData.netral.offset = [0,0];
+				jsonData.netral.offset = jsonData.netral.offset != null && jsonData.netral.offset.length == 1 ? [jsonData.netral.offset[0],jsonData.netral.offset[0]] : [0,0];
 			}
 			if(jsonData.netral.fps == null) {
 				jsonData.netral.fps = 24;
@@ -57482,7 +57482,7 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 				jsonData.lose.xmlName = "lose";
 			}
 			if(jsonData.lose.offset == null || jsonData.lose.offset.length < 2) {
-				jsonData.lose.offset = [0,0];
+				jsonData.lose.offset = jsonData.lose.offset != null && jsonData.lose.offset.length == 1 ? [jsonData.lose.offset[0],jsonData.lose.offset[0]] : [0,0];
 			}
 			if(jsonData.lose.fps == null) {
 				jsonData.lose.fps = 24;
@@ -57495,6 +57495,26 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 			}
 			if(jsonData.lose.flipY == null) {
 				jsonData.lose.flipY = false;
+			}
+		}
+		if(jsonData.win != null) {
+			if(jsonData.win.xmlName == null) {
+				jsonData.win.xmlName = "win";
+			}
+			if(jsonData.win.offset == null || jsonData.win.offset.length < 2) {
+				jsonData.win.offset = jsonData.win.offset != null && jsonData.win.offset.length == 1 ? [jsonData.win.offset[0],jsonData.win.offset[0]] : [0,0];
+			}
+			if(jsonData.win.fps == null) {
+				jsonData.win.fps = 24;
+			}
+			if(jsonData.win.loop == null) {
+				jsonData.win.loop = true;
+			}
+			if(jsonData.win.flipX == null) {
+				jsonData.win.flipX = false;
+			}
+			if(jsonData.win.flipY == null) {
+				jsonData.win.flipY = false;
 			}
 		}
 		if(jsonData.full == null) {
@@ -57559,17 +57579,26 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 		if(force == null) {
 			force = false;
 		}
-		if(this.animation != null && this.animation._curAnim != null && this.animation._curAnim.name != name || force) {
+		if(this.spriteSheet && this.animation != null && this.animation._curAnim != null && this.animation._curAnim.name != name || force) {
+			var currentFrame = this.animation._curAnim.curFrame;
+			var frameLength = this.animation._animations.h[name] != null ? this.animation._animations.h[name].frames.length : 0;
 			this.animation.play(name);
-			if(Object.prototype.hasOwnProperty.call(this.offsetMap.h,name)) {
-				this.iconOffsets[0] = this.get_width() - 150 + this.offsetMap.h[name][0];
-				this.iconOffsets[1] = this.get_height() - 150 + this.offsetMap.h[name][1];
-			} else if(Object.prototype.hasOwnProperty.call(this.offsetMap.h,"netral")) {
-				this.iconOffsets[0] = this.get_width() - 150 + this.offsetMap.h["netral"][0];
-				this.iconOffsets[1] = this.get_height() - 150 + this.offsetMap.h["netral"][1];
+			if(frameLength > 0 && currentFrame <= frameLength - 1) {
+				this.animation._curAnim.set_curFrame(currentFrame);
+			} else if(currentFrame > frameLength - 1 && frameLength > 0) {
+				this.animation._curAnim.set_curFrame(frameLength - 1);
 			} else {
-				this.iconOffsets[0] = this.get_width() - 150;
-				this.iconOffsets[1] = this.get_height() - 150;
+				this.animation._curAnim.set_curFrame(0);
+			}
+			if(Object.prototype.hasOwnProperty.call(this.offsetMap.h,name)) {
+				this.iconOffsets[0] = this.offsetMap.h[name][0];
+				this.iconOffsets[1] = this.offsetMap.h[name][1];
+			} else if(Object.prototype.hasOwnProperty.call(this.offsetMap.h,"netral")) {
+				this.iconOffsets[0] = this.offsetMap.h["netral"][0];
+				this.iconOffsets[1] = this.offsetMap.h["netral"][1];
+			} else {
+				this.iconOffsets[0] = 0;
+				this.iconOffsets[1] = 0;
 			}
 			this.changeOffsets();
 		}
@@ -81528,9 +81557,6 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.add(this.rightIcon);
 		this.eventIcon.setPosition(editors_ChartingState.GRID_SIZE / 2 - this.eventIcon.get_width() / 2 - editors_ChartingState.GRID_SIZE,25);
 		this.eventIcon.offset.set(0,0);
-		this.leftIcon.offset.set(0,0);
-		this.rightIcon.offset.set(0,0);
-		this.gfIcon.offset.set(0,0);
 		this.leftIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 2);
 		this.rightIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 6);
 		this.gfIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 10);
@@ -83640,9 +83666,6 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			this.rightIcon.changeIcon(healthIconP1);
 			this.gfIcon.changeIcon(healthIconP3);
 		}
-		this.leftIcon.offset.set(0,0);
-		this.rightIcon.offset.set(0,0);
-		this.gfIcon.offset.set(0,0);
 	}
 	,loadHealthIconFromCharacter: function(char) {
 		var characterPath = "characters/" + char + ".json";
@@ -84046,7 +84069,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
 		var noteDataToCheck = actualNoteData;
-		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3419, className : "editors.ChartingState", methodName : "deleteNote"});
+		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3413, className : "editors.ChartingState", methodName : "deleteNote"});
 		if(note.noteData > -1) {
 			var _g = 0;
 			var _g1 = this._song.notes[editors_ChartingState.curSec].sectionNotes;
@@ -84111,7 +84134,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var noteStrum = this.getStrumTime(this.dummyArrow.y * (this.getSectionBeats() / 4),false) + this.sectionStartTime();
 		var noteData = Math.floor((pos - editors_ChartingState.GRID_SIZE) / editors_ChartingState.GRID_SIZE);
-		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3491, className : "editors.ChartingState", methodName : "addNote"});
+		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3485, className : "editors.ChartingState", methodName : "addNote"});
 		var noteSus = 0;
 		var daAlt = false;
 		var daType = this.currentType;
@@ -166551,7 +166574,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 637340;
+	this.version = 825972;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
