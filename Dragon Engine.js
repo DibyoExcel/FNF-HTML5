@@ -2313,10 +2313,13 @@ flixel_FlxSprite.prototype = $extend(flixel_FlxObject.prototype,{
 		if(this.dirty) {
 			this.calcFrame(this.useFramePixels);
 		}
+		var cam = this.get_cameras();
+		if(cam == null) {
+			cam = flixel_FlxCamera._defaultCameras;
+		}
 		var _g = 0;
-		var _g1 = this.get_cameras();
-		while(_g < _g1.length) {
-			var camera = _g1[_g];
+		while(_g < cam.length) {
+			var camera = cam[_g];
 			++_g;
 			if(!camera.visible || !camera.exists || !this.isOnScreen(camera)) {
 				continue;
@@ -6612,12 +6615,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "368";
+	app.meta.h["build"] = "370";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.9.1";
+	app.meta.h["version"] = "26.9.3";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -52248,7 +52251,7 @@ FunkinLua.prototype = {
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4112, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4051, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -58006,7 +58009,7 @@ LoadingState.getNextState = function(target,stopMusic) {
 		directory = weekDir;
 	}
 	Paths.setCurrentLevel(directory);
-	haxe_Log.trace("Setting asset folder to " + directory,{ fileName : "source/LoadingState.hx", lineNumber : 162, className : "LoadingState", methodName : "getNextState"});
+	haxe_Log.trace("Setting asset folder to " + directory,{ fileName : "source/LoadingState.hx", lineNumber : 164, className : "LoadingState", methodName : "getNextState"});
 	var loaded = false;
 	if(PlayState.SONG != null) {
 		loaded = LoadingState.isSoundLoaded(LoadingState.getSongPath()) && (!PlayState.SONG.needsVoices || LoadingState.isSoundLoaded(LoadingState.getVocalPath())) && LoadingState.isLibraryLoaded("shared") && LoadingState.isLibraryLoaded(directory);
@@ -59284,7 +59287,7 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	this.holdCoverOffsetX = 0;
 	this.holdCoverScale = 1;
 	this.holdCoverScrollFactor = [1,1];
-	this.holdCoverCam = "hud";
+	this.holdCoverCam = "";
 	this.holdCoverCopyAlpha = true;
 	this.holdCoverAlpha = ClientPrefs.holdCoverAlpha;
 	this.holdCoverTexture = null;
@@ -59306,6 +59309,8 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	this.snapAngle = 0;
 	this.snapY = 0;
 	this.snapX = 0;
+	this.copyCam = true;
+	this.copyScrollFactor = true;
 	this.copyDirection = true;
 	this.copyFlipY = false;
 	this.opponentRating = false;
@@ -59329,7 +59334,7 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	this.offsetStrumTime = 0;
 	this.noteSplashScrollFactor = [1,1];
 	this.noteSplashScale = 1.0;
-	this.noteSplashCam = "hud";
+	this.noteSplashCam = "";
 	this.noteScale = 1.0;
 	this.direction = 0;
 	this.autoPress = false;
@@ -59590,6 +59595,8 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	,opponentRating: null
 	,copyFlipY: null
 	,copyDirection: null
+	,copyScrollFactor: null
+	,copyCam: null
 	,snapX: null
 	,snapY: null
 	,snapAngle: null
@@ -60317,7 +60324,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g1 ) {
 					haxe_NativeStackTrace.lastError = _g1;
 					var e = haxe_Exception.caught(_g1).unwrap();
-					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1042, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1045, className : "Note", methodName : "setConfig"});
 				}
 			} else {
 				try {
@@ -60332,11 +60339,14 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g4 ) {
 					haxe_NativeStackTrace.lastError = _g4;
 					var e1 = haxe_Exception.caught(_g4).unwrap();
-					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1053, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1056, className : "Note", methodName : "setConfig"});
 					dge_backend_CacheTools.jsonParse.h[name] = { };
 				}
 			}
 		}
+	}
+	,get_cameras: function() {
+		return this._cameras;
 	}
 	,__class__: Note
 	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_holdCoverTexture:"set_holdCoverTexture",set_holdCover:"set_holdCover",set_downScroll:"set_downScroll",set_flipScroll:"set_flipScroll",set_hitsound:"set_hitsound",set_alignSustainNote:"set_alignSustainNote",set_noteScale:"set_noteScale",set_texture:"set_texture",set_multSpeed:"set_multSpeed",set_noteSplashTexture:"set_noteSplashTexture",set_gfNote:"set_gfNote",set_noteType:"set_noteType",set_noteData:"set_noteData",set_mustPress:"set_mustPress"})
@@ -60458,6 +60468,8 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 				realCam[i] = StringTools.trim(camArray[i]);
 			}
 			this.set_cameras(FunkinLua.cameraArrayFromString(realCam));
+		} else {
+			this.set_cameras(null);
 		}
 		this.scrollFactor.set(sfX,sfY);
 		var noteWidth = Note.swagWidth;
@@ -60952,7 +60964,7 @@ Paths.returnGraphic = function(key,library) {
 			dge_backend_CacheTools.cacheImage.h[Paths.currentModDirectory + key] = Paths.currentTrackedAssets.h[path];
 			return Paths.currentTrackedAssets.h[path];
 		}
-		haxe_Log.trace("Missing image asset: " + key + ". Using Checkerboard placeholder.",{ fileName : "source/Paths.hx", lineNumber : 513, className : "Paths", methodName : "returnGraphic"});
+		haxe_Log.trace("Missing image asset: " + key + ". Using Checkerboard placeholder.",{ fileName : "source/Paths.hx", lineNumber : 527, className : "Paths", methodName : "returnGraphic"});
 		var checkBoard = CoolUtil.makeCheckerboardGraphic();
 		checkBoard.persist = true;
 		dge_backend_CacheTools.cacheImage.h[Paths.currentModDirectory + key] = checkBoard;
@@ -62833,6 +62845,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.playerNotes.set_cameras([this.camHUD]);
 		this.opponentNotes.set_cameras([this.camHUD]);
 		this.gfNotes.set_cameras([this.camHUD]);
+		this.grpHoldCover.set_cameras([this.camHUD]);
+		this.grpHoldCoverOpt.set_cameras([this.camHUD]);
+		this.grpHoldCoverGf.set_cameras([this.camHUD]);
+		this.grpNoteSplashes.set_cameras([this.camHUD]);
+		this.grpNoteSplashesOpt.set_cameras([this.camHUD]);
+		this.grpNoteSplashesGf.set_cameras([this.camHUD]);
 		this.startingSong = true;
 		this.noteTypeMap.h = Object.create(null);
 		this.noteTypeMap = null;
@@ -62974,8 +62992,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,set_songSpeed: function(value) {
 		if(this.generatedMusic) {
-			if(value == 0) {
-				value = 0.01;
+			if(Math.abs(value) <= 0.001) {
+				if(value < 0) {
+					value = -0.001;
+				} else {
+					value = 0.001;
+				}
 			}
 			var ratio = value / this.songSpeed;
 			var note = new flixel_group_FlxTypedGroupIterator(this.notes.members,null);
@@ -63021,7 +63043,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.playbackRate = value;
 		flixel_animation_FlxAnimationController.globalSpeed = value;
-		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1734, className : "PlayState", methodName : "set_playbackRate"});
+		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1743, className : "PlayState", methodName : "set_playbackRate"});
 		Conductor.safeZoneOffset = ClientPrefs.safeFrames / 60 * 1000 * value;
 		this.setOnLuas("playbackRate",this.playbackRate);
 		return value;
@@ -65032,7 +65054,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3757, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3766, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
@@ -65197,8 +65219,8 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 								longNotesOffset += daNote.parent.get_width() / 2 - daNote.get_width() / 2;
 							}
 						}
-						strumX += Math.sin(angleDir) * longNotesOffset;
-						strumY += Math.cos(angleDir) * longNotesOffset;
+						strumX += Math.abs(Math.sin(angleDir) * longNotesOffset);
+						strumY += Math.abs(Math.cos(angleDir) * longNotesOffset);
 						if(daNote.updateDistance) {
 							if(strumScroll) {
 								daNote.distance = 0.45 * (Conductor.songPosition - daNote.strumTime + daNote.offsetStrumTime) * Math.abs(_gthis.songSpeed * daNote.multSpeed);
@@ -65251,6 +65273,13 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 								daNote.set_y(daNote.y + 27.5 * (PlayState.SONG.bpm / 100 - 1) * (Math.abs(_gthis.songSpeed * daNote.multSpeed) - 1) * angleY);
 							}
 						}
+						if(daNote.copyScrollFactor) {
+							daNote.scrollFactor.set_x(actualStrum.scrollFactor.x);
+							daNote.scrollFactor.set_y(actualStrum.scrollFactor.y);
+						}
+						if(daNote.copyCam) {
+							daNote.set_cameras(actualStrum.get_cameras());
+						}
 						if(!daNote.fakeNoHit) {
 							var center = strumY + actualStrum.get_height() * actualStrum.sustainReducePoint;
 							if(actualStrum.sustainReduce && daNote.isSustainNote && (_gthis.gamemodeManager(daNote) || !daNote.ignoreNote && !daNote.canFreeze) && (!_gthis.gamemodeManager(daNote) || (daNote.wasGoodHit || daNote.prevNote.wasGoodHit && (!daNote.canBeHit || _gthis.cpuControlled)))) {
@@ -65260,14 +65289,22 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 										swagRect.height = (center - daNote.y) / daNote.scale.y;
 										swagRect.y = daNote.frameHeight - swagRect.height;
 										daNote.set_clipRect(swagRect);
+									} else if(daNote.clipRect != null) {
+										daNote.set_clipRect(null);
 									}
 								} else if(daNote.y + daNote.offset.y * daNote.scale.y <= center) {
 									var swagRect = new flixel_math_FlxRect(0,0,daNote.get_width() / daNote.scale.x,daNote.get_height() / daNote.scale.y);
 									swagRect.y = (center - daNote.y) / daNote.scale.y;
 									swagRect.height -= swagRect.y;
 									daNote.set_clipRect(swagRect);
+								} else if(daNote.clipRect != null) {
+									daNote.set_clipRect(null);
 								}
+							} else if(daNote.clipRect != null) {
+								daNote.set_clipRect(null);
 							}
+						} else if(daNote.clipRect != null) {
+							daNote.set_clipRect(null);
 						}
 					} else {
 						daNote.strumNote = null;
@@ -65324,17 +65361,17 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							}
 						}
 					}
-					var botCanHit = daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime < Conductor.songPosition + Conductor.safeZoneOffset * daNote.earlyHitMult || !daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime <= Conductor.songPosition;
-					if((daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null) && (_gthis.gamemode == "opponent" ? !daNote.blockHit && !daNote.canFreeze && daNote.mustPress : !daNote.mustPress) && (!daNote.ignoreNote && !daNote.canFreeze) && daNote.fieldTarget.length < 1 && !(_gthis.gamemode == "bothside v2" || _gthis.gamemode == "bothside") && botCanHit) {
+					var botCanHit = (daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime < Conductor.songPosition + Conductor.safeZoneOffset * daNote.earlyHitMult && (daNote.parent != null ? daNote.parent.wasGoodHit : true) || !daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime <= Conductor.songPosition) && (daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null);
+					if((_gthis.gamemode == "opponent" ? !daNote.blockHit && !daNote.canFreeze && daNote.mustPress : !daNote.mustPress) && (!daNote.ignoreNote && !daNote.canFreeze) && daNote.fieldTarget.length < 1 && !(_gthis.gamemode == "bothside v2" || _gthis.gamemode == "bothside") && botCanHit) {
 						_gthis.opponentNoteHit(daNote);
 					}
-					if((daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null) && (_gthis.gamemode == "opponent" ? !daNote.blockHit && !daNote.canFreeze && daNote.mustPress : !daNote.mustPress) && (!daNote.ignoreNote && !daNote.canFreeze) && daNote.fieldTarget.length > 0 && botCanHit) {
+					if((_gthis.gamemode == "opponent" ? !daNote.blockHit && !daNote.canFreeze && daNote.mustPress : !daNote.mustPress) && (!daNote.ignoreNote && !daNote.canFreeze) && daNote.fieldTarget.length > 0 && botCanHit) {
 						_gthis.opponentNoteHit(daNote);
 					}
-					if((daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null) && (_gthis.gamemode != "opponent" ? !daNote.blockHit && !daNote.canFreeze && (_gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress) : !daNote.mustPress) && _gthis.cpuControlled && !(daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.fieldTarget.length > 0 : _gthis.playableField.indexOf(daNote.fieldTarget) == -1)) && botCanHit) {
+					if((_gthis.gamemode != "opponent" ? !daNote.blockHit && !daNote.canFreeze && (_gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress) : !daNote.mustPress) && _gthis.cpuControlled && !(daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.fieldTarget.length > 0 : _gthis.playableField.indexOf(daNote.fieldTarget) == -1)) && botCanHit) {
 						_gthis.goodNoteHit(daNote);
 					}
-					if(daNote.strumNote != null && !daNote.strumNote.isLocked && (_gthis.gamemode != "opponent" ? !daNote.blockHit && !daNote.canFreeze && (_gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress) : !daNote.mustPress) && (daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.fieldTarget.length > 0 : _gthis.playableField.indexOf(daNote.fieldTarget) == -1)) && botCanHit) {
+					if((_gthis.gamemode != "opponent" ? !daNote.blockHit && !daNote.canFreeze && (_gthis.gamemode == "bothside" || _gthis.gamemode == "bothside v2" ? true : daNote.mustPress) : !daNote.mustPress) && (daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.fieldTarget.length > 0 : _gthis.playableField.indexOf(daNote.fieldTarget) == -1)) && botCanHit) {
 						_gthis.goodNoteHit(daNote);
 					}
 					if(Conductor.songPosition > _gthis.noteKillOffset / Math.abs(_gthis.songSpeed * daNote.multSpeed) + (daNote.strumTime + daNote.offsetStrumTime)) {
@@ -66470,12 +66507,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4860, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 4895, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4861, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 4896, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -66511,7 +66548,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 4894, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 4929, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -66522,7 +66559,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4905, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 4940, className : "PlayState", methodName : "endSong"});
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 					CustomFadeTransition.nextCamera = null;
@@ -66545,7 +66582,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4929, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 4964, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -68333,10 +68370,22 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			tag = "";
 		}
 		if(tag != "" && !Object.prototype.hasOwnProperty.call(this.strumGroupMap.h,tag) && !Object.prototype.hasOwnProperty.call(this.notesGroupMap.h,tag) && !Object.prototype.hasOwnProperty.call(this.noteSplashGroupMap.h,tag) && !Object.prototype.hasOwnProperty.call(this.holdCoverGroupMap.h,tag)) {
+			var stringArray = camera.split(",");
+			var realCam = [];
+			var _g = 0;
+			var _g1 = stringArray.length;
+			while(_g < _g1) {
+				var i = _g++;
+				realCam.push(FunkinLua.cameraBetterFromString(StringTools.trim(stringArray[i])));
+			}
 			var strumTamp = new flixel_group_FlxTypedGroup();
+			strumTamp.set_cameras(realCam);
 			var notesTamp = new flixel_group_FlxTypedGroup();
+			notesTamp.set_cameras(realCam);
 			var noteSplashTamp = new flixel_group_FlxTypedGroup();
+			noteSplashTamp.set_cameras(realCam);
 			var holdCoverTamp = new flixel_group_FlxTypedGroup();
+			holdCoverTamp.set_cameras(realCam);
 			if(downScroll == null) {
 				downScroll = ClientPrefs.downScroll;
 			}
@@ -68347,21 +68396,34 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					var i = _g++;
 					var babyArrow = new StrumNote(i * Note.swagWidth,this.strumLine.y,i,player ? 1 : 0,gf);
 					babyArrow.scrollFactor.set(sfX,sfY);
-					var stringArray = camera.split(",");
-					var realCam = [];
-					var _g2 = 0;
-					var _g3 = stringArray.length;
-					while(_g2 < _g3) {
-						var i1 = _g2++;
-						realCam.push(FunkinLua.cameraBetterFromString(StringTools.trim(stringArray[i1])));
-					}
-					babyArrow.set_cameras(realCam);
 					babyArrow.downScroll = downScroll;
 					babyArrow.postAddedToGroup();
 					strumTamp.add(babyArrow);
 					babyArrow.fieldName = tag;
 					babyArrow.memberID = i;
 					this.customStrum.add(babyArrow);
+				}
+			}
+			if(this.notes != null) {
+				var _g = 0;
+				var _g1 = this.notes.members;
+				while(_g < _g1.length) {
+					var note = _g1[_g];
+					++_g;
+					if(note.fieldTarget == tag) {
+						note.scrollFactor.set(sfX,sfY);
+					}
+				}
+			}
+			if(this.unspawnNotes != null) {
+				var _g = 0;
+				var _g1 = this.unspawnNotes;
+				while(_g < _g1.length) {
+					var note = _g1[_g];
+					++_g;
+					if(note.fieldTarget == tag) {
+						note.scrollFactor.set(sfX,sfY);
+					}
 				}
 			}
 			this.strumGroupMap.h[tag] = strumTamp;
@@ -68527,7 +68589,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7104, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7155, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -68553,7 +68615,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7117, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7168, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -70876,6 +70938,9 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			var fh = this.scale;
 			fh.set_y(fh.y * 0.75);
 		}
+	}
+	,get_cameras: function() {
+		return this._cameras;
 	}
 	,__class__: StrumNote
 	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_texture:"set_texture"})
@@ -77126,6 +77191,8 @@ dge_obj_game_HoldCover.prototype = $extend(flixel_FlxSprite.prototype,{
 					realCam[i] = StringTools.trim(camArray[i]);
 				}
 				this.set_cameras(FunkinLua.cameraArrayFromString(realCam));
+			} else {
+				this.set_cameras(null);
 			}
 		}
 	}
@@ -86434,7 +86501,6 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 						var gfSec = section.gfSection && songNotes[1] < 4 || should_gf != -1 || !section.gfSection && songNotes[1] > 7;
 						var swagNote = new Note(daStrumTime,daNoteData,oldNote,null,null,songNotes[3] == "GF Sing Force Opponent" || should_opt != -1 ? false : should_ply != -1 ? true : gottaHitNote,gfSec,noteType);
 						swagNote.sustainLength = songNotes[2];
-						swagNote.noteSplashCam = "";
 						swagNote.scrollFactor.set();
 						var susLength = swagNote.sustainLength;
 						susLength /= Conductor.stepCrochet;
@@ -86448,7 +86514,6 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 								oldNote = this.unspawnNotes[this.unspawnNotes.length - 1 | 0];
 								var sustainNote = new Note(daStrumTime + Conductor.stepCrochet * susNote + Conductor.stepCrochet / flixel_math_FlxMath.roundDecimal(PlayState.SONG.speed,2),daNoteData,oldNote,true,null,songNotes[3] == "GF Sing Force Opponent" || should_opt != -1 ? false : should_ply != -1 ? true : gottaHitNote,gfSec,swagNote.noteType,susNote == floorSus);
 								sustainNote.scrollFactor.set();
-								sustainNote.noteSplashCam = "";
 								sustainNote.parent = swagNote;
 								this.unspawnNotes.push(sustainNote);
 								if(sustainNote.mustPress) {
@@ -166805,7 +166870,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 15987;
+	this.version = 240747;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
