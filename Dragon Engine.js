@@ -6615,12 +6615,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "371";
+	app.meta.h["build"] = "372";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.9.4";
+	app.meta.h["version"] = "26.9.5";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -35161,7 +35161,8 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	if(!this.isSustainNote) {
 		var animToPlay = "";
 		animToPlay = this.colArray[noteData % this.colArray.length];
-		this.animation.play(animToPlay + "Scroll");
+		var animName = this.animationDownScrollHandle(animToPlay + "Scroll");
+		this.animation.play(animName);
 	}
 	if(prevNote != null) {
 		prevNote.nextNote = this;
@@ -35172,7 +35173,8 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 		this.hitsoundDisabled = true;
 		this.copyAngle = false;
 		this.copyFlipY = true;
-		this.animation.play(this.colArray[noteData % this.colArray.length] + (tail ? "holdend" : "hold"));
+		var animName = this.animationDownScrollHandle(this.colArray[noteData % this.colArray.length] + (tail ? "holdend" : "hold"));
+		this.animation.play(animName);
 		this.updateHitbox();
 		if(!tail) {
 			var fh = this.scale;
@@ -35406,15 +35408,19 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		return flixel_FlxSprite.prototype.set_alpha.call(this,value);
 	}
 	,set_multSpeed: function(value) {
+		var reload = false;
 		this.resizeByRatio(value / this.multSpeed);
 		if((this.multSpeed < 0 && value >= 0 || (this.multSpeed >= 0 || value < 0)) && this.downScroll == null) {
-			this.reloadNoteSkin();
+			reload = true;
 		}
 		this.multSpeed = value;
+		if(reload) {
+			this.reloadAnim();
+		}
 		return value;
 	}
 	,resizeByRatio: function(ratio) {
-		if(this.isSustainNote && !StringTools.endsWith(this.animation._curAnim.name,"end")) {
+		if(this.isSustainNote && !(StringTools.endsWith(this.animation._curAnim.name,"end") || StringTools.endsWith(this.animation._curAnim.name,"end_down"))) {
 			if(this.scale.y == 0) {
 				var fh = this.scale;
 				fh.set_y(fh.y + ratio);
@@ -35650,7 +35656,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			this.scale.set_y(lastScaleY);
 		}
 		if(animName != null) {
-			this.animation.play(animName,true);
+			this.animation.play(this.animationDownScrollHandle(animName),true);
 		}
 		this.updateHitbox();
 		if(this.inEditor) {
@@ -35663,18 +35669,14 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		var _g1 = this.colArray.length;
 		while(_g < _g1) {
 			var i = _g++;
-			if(this.getActualDownscroll()) {
-				var addAnimThingy = CoolUtil.addSpecialAnimation;
-				addAnimThingy(this,this.colArray[i] + "Scroll",this.colArray[i] + "_DownScroll0",this.colArray[i] + "0",true,ClientPrefs.fpsStrumAnim);
-				addAnimThingy(this,"purpleholdend","pruple end hold_DownScroll0","pruple end hold0",true,ClientPrefs.fpsStrumAnim);
-				addAnimThingy(this,this.colArray[i] + "holdend",this.colArray[i] + " hold end_DownScroll0",this.colArray[i] + " hold end0",true,ClientPrefs.fpsStrumAnim);
-				addAnimThingy(this,this.colArray[i] + "hold",this.colArray[i] + " hold piece_DownScroll0",this.colArray[i] + " hold piece0",true,ClientPrefs.fpsStrumAnim);
-			} else {
-				this.animation.addByPrefix(this.colArray[i] + "Scroll",this.colArray[i] + "0");
-				this.animation.addByPrefix("purpleholdend","pruple end hold0");
-				this.animation.addByPrefix(this.colArray[i] + "holdend",this.colArray[i] + " hold end0");
-				this.animation.addByPrefix(this.colArray[i] + "hold",this.colArray[i] + " hold piece0");
-			}
+			this.animation.addByPrefix(this.colArray[i] + "Scroll",this.colArray[i] + "0");
+			this.animation.addByPrefix("purpleholdend","pruple end hold0");
+			this.animation.addByPrefix(this.colArray[i] + "holdend",this.colArray[i] + " hold end0");
+			this.animation.addByPrefix(this.colArray[i] + "hold",this.colArray[i] + " hold piece0");
+			this.animation.addByPrefix(this.colArray[i] + "Scroll_down",this.colArray[i] + "_DownScroll0");
+			this.animation.addByPrefix("purpleholdend_down","pruple end hold_DownScroll0");
+			this.animation.addByPrefix(this.colArray[i] + "holdend_down",this.colArray[i] + " hold end_DownScroll0");
+			this.animation.addByPrefix(this.colArray[i] + "hold_down",this.colArray[i] + " hold piece_DownScroll0");
 		}
 	}
 	,loadPixelNoteAnims: function() {
@@ -35712,7 +35714,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				this.set_flipY(!this.flipY);
 			}
 			if(this.downScroll == null) {
-				this.reloadNoteSkin();
+				this.reloadAnim();
 			}
 		}
 		this.flipScroll = value;
@@ -35796,7 +35798,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			if(value != null) {
 				this.set_flipY(value);
 			}
-			this.reloadNoteSkin();
+			this.reloadAnim();
 		}
 		return value;
 	}
@@ -35806,9 +35808,9 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			if(!this.isSustainNote) {
 				var animToPlay = "";
 				animToPlay = this.colArray[this.noteData % this.colArray.length];
-				this.animation.play(animToPlay + "Scroll");
+				this.animation.play(this.animationDownScrollHandle(animToPlay + "Scroll"));
 			} else {
-				this.animation.play(this.colArray[this.noteData % this.colArray.length] + (this.sustainTail ? "holdend" : "hold"));
+				this.animation.play(this.animationDownScrollHandle(this.colArray[this.noteData % this.colArray.length] + (this.sustainTail ? "holdend" : "hold")));
 			}
 		}
 		return value;
@@ -35995,13 +35997,16 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			return this.downScroll;
 		} else {
 			var down = ClientPrefs.downScroll;
-			if(this.flipScroll) {
-				down = !down;
+			if(this.strumNote != null) {
+				down = this.strumNote.downScroll;
 			}
 			if(PlayState.instance != null && PlayState.instance.songSpeed < 0) {
 				down = !down;
 			}
 			if(this.multSpeed < 0) {
+				down = !down;
+			}
+			if(this.flipScroll) {
 				down = !down;
 			}
 			return down;
@@ -36029,7 +36034,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g1 ) {
 					haxe_NativeStackTrace.lastError = _g1;
 					var e = haxe_Exception.caught(_g1).unwrap();
-					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1024, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1025, className : "Note", methodName : "setConfig"});
 				}
 			} else {
 				try {
@@ -36044,7 +36049,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g4 ) {
 					haxe_NativeStackTrace.lastError = _g4;
 					var e1 = haxe_Exception.caught(_g4).unwrap();
-					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1035, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1036, className : "Note", methodName : "setConfig"});
 					dge_backend_CacheTools.jsonParse.h[name] = { };
 				}
 			}
@@ -36052,6 +36057,29 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	}
 	,get_cameras: function() {
 		return this._cameras;
+	}
+	,animationDownScrollHandle: function(anim) {
+		if(anim == null || anim.length < 1) {
+			return "";
+		}
+		if(this.getActualDownscroll() && !StringTools.endsWith(anim,"_down")) {
+			if(this.animation != null && this.animation._animations.h[anim + "_down"] != null) {
+				return anim + "_down";
+			}
+		} else if(!this.getActualDownscroll() && StringTools.endsWith(anim,"_down")) {
+			anim = anim.substring(0,anim.length - 5);
+			return anim;
+		}
+		if(StringTools.endsWith(anim,"_down") && this.animation._animations.h[anim + "_down"] == null) {
+			anim = anim.substring(0,anim.length - 5);
+		}
+		return anim;
+	}
+	,reloadAnim: function() {
+		if(this.animation != null && this.animation._curAnim != null) {
+			var animname = this.animationDownScrollHandle(this.animation._curAnim.name);
+			this.animation.play(animname,true);
+		}
 	}
 	,__class__: Note
 	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_holdCoverTexture:"set_holdCoverTexture",set_holdCover:"set_holdCover",set_downScroll:"set_downScroll",set_flipScroll:"set_flipScroll",set_hitsound:"set_hitsound",set_alignSustainNote:"set_alignSustainNote",set_noteScale:"set_noteScale",set_texture:"set_texture",set_multSpeed:"set_multSpeed",set_noteSplashTexture:"set_noteSplashTexture",set_gfNote:"set_gfNote",set_noteType:"set_noteType",set_noteData:"set_noteData",set_mustPress:"set_mustPress"})
@@ -38698,6 +38726,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		CustomFadeTransition.nextCamera = this.camOther;
 	}
 	,set_songSpeed: function(value) {
+		var reloadNoteAnim = false;
 		if(this.generatedMusic) {
 			if(Math.abs(value) <= 0.001) {
 				if(value < 0) {
@@ -38720,25 +38749,28 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				note.resizeByRatio(Math.abs(ratio));
 			}
 			if(this.songSpeed < 0 && value >= 0 || this.songSpeed >= 0 && value < 0) {
-				var note = new flixel_group_FlxTypedGroupIterator(this.notes.members,null);
-				while(note.hasNext()) {
-					var note1 = note.next();
-					if(note1.downScroll == null) {
-						note1.reloadNoteSkin();
-					}
-				}
-				var _g = 0;
-				var _g1 = this.unspawnNotes;
-				while(_g < _g1.length) {
-					var note = _g1[_g];
-					++_g;
-					if(note.downScroll == null) {
-						note.reloadNoteSkin();
-					}
-				}
+				reloadNoteAnim = true;
 			}
 		}
 		this.songSpeed = value;
+		if(reloadNoteAnim) {
+			var note = new flixel_group_FlxTypedGroupIterator(this.notes.members,null);
+			while(note.hasNext()) {
+				var note1 = note.next();
+				if(note1.downScroll == null) {
+					note1.reloadAnim();
+				}
+			}
+			var _g = 0;
+			var _g1 = this.unspawnNotes;
+			while(_g < _g1.length) {
+				var note = _g1[_g];
+				++_g;
+				if(note.downScroll == null) {
+					note.reloadAnim();
+				}
+			}
+		}
 		return value;
 	}
 	,set_playbackRate: function(value) {
@@ -38750,7 +38782,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.playbackRate = value;
 		flixel_animation_FlxAnimationController.globalSpeed = value;
-		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1745, className : "PlayState", methodName : "set_playbackRate"});
+		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1749, className : "PlayState", methodName : "set_playbackRate"});
 		Conductor.safeZoneOffset = ClientPrefs.safeFrames / 60 * 1000 * value;
 		this.setOnLuas("playbackRate",this.playbackRate);
 		return value;
@@ -40827,7 +40859,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3956, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3960, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
@@ -40943,7 +40975,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							daNote.fieldTarget = "";
 						}
 					} else if(!daNote.mustPress) {
-						if((daNote.gfNote || daNote.secondOpponent) && PlayState.SONG.secOpt) {
+						if((daNote.gfNote || daNote.secondOpponent) && PlayState.SONG.secOpt && _gthis.gamemode != "bothside") {
 							strumGroup = _gthis.gfStrums;
 						} else {
 							strumGroup = _gthis.opponentStrums;
@@ -41027,7 +41059,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							if(strumScroll && daNote.isSustainNote) {
 								var angleX = Math.cos(angleDir);
 								var angleY = Math.sin(angleDir);
-								if(StringTools.endsWith(daNote.animation._curAnim.name,"end")) {
+								if(daNote.animation._curAnim != null && (StringTools.endsWith(daNote.animation._curAnim.name,"end") || StringTools.endsWith(daNote.animation._curAnim.name,"end_down"))) {
 									daNote.set_x(daNote.x + (10.5 * (fakeCrochet / 400) * 1.5 * Math.abs(_gthis.songSpeed * daNote.multSpeed) + 46 * (Math.abs(_gthis.songSpeed * daNote.multSpeed) - 1)) * angleX);
 									daNote.set_y(daNote.y + (10.5 * (fakeCrochet / 400) * 1.5 * Math.abs(_gthis.songSpeed * daNote.multSpeed) + 46 * (Math.abs(_gthis.songSpeed * daNote.multSpeed) - 1)) * angleY);
 									daNote.set_x(daNote.x - 46 * (1 - fakeCrochet / 600) * Math.abs(_gthis.songSpeed * daNote.multSpeed) * angleX);
@@ -42280,12 +42312,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5085, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5089, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5086, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5090, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -42321,7 +42353,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5119, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5123, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -42332,7 +42364,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5130, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5134, className : "PlayState", methodName : "endSong"});
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 					CustomFadeTransition.nextCamera = null;
@@ -42355,7 +42387,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5154, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5158, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -43289,7 +43321,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				if(note.resetTimeStrumAnim > 0) {
 					time = note.resetTimeStrumAnim;
 				}
-				if(note.isSustainNote && !StringTools.endsWith(note.animation._curAnim.name,"end")) {
+				if(note.isSustainNote && note.animation._curAnim != null && !(StringTools.endsWith(note.animation._curAnim.name,"end") || StringTools.endsWith(note.animation._curAnim.name,"end_down"))) {
 					var timeAdd = 0.2;
 					if(note.strumNote != null) {
 						timeAdd = note.strumNote.resetTime;
@@ -43327,7 +43359,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var spr = note.strumNote;
 				if(spr != null) {
 					if(note.playStrumAnim && !note.fakeNoHit) {
-						spr.playAnim(note.animConfirm == null || note.animConfirm.length < 1 ? spr.animConfirm == null || spr.animConfirm.length < 1 ? "confirm" : spr.animConfirm : note.animConfirm,true,note.isSustainNote,note,true);
+						spr.playAnim(note.animConfirm == null || note.animConfirm.length < 1 ? spr.animConfirm == null || spr.animConfirm.length < 1 ? "confirm" : spr.animConfirm : note.animConfirm,true,note.isSustainNote,note);
 					}
 				}
 			}
@@ -43775,7 +43807,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			if(note.animConfirm != null && note.animConfirm.length > 1) {
 				anim = note.animConfirm;
 			}
-			spr.playAnim(anim,true,note.isSustainNote,note,true);
+			spr.playAnim(anim,true,note.isSustainNote,note);
 			spr.resetAnim = time;
 		}
 	}
@@ -44313,7 +44345,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7141, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7145, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -44339,7 +44371,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7154, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7158, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -46319,7 +46351,6 @@ var StrumNote = function(x,y,leData,player,gf) {
 	this.fakeStrumAngle = null;
 	this.fakeStrumY = null;
 	this.fakeStrumX = null;
-	this.reloadAnimation = true;
 	this.isLocked = false;
 	this.classicAnim = ClientPrefs.classicAnim;
 	this.resetTime = 0.2;
@@ -46372,7 +46403,6 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 	,resetTime: null
 	,classicAnim: null
 	,isLocked: null
-	,reloadAnimation: null
 	,fakeStrumX: null
 	,fakeStrumY: null
 	,fakeStrumAngle: null
@@ -46421,21 +46451,18 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 		flixel_FlxSprite.prototype.update.call(this,elapsed);
 	}
-	,playAnim: function(anim,force,sustainNote,note,reloadAnim) {
-		if(reloadAnim == null) {
-			reloadAnim = false;
-		}
+	,playAnim: function(anim,force,sustainNote,note) {
 		if(sustainNote == null) {
 			sustainNote = false;
 		}
 		if(force == null) {
 			force = false;
 		}
-		if(sustainNote && !this.classicAnim) {
-			return;
+		if(note != null && note.getActualDownscroll()) {
+			anim += "_down";
 		}
-		if(reloadAnim && this.reloadAnimation) {
-			this.reloadAnims(this.texture,note);
+		if(StringTools.endsWith(anim,"_down") && this.animation._animations.h[anim] == null) {
+			anim = anim.substring(0,anim.length - 5);
 		}
 		this.animation.play(anim,force);
 		this.origin.set(this.frameWidth * 0.5,this.frameHeight * 0.5);
@@ -46487,7 +46514,7 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 		return flixel_FlxSprite.prototype.set_alpha.call(this,value);
 	}
-	,reloadAnims: function(image,note) {
+	,reloadAnims: function(image) {
 		var skin = PlayState.SONG.arrowSkin;
 		var skinOpt = PlayState.SONG.arrowSkinOpt;
 		var skinSec = PlayState.SONG.arrowSkinSec;
@@ -46602,56 +46629,44 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			var addAnimThingy = CoolUtil.addSpecialAnimation;
 			switch(Math.abs(this.noteData) % 4) {
 			case 0:
-				if(note != null && note.getActualDownscroll() || ClientPrefs.downScroll) {
-					addAnimThingy(this,"static","arrowLEFT_DownScroll0","arrowLEFT0",true,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"pressed","left press_DownScroll0","left press0",false,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"confirm","left confirm_DownScroll0","left confirm0",false,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"notes","purple Downscroll0","purple0",false,ClientPrefs.fpsStrumAnim);
-				} else {
-					this.animation.addByPrefix("static","arrowLEFT0");
-					this.animation.addByPrefix("pressed","left press0",ClientPrefs.fpsStrumAnim,false);
-					this.animation.addByPrefix("confirm","left confirm0",ClientPrefs.fpsStrumAnim,false);
-					this.animation.addByPrefix("notes","purple0",ClientPrefs.fpsStrumAnim,false);
-				}
+				this.animation.addByPrefix("static","arrowLEFT0");
+				this.animation.addByPrefix("pressed","left press0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm","left confirm0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes","purple0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("static_down","arrowLEFT_DownScroll0");
+				this.animation.addByPrefix("pressed_down","left press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm_down","left confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes_down","purple_DownScroll0",ClientPrefs.fpsStrumAnim,false);
 				break;
 			case 1:
-				if(note != null && note.getActualDownscroll() || ClientPrefs.downScroll) {
-					addAnimThingy(this,"static","arrowDOWN_DownScroll0","arrowDOWN0",true,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"pressed","down press_DownScroll0","down press0",false,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"confirm","down confirm_DownScroll0","down confirm0",false,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"notes","blue Downscroll0","blue0",false,ClientPrefs.fpsStrumAnim);
-				} else {
-					this.animation.addByPrefix("static","arrowDOWN0");
-					this.animation.addByPrefix("pressed","down press0",ClientPrefs.fpsStrumAnim,false);
-					this.animation.addByPrefix("confirm","down confirm0",ClientPrefs.fpsStrumAnim,false);
-					this.animation.addByPrefix("notes","blue0",ClientPrefs.fpsStrumAnim,false);
-				}
+				this.animation.addByPrefix("static","arrowDOWN0");
+				this.animation.addByPrefix("pressed","down press0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm","down confirm0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes","blue0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("static_down","arrowDOWN_DownScroll0");
+				this.animation.addByPrefix("pressed_down","down press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm_down","down confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes_down","blue_DownScroll0",ClientPrefs.fpsStrumAnim,false);
 				break;
 			case 2:
-				if(note != null && note.getActualDownscroll() || ClientPrefs.downScroll) {
-					addAnimThingy(this,"static","arrowUP_DownScroll0","arrowUP0",true,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"pressed","up press_DownScroll0","up press0",false,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"confirm","up confirm_DownScroll0","up confirm0",false,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"notes","green Downscroll0","green0",false,ClientPrefs.fpsStrumAnim);
-				} else {
-					this.animation.addByPrefix("static","arrowUP0");
-					this.animation.addByPrefix("pressed","up press0",ClientPrefs.fpsStrumAnim,false);
-					this.animation.addByPrefix("confirm","up confirm0",ClientPrefs.fpsStrumAnim,false);
-					this.animation.addByPrefix("notes","green0",ClientPrefs.fpsStrumAnim,false);
-				}
+				this.animation.addByPrefix("static","arrowUP0");
+				this.animation.addByPrefix("pressed","up press0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm","up confirm0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes","green0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("static_down","arrowUP_DownScroll0");
+				this.animation.addByPrefix("pressed_down","up press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm_down","up confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes_down","green_DownScroll0",ClientPrefs.fpsStrumAnim,false);
 				break;
 			case 3:
-				if(note != null && note.getActualDownscroll() || ClientPrefs.downScroll) {
-					addAnimThingy(this,"static","arrowRIGHT_DownScroll0","arrowRIGHT0",true,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"pressed","right press_DownScroll0","right press0",false,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"confirm","right confirm_DownScroll0","right confirm0",false,ClientPrefs.fpsStrumAnim);
-					addAnimThingy(this,"notes","red Downscroll0","red0",false,ClientPrefs.fpsStrumAnim);
-				} else {
-					this.animation.addByPrefix("static","arrowRIGHT0");
-					this.animation.addByPrefix("pressed","right press0",ClientPrefs.fpsStrumAnim,false);
-					this.animation.addByPrefix("confirm","right confirm0",ClientPrefs.fpsStrumAnim,false);
-					this.animation.addByPrefix("notes","red0",ClientPrefs.fpsStrumAnim,false);
-				}
+				this.animation.addByPrefix("static","arrowRIGHT0");
+				this.animation.addByPrefix("pressed","right press0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm","right confirm0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes","red0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("static_down","arrowRIGHT_DownScroll0");
+				this.animation.addByPrefix("pressed_down","right press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm_down","right confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes_down","red_DownScroll0",ClientPrefs.fpsStrumAnim,false);
 				break;
 			}
 		}
@@ -55898,7 +55913,7 @@ dge_states_options_TypedValueSubState.prototype = $extend(MusicBeatSubstate.prot
 	,__class__: dge_states_options_TypedValueSubState
 });
 var dge_states_options_VisualUISubState = function() {
-	this.colorKeyPress = ["FF00FF","00FFFF","00FF00","0000FF"];
+	this.colorKeyPress = ["FF00FF","00FFFF","00FF00","FF0000"];
 	var _gthis = this;
 	this.title = "DGE Visual & UI Settings";
 	this.rpcTitle = "DGE Visual & UI Settings Menu";
@@ -62688,7 +62703,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.songHits++;
 			}
 			if(note.strumNote != null) {
-				note.strumNote.playAnim(note.animConfirm.length < 1 ? note.strumNote.animConfirm : note.animConfirm,true,note.isSustainNote,note,true);
+				note.strumNote.playAnim(note.animConfirm.length < 1 ? note.strumNote.animConfirm : note.animConfirm,true,note.isSustainNote,note);
 			}
 			if(note.multiPress <= 0) {
 				note.wasGoodHit = true;
@@ -142588,7 +142603,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 175592;
+	this.version = 8216;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -194555,7 +194570,7 @@ ClientPrefs.holdCoverOpt = true;
 ClientPrefs.keyPressColor1 = "FF00FF";
 ClientPrefs.keyPressColor2 = "00FFFF";
 ClientPrefs.keyPressColor3 = "00FF00";
-ClientPrefs.keyPressColor4 = "0000FF";
+ClientPrefs.keyPressColor4 = "FF0000";
 ClientPrefs.botplayText = "BOTPLAY";
 ClientPrefs.classicAnim = false;
 ClientPrefs.modchart = true;
