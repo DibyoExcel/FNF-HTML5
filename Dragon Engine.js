@@ -6567,12 +6567,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "380";
+	app.meta.h["build"] = "381";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.10.3";
+	app.meta.h["version"] = "26.10.4";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -39063,7 +39063,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.playbackRate = value;
 		flixel_animation_FlxAnimationController.globalSpeed = value;
-		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1749, className : "PlayState", methodName : "set_playbackRate"});
+		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1747, className : "PlayState", methodName : "set_playbackRate"});
 		Conductor.safeZoneOffset = ClientPrefs.safeFrames / 60 * 1000 * value;
 		this.setOnLuas("playbackRate",this.playbackRate);
 		return value;
@@ -41176,7 +41176,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3960, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3958, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
@@ -42732,12 +42732,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5188, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5186, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5189, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5187, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -42773,7 +42773,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5222, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5220, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -42784,7 +42784,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5233, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5231, className : "PlayState", methodName : "endSong"});
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 					CustomFadeTransition.nextCamera = null;
@@ -42807,7 +42807,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5257, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5255, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -44748,7 +44748,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7233, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7231, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -44774,7 +44774,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7246, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7244, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -46869,16 +46869,19 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 		if(force == null) {
 			force = false;
 		}
+		if(this.animation == null) {
+			return;
+		}
 		if(note != null ? note.getActualDownscroll() : ClientPrefs.downScroll) {
 			anim += "_down";
 		}
-		if(StringTools.endsWith(anim,"_down") && this.animation != null && this.animation._animations.h[anim] == null) {
+		if(StringTools.endsWith(anim,"_down") && this.animation._animations.h[anim] == null) {
 			anim = anim.substring(0,anim.length - 5);
 		}
 		this.animation.play(anim,force);
 		this.origin.set(this.frameWidth * 0.5,this.frameHeight * 0.5);
 		this.centerOffsets();
-		if(this.animation._curAnim == null || this.animation._curAnim.name == "static") {
+		if(this.animation._curAnim == null || this.animation._curAnim.name == "static" || this.animation._curAnim.name == "static_down") {
 			this.get_colorSwap().set_hue(0);
 			this.get_colorSwap().set_saturation(0);
 			this.get_colorSwap().set_brightness(0);
@@ -142300,7 +142303,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 363522;
+	this.version = 531169;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
