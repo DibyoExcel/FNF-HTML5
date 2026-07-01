@@ -5314,7 +5314,7 @@ var Alphabet = function(x,y,text,bold,darkMode) {
 		text = "";
 	}
 	this.startPosition = new flixel_math_FlxPoint(0,0);
-	this.distancePerItem = new flixel_math_FlxPoint(20,120);
+	this.distancePerItem = new flixel_math_FlxPoint(25,110);
 	this.rows = 0;
 	this.scaleY = 1;
 	this.scaleX = 1;
@@ -5455,7 +5455,7 @@ Alphabet.prototype = $extend(flixel_group_FlxTypedSpriteGroup.prototype,{
 			var lerpVal = Math.max(0,Math.min(1,elapsed * 9.6));
 			if(this.changeX) {
 				var a = this.x;
-				this.set_x(a + lerpVal * (this.targetY * this.distancePerItem.x + this.startPosition.x - a));
+				this.set_x(a + lerpVal * (-Math.abs(this.targetY) * this.distancePerItem.x + this.startPosition.x - a));
 			}
 			if(this.changeY) {
 				var a = this.y;
@@ -5467,7 +5467,7 @@ Alphabet.prototype = $extend(flixel_group_FlxTypedSpriteGroup.prototype,{
 	,snapToPosition: function() {
 		if(this.isMenuItem) {
 			if(this.changeX) {
-				this.set_x(this.targetY * this.distancePerItem.x + this.startPosition.x);
+				this.set_x(-Math.abs(this.targetY) * this.distancePerItem.x + this.startPosition.x);
 			}
 			if(this.changeY) {
 				this.set_y(this.targetY * 1.3 * this.distancePerItem.y + this.startPosition.y);
@@ -6567,12 +6567,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "382";
+	app.meta.h["build"] = "383";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.11.0";
+	app.meta.h["version"] = "26.12.0";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -24095,12 +24095,24 @@ Controls.prototype = $extend(flixel_input_actions_FlxActionSet.prototype,{
 	,__class__: Controls
 	,__properties__: {get_RESET:"get_RESET",get_PAUSE:"get_PAUSE",get_BACK:"get_BACK",get_ACCEPT:"get_ACCEPT",get_NOTE_DOWN_R:"get_NOTE_DOWN_R",get_NOTE_RIGHT_R:"get_NOTE_RIGHT_R",get_NOTE_LEFT_R:"get_NOTE_LEFT_R",get_NOTE_UP_R:"get_NOTE_UP_R",get_NOTE_DOWN_P:"get_NOTE_DOWN_P",get_NOTE_RIGHT_P:"get_NOTE_RIGHT_P",get_NOTE_LEFT_P:"get_NOTE_LEFT_P",get_NOTE_UP_P:"get_NOTE_UP_P",get_NOTE_DOWN:"get_NOTE_DOWN",get_NOTE_RIGHT:"get_NOTE_RIGHT",get_NOTE_LEFT:"get_NOTE_LEFT",get_NOTE_UP:"get_NOTE_UP",get_UI_DOWN_R:"get_UI_DOWN_R",get_UI_RIGHT_R:"get_UI_RIGHT_R",get_UI_LEFT_R:"get_UI_LEFT_R",get_UI_UP_R:"get_UI_UP_R",get_UI_DOWN_P:"get_UI_DOWN_P",get_UI_RIGHT_P:"get_UI_RIGHT_P",get_UI_LEFT_P:"get_UI_LEFT_P",get_UI_UP_P:"get_UI_UP_P",get_UI_DOWN:"get_UI_DOWN",get_UI_RIGHT:"get_UI_RIGHT",get_UI_LEFT:"get_UI_LEFT",get_UI_UP:"get_UI_UP"}
 });
+var Align = $hxEnums["Align"] = { __ename__:"Align",__constructs__:null
+	,TOP_LEFT: {_hx_name:"TOP_LEFT",_hx_index:0,__enum__:"Align",toString:$estr}
+	,TOP_RIGHT: {_hx_name:"TOP_RIGHT",_hx_index:1,__enum__:"Align",toString:$estr}
+	,TOP_MIDDLE: {_hx_name:"TOP_MIDDLE",_hx_index:2,__enum__:"Align",toString:$estr}
+	,MIDDLE_LEFT: {_hx_name:"MIDDLE_LEFT",_hx_index:3,__enum__:"Align",toString:$estr}
+	,CENTER: {_hx_name:"CENTER",_hx_index:4,__enum__:"Align",toString:$estr}
+	,MIDDLE_RIGHT: {_hx_name:"MIDDLE_RIGHT",_hx_index:5,__enum__:"Align",toString:$estr}
+	,BOTTOM_LEFT: {_hx_name:"BOTTOM_LEFT",_hx_index:6,__enum__:"Align",toString:$estr}
+	,BOTTOM_MIDDLE: {_hx_name:"BOTTOM_MIDDLE",_hx_index:7,__enum__:"Align",toString:$estr}
+	,BOTTOM_RIGHT: {_hx_name:"BOTTOM_RIGHT",_hx_index:8,__enum__:"Align",toString:$estr}
+};
+Align.__constructs__ = [Align.TOP_LEFT,Align.TOP_RIGHT,Align.TOP_MIDDLE,Align.MIDDLE_LEFT,Align.CENTER,Align.MIDDLE_RIGHT,Align.BOTTOM_LEFT,Align.BOTTOM_MIDDLE,Align.BOTTOM_RIGHT];
 var CoolUtil = function() { };
 $hxClasses["CoolUtil"] = CoolUtil;
 CoolUtil.__name__ = "CoolUtil";
 CoolUtil.quantize = function(f,snap) {
 	var m = Math.round(f * snap);
-	haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
+	haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
 	return m / snap;
 };
 CoolUtil.getDifficultyFilePath = function(num) {
@@ -24454,6 +24466,50 @@ CoolUtil.addSpecialAnimation = function(sprite,anim,xmlName,defaultXmlName,loop,
 		}
 	}
 	return hasAnim;
+};
+CoolUtil.alignItem = function(key,obj,alignType) {
+	if(alignType == null) {
+		alignType = Align.CENTER;
+	}
+	if(key != null && obj != null) {
+		switch(alignType._hx_index) {
+		case 0:
+			obj.set_x(key.x);
+			obj.set_y(key.y);
+			break;
+		case 1:
+			obj.set_x(key.x + key.get_width() - obj.get_width());
+			obj.set_y(key.y);
+			break;
+		case 2:
+			obj.set_x(key.x + key.get_width() / 2 - obj.get_width() / 2);
+			obj.set_y(key.y);
+			break;
+		case 3:
+			obj.set_x(key.x);
+			obj.set_y(key.y + key.get_height() / 2 - obj.get_height() / 2);
+			break;
+		case 5:
+			obj.set_x(key.x + key.get_width() - obj.get_width());
+			obj.set_y(key.y + key.get_height() / 2 - obj.get_height() / 2);
+			break;
+		case 6:
+			obj.set_x(key.x);
+			obj.set_y(key.y + key.get_height() - obj.get_height());
+			break;
+		case 7:
+			obj.set_x(key.x + key.get_width() / 2 - obj.get_width() / 2);
+			obj.set_y(key.y + key.get_height() - obj.get_height());
+			break;
+		case 8:
+			obj.set_x(key.x + key.get_width() - obj.get_width());
+			obj.set_y(key.y + key.get_height() - obj.get_height());
+			break;
+		default:
+			obj.set_x(key.x + key.get_width() / 2 - obj.get_width() / 2);
+			obj.set_y(key.y + key.get_height() / 2 - obj.get_height() / 2);
+		}
+	}
 };
 var CreditsState = function(TransIn,TransOut) {
 	this.moveTween = null;
@@ -26916,7 +26972,6 @@ FlxUIDropDownMenuDropDirection.__constructs__ = [FlxUIDropDownMenuDropDirection.
 var FreeplayState = function(TransIn,TransOut) {
 	this.holdTime = 0;
 	this.instPlaying = -1;
-	this.iconArray = [];
 	this.curPlaying = false;
 	this.intendedRating = 0;
 	this.intendedScore = 0;
@@ -26950,7 +27005,6 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 	,intendedRating: null
 	,grpSongs: null
 	,curPlaying: null
-	,iconArray: null
 	,bg: null
 	,intendedColor: null
 	,colorTween: null
@@ -26985,6 +27039,10 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 				if(colors == null || colors.length < 3) {
 					colors = [146,113,253];
 				}
+				var borderTexture = song[3];
+				if(borderTexture == null || borderTexture.length < 1) {
+					borderTexture = "ui/nineslice";
+				}
 				var song1 = song[0];
 				var song2 = song[1];
 				var Red = colors[0];
@@ -27003,7 +27061,7 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 				color |= Blue > 255 ? 255 : Blue < 0 ? 0 : Blue;
 				color &= 16777215;
 				color |= (Alpha > 255 ? 255 : Alpha < 0 ? 0 : Alpha) << 24;
-				this.addSong(song1,i,song2,color);
+				this.addSong(song1,i,song2,color,borderTexture);
 			}
 		}
 		WeekData.loadTheFirstEnabledMod();
@@ -27020,20 +27078,12 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 			var _g1 = this.songs.length;
 			while(_g < _g1) {
 				var i = _g++;
-				var songText = new Alphabet(90,320,this.songs[i].songName,true);
-				songText.isMenuItem = true;
-				songText.targetY = i - FreeplayState.curSelected;
-				this.grpSongs.add(songText);
-				var maxWidth = 980 * (flixel_FlxG.width / 1280);
-				if(songText.get_width() > maxWidth) {
-					songText.set_scaleX(maxWidth / songText.get_width());
-				}
-				songText.snapToPosition();
 				Paths.currentModDirectory = this.songs[i].folder;
-				var icon = new HealthIcon(this.songs[i].songCharacter);
-				icon.sprTracker = songText;
-				this.iconArray.push(icon);
-				this.add(icon);
+				var xCenter = flixel_FlxG.width / 2 - (175 + (870 * (flixel_FlxG.width / 1280) | 0)) / 2;
+				var songPanel = new dge_obj_ui_MenuItem(xCenter,flixel_FlxG.height / 2 - 75,this.songs[i].songName,this.songs[i].songCharacter,this.songs[i].borderTex);
+				songPanel.targetY = i - FreeplayState.curSelected;
+				songPanel.snapToPosition();
+				this.grpSongs.add(songPanel);
 			}
 			WeekData.setDirectoryFromWeek();
 			this.scoreText = new flixel_text_FlxText(flixel_FlxG.width * 0.7,5,0,"",32);
@@ -27111,8 +27161,8 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 		this.persistentUpdate = true;
 		MusicBeatState.prototype.closeSubState.call(this);
 	}
-	,addSong: function(songName,weekNum,songCharacter,color) {
-		this.songs.push(new SongMetadata(songName,weekNum,songCharacter,color));
+	,addSong: function(songName,weekNum,songCharacter,color,tex) {
+		this.songs.push(new SongMetadata(songName,weekNum,songCharacter,color,tex));
 	}
 	,weekIsLocked: function(name) {
 		var leWeek = WeekData.weeksLoaded.h[name];
@@ -27216,13 +27266,13 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 			var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
 			var songLowercase = hideChars.split(path1).join("").toLowerCase();
 			var poop = Highscore.formatSong(songLowercase,this.curDifficulty);
-			haxe_Log.trace(poop,{ fileName : "source/FreeplayState.hx", lineNumber : 435, className : "FreeplayState", methodName : "update"});
+			haxe_Log.trace(poop,{ fileName : "source/FreeplayState.hx", lineNumber : 443, className : "FreeplayState", methodName : "update"});
 			var songData = Song.loadFromJson(poop,songLowercase);
 			if(songData != null) {
 				PlayState.SONG = songData;
 				PlayState.isStoryMode = false;
 				PlayState.storyDifficulty = this.curDifficulty;
-				haxe_Log.trace("CURRENT WEEK: " + WeekData.getWeekFileName(),{ fileName : "source/FreeplayState.hx", lineNumber : 442, className : "FreeplayState", methodName : "update"});
+				haxe_Log.trace("CURRENT WEEK: " + WeekData.getWeekFileName(),{ fileName : "source/FreeplayState.hx", lineNumber : 450, className : "FreeplayState", methodName : "update"});
 				if(this.colorTween != null) {
 					this.colorTween.cancel();
 				}
@@ -27315,13 +27365,6 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 		this.intendedRating = Highscore.getRating(this.songs[FreeplayState.curSelected].songName + (ClientPrefs.gameplaySettings.h["gamemode"] == "none" ? "" : ClientPrefs.gameplaySettings.h["gamemode"]),this.curDifficulty);
 		var bullShit = 0;
 		var _g = 0;
-		var _g1 = this.iconArray.length;
-		while(_g < _g1) {
-			var i = _g++;
-			this.iconArray[i].set_alpha(0.6);
-		}
-		this.iconArray[FreeplayState.curSelected].set_alpha(1);
-		var _g = 0;
 		var _g1 = this.grpSongs.members;
 		while(_g < _g1.length) {
 			var item = _g1[_g];
@@ -27379,7 +27422,8 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,__class__: FreeplayState
 });
-var SongMetadata = function(song,week,songCharacter,color) {
+var SongMetadata = function(song,week,songCharacter,color,tex) {
+	this.borderTex = "";
 	this.folder = "";
 	this.color = -7179779;
 	this.songCharacter = "";
@@ -27393,6 +27437,7 @@ var SongMetadata = function(song,week,songCharacter,color) {
 	if(this.folder == null) {
 		this.folder = "";
 	}
+	this.borderTex = tex;
 };
 $hxClasses["SongMetadata"] = SongMetadata;
 SongMetadata.__name__ = "SongMetadata";
@@ -27402,6 +27447,7 @@ SongMetadata.prototype = {
 	,songCharacter: null
 	,color: null
 	,folder: null
+	,borderTex: null
 	,__class__: SongMetadata
 };
 var FunkinLua = function(script) {
@@ -33291,6 +33337,9 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 	}
 	,iconOffsets: null
 	,changeIcon: function(char) {
+		if(char == null || char.length < 1) {
+			char = "face";
+		}
 		if(this.char != char) {
 			this.offsetMap = new haxe_ds_StringMap();
 			var name = "icons/" + char;
@@ -34512,7 +34561,7 @@ ManifestResources.init = function(config) {
 	lime_utils_Assets.libraryPaths.h["week6"] = v;
 	var v = ManifestResources.rootPath + "manifest/week7.json";
 	lime_utils_Assets.libraryPaths.h["week7"] = v;
-	var data = "{\"name\":null,\"assets\":\"aoy4:pathy33:assets%2Fcharacters%2Fbf-car.jsony4:sizei2527y4:typey4:TEXTy2:idR1y7:preloadtgoR0y39:assets%2Fcharacters%2Fbf-christmas.jsonR2i1747R3R4R5R7R6tgoR0y34:assets%2Fcharacters%2Fbf-dead.jsonR2i709R3R4R5R8R6tgoR0y45:assets%2Fcharacters%2Fbf-holding-gf-dead.jsonR2i740R3R4R5R9R6tgoR0y40:assets%2Fcharacters%2Fbf-holding-gf.jsonR2i1751R3R4R5R10R6tgoR0y40:assets%2Fcharacters%2Fbf-pixel-dead.jsonR2i721R3R4R5R11R6tgoR0y44:assets%2Fcharacters%2Fbf-pixel-opponent.jsonR2i1567R3R4R5R12R6tgoR0y35:assets%2Fcharacters%2Fbf-pixel.jsonR2i1563R3R4R5R13R6tgoR0y29:assets%2Fcharacters%2Fbf.jsonR2i2467R3R4R5R14R6tgoR0y30:assets%2Fcharacters%2Fdad.jsonR2i1762R3R4R5R15R6tgoR0y41:assets%2Fcharacters%2FDubEnderDragon.jsonR2i1039R3R4R5R16R6tgoR0y33:assets%2Fcharacters%2Fgf-car.jsonR2i993R3R4R5R17R6tgoR0y39:assets%2Fcharacters%2Fgf-christmas.jsonR2i2137R3R4R5R18R6tgoR0y35:assets%2Fcharacters%2Fgf-pixel.jsonR2i937R3R4R5R19R6tgoR0y37:assets%2Fcharacters%2Fgf-tankmen.jsonR2i1066R3R4R5R20R6tgoR0y29:assets%2Fcharacters%2Fgf.jsonR2i2326R3R4R5R21R6tgoR0y42:assets%2Fcharacters%2FMintEnderDragon.jsonR2i1044R3R4R5R22R6tgoR0y34:assets%2Fcharacters%2Fmom-car.jsonR2i1892R3R4R5R23R6tgoR0y30:assets%2Fcharacters%2Fmom.jsonR2i988R3R4R5R24R6tgoR0y44:assets%2Fcharacters%2Fmonster-christmas.jsonR2i1905R3R4R5R25R6tgoR0y34:assets%2Fcharacters%2Fmonster.jsonR2i1904R3R4R5R26R6tgoR0y44:assets%2Fcharacters%2Fparents-christmas.jsonR2i3427R3R4R5R27R6tgoR0y38:assets%2Fcharacters%2Fpico-player.jsonR2i1635R3R4R5R28R6tgoR0y39:assets%2Fcharacters%2Fpico-speaker.jsonR2i1554R3R4R5R29R6tgoR0y31:assets%2Fcharacters%2Fpico.jsonR2i1636R3R4R5R30R6tgoR0y39:assets%2Fcharacters%2Fsenpai-angry.jsonR2i1039R3R4R5R31R6tgoR0y33:assets%2Fcharacters%2Fsenpai.jsonR2i1009R3R4R5R32R6tgoR0y33:assets%2Fcharacters%2Fspirit.jsonR2i992R3R4R5R33R6tgoR0y33:assets%2Fcharacters%2Fspooky.jsonR2i1384R3R4R5R34R6tgoR0y41:assets%2Fcharacters%2Ftankman-player.jsonR2i1976R3R4R5R35R6tgoR0y34:assets%2Fcharacters%2Ftankman.jsonR2i1974R3R4R5R36R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-easy.jsonR2i8488R3R4R5R37R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-hard.jsonR2i12097R3R4R5R38R6tgoR0y38:assets%2Fdata%2Fblammed%2Fblammed.jsonR2i9687R3R4R5R39R6tgoR0y37:assets%2Fdata%2Fblammed%2Fevents.jsonR2i10344R3R4R5R40R6tgoR0y44:assets%2Fdata%2Fbopeebo%2Fbopeebo-boobs.jsonR2i4140R3R4R5R41R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-easy.jsonR2i9178R3R4R5R42R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-hard.jsonR2i4140R3R4R5R43R6tgoR0y38:assets%2Fdata%2Fbopeebo%2Fbopeebo.jsonR2i9542R3R4R5R44R6tgoR0y37:assets%2Fdata%2Fbopeebo%2Fevents.jsonR2i5047R3R4R5R45R6tgoR0y33:assets%2Fdata%2FcharacterList.txtR2i284R3R4R5R46R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-easy.jsonR2i7062R3R4R5R47R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-hard.jsonR2i10443R3R4R5R48R6tgoR0y34:assets%2Fdata%2Fcocoa%2Fcocoa.jsonR2i8278R3R4R5R49R6tgoR0y35:assets%2Fdata%2Fcocoa%2Fevents.jsonR2i3644R3R4R5R50R6tgoR0y32:assets%2Fdata%2FcrashConfig.jsonR2i739R3R4R5R51R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-easy.jsonR2i7937R3R4R5R52R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-hard.jsonR2i9756R3R4R5R53R6tgoR0y44:assets%2Fdata%2Fdad-battle%2Fdad-battle.jsonR2i8913R3R4R5R54R6tgoR0y40:assets%2Fdata%2Fdad-battle%2Fevents.jsonR2i2614R3R4R5R55R6tgoR0y34:assets%2Fdata%2Fdata-goes-here.txtR2zR3R4R5R56R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-easy.jsonR2i9239R3R4R5R57R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-hard.jsonR2i11689R3R4R5R58R6tgoR0y36:assets%2Fdata%2Feggnog%2Feggnog.jsonR2i10333R3R4R5R59R6tgoR0y36:assets%2Fdata%2Feggnog%2Fevents.jsonR2i4881R3R4R5R60R6tgoR0y34:assets%2Fdata%2FfreeplayColors.txtR2i76R3R4R5R61R6tgoR0y35:assets%2Fdata%2Ffresh%2Fevents.jsonR2i3201R3R4R5R62R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-easy.jsonR2i5857R3R4R5R63R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-hard.jsonR2i6905R3R4R5R64R6tgoR0y34:assets%2Fdata%2Ffresh%2Ffresh.jsonR2i6493R3R4R5R65R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-easy.jsonR2i15146R3R4R5R66R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-hard.jsonR2i23500R3R4R5R67R6tgoR0y32:assets%2Fdata%2Fguns%2Fguns.jsonR2i20620R3R4R5R68R6tgoR0y34:assets%2Fdata%2Fhigh%2Fevents.jsonR2i4558R3R4R5R69R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-easy.jsonR2i8563R3R4R5R70R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-hard.jsonR2i11553R3R4R5R71R6tgoR0y32:assets%2Fdata%2Fhigh%2Fhigh.jsonR2i9757R3R4R5R72R6tgoR0y29:assets%2Fdata%2FintroText.txtR2i2103R3R4R5R73R6tgoR0y29:assets%2Fdata%2Fmain-view.xmlR2i123R3R4R5R74R6tgoR0y34:assets%2Fdata%2Fmilf%2Fevents.jsonR2i7488R3R4R5R75R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-easy.jsonR2i13522R3R4R5R76R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-hard.jsonR2i18135R3R4R5R77R6tgoR0y32:assets%2Fdata%2Fmilf%2Fmilf.jsonR2i15192R3R4R5R78R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-easy.jsonR2i12175R3R4R5R79R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-hard.jsonR2i14163R3R4R5R80R6tgoR0y38:assets%2Fdata%2Fmonster%2Fmonster.jsonR2i13445R3R4R5R81R6tgoR0y41:assets%2Fdata%2Fphilly-nice%2Fevents.jsonR2i5191R3R4R5R82R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-easy.jsonR2i8067R3R4R5R83R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-hard.jsonR2i12556R3R4R5R84R6tgoR0y46:assets%2Fdata%2Fphilly-nice%2Fphilly-nice.jsonR2i10103R3R4R5R85R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-easy.jsonR2i6089R3R4R5R86R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-hard.jsonR2i8768R3R4R5R87R6tgoR0y32:assets%2Fdata%2Fpico%2Fpico.jsonR2i7493R3R4R5R88R6tgoR0y34:assets%2Fdata%2Fridge%2Fridge.jsonR2i34473R3R4R5R89R6tgoR0y35:assets%2Fdata%2Froses%2Fevents.jsonR2i8786R3R4R5R90R6tgoR0y39:assets%2Fdata%2Froses%2Froses-easy.jsonR2i6725R3R4R5R91R6tgoR0y39:assets%2Fdata%2Froses%2Froses-hard.jsonR2i10432R3R4R5R92R6tgoR0y34:assets%2Fdata%2Froses%2Froses.jsonR2i8609R3R4R5R93R6tgoR0y41:assets%2Fdata%2Froses%2FrosesDialogue.txtR2i153R3R4R5R94R6tgoR0y43:assets%2Fdata%2Fsatin-panties%2Fevents.jsonR2i3177R3R4R5R95R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-easy.jsonR2i8817R3R4R5R96R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-hard.jsonR2i12704R3R4R5R97R6tgoR0y50:assets%2Fdata%2Fsatin-panties%2Fsatin-panties.jsonR2i10725R3R4R5R98R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-easy.jsonR2i9027R3R4R5R99R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-hard.jsonR2i10778R3R4R5R100R6tgoR0y36:assets%2Fdata%2Fsenpai%2Fsenpai.jsonR2i10016R3R4R5R101R6tgoR0y43:assets%2Fdata%2Fsenpai%2FsenpaiDialogue.txtR2i162R3R4R5R102R6tgoR0y34:assets%2Fdata%2Fsmash%2Fsmash.jsonR2i23961R3R4R5R103R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-easy.jsonR2i8435R3R4R5R104R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-hard.jsonR2i10170R3R4R5R105R6tgoR0y34:assets%2Fdata%2Fsouth%2Fsouth.jsonR2i10097R3R4R5R106R6tgoR0y33:assets%2Fdata%2FspecialThanks.txtR2i300R3R4R5R107R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-easy.jsonR2i7965R3R4R5R108R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-hard.jsonR2i9429R3R4R5R109R6tgoR0y40:assets%2Fdata%2Fspookeez%2Fspookeez.jsonR2i8875R3R4R5R110R6tgoR0y29:assets%2Fdata%2FstageList.txtR2i61R3R4R5R111R6tgoR0y36:assets%2Fdata%2Fstress%2Fevents.jsonR2i747R3R4R5R112R6tgoR0y41:assets%2Fdata%2Fstress%2Fpicospeaker.jsonR2i18286R3R4R5R113R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-easy.jsonR2i33455R3R4R5R114R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-hard.jsonR2i53679R3R4R5R115R6tgoR0y36:assets%2Fdata%2Fstress%2Fstress.jsonR2i45928R3R4R5R116R6tgoR0y32:assets%2Fdata%2Ftest%2Ftest.jsonR2i75208R3R4R5R117R6tgoR0y40:assets%2Fdata%2Ftest-dev%2Ftest-dev.jsonR2i49834R3R4R5R118R6tgoR0y36:assets%2Fdata%2Fthorns%2Fevents.jsonR2i8104R3R4R5R119R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-easy.jsonR2i10437R3R4R5R120R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-hard.jsonR2i15444R3R4R5R121R6tgoR0y36:assets%2Fdata%2Fthorns%2Fthorns.jsonR2i12691R3R4R5R122R6tgoR0y43:assets%2Fdata%2Fthorns%2FthornsDialogue.txtR2i305R3R4R5R123R6tgoR0y38:assets%2Fdata%2Ftutorial%2Fevents.jsonR2i2702R3R4R5R124R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-easy.jsonR2i5739R3R4R5R125R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-hard.jsonR2i6335R3R4R5R126R6tgoR0y40:assets%2Fdata%2Ftutorial%2Ftutorial.jsonR2i5739R3R4R5R127R6tgoR0y33:assets%2Fdata%2Fugh%2Fevents.jsonR2i1345R3R4R5R128R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-easy.jsonR2i8550R3R4R5R129R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-hard.jsonR2i12496R3R4R5R130R6tgoR0y30:assets%2Fdata%2Fugh%2Fugh.jsonR2i11354R3R4R5R131R6tgoR0y47:assets%2Fdata%2Fwinter-horrorland%2Fevents.jsonR2i6197R3R4R5R132R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-easy.jsonR2i11846R3R4R5R133R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-hard.jsonR2i14558R3R4R5R134R6tgoR0y58:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland.jsonR2i12808R3R4R5R135R6tgoR0y45:assets%2Fimages%2Fachievements%2Fbirthday.pngR2i10948R3y5:IMAGER5R136R6tgoR0y45:assets%2Fimages%2Fachievements%2Fdebugger.pngR2i7554R3R137R5R138R6tgoR0y54:assets%2Fimages%2Fachievements%2Ffriday_night_play.pngR2i7661R3R137R5R139R6tgoR0y41:assets%2Fimages%2Fachievements%2Fhype.pngR2i23694R3R137R5R140R6tgoR0y54:assets%2Fimages%2Fachievements%2Flockedachievement.pngR2i1709R3R137R5R141R6tgoR0y48:assets%2Fimages%2Fachievements%2Foversinging.pngR2i19900R3R137R5R142R6tgoR0y56:assets%2Fimages%2Fachievements%2Froadkill_enthusiast.pngR2i5996R3R137R5R143R6tgoR0y44:assets%2Fimages%2Fachievements%2Ftoastie.pngR2i3094R3R137R5R144R6tgoR0y45:assets%2Fimages%2Fachievements%2Ftwo_keys.pngR2i27127R3R137R5R145R6tgoR0y43:assets%2Fimages%2Fachievements%2Fur_bad.pngR2i22017R3R137R5R146R6tgoR0y44:assets%2Fimages%2Fachievements%2Fur_good.pngR2i3467R3R137R5R147R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek1_nomiss.pngR2i20155R3R137R5R148R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek2_nomiss.pngR2i9304R3R137R5R149R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek3_nomiss.pngR2i21984R3R137R5R150R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek4_nomiss.pngR2i13430R3R137R5R151R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek5_nomiss.pngR2i21894R3R137R5R152R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek6_nomiss.pngR2i552R3R137R5R153R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek7_nomiss.pngR2i7249R3R137R5R154R6tgoR0y30:assets%2Fimages%2Falphabet.pngR2i177267R3R137R5R155R6tgoR0y30:assets%2Fimages%2Falphabet.xmlR2i57385R3R4R5R156R6tgoR0y34:assets%2Fimages%2FalphabetDark.pngR2i120330R3R137R5R157R6tgoR0y34:assets%2Fimages%2FalphabetDark.xmlR2i57389R3R4R5R158R6tgoR0y33:assets%2Fimages%2FalphabetOld.pngR2i90070R3R137R5R159R6tgoR0y33:assets%2Fimages%2FalphabetOld.xmlR2i52093R3R4R5R160R6tgoR0y38:assets%2Fimages%2Fbutton%2Fa-hover.pngR2i9818R3R137R5R161R6tgoR0y42:assets%2Fimages%2Fbutton%2Fa-hoverDark.pngR2i9677R3R137R5R162R6tgoR0y32:assets%2Fimages%2Fbutton%2Fa.pngR2i8053R3R137R5R163R6tgoR0y36:assets%2Fimages%2Fbutton%2FaDark.pngR2i7859R3R137R5R164R6tgoR0y40:assets%2Fimages%2Fbutton%2Falt-hover.pngR2i10795R3R137R5R165R6tgoR0y44:assets%2Fimages%2Fbutton%2Falt-hoverDark.pngR2i10294R3R137R5R166R6tgoR0y34:assets%2Fimages%2Fbutton%2Falt.pngR2i9075R3R137R5R167R6tgoR0y38:assets%2Fimages%2Fbutton%2FaltDark.pngR2i8397R3R137R5R168R6tgoR0y41:assets%2Fimages%2Fbutton%2Fback-hover.pngR2i10662R3R137R5R169R6tgoR0y45:assets%2Fimages%2Fbutton%2Fback-hoverDark.pngR2i10381R3R137R5R170R6tgoR0y35:assets%2Fimages%2Fbutton%2Fback.pngR2i9279R3R137R5R171R6tgoR0y39:assets%2Fimages%2Fbutton%2FbackDark.pngR2i8503R3R137R5R172R6tgoR0y41:assets%2Fimages%2Fbutton%2Fctrl-hover.pngR2i11612R3R137R5R173R6tgoR0y45:assets%2Fimages%2Fbutton%2Fctrl-hoverDark.pngR2i11311R3R137R5R174R6tgoR0y35:assets%2Fimages%2Fbutton%2Fctrl.pngR2i9607R3R137R5R175R6tgoR0y39:assets%2Fimages%2Fbutton%2FctrlDark.pngR2i8838R3R137R5R176R6tgoR0y38:assets%2Fimages%2Fbutton%2Fd-hover.pngR2i11142R3R137R5R177R6tgoR0y42:assets%2Fimages%2Fbutton%2Fd-hoverDark.pngR2i10476R3R137R5R178R6tgoR0y32:assets%2Fimages%2Fbutton%2Fd.pngR2i9363R3R137R5R179R6tgoR0y36:assets%2Fimages%2Fbutton%2FdDark.pngR2i8614R3R137R5R180R6tgoR0y41:assets%2Fimages%2Fbutton%2Fdown-hover.pngR2i11291R3R137R5R181R6tgoR0y45:assets%2Fimages%2Fbutton%2Fdown-hoverDark.pngR2i10758R3R137R5R182R6tgoR0y35:assets%2Fimages%2Fbutton%2Fdown.pngR2i9327R3R137R5R183R6tgoR0y39:assets%2Fimages%2Fbutton%2FdownDark.pngR2i8715R3R137R5R184R6tgoR0y38:assets%2Fimages%2Fbutton%2Fe-hover.pngR2i10420R3R137R5R185R6tgoR0y42:assets%2Fimages%2Fbutton%2Fe-hoverDark.pngR2i10032R3R137R5R186R6tgoR0y32:assets%2Fimages%2Fbutton%2Fe.pngR2i8707R3R137R5R187R6tgoR0y36:assets%2Fimages%2Fbutton%2FeDark.pngR2i8132R3R137R5R188R6tgoR0y42:assets%2Fimages%2Fbutton%2Fenter-hover.pngR2i11879R3R137R5R189R6tgoR0y46:assets%2Fimages%2Fbutton%2Fenter-hoverDark.pngR2i10628R3R137R5R190R6tgoR0y36:assets%2Fimages%2Fbutton%2Fenter.pngR2i9976R3R137R5R191R6tgoR0y40:assets%2Fimages%2Fbutton%2FenterDark.pngR2i8756R3R137R5R192R6tgoR0y38:assets%2Fimages%2Fbutton%2Fh-hover.pngR2i9483R3R137R5R193R6tgoR0y42:assets%2Fimages%2Fbutton%2Fh-hoverDark.pngR2i9212R3R137R5R194R6tgoR0y32:assets%2Fimages%2Fbutton%2Fh.pngR2i7864R3R137R5R195R6tgoR0y41:assets%2Fimages%2Fbutton%2Fhand-hover.pngR2i12156R3R137R5R196R6tgoR0y45:assets%2Fimages%2Fbutton%2Fhand-hoverDark.pngR2i11520R3R137R5R197R6tgoR0y35:assets%2Fimages%2Fbutton%2Fhand.pngR2i10176R3R137R5R198R6tgoR0y39:assets%2Fimages%2Fbutton%2FhandDark.pngR2i9169R3R137R5R199R6tgoR0y36:assets%2Fimages%2Fbutton%2FhDark.pngR2i7605R3R137R5R200R6tgoR0y41:assets%2Fimages%2Fbutton%2Fleft-hover.pngR2i11243R3R137R5R201R6tgoR0y45:assets%2Fimages%2Fbutton%2Fleft-hoverDark.pngR2i10491R3R137R5R202R6tgoR0y35:assets%2Fimages%2Fbutton%2Fleft.pngR2i9441R3R137R5R203R6tgoR0y39:assets%2Fimages%2Fbutton%2FleftDark.pngR2i8311R3R137R5R204R6tgoR0y49:assets%2Fimages%2Fbutton%2Fleft_bracket-hover.pngR2i9250R3R137R5R205R6tgoR0y53:assets%2Fimages%2Fbutton%2Fleft_bracket-hoverDark.pngR2i9022R3R137R5R206R6tgoR0y43:assets%2Fimages%2Fbutton%2Fleft_bracket.pngR2i8192R3R137R5R207R6tgoR0y47:assets%2Fimages%2Fbutton%2Fleft_bracketDark.pngR2i7672R3R137R5R208R6tgoR0y38:assets%2Fimages%2Fbutton%2Fo-hover.pngR2i9783R3R137R5R209R6tgoR0y42:assets%2Fimages%2Fbutton%2Fo-hoverDark.pngR2i9417R3R137R5R210R6tgoR0y32:assets%2Fimages%2Fbutton%2Fo.pngR2i8136R3R137R5R211R6tgoR0y36:assets%2Fimages%2Fbutton%2FoDark.pngR2i7730R3R137R5R212R6tgoR0y38:assets%2Fimages%2Fbutton%2Fp-hover.pngR2i9654R3R137R5R213R6tgoR0y42:assets%2Fimages%2Fbutton%2Fp-hoverDark.pngR2i9311R3R137R5R214R6tgoR0y32:assets%2Fimages%2Fbutton%2Fp.pngR2i8326R3R137R5R215R6tgoR0y42:assets%2Fimages%2Fbutton%2Fpause-hover.pngR2i9233R3R137R5R216R6tgoR0y46:assets%2Fimages%2Fbutton%2Fpause-hoverDark.pngR2i9009R3R137R5R217R6tgoR0y36:assets%2Fimages%2Fbutton%2Fpause.pngR2i7630R3R137R5R218R6tgoR0y40:assets%2Fimages%2Fbutton%2FpauseDark.pngR2i7317R3R137R5R219R6tgoR0y36:assets%2Fimages%2Fbutton%2FpDark.pngR2i7859R3R137R5R220R6tgoR0y50:assets%2Fimages%2Fbutton%2Fplayback_rate-hover.pngR2i9213R3R137R5R221R6tgoR0y54:assets%2Fimages%2Fbutton%2Fplayback_rate-hoverDark.pngR2i9088R3R137R5R222R6tgoR0y44:assets%2Fimages%2Fbutton%2Fplayback_rate.pngR2i7970R3R137R5R223R6tgoR0y48:assets%2Fimages%2Fbutton%2Fplayback_rateDark.pngR2i7824R3R137R5R224R6tgoR0y38:assets%2Fimages%2Fbutton%2Fq-hover.pngR2i10269R3R137R5R225R6tgoR0y42:assets%2Fimages%2Fbutton%2Fq-hoverDark.pngR2i9768R3R137R5R226R6tgoR0y32:assets%2Fimages%2Fbutton%2Fq.pngR2i8629R3R137R5R227R6tgoR0y36:assets%2Fimages%2Fbutton%2FqDark.pngR2i8082R3R137R5R228R6tgoR0y38:assets%2Fimages%2Fbutton%2Fr-hover.pngR2i10374R3R137R5R229R6tgoR0y42:assets%2Fimages%2Fbutton%2Fr-hoverDark.pngR2i9831R3R137R5R230R6tgoR0y32:assets%2Fimages%2Fbutton%2Fr.pngR2i8742R3R137R5R231R6tgoR0y36:assets%2Fimages%2Fbutton%2FrDark.pngR2i7920R3R137R5R232R6tgoR0y42:assets%2Fimages%2Fbutton%2Fright-hover.pngR2i11204R3R137R5R233R6tgoR0y46:assets%2Fimages%2Fbutton%2Fright-hoverDark.pngR2i10494R3R137R5R234R6tgoR0y36:assets%2Fimages%2Fbutton%2Fright.pngR2i9386R3R137R5R235R6tgoR0y40:assets%2Fimages%2Fbutton%2FrightDark.pngR2i8278R3R137R5R236R6tgoR0y50:assets%2Fimages%2Fbutton%2Fright_bracket-hover.pngR2i9415R3R137R5R237R6tgoR0y54:assets%2Fimages%2Fbutton%2Fright_bracket-hoverDark.pngR2i9003R3R137R5R238R6tgoR0y44:assets%2Fimages%2Fbutton%2Fright_bracket.pngR2i8203R3R137R5R239R6tgoR0y48:assets%2Fimages%2Fbutton%2Fright_bracketDark.pngR2i7685R3R137R5R240R6tgoR0y38:assets%2Fimages%2Fbutton%2Fs-hover.pngR2i10516R3R137R5R241R6tgoR0y42:assets%2Fimages%2Fbutton%2Fs-hoverDark.pngR2i10006R3R137R5R242R6tgoR0y32:assets%2Fimages%2Fbutton%2Fs.pngR2i8744R3R137R5R243R6tgoR0y36:assets%2Fimages%2Fbutton%2FsDark.pngR2i8061R3R137R5R244R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsection-hover.pngR2i10161R3R137R5R245R6tgoR0y48:assets%2Fimages%2Fbutton%2Fsection-hoverDark.pngR2i10068R3R137R5R246R6tgoR0y38:assets%2Fimages%2Fbutton%2Fsection.pngR2i8425R3R137R5R247R6tgoR0y42:assets%2Fimages%2Fbutton%2FsectionDark.pngR2i8300R3R137R5R248R6tgoR0y42:assets%2Fimages%2Fbutton%2Fshift-hover.pngR2i11227R3R137R5R249R6tgoR0y46:assets%2Fimages%2Fbutton%2Fshift-hoverDark.pngR2i10498R3R137R5R250R6tgoR0y36:assets%2Fimages%2Fbutton%2Fshift.pngR2i9321R3R137R5R251R6tgoR0y40:assets%2Fimages%2Fbutton%2FshiftDark.pngR2i8423R3R137R5R252R6tgoR0y46:assets%2Fimages%2Fbutton%2Fsnap_grid-hover.pngR2i10584R3R137R5R253R6tgoR0y50:assets%2Fimages%2Fbutton%2Fsnap_grid-hoverDark.pngR2i10016R3R137R5R254R6tgoR0y40:assets%2Fimages%2Fbutton%2Fsnap_grid.pngR2i8674R3R137R5R255R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsnap_gridDark.pngR2i8175R3R137R5R256R6tgoR0y42:assets%2Fimages%2Fbutton%2Fspace-hover.pngR2i9210R3R137R5R257R6tgoR0y46:assets%2Fimages%2Fbutton%2Fspace-hoverDark.pngR2i8760R3R137R5R258R6tgoR0y36:assets%2Fimages%2Fbutton%2Fspace.pngR2i7893R3R137R5R259R6tgoR0y40:assets%2Fimages%2Fbutton%2FspaceDark.pngR2i7277R3R137R5R260R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsustain-hover.pngR2i10807R3R137R5R261R6tgoR0y48:assets%2Fimages%2Fbutton%2Fsustain-hoverDark.pngR2i10166R3R137R5R262R6tgoR0y38:assets%2Fimages%2Fbutton%2Fsustain.pngR2i9058R3R137R5R263R6tgoR0y42:assets%2Fimages%2Fbutton%2FsustainDark.pngR2i8448R3R137R5R264R6tgoR0y38:assets%2Fimages%2Fbutton%2Ft-hover.pngR2i9341R3R137R5R265R6tgoR0y42:assets%2Fimages%2Fbutton%2Ft-hoverDark.pngR2i8860R3R137R5R266R6tgoR0y32:assets%2Fimages%2Fbutton%2Ft.pngR2i7916R3R137R5R267R6tgoR0y45:assets%2Fimages%2Fbutton%2Ftamplate-hover.pngR2i7778R3R137R5R268R6tgoR0y49:assets%2Fimages%2Fbutton%2Ftamplate-hoverDark.pngR2i7442R3R137R5R269R6tgoR0y39:assets%2Fimages%2Fbutton%2Ftamplate.pngR2i6924R3R137R5R270R6tgoR0y43:assets%2Fimages%2Fbutton%2FtamplateDark.pngR2i6617R3R137R5R271R6tgoR0y36:assets%2Fimages%2Fbutton%2FtDark.pngR2i7683R3R137R5R272R6tgoR0y39:assets%2Fimages%2Fbutton%2Fup-hover.pngR2i11312R3R137R5R273R6tgoR0y43:assets%2Fimages%2Fbutton%2Fup-hoverDark.pngR2i10783R3R137R5R274R6tgoR0y33:assets%2Fimages%2Fbutton%2Fup.pngR2i9306R3R137R5R275R6tgoR0y37:assets%2Fimages%2Fbutton%2FupDark.pngR2i8745R3R137R5R276R6tgoR0y38:assets%2Fimages%2Fbutton%2Fw-hover.pngR2i9805R3R137R5R277R6tgoR0y42:assets%2Fimages%2Fbutton%2Fw-hoverDark.pngR2i9561R3R137R5R278R6tgoR0y32:assets%2Fimages%2Fbutton%2Fw.pngR2i8235R3R137R5R279R6tgoR0y36:assets%2Fimages%2Fbutton%2FwDark.pngR2i7738R3R137R5R280R6tgoR0y38:assets%2Fimages%2Fbutton%2Fx-hover.pngR2i12388R3R137R5R281R6tgoR0y42:assets%2Fimages%2Fbutton%2Fx-hoverDark.pngR2i11499R3R137R5R282R6tgoR0y32:assets%2Fimages%2Fbutton%2Fx.pngR2i10418R3R137R5R283R6tgoR0y36:assets%2Fimages%2Fbutton%2FxDark.pngR2i9356R3R137R5R284R6tgoR0y87:assets%2Fimages%2Fbutton%2Fyou%20can%20use%20any%20resolution%20of%20image%20button.txtR2zR3R4R5R285R6tgoR0y38:assets%2Fimages%2Fbutton%2Fz-hover.pngR2i10489R3R137R5R286R6tgoR0y42:assets%2Fimages%2Fbutton%2Fz-hoverDark.pngR2i9825R3R137R5R287R6tgoR0y32:assets%2Fimages%2Fbutton%2Fz.pngR2i8703R3R137R5R288R6tgoR0y36:assets%2Fimages%2Fbutton%2FzDark.pngR2i8115R3R137R5R289R6tgoR0y41:assets%2Fimages%2Fbutton%2Fzoom-hover.pngR2i10632R3R137R5R290R6tgoR0y45:assets%2Fimages%2Fbutton%2Fzoom-hoverDark.pngR2i10245R3R137R5R291R6tgoR0y35:assets%2Fimages%2Fbutton%2Fzoom.pngR2i8952R3R137R5R292R6tgoR0y39:assets%2Fimages%2Fbutton%2FzoomDark.pngR2i8381R3R137R5R293R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.pngR2i3044R3R137R5R294R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.xmlR2i597R3R4R5R295R6tgoR0y33:assets%2Fimages%2Fchart_quant.pngR2i3143R3R137R5R296R6tgoR0y33:assets%2Fimages%2Fchart_quant.xmlR2i1028R3R4R5R297R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.pngR2i16546R3R137R5R298R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.xmlR2i1976R3R4R5R299R6tgoR0y34:assets%2Fimages%2Fcredits%2Fbb.pngR2i5485R3R137R5R300R6tgoR0y39:assets%2Fimages%2Fcredits%2Fdiscord.pngR2i1510R3R137R5R301R6tgoR0y35:assets%2Fimages%2Fcredits%2Fdub.pngR2i1153R3R137R5R302R6tgoR0y40:assets%2Fimages%2Fcredits%2Fevilsk8r.pngR2i7497R3R137R5R303R6tgoR0y38:assets%2Fimages%2Fcredits%2Fflicky.pngR2i6462R3R137R5R304R6tgoR0y36:assets%2Fimages%2Fcredits%2Fkade.pngR2i9684R3R137R5R305R6tgoR0y43:assets%2Fimages%2Fcredits%2Fkawaisprite.pngR2i3953R3R137R5R306R6tgoR0y38:assets%2Fimages%2Fcredits%2Fkeoiki.pngR2i3918R3R137R5R307R6tgoR0y42:assets%2Fimages%2Fcredits%2Fmastereric.pngR2i11899R3R137R5R308R6tgoR0y38:assets%2Fimages%2Fcredits%2Fnebula.pngR2i5644R3R137R5R309R6tgoR0y45:assets%2Fimages%2Fcredits%2Fninjamuffin99.pngR2i5850R3R137R5R310R6tgoR0y45:assets%2Fimages%2Fcredits%2Fphantomarcade.pngR2i9615R3R137R5R311R6tgoR0y37:assets%2Fimages%2Fcredits%2Fproxy.pngR2i7645R3R137R5R312R6tgoR0y37:assets%2Fimages%2Fcredits%2Friver.pngR2i8283R3R137R5R313R6tgoR0y43:assets%2Fimages%2Fcredits%2Fshadowmario.pngR2i3679R3R137R5R314R6tgoR0y37:assets%2Fimages%2Fcredits%2Fshubs.pngR2i6829R3R137R5R315R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsmokey.pngR2i9145R3R137R5R316R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsqirra.pngR2i8258R3R137R5R317R6tgoR0y34:assets%2Fimages%2Fcry_about_it.pngR2i380631R3R137R5R318R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fbf.jsonR2i987R3R4R5R319R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fgf.jsonR2i807R3R4R5R320R6tgoR0y28:assets%2Fimages%2Ffunkay.pngR2i135548R3R137R5R321R6tgoR0y35:assets%2Fimages%2FgfDanceTitle.jsonR2i124R3R4R5R322R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.pngR2i745426R3R137R5R323R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.xmlR2i4259R3R4R5R324R6tgoR0y30:assets%2Fimages%2Fhahadumb.pngR2i16097R3R137R5R325R6tgoR0y28:assets%2Fimages%2Fhitbox.pngR2i620R3R137R5R326R6tgoR0y27:assets%2Fimages%2FhugeW.pngR2i18069R3R137R5R327R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-bf-old.pngR2i4101R3R137R5R328R6tgoR0y43:assets%2Fimages%2Ficons%2Ficon-bf-pixel.pngR2i538R3R137R5R329R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-bf.pngR2i22287R3R137R5R330R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-dad.pngR2i12384R3R137R5R331R6tgoR0y49:assets%2Fimages%2Ficons%2Ficon-dubenderdragon.pngR2i8798R3R137R5R332R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-face.pngR2i3549R3R137R5R333R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-gf.pngR2i10205R3R137R5R334R6tgoR0y50:assets%2Fimages%2Ficons%2Ficon-mintenderdragon.pngR2i9431R3R137R5R335R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-mom.pngR2i9237R3R137R5R336R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-monster.pngR2i17792R3R137R5R337R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-parents.pngR2i15547R3R137R5R338R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-pico.pngR2i14208R3R137R5R339R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-senpai-pixel.pngR2i622R3R137R5R340R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-spirit-pixel.pngR2i509R3R137R5R341R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-spooky.pngR2i6907R3R137R5R342R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-tankman.pngR2i3493R3R137R5R343R6tgoR0y26:assets%2Fimages%2Flogo.pngR2i86924R3R137R5R344R6tgoR0y32:assets%2Fimages%2FlogoBumpin.pngR2i578147R3R137R5R345R6tgoR0y32:assets%2Fimages%2FlogoBumpin.xmlR2i2177R3R4R5R346R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.pngR2i28858R3R137R5R347R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.xmlR2i1380R3R4R5R348R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.pngR2i28734R3R137R5R349R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.xmlR2i1385R3R4R5R350R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.pngR2i24842R3R137R5R351R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.xmlR2i1375R3R4R5R352R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.pngR2i30316R3R137R5R353R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.xmlR2i1399R3R4R5R354R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.pngR2i22741R3R137R5R355R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.xmlR2i1644R3R4R5R356R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.pngR2i27299R3R137R5R357R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.xmlR2i1332R3R4R5R358R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.pngR2i54659R3R137R5R359R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.xmlR2i1444R3R4R5R360R6tgoR0y38:assets%2Fimages%2FMCButton%2Fhover.pngR2i906R3R137R5R361R6tgoR0y39:assets%2Fimages%2FMCButton%2Fnormal.pngR2i908R3R137R5R362R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_christmas.pngR2i16696R3R137R5R363R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_halloween.pngR2i7474R3R137R5R364R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_limo.pngR2i6842R3R137R5R365R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_philly.pngR2i19689R3R137R5R366R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_school.pngR2i1963R3R137R5R367R6tgoR0y50:assets%2Fimages%2Fmenubackgrounds%2Fmenu_stage.pngR2i21287R3R137R5R368R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_tank.pngR2i21289R3R137R5R369R6tgoR0y28:assets%2Fimages%2FmenuBG.pngR2i474435R3R137R5R370R6tgoR0y32:assets%2Fimages%2FmenuBGBlue.pngR2i454823R3R137R5R371R6tgoR0y35:assets%2Fimages%2FmenuBGMagenta.pngR2i446604R3R137R5R372R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fbf.jsonR2i125R3R4R5R373R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fdad.jsonR2i126R3R4R5R374R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fgf.jsonR2i125R3R4R5R375R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.pngR2i231974R3R137R5R376R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.xmlR2i5582R3R4R5R377R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.pngR2i111851R3R137R5R378R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.xmlR2i2115R3R4R5R379R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.pngR2i314273R3R137R5R380R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.xmlR2i3802R3R4R5R381R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.pngR2i152414R3R137R5R382R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.xmlR2i2113R3R4R5R383R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.pngR2i335745R3R137R5R384R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.xmlR2i2188R3R4R5R385R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.pngR2i109825R3R137R5R386R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.xmlR2i2142R3R4R5R387R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.pngR2i64463R3R137R5R388R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.xmlR2i1348R3R4R5R389R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.pngR2i80071R3R137R5R390R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.xmlR2i2543R3R4R5R391R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.pngR2i117065R3R137R5R392R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.xmlR2i2164R3R4R5R393R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fmom.jsonR2i125R3R4R5R394R6tgoR0y57:assets%2Fimages%2Fmenucharacters%2Fparents-christmas.jsonR2i135R3R4R5R395R6tgoR0y44:assets%2Fimages%2Fmenucharacters%2Fpico.jsonR2i129R3R4R5R396R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fsenpai.jsonR2i133R3R4R5R397R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fspooky.jsonR2i142R3R4R5R398R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2Ftankman.jsonR2i134R3R4R5R399R6tgoR0y31:assets%2Fimages%2FmenuDesat.pngR2i215613R3R137R5R400R6tgoR0y35:assets%2Fimages%2FmenuDesatDark.pngR2i455541R3R137R5R401R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Feasy.pngR2i3453R3R137R5R402R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Fhard.pngR2i3880R3R137R5R403R6tgoR0y47:assets%2Fimages%2Fmenudifficulties%2Fnormal.pngR2i4853R3R137R5R404R6tgoR0y33:assets%2Fimages%2FMenu_Tracks.pngR2i1254R3R137R5R405R6tgoR0y37:assets%2Fimages%2Fnewgrounds_logo.pngR2i40016R3R137R5R406R6tgoR0y26:assets%2Fimages%2Fnum0.pngR2i1816R3R137R5R407R6tgoR0y26:assets%2Fimages%2Fnum1.pngR2i1639R3R137R5R408R6tgoR0y26:assets%2Fimages%2Fnum2.pngR2i1985R3R137R5R409R6tgoR0y26:assets%2Fimages%2Fnum3.pngR2i1990R3R137R5R410R6tgoR0y26:assets%2Fimages%2Fnum4.pngR2i1955R3R137R5R411R6tgoR0y26:assets%2Fimages%2Fnum5.pngR2i2023R3R137R5R412R6tgoR0y26:assets%2Fimages%2Fnum6.pngR2i2082R3R137R5R413R6tgoR0y26:assets%2Fimages%2Fnum7.pngR2i1881R3R137R5R414R6tgoR0y26:assets%2Fimages%2Fnum8.pngR2i2024R3R137R5R415R6tgoR0y26:assets%2Fimages%2Fnum9.pngR2i1851R3R137R5R416R6tgoR0y42:assets%2Fimages%2Fstorymenu%2Ftutorial.pngR2i7056R3R137R5R417R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek1.pngR2i6261R3R137R5R418R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek2.pngR2i6517R3R137R5R419R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek3.pngR2i7148R3R137R5R420R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek4.pngR2i6262R3R137R5R421R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek5.pngR2i6440R3R137R5R422R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek6.pngR2i8979R3R137R5R423R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek7.pngR2i7349R3R137R5R424R6tgoR0y32:assets%2Fimages%2FtitleEnter.pngR2i26291R3R137R5R425R6tgoR0y32:assets%2Fimages%2FtitleEnter.xmlR2i518R3R4R5R426R6tgoR0y31:assets%2Fimages%2Fui%2Ffile.pngR2i1056R3R137R5R427R6tgoR0y33:assets%2Fimages%2Fui%2Ffolder.pngR2i883R3R137R5R428R6tgoR0y31:assets%2Fimages%2Fui%2Fjson.pngR2i1960R3R137R5R429R6tgoR0y34:assets%2Fimages%2Fui%2Fpicture.pngR2i1887R3R137R5R430R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_1.pngR2i52419R3R137R5R431R6tgoR0y43:assets%2Fimages%2Fui%2FsplashLoad_1Dark.pngR2i51758R3R137R5R432R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_2.pngR2i10521R3R137R5R433R6tgoR0y43:assets%2Fimages%2Fui%2FsplashLoad_2Dark.pngR2i11238R3R137R5R434R6tgoR0y30:assets%2Fimages%2Fui%2Fzip.pngR2i1416R3R137R5R435R6tgoR0y32:assets%2Fimages%2FunknownMod.pngR2i2387R3R137R5R436R6tgoR2i2309657R3y5:MUSICR5y31:assets%2Fmusic%2FfreakyMenu.mp3y9:pathGroupaR438hR6tgoR2i2402257R3R437R5y31:assets%2Fmusic%2FoffsetSong.mp3R439aR440hR6tgoR2i17762R3R437R5y32:assets%2Fsounds%2FcancelMenu.mp3R439aR441hR6tgoR2i2114R3R437R5y34:assets%2Fsounds%2FchangeVolume.mp3R439aR442hR6tgoR2i91950R3R437R5y33:assets%2Fsounds%2FconfirmMenu.mp3R439aR443hR6tgoR2i9155R3R437R5y34:assets%2Fsounds%2Fintro1-pixel.mp3R439aR444hR6tgoR2i9912R3R437R5y34:assets%2Fsounds%2Fintro2-pixel.mp3R439aR445hR6tgoR2i9128R3R437R5y34:assets%2Fsounds%2Fintro3-pixel.mp3R439aR446hR6tgoR2i21651R3R437R5y35:assets%2Fsounds%2FintroGo-pixel.mp3R439aR447hR6tgoR2i17762R3R437R5y32:assets%2Fsounds%2FscrollMenu.mp3R439aR448hR6tgoR0y27:assets%2Fstages%2Flimo.jsonR2i289R3R4R5R449R6tgoR0y27:assets%2Fstages%2Fmall.jsonR2i287R3R4R5R450R6tgoR0y31:assets%2Fstages%2FmallEvil.jsonR2i285R3R4R5R451R6tgoR0y29:assets%2Fstages%2Fphilly.jsonR2i285R3R4R5R452R6tgoR0y29:assets%2Fstages%2Fschool.jsonR2i290R3R4R5R453R6tgoR0y33:assets%2Fstages%2FschoolEvil.jsonR2i290R3R4R5R454R6tgoR0y29:assets%2Fstages%2Fspooky.jsonR2i285R3R4R5R455R6tgoR0y28:assets%2Fstages%2Fstage.jsonR2i279R3R4R5R456R6tgoR0y27:assets%2Fstages%2Ftank.jsonR2i147R3R4R5R457R6tgoR0y30:assets%2Fweeks%2Ftutorial.jsonR2i274R3R4R5R458R6tgoR0y27:assets%2Fweeks%2Fweek1.jsonR2i369R3R4R5R459R6tgoR0y27:assets%2Fweeks%2Fweek2.jsonR2i371R3R4R5R460R6tgoR0y27:assets%2Fweeks%2Fweek3.jsonR2i356R3R4R5R461R6tgoR0y27:assets%2Fweeks%2Fweek4.jsonR2i369R3R4R5R462R6tgoR0y27:assets%2Fweeks%2Fweek5.jsonR2i397R3R4R5R463R6tgoR0y27:assets%2Fweeks%2Fweek6.jsonR2i408R3R4R5R464R6tgoR0y27:assets%2Fweeks%2Fweek7.jsonR2i491R3R4R5R465R6tgoR0y29:assets%2Fweeks%2FweekList.txtR2i50R3R4R5R466R6tgoR0y21:do%20NOT%20readme.txtR2i4326R3R4R5R467R6tgoR0y34:assets%2Ffonts%2Ffonts-go-here.txtR2zR3R4R5R468R6tgoR2i14656R3y4:FONTy9:classNamey31:__ASSET__assets_fonts_pixel_otfR5y26:assets%2Ffonts%2Fpixel.otfR6tgoR2i75864R3R469R470y29:__ASSET__assets_fonts_vcr_ttfR5y24:assets%2Ffonts%2Fvcr.ttfR6tgoR2i2114R3R437R5y26:flixel%2Fsounds%2Fbeep.mp3R439aR475y26:flixel%2Fsounds%2Fbeep.ogghR6tgoR2i39706R3R437R5y28:flixel%2Fsounds%2Fflixel.mp3R439aR477y28:flixel%2Fsounds%2Fflixel.ogghR6tgoR2i5794R3y5:SOUNDR5R476R439aR475R476hgoR2i33629R3R479R5R478R439aR477R478hgoR2i15744R3R469R470y35:__ASSET__flixel_fonts_nokiafc22_ttfR5y30:flixel%2Ffonts%2Fnokiafc22.ttfR6tgoR2i29724R3R469R470y36:__ASSET__flixel_fonts_monsterrat_ttfR5y31:flixel%2Ffonts%2Fmonsterrat.ttfR6tgoR0y33:flixel%2Fimages%2Fui%2Fbutton.pngR2i519R3R137R5R484R6tgoR0y36:flixel%2Fimages%2Flogo%2Fdefault.pngR2i3280R3R137R5R485R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Fbox.pngR2i912R3R137R5R486R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fbutton.pngR2i433R3R137R5R487R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_down.pngR2i446R3R137R5R488R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_left.pngR2i459R3R137R5R489R6tgoR0y49:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_right.pngR2i511R3R137R5R490R6tgoR0y46:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_up.pngR2i493R3R137R5R491R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fbutton_thin.pngR2i247R3R137R5R492R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fbutton_toggle.pngR2i534R3R137R5R493R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fcheck_box.pngR2i922R3R137R5R494R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fcheck_mark.pngR2i946R3R137R5R495R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fchrome.pngR2i253R3R137R5R496R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fchrome_flat.pngR2i212R3R137R5R497R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_inset.pngR2i192R3R137R5R498R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_light.pngR2i214R3R137R5R499R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fdropdown_mark.pngR2i156R3R137R5R500R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Ffinger_big.pngR2i1724R3R137R5R501R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Ffinger_small.pngR2i294R3R137R5R502R6tgoR0y38:flixel%2Fflixel-ui%2Fimg%2Fhilight.pngR2i129R3R137R5R503R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Finvis.pngR2i128R3R137R5R504R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fminus_mark.pngR2i136R3R137R5R505R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fplus_mark.pngR2i147R3R137R5R506R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Fradio.pngR2i191R3R137R5R507R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fradio_dot.pngR2i153R3R137R5R508R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fswatch.pngR2i185R3R137R5R509R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Ftab.pngR2i201R3R137R5R510R6tgoR0y39:flixel%2Fflixel-ui%2Fimg%2Ftab_back.pngR2i210R3R137R5R511R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Ftooltip_arrow.pngR2i18509R3R137R5R512R6tgoR0y39:flixel%2Fflixel-ui%2Fxml%2Fdefaults.xmlR2i1263R3R4R5R513R6tgoR0y53:flixel%2Fflixel-ui%2Fxml%2Fdefault_loading_screen.xmlR2i1953R3R4R5R514R6tgoR0y44:flixel%2Fflixel-ui%2Fxml%2Fdefault_popup.xmlR2i1848R3R4R5R515R6tgh\",\"rootPath\":null,\"version\":2,\"libraryArgs\":[],\"libraryType\":null}";
+	var data = "{\"name\":null,\"assets\":\"aoy4:pathy33:assets%2Fcharacters%2Fbf-car.jsony4:sizei2527y4:typey4:TEXTy2:idR1y7:preloadtgoR0y39:assets%2Fcharacters%2Fbf-christmas.jsonR2i1747R3R4R5R7R6tgoR0y34:assets%2Fcharacters%2Fbf-dead.jsonR2i709R3R4R5R8R6tgoR0y45:assets%2Fcharacters%2Fbf-holding-gf-dead.jsonR2i740R3R4R5R9R6tgoR0y40:assets%2Fcharacters%2Fbf-holding-gf.jsonR2i1751R3R4R5R10R6tgoR0y40:assets%2Fcharacters%2Fbf-pixel-dead.jsonR2i721R3R4R5R11R6tgoR0y44:assets%2Fcharacters%2Fbf-pixel-opponent.jsonR2i1567R3R4R5R12R6tgoR0y35:assets%2Fcharacters%2Fbf-pixel.jsonR2i1563R3R4R5R13R6tgoR0y29:assets%2Fcharacters%2Fbf.jsonR2i2467R3R4R5R14R6tgoR0y30:assets%2Fcharacters%2Fdad.jsonR2i1762R3R4R5R15R6tgoR0y41:assets%2Fcharacters%2FDubEnderDragon.jsonR2i1039R3R4R5R16R6tgoR0y33:assets%2Fcharacters%2Fgf-car.jsonR2i993R3R4R5R17R6tgoR0y39:assets%2Fcharacters%2Fgf-christmas.jsonR2i2137R3R4R5R18R6tgoR0y35:assets%2Fcharacters%2Fgf-pixel.jsonR2i937R3R4R5R19R6tgoR0y37:assets%2Fcharacters%2Fgf-tankmen.jsonR2i1066R3R4R5R20R6tgoR0y29:assets%2Fcharacters%2Fgf.jsonR2i2326R3R4R5R21R6tgoR0y42:assets%2Fcharacters%2FMintEnderDragon.jsonR2i1044R3R4R5R22R6tgoR0y34:assets%2Fcharacters%2Fmom-car.jsonR2i1892R3R4R5R23R6tgoR0y30:assets%2Fcharacters%2Fmom.jsonR2i988R3R4R5R24R6tgoR0y44:assets%2Fcharacters%2Fmonster-christmas.jsonR2i1905R3R4R5R25R6tgoR0y34:assets%2Fcharacters%2Fmonster.jsonR2i1904R3R4R5R26R6tgoR0y44:assets%2Fcharacters%2Fparents-christmas.jsonR2i3427R3R4R5R27R6tgoR0y38:assets%2Fcharacters%2Fpico-player.jsonR2i1635R3R4R5R28R6tgoR0y39:assets%2Fcharacters%2Fpico-speaker.jsonR2i1554R3R4R5R29R6tgoR0y31:assets%2Fcharacters%2Fpico.jsonR2i1636R3R4R5R30R6tgoR0y39:assets%2Fcharacters%2Fsenpai-angry.jsonR2i1039R3R4R5R31R6tgoR0y33:assets%2Fcharacters%2Fsenpai.jsonR2i1009R3R4R5R32R6tgoR0y33:assets%2Fcharacters%2Fspirit.jsonR2i992R3R4R5R33R6tgoR0y33:assets%2Fcharacters%2Fspooky.jsonR2i1384R3R4R5R34R6tgoR0y41:assets%2Fcharacters%2Ftankman-player.jsonR2i1976R3R4R5R35R6tgoR0y34:assets%2Fcharacters%2Ftankman.jsonR2i1974R3R4R5R36R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-easy.jsonR2i8488R3R4R5R37R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-hard.jsonR2i12097R3R4R5R38R6tgoR0y38:assets%2Fdata%2Fblammed%2Fblammed.jsonR2i9687R3R4R5R39R6tgoR0y37:assets%2Fdata%2Fblammed%2Fevents.jsonR2i10344R3R4R5R40R6tgoR0y44:assets%2Fdata%2Fbopeebo%2Fbopeebo-boobs.jsonR2i4140R3R4R5R41R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-easy.jsonR2i9178R3R4R5R42R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-hard.jsonR2i4140R3R4R5R43R6tgoR0y38:assets%2Fdata%2Fbopeebo%2Fbopeebo.jsonR2i9542R3R4R5R44R6tgoR0y37:assets%2Fdata%2Fbopeebo%2Fevents.jsonR2i5047R3R4R5R45R6tgoR0y33:assets%2Fdata%2FcharacterList.txtR2i284R3R4R5R46R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-easy.jsonR2i7062R3R4R5R47R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-hard.jsonR2i10443R3R4R5R48R6tgoR0y34:assets%2Fdata%2Fcocoa%2Fcocoa.jsonR2i8278R3R4R5R49R6tgoR0y35:assets%2Fdata%2Fcocoa%2Fevents.jsonR2i3644R3R4R5R50R6tgoR0y32:assets%2Fdata%2FcrashConfig.jsonR2i739R3R4R5R51R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-easy.jsonR2i7937R3R4R5R52R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-hard.jsonR2i9756R3R4R5R53R6tgoR0y44:assets%2Fdata%2Fdad-battle%2Fdad-battle.jsonR2i8913R3R4R5R54R6tgoR0y40:assets%2Fdata%2Fdad-battle%2Fevents.jsonR2i2614R3R4R5R55R6tgoR0y34:assets%2Fdata%2Fdata-goes-here.txtR2zR3R4R5R56R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-easy.jsonR2i9239R3R4R5R57R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-hard.jsonR2i11689R3R4R5R58R6tgoR0y36:assets%2Fdata%2Feggnog%2Feggnog.jsonR2i10333R3R4R5R59R6tgoR0y36:assets%2Fdata%2Feggnog%2Fevents.jsonR2i4881R3R4R5R60R6tgoR0y34:assets%2Fdata%2FfreeplayColors.txtR2i76R3R4R5R61R6tgoR0y35:assets%2Fdata%2Ffresh%2Fevents.jsonR2i3201R3R4R5R62R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-easy.jsonR2i5857R3R4R5R63R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-hard.jsonR2i6905R3R4R5R64R6tgoR0y34:assets%2Fdata%2Ffresh%2Ffresh.jsonR2i6493R3R4R5R65R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-easy.jsonR2i15146R3R4R5R66R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-hard.jsonR2i23500R3R4R5R67R6tgoR0y32:assets%2Fdata%2Fguns%2Fguns.jsonR2i20620R3R4R5R68R6tgoR0y34:assets%2Fdata%2Fhigh%2Fevents.jsonR2i4558R3R4R5R69R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-easy.jsonR2i8563R3R4R5R70R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-hard.jsonR2i11553R3R4R5R71R6tgoR0y32:assets%2Fdata%2Fhigh%2Fhigh.jsonR2i9757R3R4R5R72R6tgoR0y29:assets%2Fdata%2FintroText.txtR2i2103R3R4R5R73R6tgoR0y29:assets%2Fdata%2Fmain-view.xmlR2i123R3R4R5R74R6tgoR0y34:assets%2Fdata%2Fmilf%2Fevents.jsonR2i7488R3R4R5R75R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-easy.jsonR2i13522R3R4R5R76R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-hard.jsonR2i18135R3R4R5R77R6tgoR0y32:assets%2Fdata%2Fmilf%2Fmilf.jsonR2i15192R3R4R5R78R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-easy.jsonR2i12175R3R4R5R79R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-hard.jsonR2i14163R3R4R5R80R6tgoR0y38:assets%2Fdata%2Fmonster%2Fmonster.jsonR2i13445R3R4R5R81R6tgoR0y41:assets%2Fdata%2Fphilly-nice%2Fevents.jsonR2i5191R3R4R5R82R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-easy.jsonR2i8067R3R4R5R83R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-hard.jsonR2i12556R3R4R5R84R6tgoR0y46:assets%2Fdata%2Fphilly-nice%2Fphilly-nice.jsonR2i10103R3R4R5R85R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-easy.jsonR2i6089R3R4R5R86R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-hard.jsonR2i8768R3R4R5R87R6tgoR0y32:assets%2Fdata%2Fpico%2Fpico.jsonR2i7493R3R4R5R88R6tgoR0y34:assets%2Fdata%2Fridge%2Fridge.jsonR2i34473R3R4R5R89R6tgoR0y35:assets%2Fdata%2Froses%2Fevents.jsonR2i8786R3R4R5R90R6tgoR0y39:assets%2Fdata%2Froses%2Froses-easy.jsonR2i6725R3R4R5R91R6tgoR0y39:assets%2Fdata%2Froses%2Froses-hard.jsonR2i10432R3R4R5R92R6tgoR0y34:assets%2Fdata%2Froses%2Froses.jsonR2i8609R3R4R5R93R6tgoR0y41:assets%2Fdata%2Froses%2FrosesDialogue.txtR2i153R3R4R5R94R6tgoR0y43:assets%2Fdata%2Fsatin-panties%2Fevents.jsonR2i3177R3R4R5R95R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-easy.jsonR2i8817R3R4R5R96R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-hard.jsonR2i12704R3R4R5R97R6tgoR0y50:assets%2Fdata%2Fsatin-panties%2Fsatin-panties.jsonR2i10725R3R4R5R98R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-easy.jsonR2i9027R3R4R5R99R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-hard.jsonR2i10778R3R4R5R100R6tgoR0y36:assets%2Fdata%2Fsenpai%2Fsenpai.jsonR2i10016R3R4R5R101R6tgoR0y43:assets%2Fdata%2Fsenpai%2FsenpaiDialogue.txtR2i162R3R4R5R102R6tgoR0y34:assets%2Fdata%2Fsmash%2Fsmash.jsonR2i23961R3R4R5R103R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-easy.jsonR2i8435R3R4R5R104R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-hard.jsonR2i10170R3R4R5R105R6tgoR0y34:assets%2Fdata%2Fsouth%2Fsouth.jsonR2i10097R3R4R5R106R6tgoR0y33:assets%2Fdata%2FspecialThanks.txtR2i300R3R4R5R107R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-easy.jsonR2i7965R3R4R5R108R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-hard.jsonR2i9429R3R4R5R109R6tgoR0y40:assets%2Fdata%2Fspookeez%2Fspookeez.jsonR2i8875R3R4R5R110R6tgoR0y29:assets%2Fdata%2FstageList.txtR2i61R3R4R5R111R6tgoR0y36:assets%2Fdata%2Fstress%2Fevents.jsonR2i747R3R4R5R112R6tgoR0y41:assets%2Fdata%2Fstress%2Fpicospeaker.jsonR2i18286R3R4R5R113R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-easy.jsonR2i33455R3R4R5R114R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-hard.jsonR2i53679R3R4R5R115R6tgoR0y36:assets%2Fdata%2Fstress%2Fstress.jsonR2i45928R3R4R5R116R6tgoR0y32:assets%2Fdata%2Ftest%2Ftest.jsonR2i75208R3R4R5R117R6tgoR0y40:assets%2Fdata%2Ftest-dev%2Ftest-dev.jsonR2i49834R3R4R5R118R6tgoR0y36:assets%2Fdata%2Fthorns%2Fevents.jsonR2i8104R3R4R5R119R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-easy.jsonR2i10437R3R4R5R120R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-hard.jsonR2i15444R3R4R5R121R6tgoR0y36:assets%2Fdata%2Fthorns%2Fthorns.jsonR2i12691R3R4R5R122R6tgoR0y43:assets%2Fdata%2Fthorns%2FthornsDialogue.txtR2i305R3R4R5R123R6tgoR0y38:assets%2Fdata%2Ftutorial%2Fevents.jsonR2i2702R3R4R5R124R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-easy.jsonR2i5739R3R4R5R125R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-hard.jsonR2i6335R3R4R5R126R6tgoR0y40:assets%2Fdata%2Ftutorial%2Ftutorial.jsonR2i5739R3R4R5R127R6tgoR0y33:assets%2Fdata%2Fugh%2Fevents.jsonR2i1345R3R4R5R128R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-easy.jsonR2i8550R3R4R5R129R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-hard.jsonR2i12496R3R4R5R130R6tgoR0y30:assets%2Fdata%2Fugh%2Fugh.jsonR2i11354R3R4R5R131R6tgoR0y47:assets%2Fdata%2Fwinter-horrorland%2Fevents.jsonR2i6197R3R4R5R132R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-easy.jsonR2i11846R3R4R5R133R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-hard.jsonR2i14558R3R4R5R134R6tgoR0y58:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland.jsonR2i12808R3R4R5R135R6tgoR0y45:assets%2Fimages%2Fachievements%2Fbirthday.pngR2i10948R3y5:IMAGER5R136R6tgoR0y45:assets%2Fimages%2Fachievements%2Fdebugger.pngR2i7554R3R137R5R138R6tgoR0y54:assets%2Fimages%2Fachievements%2Ffriday_night_play.pngR2i7661R3R137R5R139R6tgoR0y41:assets%2Fimages%2Fachievements%2Fhype.pngR2i23694R3R137R5R140R6tgoR0y54:assets%2Fimages%2Fachievements%2Flockedachievement.pngR2i1709R3R137R5R141R6tgoR0y48:assets%2Fimages%2Fachievements%2Foversinging.pngR2i19900R3R137R5R142R6tgoR0y56:assets%2Fimages%2Fachievements%2Froadkill_enthusiast.pngR2i5996R3R137R5R143R6tgoR0y44:assets%2Fimages%2Fachievements%2Ftoastie.pngR2i3094R3R137R5R144R6tgoR0y45:assets%2Fimages%2Fachievements%2Ftwo_keys.pngR2i27127R3R137R5R145R6tgoR0y43:assets%2Fimages%2Fachievements%2Fur_bad.pngR2i22017R3R137R5R146R6tgoR0y44:assets%2Fimages%2Fachievements%2Fur_good.pngR2i3467R3R137R5R147R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek1_nomiss.pngR2i20155R3R137R5R148R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek2_nomiss.pngR2i9304R3R137R5R149R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek3_nomiss.pngR2i21984R3R137R5R150R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek4_nomiss.pngR2i13430R3R137R5R151R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek5_nomiss.pngR2i21894R3R137R5R152R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek6_nomiss.pngR2i552R3R137R5R153R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek7_nomiss.pngR2i7249R3R137R5R154R6tgoR0y30:assets%2Fimages%2Falphabet.pngR2i177267R3R137R5R155R6tgoR0y30:assets%2Fimages%2Falphabet.xmlR2i57385R3R4R5R156R6tgoR0y34:assets%2Fimages%2FalphabetDark.pngR2i120330R3R137R5R157R6tgoR0y34:assets%2Fimages%2FalphabetDark.xmlR2i57389R3R4R5R158R6tgoR0y33:assets%2Fimages%2FalphabetOld.pngR2i90070R3R137R5R159R6tgoR0y33:assets%2Fimages%2FalphabetOld.xmlR2i52093R3R4R5R160R6tgoR0y38:assets%2Fimages%2Fbutton%2Fa-hover.pngR2i9818R3R137R5R161R6tgoR0y42:assets%2Fimages%2Fbutton%2Fa-hoverDark.pngR2i9677R3R137R5R162R6tgoR0y32:assets%2Fimages%2Fbutton%2Fa.pngR2i8053R3R137R5R163R6tgoR0y36:assets%2Fimages%2Fbutton%2FaDark.pngR2i7859R3R137R5R164R6tgoR0y40:assets%2Fimages%2Fbutton%2Falt-hover.pngR2i10795R3R137R5R165R6tgoR0y44:assets%2Fimages%2Fbutton%2Falt-hoverDark.pngR2i10294R3R137R5R166R6tgoR0y34:assets%2Fimages%2Fbutton%2Falt.pngR2i9075R3R137R5R167R6tgoR0y38:assets%2Fimages%2Fbutton%2FaltDark.pngR2i8397R3R137R5R168R6tgoR0y41:assets%2Fimages%2Fbutton%2Fback-hover.pngR2i10662R3R137R5R169R6tgoR0y45:assets%2Fimages%2Fbutton%2Fback-hoverDark.pngR2i10381R3R137R5R170R6tgoR0y35:assets%2Fimages%2Fbutton%2Fback.pngR2i9279R3R137R5R171R6tgoR0y39:assets%2Fimages%2Fbutton%2FbackDark.pngR2i8503R3R137R5R172R6tgoR0y41:assets%2Fimages%2Fbutton%2Fctrl-hover.pngR2i11612R3R137R5R173R6tgoR0y45:assets%2Fimages%2Fbutton%2Fctrl-hoverDark.pngR2i11311R3R137R5R174R6tgoR0y35:assets%2Fimages%2Fbutton%2Fctrl.pngR2i9607R3R137R5R175R6tgoR0y39:assets%2Fimages%2Fbutton%2FctrlDark.pngR2i8838R3R137R5R176R6tgoR0y38:assets%2Fimages%2Fbutton%2Fd-hover.pngR2i11142R3R137R5R177R6tgoR0y42:assets%2Fimages%2Fbutton%2Fd-hoverDark.pngR2i10476R3R137R5R178R6tgoR0y32:assets%2Fimages%2Fbutton%2Fd.pngR2i9363R3R137R5R179R6tgoR0y36:assets%2Fimages%2Fbutton%2FdDark.pngR2i8614R3R137R5R180R6tgoR0y41:assets%2Fimages%2Fbutton%2Fdown-hover.pngR2i11291R3R137R5R181R6tgoR0y45:assets%2Fimages%2Fbutton%2Fdown-hoverDark.pngR2i10758R3R137R5R182R6tgoR0y35:assets%2Fimages%2Fbutton%2Fdown.pngR2i9327R3R137R5R183R6tgoR0y39:assets%2Fimages%2Fbutton%2FdownDark.pngR2i8715R3R137R5R184R6tgoR0y38:assets%2Fimages%2Fbutton%2Fe-hover.pngR2i10420R3R137R5R185R6tgoR0y42:assets%2Fimages%2Fbutton%2Fe-hoverDark.pngR2i10032R3R137R5R186R6tgoR0y32:assets%2Fimages%2Fbutton%2Fe.pngR2i8707R3R137R5R187R6tgoR0y36:assets%2Fimages%2Fbutton%2FeDark.pngR2i8132R3R137R5R188R6tgoR0y42:assets%2Fimages%2Fbutton%2Fenter-hover.pngR2i11879R3R137R5R189R6tgoR0y46:assets%2Fimages%2Fbutton%2Fenter-hoverDark.pngR2i10628R3R137R5R190R6tgoR0y36:assets%2Fimages%2Fbutton%2Fenter.pngR2i9976R3R137R5R191R6tgoR0y40:assets%2Fimages%2Fbutton%2FenterDark.pngR2i8756R3R137R5R192R6tgoR0y38:assets%2Fimages%2Fbutton%2Fh-hover.pngR2i9483R3R137R5R193R6tgoR0y42:assets%2Fimages%2Fbutton%2Fh-hoverDark.pngR2i9212R3R137R5R194R6tgoR0y32:assets%2Fimages%2Fbutton%2Fh.pngR2i7864R3R137R5R195R6tgoR0y41:assets%2Fimages%2Fbutton%2Fhand-hover.pngR2i12156R3R137R5R196R6tgoR0y45:assets%2Fimages%2Fbutton%2Fhand-hoverDark.pngR2i11520R3R137R5R197R6tgoR0y35:assets%2Fimages%2Fbutton%2Fhand.pngR2i10176R3R137R5R198R6tgoR0y39:assets%2Fimages%2Fbutton%2FhandDark.pngR2i9169R3R137R5R199R6tgoR0y36:assets%2Fimages%2Fbutton%2FhDark.pngR2i7605R3R137R5R200R6tgoR0y41:assets%2Fimages%2Fbutton%2Fleft-hover.pngR2i11243R3R137R5R201R6tgoR0y45:assets%2Fimages%2Fbutton%2Fleft-hoverDark.pngR2i10491R3R137R5R202R6tgoR0y35:assets%2Fimages%2Fbutton%2Fleft.pngR2i9441R3R137R5R203R6tgoR0y39:assets%2Fimages%2Fbutton%2FleftDark.pngR2i8311R3R137R5R204R6tgoR0y49:assets%2Fimages%2Fbutton%2Fleft_bracket-hover.pngR2i9250R3R137R5R205R6tgoR0y53:assets%2Fimages%2Fbutton%2Fleft_bracket-hoverDark.pngR2i9022R3R137R5R206R6tgoR0y43:assets%2Fimages%2Fbutton%2Fleft_bracket.pngR2i8192R3R137R5R207R6tgoR0y47:assets%2Fimages%2Fbutton%2Fleft_bracketDark.pngR2i7672R3R137R5R208R6tgoR0y38:assets%2Fimages%2Fbutton%2Fo-hover.pngR2i9783R3R137R5R209R6tgoR0y42:assets%2Fimages%2Fbutton%2Fo-hoverDark.pngR2i9417R3R137R5R210R6tgoR0y32:assets%2Fimages%2Fbutton%2Fo.pngR2i8136R3R137R5R211R6tgoR0y36:assets%2Fimages%2Fbutton%2FoDark.pngR2i7730R3R137R5R212R6tgoR0y38:assets%2Fimages%2Fbutton%2Fp-hover.pngR2i9654R3R137R5R213R6tgoR0y42:assets%2Fimages%2Fbutton%2Fp-hoverDark.pngR2i9311R3R137R5R214R6tgoR0y32:assets%2Fimages%2Fbutton%2Fp.pngR2i8326R3R137R5R215R6tgoR0y42:assets%2Fimages%2Fbutton%2Fpause-hover.pngR2i9233R3R137R5R216R6tgoR0y46:assets%2Fimages%2Fbutton%2Fpause-hoverDark.pngR2i9009R3R137R5R217R6tgoR0y36:assets%2Fimages%2Fbutton%2Fpause.pngR2i7630R3R137R5R218R6tgoR0y40:assets%2Fimages%2Fbutton%2FpauseDark.pngR2i7317R3R137R5R219R6tgoR0y36:assets%2Fimages%2Fbutton%2FpDark.pngR2i7859R3R137R5R220R6tgoR0y50:assets%2Fimages%2Fbutton%2Fplayback_rate-hover.pngR2i9213R3R137R5R221R6tgoR0y54:assets%2Fimages%2Fbutton%2Fplayback_rate-hoverDark.pngR2i9088R3R137R5R222R6tgoR0y44:assets%2Fimages%2Fbutton%2Fplayback_rate.pngR2i7970R3R137R5R223R6tgoR0y48:assets%2Fimages%2Fbutton%2Fplayback_rateDark.pngR2i7824R3R137R5R224R6tgoR0y38:assets%2Fimages%2Fbutton%2Fq-hover.pngR2i10269R3R137R5R225R6tgoR0y42:assets%2Fimages%2Fbutton%2Fq-hoverDark.pngR2i9768R3R137R5R226R6tgoR0y32:assets%2Fimages%2Fbutton%2Fq.pngR2i8629R3R137R5R227R6tgoR0y36:assets%2Fimages%2Fbutton%2FqDark.pngR2i8082R3R137R5R228R6tgoR0y38:assets%2Fimages%2Fbutton%2Fr-hover.pngR2i10374R3R137R5R229R6tgoR0y42:assets%2Fimages%2Fbutton%2Fr-hoverDark.pngR2i9831R3R137R5R230R6tgoR0y32:assets%2Fimages%2Fbutton%2Fr.pngR2i8742R3R137R5R231R6tgoR0y36:assets%2Fimages%2Fbutton%2FrDark.pngR2i7920R3R137R5R232R6tgoR0y42:assets%2Fimages%2Fbutton%2Fright-hover.pngR2i11204R3R137R5R233R6tgoR0y46:assets%2Fimages%2Fbutton%2Fright-hoverDark.pngR2i10494R3R137R5R234R6tgoR0y36:assets%2Fimages%2Fbutton%2Fright.pngR2i9386R3R137R5R235R6tgoR0y40:assets%2Fimages%2Fbutton%2FrightDark.pngR2i8278R3R137R5R236R6tgoR0y50:assets%2Fimages%2Fbutton%2Fright_bracket-hover.pngR2i9415R3R137R5R237R6tgoR0y54:assets%2Fimages%2Fbutton%2Fright_bracket-hoverDark.pngR2i9003R3R137R5R238R6tgoR0y44:assets%2Fimages%2Fbutton%2Fright_bracket.pngR2i8203R3R137R5R239R6tgoR0y48:assets%2Fimages%2Fbutton%2Fright_bracketDark.pngR2i7685R3R137R5R240R6tgoR0y38:assets%2Fimages%2Fbutton%2Fs-hover.pngR2i10516R3R137R5R241R6tgoR0y42:assets%2Fimages%2Fbutton%2Fs-hoverDark.pngR2i10006R3R137R5R242R6tgoR0y32:assets%2Fimages%2Fbutton%2Fs.pngR2i8744R3R137R5R243R6tgoR0y36:assets%2Fimages%2Fbutton%2FsDark.pngR2i8061R3R137R5R244R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsection-hover.pngR2i10161R3R137R5R245R6tgoR0y48:assets%2Fimages%2Fbutton%2Fsection-hoverDark.pngR2i10068R3R137R5R246R6tgoR0y38:assets%2Fimages%2Fbutton%2Fsection.pngR2i8425R3R137R5R247R6tgoR0y42:assets%2Fimages%2Fbutton%2FsectionDark.pngR2i8300R3R137R5R248R6tgoR0y42:assets%2Fimages%2Fbutton%2Fshift-hover.pngR2i11227R3R137R5R249R6tgoR0y46:assets%2Fimages%2Fbutton%2Fshift-hoverDark.pngR2i10498R3R137R5R250R6tgoR0y36:assets%2Fimages%2Fbutton%2Fshift.pngR2i9321R3R137R5R251R6tgoR0y40:assets%2Fimages%2Fbutton%2FshiftDark.pngR2i8423R3R137R5R252R6tgoR0y46:assets%2Fimages%2Fbutton%2Fsnap_grid-hover.pngR2i10584R3R137R5R253R6tgoR0y50:assets%2Fimages%2Fbutton%2Fsnap_grid-hoverDark.pngR2i10016R3R137R5R254R6tgoR0y40:assets%2Fimages%2Fbutton%2Fsnap_grid.pngR2i8674R3R137R5R255R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsnap_gridDark.pngR2i8175R3R137R5R256R6tgoR0y42:assets%2Fimages%2Fbutton%2Fspace-hover.pngR2i9210R3R137R5R257R6tgoR0y46:assets%2Fimages%2Fbutton%2Fspace-hoverDark.pngR2i8760R3R137R5R258R6tgoR0y36:assets%2Fimages%2Fbutton%2Fspace.pngR2i7893R3R137R5R259R6tgoR0y40:assets%2Fimages%2Fbutton%2FspaceDark.pngR2i7277R3R137R5R260R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsustain-hover.pngR2i10807R3R137R5R261R6tgoR0y48:assets%2Fimages%2Fbutton%2Fsustain-hoverDark.pngR2i10166R3R137R5R262R6tgoR0y38:assets%2Fimages%2Fbutton%2Fsustain.pngR2i9058R3R137R5R263R6tgoR0y42:assets%2Fimages%2Fbutton%2FsustainDark.pngR2i8448R3R137R5R264R6tgoR0y38:assets%2Fimages%2Fbutton%2Ft-hover.pngR2i9341R3R137R5R265R6tgoR0y42:assets%2Fimages%2Fbutton%2Ft-hoverDark.pngR2i8860R3R137R5R266R6tgoR0y32:assets%2Fimages%2Fbutton%2Ft.pngR2i7916R3R137R5R267R6tgoR0y45:assets%2Fimages%2Fbutton%2Ftamplate-hover.pngR2i7778R3R137R5R268R6tgoR0y49:assets%2Fimages%2Fbutton%2Ftamplate-hoverDark.pngR2i7442R3R137R5R269R6tgoR0y39:assets%2Fimages%2Fbutton%2Ftamplate.pngR2i6924R3R137R5R270R6tgoR0y43:assets%2Fimages%2Fbutton%2FtamplateDark.pngR2i6617R3R137R5R271R6tgoR0y36:assets%2Fimages%2Fbutton%2FtDark.pngR2i7683R3R137R5R272R6tgoR0y39:assets%2Fimages%2Fbutton%2Fup-hover.pngR2i11312R3R137R5R273R6tgoR0y43:assets%2Fimages%2Fbutton%2Fup-hoverDark.pngR2i10783R3R137R5R274R6tgoR0y33:assets%2Fimages%2Fbutton%2Fup.pngR2i9306R3R137R5R275R6tgoR0y37:assets%2Fimages%2Fbutton%2FupDark.pngR2i8745R3R137R5R276R6tgoR0y38:assets%2Fimages%2Fbutton%2Fw-hover.pngR2i9805R3R137R5R277R6tgoR0y42:assets%2Fimages%2Fbutton%2Fw-hoverDark.pngR2i9561R3R137R5R278R6tgoR0y32:assets%2Fimages%2Fbutton%2Fw.pngR2i8235R3R137R5R279R6tgoR0y36:assets%2Fimages%2Fbutton%2FwDark.pngR2i7738R3R137R5R280R6tgoR0y38:assets%2Fimages%2Fbutton%2Fx-hover.pngR2i12388R3R137R5R281R6tgoR0y42:assets%2Fimages%2Fbutton%2Fx-hoverDark.pngR2i11499R3R137R5R282R6tgoR0y32:assets%2Fimages%2Fbutton%2Fx.pngR2i10418R3R137R5R283R6tgoR0y36:assets%2Fimages%2Fbutton%2FxDark.pngR2i9356R3R137R5R284R6tgoR0y87:assets%2Fimages%2Fbutton%2Fyou%20can%20use%20any%20resolution%20of%20image%20button.txtR2zR3R4R5R285R6tgoR0y38:assets%2Fimages%2Fbutton%2Fz-hover.pngR2i10489R3R137R5R286R6tgoR0y42:assets%2Fimages%2Fbutton%2Fz-hoverDark.pngR2i9825R3R137R5R287R6tgoR0y32:assets%2Fimages%2Fbutton%2Fz.pngR2i8703R3R137R5R288R6tgoR0y36:assets%2Fimages%2Fbutton%2FzDark.pngR2i8115R3R137R5R289R6tgoR0y41:assets%2Fimages%2Fbutton%2Fzoom-hover.pngR2i10632R3R137R5R290R6tgoR0y45:assets%2Fimages%2Fbutton%2Fzoom-hoverDark.pngR2i10245R3R137R5R291R6tgoR0y35:assets%2Fimages%2Fbutton%2Fzoom.pngR2i8952R3R137R5R292R6tgoR0y39:assets%2Fimages%2Fbutton%2FzoomDark.pngR2i8381R3R137R5R293R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.pngR2i3044R3R137R5R294R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.xmlR2i597R3R4R5R295R6tgoR0y33:assets%2Fimages%2Fchart_quant.pngR2i3143R3R137R5R296R6tgoR0y33:assets%2Fimages%2Fchart_quant.xmlR2i1028R3R4R5R297R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.pngR2i16546R3R137R5R298R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.xmlR2i1976R3R4R5R299R6tgoR0y34:assets%2Fimages%2Fcredits%2Fbb.pngR2i5485R3R137R5R300R6tgoR0y39:assets%2Fimages%2Fcredits%2Fdiscord.pngR2i1510R3R137R5R301R6tgoR0y35:assets%2Fimages%2Fcredits%2Fdub.pngR2i1153R3R137R5R302R6tgoR0y40:assets%2Fimages%2Fcredits%2Fevilsk8r.pngR2i7497R3R137R5R303R6tgoR0y38:assets%2Fimages%2Fcredits%2Fflicky.pngR2i6462R3R137R5R304R6tgoR0y36:assets%2Fimages%2Fcredits%2Fkade.pngR2i9684R3R137R5R305R6tgoR0y43:assets%2Fimages%2Fcredits%2Fkawaisprite.pngR2i3953R3R137R5R306R6tgoR0y38:assets%2Fimages%2Fcredits%2Fkeoiki.pngR2i3918R3R137R5R307R6tgoR0y42:assets%2Fimages%2Fcredits%2Fmastereric.pngR2i11899R3R137R5R308R6tgoR0y38:assets%2Fimages%2Fcredits%2Fnebula.pngR2i5644R3R137R5R309R6tgoR0y45:assets%2Fimages%2Fcredits%2Fninjamuffin99.pngR2i5850R3R137R5R310R6tgoR0y45:assets%2Fimages%2Fcredits%2Fphantomarcade.pngR2i9615R3R137R5R311R6tgoR0y37:assets%2Fimages%2Fcredits%2Fproxy.pngR2i7645R3R137R5R312R6tgoR0y37:assets%2Fimages%2Fcredits%2Friver.pngR2i8283R3R137R5R313R6tgoR0y43:assets%2Fimages%2Fcredits%2Fshadowmario.pngR2i3679R3R137R5R314R6tgoR0y37:assets%2Fimages%2Fcredits%2Fshubs.pngR2i6829R3R137R5R315R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsmokey.pngR2i9145R3R137R5R316R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsqirra.pngR2i8258R3R137R5R317R6tgoR0y34:assets%2Fimages%2Fcry_about_it.pngR2i380631R3R137R5R318R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fbf.jsonR2i987R3R4R5R319R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fgf.jsonR2i807R3R4R5R320R6tgoR0y28:assets%2Fimages%2Ffunkay.pngR2i135548R3R137R5R321R6tgoR0y35:assets%2Fimages%2FgfDanceTitle.jsonR2i124R3R4R5R322R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.pngR2i745426R3R137R5R323R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.xmlR2i4259R3R4R5R324R6tgoR0y30:assets%2Fimages%2Fhahadumb.pngR2i16097R3R137R5R325R6tgoR0y28:assets%2Fimages%2Fhitbox.pngR2i620R3R137R5R326R6tgoR0y27:assets%2Fimages%2FhugeW.pngR2i18069R3R137R5R327R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-bf-old.pngR2i4101R3R137R5R328R6tgoR0y43:assets%2Fimages%2Ficons%2Ficon-bf-pixel.pngR2i538R3R137R5R329R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-bf.pngR2i22287R3R137R5R330R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-dad.pngR2i12384R3R137R5R331R6tgoR0y49:assets%2Fimages%2Ficons%2Ficon-dubenderdragon.pngR2i8798R3R137R5R332R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-face.pngR2i3549R3R137R5R333R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-gf.pngR2i10205R3R137R5R334R6tgoR0y50:assets%2Fimages%2Ficons%2Ficon-mintenderdragon.pngR2i9431R3R137R5R335R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-mom.pngR2i9237R3R137R5R336R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-monster.pngR2i17792R3R137R5R337R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-parents.pngR2i15547R3R137R5R338R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-pico.pngR2i14208R3R137R5R339R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-senpai-pixel.pngR2i622R3R137R5R340R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-spirit-pixel.pngR2i509R3R137R5R341R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-spooky.pngR2i6907R3R137R5R342R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-tankman.pngR2i3493R3R137R5R343R6tgoR0y26:assets%2Fimages%2Flogo.pngR2i86924R3R137R5R344R6tgoR0y32:assets%2Fimages%2FlogoBumpin.pngR2i578147R3R137R5R345R6tgoR0y32:assets%2Fimages%2FlogoBumpin.xmlR2i2177R3R4R5R346R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.pngR2i28858R3R137R5R347R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.xmlR2i1380R3R4R5R348R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.pngR2i28734R3R137R5R349R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.xmlR2i1385R3R4R5R350R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.pngR2i24842R3R137R5R351R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.xmlR2i1375R3R4R5R352R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.pngR2i30316R3R137R5R353R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.xmlR2i1399R3R4R5R354R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.pngR2i22741R3R137R5R355R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.xmlR2i1644R3R4R5R356R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.pngR2i27299R3R137R5R357R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.xmlR2i1332R3R4R5R358R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.pngR2i54659R3R137R5R359R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.xmlR2i1444R3R4R5R360R6tgoR0y38:assets%2Fimages%2FMCButton%2Fhover.pngR2i906R3R137R5R361R6tgoR0y39:assets%2Fimages%2FMCButton%2Fnormal.pngR2i908R3R137R5R362R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_christmas.pngR2i16696R3R137R5R363R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_halloween.pngR2i7474R3R137R5R364R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_limo.pngR2i6842R3R137R5R365R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_philly.pngR2i19689R3R137R5R366R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_school.pngR2i1963R3R137R5R367R6tgoR0y50:assets%2Fimages%2Fmenubackgrounds%2Fmenu_stage.pngR2i21287R3R137R5R368R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_tank.pngR2i21289R3R137R5R369R6tgoR0y28:assets%2Fimages%2FmenuBG.pngR2i474435R3R137R5R370R6tgoR0y32:assets%2Fimages%2FmenuBGBlue.pngR2i454823R3R137R5R371R6tgoR0y35:assets%2Fimages%2FmenuBGMagenta.pngR2i446604R3R137R5R372R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fbf.jsonR2i125R3R4R5R373R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fdad.jsonR2i126R3R4R5R374R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fgf.jsonR2i125R3R4R5R375R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.pngR2i231974R3R137R5R376R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.xmlR2i5582R3R4R5R377R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.pngR2i111851R3R137R5R378R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.xmlR2i2115R3R4R5R379R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.pngR2i314273R3R137R5R380R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.xmlR2i3802R3R4R5R381R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.pngR2i152414R3R137R5R382R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.xmlR2i2113R3R4R5R383R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.pngR2i335745R3R137R5R384R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.xmlR2i2188R3R4R5R385R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.pngR2i109825R3R137R5R386R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.xmlR2i2142R3R4R5R387R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.pngR2i64463R3R137R5R388R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.xmlR2i1348R3R4R5R389R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.pngR2i80071R3R137R5R390R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.xmlR2i2543R3R4R5R391R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.pngR2i117065R3R137R5R392R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.xmlR2i2164R3R4R5R393R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fmom.jsonR2i125R3R4R5R394R6tgoR0y57:assets%2Fimages%2Fmenucharacters%2Fparents-christmas.jsonR2i135R3R4R5R395R6tgoR0y44:assets%2Fimages%2Fmenucharacters%2Fpico.jsonR2i129R3R4R5R396R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fsenpai.jsonR2i133R3R4R5R397R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fspooky.jsonR2i142R3R4R5R398R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2Ftankman.jsonR2i134R3R4R5R399R6tgoR0y31:assets%2Fimages%2FmenuDesat.pngR2i215613R3R137R5R400R6tgoR0y35:assets%2Fimages%2FmenuDesatDark.pngR2i455541R3R137R5R401R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Feasy.pngR2i3453R3R137R5R402R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Fhard.pngR2i3880R3R137R5R403R6tgoR0y47:assets%2Fimages%2Fmenudifficulties%2Fnormal.pngR2i4853R3R137R5R404R6tgoR0y33:assets%2Fimages%2FMenu_Tracks.pngR2i1254R3R137R5R405R6tgoR0y37:assets%2Fimages%2Fnewgrounds_logo.pngR2i40016R3R137R5R406R6tgoR0y26:assets%2Fimages%2Fnum0.pngR2i1816R3R137R5R407R6tgoR0y26:assets%2Fimages%2Fnum1.pngR2i1639R3R137R5R408R6tgoR0y26:assets%2Fimages%2Fnum2.pngR2i1985R3R137R5R409R6tgoR0y26:assets%2Fimages%2Fnum3.pngR2i1990R3R137R5R410R6tgoR0y26:assets%2Fimages%2Fnum4.pngR2i1955R3R137R5R411R6tgoR0y26:assets%2Fimages%2Fnum5.pngR2i2023R3R137R5R412R6tgoR0y26:assets%2Fimages%2Fnum6.pngR2i2082R3R137R5R413R6tgoR0y26:assets%2Fimages%2Fnum7.pngR2i1881R3R137R5R414R6tgoR0y26:assets%2Fimages%2Fnum8.pngR2i2024R3R137R5R415R6tgoR0y26:assets%2Fimages%2Fnum9.pngR2i1851R3R137R5R416R6tgoR0y42:assets%2Fimages%2Fstorymenu%2Ftutorial.pngR2i7056R3R137R5R417R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek1.pngR2i6261R3R137R5R418R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek2.pngR2i6517R3R137R5R419R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek3.pngR2i7148R3R137R5R420R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek4.pngR2i6262R3R137R5R421R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek5.pngR2i6440R3R137R5R422R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek6.pngR2i8979R3R137R5R423R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek7.pngR2i7349R3R137R5R424R6tgoR0y32:assets%2Fimages%2FtitleEnter.pngR2i26291R3R137R5R425R6tgoR0y32:assets%2Fimages%2FtitleEnter.xmlR2i518R3R4R5R426R6tgoR0y31:assets%2Fimages%2Fui%2Ffile.pngR2i1056R3R137R5R427R6tgoR0y33:assets%2Fimages%2Fui%2Ffolder.pngR2i883R3R137R5R428R6tgoR0y31:assets%2Fimages%2Fui%2Fjson.pngR2i1960R3R137R5R429R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left-hover.pngR2i170R3R137R5R430R6tgoR0y60:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left-hoverDark.pngR2i169R3R137R5R431R6tgoR0y50:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left.pngR2i166R3R137R5R432R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_leftDark.pngR2i175R3R137R5R433R6tgoR0y58:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle-hover.pngR2i157R3R137R5R434R6tgoR0y62:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle-hoverDark.pngR2i157R3R137R5R435R6tgoR0y52:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle.pngR2i154R3R137R5R436R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middleDark.pngR2i158R3R137R5R437R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right-hover.pngR2i171R3R137R5R438R6tgoR0y61:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right-hoverDark.pngR2i168R3R137R5R439R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right.pngR2i167R3R137R5R440R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_rightDark.pngR2i166R3R137R5R441R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fcenter-hover.pngR2i149R3R137R5R442R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fcenter-hoverDark.pngR2i149R3R137R5R443R6tgoR0y45:assets%2Fimages%2Fui%2Fnineslice%2Fcenter.pngR2i147R3R137R5R444R6tgoR0y49:assets%2Fimages%2Fui%2Fnineslice%2FcenterDark.pngR2i146R3R137R5R445R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left-hover.pngR2i160R3R137R5R446R6tgoR0y60:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left-hoverDark.pngR2i161R3R137R5R447R6tgoR0y50:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left.pngR2i159R3R137R5R448R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_leftDark.pngR2i161R3R137R5R449R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right-hover.pngR2i158R3R137R5R450R6tgoR0y61:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right-hoverDark.pngR2i157R3R137R5R451R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right.pngR2i155R3R137R5R452R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_rightDark.pngR2i157R3R137R5R453R6tgoR0y53:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left-hover.pngR2i169R3R137R5R454R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left-hoverDark.pngR2i169R3R137R5R455R6tgoR0y47:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left.pngR2i164R3R137R5R456R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Ftop_leftDark.pngR2i170R3R137R5R457R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle-hover.pngR2i161R3R137R5R458R6tgoR0y59:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle-hoverDark.pngR2i161R3R137R5R459R6tgoR0y49:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle.pngR2i154R3R137R5R460R6tgoR0y53:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middleDark.pngR2i154R3R137R5R461R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right-hover.pngR2i170R3R137R5R462R6tgoR0y58:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right-hoverDark.pngR2i169R3R137R5R463R6tgoR0y48:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right.pngR2i164R3R137R5R464R6tgoR0y52:assets%2Fimages%2Fui%2Fnineslice%2Ftop_rightDark.pngR2i166R3R137R5R465R6tgoR0y34:assets%2Fimages%2Fui%2Fpicture.pngR2i1887R3R137R5R466R6tgoR0y31:assets%2Fimages%2Fui%2Fplay.pngR2i697R3R137R5R467R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_1.pngR2i52419R3R137R5R468R6tgoR0y43:assets%2Fimages%2Fui%2FsplashLoad_1Dark.pngR2i51758R3R137R5R469R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_2.pngR2i10521R3R137R5R470R6tgoR0y43:assets%2Fimages%2Fui%2FsplashLoad_2Dark.pngR2i11238R3R137R5R471R6tgoR0y30:assets%2Fimages%2Fui%2Fzip.pngR2i1416R3R137R5R472R6tgoR0y32:assets%2Fimages%2FunknownMod.pngR2i2387R3R137R5R473R6tgoR2i2309657R3y5:MUSICR5y31:assets%2Fmusic%2FfreakyMenu.mp3y9:pathGroupaR475hR6tgoR2i2402257R3R474R5y31:assets%2Fmusic%2FoffsetSong.mp3R476aR477hR6tgoR2i17762R3R474R5y32:assets%2Fsounds%2FcancelMenu.mp3R476aR478hR6tgoR2i2114R3R474R5y34:assets%2Fsounds%2FchangeVolume.mp3R476aR479hR6tgoR2i91950R3R474R5y33:assets%2Fsounds%2FconfirmMenu.mp3R476aR480hR6tgoR2i9155R3R474R5y34:assets%2Fsounds%2Fintro1-pixel.mp3R476aR481hR6tgoR2i9912R3R474R5y34:assets%2Fsounds%2Fintro2-pixel.mp3R476aR482hR6tgoR2i9128R3R474R5y34:assets%2Fsounds%2Fintro3-pixel.mp3R476aR483hR6tgoR2i21651R3R474R5y35:assets%2Fsounds%2FintroGo-pixel.mp3R476aR484hR6tgoR2i17762R3R474R5y32:assets%2Fsounds%2FscrollMenu.mp3R476aR485hR6tgoR0y27:assets%2Fstages%2Flimo.jsonR2i289R3R4R5R486R6tgoR0y27:assets%2Fstages%2Fmall.jsonR2i287R3R4R5R487R6tgoR0y31:assets%2Fstages%2FmallEvil.jsonR2i285R3R4R5R488R6tgoR0y29:assets%2Fstages%2Fphilly.jsonR2i285R3R4R5R489R6tgoR0y29:assets%2Fstages%2Fschool.jsonR2i290R3R4R5R490R6tgoR0y33:assets%2Fstages%2FschoolEvil.jsonR2i290R3R4R5R491R6tgoR0y29:assets%2Fstages%2Fspooky.jsonR2i285R3R4R5R492R6tgoR0y28:assets%2Fstages%2Fstage.jsonR2i279R3R4R5R493R6tgoR0y27:assets%2Fstages%2Ftank.jsonR2i147R3R4R5R494R6tgoR0y30:assets%2Fweeks%2Ftutorial.jsonR2i274R3R4R5R495R6tgoR0y27:assets%2Fweeks%2Fweek1.jsonR2i369R3R4R5R496R6tgoR0y27:assets%2Fweeks%2Fweek2.jsonR2i371R3R4R5R497R6tgoR0y27:assets%2Fweeks%2Fweek3.jsonR2i356R3R4R5R498R6tgoR0y27:assets%2Fweeks%2Fweek4.jsonR2i369R3R4R5R499R6tgoR0y27:assets%2Fweeks%2Fweek5.jsonR2i397R3R4R5R500R6tgoR0y27:assets%2Fweeks%2Fweek6.jsonR2i408R3R4R5R501R6tgoR0y27:assets%2Fweeks%2Fweek7.jsonR2i491R3R4R5R502R6tgoR0y29:assets%2Fweeks%2FweekList.txtR2i50R3R4R5R503R6tgoR0y21:do%20NOT%20readme.txtR2i4326R3R4R5R504R6tgoR0y34:assets%2Ffonts%2Ffonts-go-here.txtR2zR3R4R5R505R6tgoR2i14656R3y4:FONTy9:classNamey31:__ASSET__assets_fonts_pixel_otfR5y26:assets%2Ffonts%2Fpixel.otfR6tgoR2i75864R3R506R507y29:__ASSET__assets_fonts_vcr_ttfR5y24:assets%2Ffonts%2Fvcr.ttfR6tgoR2i2114R3R474R5y26:flixel%2Fsounds%2Fbeep.mp3R476aR512y26:flixel%2Fsounds%2Fbeep.ogghR6tgoR2i39706R3R474R5y28:flixel%2Fsounds%2Fflixel.mp3R476aR514y28:flixel%2Fsounds%2Fflixel.ogghR6tgoR2i5794R3y5:SOUNDR5R513R476aR512R513hgoR2i33629R3R516R5R515R476aR514R515hgoR2i15744R3R506R507y35:__ASSET__flixel_fonts_nokiafc22_ttfR5y30:flixel%2Ffonts%2Fnokiafc22.ttfR6tgoR2i29724R3R506R507y36:__ASSET__flixel_fonts_monsterrat_ttfR5y31:flixel%2Ffonts%2Fmonsterrat.ttfR6tgoR0y33:flixel%2Fimages%2Fui%2Fbutton.pngR2i519R3R137R5R521R6tgoR0y36:flixel%2Fimages%2Flogo%2Fdefault.pngR2i3280R3R137R5R522R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Fbox.pngR2i912R3R137R5R523R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fbutton.pngR2i433R3R137R5R524R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_down.pngR2i446R3R137R5R525R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_left.pngR2i459R3R137R5R526R6tgoR0y49:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_right.pngR2i511R3R137R5R527R6tgoR0y46:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_up.pngR2i493R3R137R5R528R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fbutton_thin.pngR2i247R3R137R5R529R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fbutton_toggle.pngR2i534R3R137R5R530R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fcheck_box.pngR2i922R3R137R5R531R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fcheck_mark.pngR2i946R3R137R5R532R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fchrome.pngR2i253R3R137R5R533R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fchrome_flat.pngR2i212R3R137R5R534R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_inset.pngR2i192R3R137R5R535R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_light.pngR2i214R3R137R5R536R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fdropdown_mark.pngR2i156R3R137R5R537R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Ffinger_big.pngR2i1724R3R137R5R538R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Ffinger_small.pngR2i294R3R137R5R539R6tgoR0y38:flixel%2Fflixel-ui%2Fimg%2Fhilight.pngR2i129R3R137R5R540R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Finvis.pngR2i128R3R137R5R541R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fminus_mark.pngR2i136R3R137R5R542R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fplus_mark.pngR2i147R3R137R5R543R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Fradio.pngR2i191R3R137R5R544R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fradio_dot.pngR2i153R3R137R5R545R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fswatch.pngR2i185R3R137R5R546R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Ftab.pngR2i201R3R137R5R547R6tgoR0y39:flixel%2Fflixel-ui%2Fimg%2Ftab_back.pngR2i210R3R137R5R548R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Ftooltip_arrow.pngR2i18509R3R137R5R549R6tgoR0y39:flixel%2Fflixel-ui%2Fxml%2Fdefaults.xmlR2i1263R3R4R5R550R6tgoR0y53:flixel%2Fflixel-ui%2Fxml%2Fdefault_loading_screen.xmlR2i1953R3R4R5R551R6tgoR0y44:flixel%2Fflixel-ui%2Fxml%2Fdefault_popup.xmlR2i1848R3R4R5R552R6tgh\",\"rootPath\":null,\"version\":2,\"libraryArgs\":[],\"libraryType\":null}";
 	var manifest = lime_utils_AssetManifest.parse(data,ManifestResources.rootPath);
 	var library = lime_utils_AssetLibrary.fromManifest(manifest);
 	lime_utils_Assets.registerLibrary("default",library);
@@ -36248,7 +36297,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g1 ) {
 					haxe_NativeStackTrace.lastError = _g1;
 					var e = haxe_Exception.caught(_g1).unwrap();
-					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1013, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1007, className : "Note", methodName : "setConfig"});
 				}
 			} else {
 				try {
@@ -36263,7 +36312,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g4 ) {
 					haxe_NativeStackTrace.lastError = _g4;
 					var e1 = haxe_Exception.caught(_g4).unwrap();
-					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1024, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1018, className : "Note", methodName : "setConfig"});
 					dge_backend_CacheTools.jsonParse.h[name] = { };
 				}
 			}
@@ -48272,7 +48321,7 @@ var WeekData = function(weekFile,fileName) {
 $hxClasses["WeekData"] = WeekData;
 WeekData.__name__ = "WeekData";
 WeekData.createWeekFile = function() {
-	var weekFile = { songs : [["Bopeebo","dad",[146,113,253]],["Fresh","dad",[146,113,253]],["Dad Battle","dad",[146,113,253]]], weekCharacters : ["dad","bf","gf"], weekBackground : "stage", weekBefore : "tutorial", storyName : "Your New Week", weekName : "Custom Week", freeplayColor : [146,113,253], startUnlocked : true, hiddenUntilUnlocked : false, hideStoryMode : false, hideFreeplay : false, difficulties : ""};
+	var weekFile = { songs : [["Bopeebo","dad",[146,113,253],"ui/nineslice"],["Fresh","dad",[146,113,253],"ui/nineslice"],["Dad Battle","dad",[146,113,253],"ui/nineslice"]], weekCharacters : ["dad","bf","gf"], weekBackground : "stage", weekBefore : "tutorial", storyName : "Your New Week", weekName : "Custom Week", freeplayColor : [146,113,253], startUnlocked : true, hiddenUntilUnlocked : false, hideStoryMode : false, hideFreeplay : false, difficulties : ""};
 	return weekFile;
 };
 WeekData.reloadWeekFiles = function(isStoryMode) {
@@ -54055,6 +54104,273 @@ dge_obj_ui_HealthIcon.prototype = $extend(HealthIcon.prototype,{
 	}
 	,__class__: dge_obj_ui_HealthIcon
 });
+var dge_obj_ui_MenuItem = function(x,y,title,icon,texture) {
+	if(title == null) {
+		title = "?????";
+	}
+	this.targetY = 0;
+	this.distancePerItem = new flixel_math_FlxPoint(75,200);
+	this.startPoint = new flixel_math_FlxPoint(0,0);
+	flixel_group_FlxTypedSpriteGroup.call(this,0,0);
+	this.startPoint.set_x(x);
+	this.startPoint.set_y(y);
+	this.iconPanel = new dge_obj_ui_NinesliceSprite(0,0,150,150,texture);
+	this.add(this.iconPanel);
+	this.songPanel = new dge_obj_ui_NinesliceSprite(this.iconPanel.x + this.iconPanel.get_width() + 25,0,870 * (flixel_FlxG.width / 1280) | 0,150,texture);
+	this.add(this.songPanel);
+	this.icon = new dge_obj_ui_HealthIcon(icon);
+	CoolUtil.alignItem(this.iconPanel,this.icon);
+	this.icon.setGraphicSize(105,105);
+	this.icon.updateHitbox();
+	this.add(this.icon);
+	this.songName = new flixel_text_FlxText(0,0,0,title.toUpperCase(),60);
+	this.songName.setFormat("assets/fonts/" + "vcr.ttf",60,ClientPrefs.darkmode ? -1 : -16777216,"left");
+	this.cutText(this.songName,title.toUpperCase(),this.songPanel.get_width() - 40);
+	CoolUtil.alignItem(this.songPanel,this.songName,Align.MIDDLE_LEFT);
+	var fh = this.songName;
+	fh.set_x(fh.x + 20);
+	this.add(this.songName);
+	this.snapToPosition();
+};
+$hxClasses["dge.obj.ui.MenuItem"] = dge_obj_ui_MenuItem;
+dge_obj_ui_MenuItem.__name__ = "dge.obj.ui.MenuItem";
+dge_obj_ui_MenuItem.__super__ = flixel_group_FlxTypedSpriteGroup;
+dge_obj_ui_MenuItem.prototype = $extend(flixel_group_FlxTypedSpriteGroup.prototype,{
+	iconPanel: null
+	,songPanel: null
+	,icon: null
+	,songName: null
+	,startPoint: null
+	,distancePerItem: null
+	,targetY: null
+	,cutText: function(txt,input,maxWidth) {
+		if(maxWidth == null) {
+			maxWidth = 0;
+		}
+		if(txt == null) {
+			return "...";
+		}
+		if(maxWidth <= 0) {
+			txt.set_text(input);
+			return txt.text;
+		} else {
+			txt.set_text(input);
+			if(txt.textField.get_textWidth() <= maxWidth) {
+				return txt.text;
+			}
+			var og = input;
+			while(og.length > 0) {
+				og = HxOverrides.substr(og,0,og.length - 1);
+				txt.set_text(og + "...");
+				if(txt.textField.get_textWidth() <= maxWidth) {
+					return txt.text;
+				}
+			}
+		}
+		return "...";
+	}
+	,update: function(e) {
+		var lerpVal = Math.max(0,Math.min(1,e * 9.6));
+		var a = this.x;
+		this.set_x(a + lerpVal * (-Math.abs(this.targetY) * this.distancePerItem.x + this.startPoint.x - a));
+		var a = this.y;
+		this.set_y(a + lerpVal * (this.targetY * this.distancePerItem.y + this.startPoint.y - a));
+		flixel_group_FlxTypedSpriteGroup.prototype.update.call(this,e);
+	}
+	,snapToPosition: function() {
+		this.set_x(-Math.abs(this.targetY) * this.distancePerItem.x + this.startPoint.x);
+		this.set_y(this.targetY * this.distancePerItem.y + this.startPoint.y);
+	}
+	,changeIcon: function(char) {
+		this.icon.changeIcon(char);
+		CoolUtil.alignItem(this.iconPanel,this.icon);
+		this.icon.setGraphicSize(105,105);
+		this.icon.updateHitbox();
+	}
+	,changeTexture: function(tex) {
+		if(this.iconPanel != null) {
+			this.iconPanel.set_texture(tex);
+		}
+		if(this.songPanel != null) {
+			this.songPanel.set_texture(tex);
+		}
+	}
+	,__class__: dge_obj_ui_MenuItem
+});
+var dge_obj_ui_NinesliceSprite = function(x,y,width,height,texture) {
+	if(texture == null) {
+		texture = "";
+	}
+	if(height == null) {
+		height = 100;
+	}
+	if(width == null) {
+		width = 100;
+	}
+	this.texture = null;
+	this.CORNER_WIDTH = 45;
+	flixel_group_FlxTypedSpriteGroup.call(this,x,y);
+	if(texture == null || texture.length < 1) {
+		texture = "ui/nineslice";
+	}
+	while(StringTools.endsWith(texture,"/")) texture = HxOverrides.substr(texture,0,texture.length - 1);
+	if(width < this.CORNER_WIDTH * 2) {
+		width = this.CORNER_WIDTH * 2;
+	}
+	if(height < this.CORNER_WIDTH * 2) {
+		height = this.CORNER_WIDTH * 2;
+	}
+	var tmp = new flixel_FlxSprite(0,0);
+	var returnAsset = Paths.returnGraphic(texture + "/top_left",null);
+	this.TL = tmp.loadGraphic(returnAsset);
+	this.TL.setGraphicSize(this.CORNER_WIDTH,this.CORNER_WIDTH);
+	this.TL.updateHitbox();
+	this.add(this.TL);
+	var subCorner = this.CORNER_WIDTH * 2;
+	var tmp = new flixel_FlxSprite(this.TL.x + this.CORNER_WIDTH,this.TL.y);
+	var returnAsset = Paths.returnGraphic(texture + "/top_middle",null);
+	this.TM = tmp.loadGraphic(returnAsset);
+	this.TM.setGraphicSize(width - subCorner,this.CORNER_WIDTH);
+	this.TM.updateHitbox();
+	this.add(this.TM);
+	var tmp = new flixel_FlxSprite(this.TL.x + width - this.CORNER_WIDTH,this.TL.y);
+	var returnAsset = Paths.returnGraphic(texture + "/top_right",null);
+	this.TR = tmp.loadGraphic(returnAsset);
+	this.TR.setGraphicSize(this.CORNER_WIDTH,this.CORNER_WIDTH);
+	this.TR.updateHitbox();
+	this.add(this.TR);
+	var tmp = new flixel_FlxSprite(this.TL.x,this.TL.y + this.CORNER_WIDTH);
+	var returnAsset = Paths.returnGraphic(texture + "/middle_left",null);
+	this.ML = tmp.loadGraphic(returnAsset);
+	this.ML.setGraphicSize(this.CORNER_WIDTH,height - subCorner);
+	this.ML.updateHitbox();
+	this.add(this.ML);
+	var tmp = new flixel_FlxSprite(this.TL.x + this.CORNER_WIDTH,this.TL.y + this.CORNER_WIDTH);
+	var returnAsset = Paths.returnGraphic(texture + "/center",null);
+	this.C = tmp.loadGraphic(returnAsset);
+	this.C.setGraphicSize(width - subCorner,height - subCorner);
+	this.C.updateHitbox();
+	this.add(this.C);
+	var tmp = new flixel_FlxSprite(this.TL.x + width - this.CORNER_WIDTH,this.TL.y + this.CORNER_WIDTH);
+	var returnAsset = Paths.returnGraphic(texture + "/middle_right",null);
+	this.MR = tmp.loadGraphic(returnAsset);
+	this.MR.setGraphicSize(this.CORNER_WIDTH,height - subCorner);
+	this.MR.updateHitbox();
+	this.add(this.MR);
+	var tmp = new flixel_FlxSprite(this.TL.x,this.TL.y + height - this.CORNER_WIDTH);
+	var returnAsset = Paths.returnGraphic(texture + "/bottom_left",null);
+	this.BL = tmp.loadGraphic(returnAsset);
+	this.BL.setGraphicSize(this.CORNER_WIDTH,this.CORNER_WIDTH);
+	this.BL.updateHitbox();
+	this.add(this.BL);
+	var tmp = new flixel_FlxSprite(this.TL.x + this.CORNER_WIDTH,this.TL.y + height - this.CORNER_WIDTH);
+	var returnAsset = Paths.returnGraphic(texture + "/bottom_middle",null);
+	this.BM = tmp.loadGraphic(returnAsset);
+	this.BM.setGraphicSize(width - subCorner,this.CORNER_WIDTH);
+	this.BM.updateHitbox();
+	this.add(this.BM);
+	var tmp = new flixel_FlxSprite(this.TL.x + width - this.CORNER_WIDTH,this.TL.y + height - this.CORNER_WIDTH);
+	var returnAsset = Paths.returnGraphic(texture + "/bottom_right",null);
+	this.BR = tmp.loadGraphic(returnAsset);
+	this.BR.setGraphicSize(this.CORNER_WIDTH,this.CORNER_WIDTH);
+	this.BR.updateHitbox();
+	this.add(this.BR);
+	this.resize(width,height);
+};
+$hxClasses["dge.obj.ui.NinesliceSprite"] = dge_obj_ui_NinesliceSprite;
+dge_obj_ui_NinesliceSprite.__name__ = "dge.obj.ui.NinesliceSprite";
+dge_obj_ui_NinesliceSprite.__super__ = flixel_group_FlxTypedSpriteGroup;
+dge_obj_ui_NinesliceSprite.prototype = $extend(flixel_group_FlxTypedSpriteGroup.prototype,{
+	TL: null
+	,TM: null
+	,TR: null
+	,ML: null
+	,C: null
+	,MR: null
+	,BL: null
+	,BM: null
+	,BR: null
+	,CORNER_WIDTH: null
+	,texture: null
+	,resize: function(width,height) {
+		if(width < this.CORNER_WIDTH * 2) {
+			width = this.CORNER_WIDTH * 2;
+		}
+		if(height < this.CORNER_WIDTH * 2) {
+			height = this.CORNER_WIDTH * 2;
+		}
+		var subCorner = this.CORNER_WIDTH * 2;
+		this.TL.setGraphicSize(this.CORNER_WIDTH,this.CORNER_WIDTH);
+		this.TL.updateHitbox();
+		this.TL.setPosition(this.x,this.y);
+		this.TM.setGraphicSize(width - subCorner,this.CORNER_WIDTH);
+		this.TM.updateHitbox();
+		this.TM.setPosition(this.TL.x + this.CORNER_WIDTH,this.TL.y);
+		this.TR.setGraphicSize(this.CORNER_WIDTH,this.CORNER_WIDTH);
+		this.TR.updateHitbox();
+		this.TR.setPosition(this.TL.x + width - this.CORNER_WIDTH,this.TL.y);
+		this.ML.setGraphicSize(this.CORNER_WIDTH,height - subCorner);
+		this.ML.updateHitbox();
+		this.ML.setPosition(this.TL.x,this.TL.y + this.CORNER_WIDTH);
+		this.C.setGraphicSize(width - subCorner,height - subCorner);
+		this.C.updateHitbox();
+		this.C.setPosition(this.TL.x + this.CORNER_WIDTH,this.TL.y + this.CORNER_WIDTH);
+		this.MR.setGraphicSize(this.CORNER_WIDTH,height - subCorner);
+		this.MR.updateHitbox();
+		this.MR.setPosition(this.TL.x + width - this.CORNER_WIDTH,this.TL.y + this.CORNER_WIDTH);
+		this.BL.setGraphicSize(this.CORNER_WIDTH,this.CORNER_WIDTH);
+		this.BL.updateHitbox();
+		this.BL.setPosition(this.TL.x,this.TL.y + height - this.CORNER_WIDTH);
+		this.BM.setGraphicSize(width - subCorner,this.CORNER_WIDTH);
+		this.BM.updateHitbox();
+		this.BM.setPosition(this.TL.x + this.CORNER_WIDTH,this.TL.y + height - this.CORNER_WIDTH);
+		this.BR.setGraphicSize(this.CORNER_WIDTH,this.CORNER_WIDTH);
+		this.BR.updateHitbox();
+		this.BR.setPosition(this.TL.x + width - this.CORNER_WIDTH,this.TL.y + height - this.CORNER_WIDTH);
+	}
+	,set_texture: function(value) {
+		if(this.texture != value) {
+			if(value == null || value.length < 1) {
+				value = "ui/nineslice";
+			}
+			while(StringTools.endsWith(value,"/")) value = HxOverrides.substr(value,0,value.length - 1);
+			var size_0 = this.get_width() | 0;
+			var size_1 = this.get_height() | 0;
+			this.texture = value;
+			var tmp = this.TL;
+			var returnAsset = Paths.returnGraphic(this.texture + "/top_left",null);
+			tmp.loadGraphic(returnAsset);
+			var tmp = this.TM;
+			var returnAsset = Paths.returnGraphic(this.texture + "/top_middle",null);
+			tmp.loadGraphic(returnAsset);
+			var tmp = this.TR;
+			var returnAsset = Paths.returnGraphic(this.texture + "/top_right",null);
+			tmp.loadGraphic(returnAsset);
+			var tmp = this.ML;
+			var returnAsset = Paths.returnGraphic(this.texture + "/middle_left",null);
+			tmp.loadGraphic(returnAsset);
+			var tmp = this.C;
+			var returnAsset = Paths.returnGraphic(this.texture + "/center",null);
+			tmp.loadGraphic(returnAsset);
+			var tmp = this.MR;
+			var returnAsset = Paths.returnGraphic(this.texture + "/middle_right",null);
+			tmp.loadGraphic(returnAsset);
+			var tmp = this.BL;
+			var returnAsset = Paths.returnGraphic(this.texture + "/bottom_left",null);
+			tmp.loadGraphic(returnAsset);
+			var tmp = this.BM;
+			var returnAsset = Paths.returnGraphic(this.texture + "/bottom_middle",null);
+			tmp.loadGraphic(returnAsset);
+			var tmp = this.BR;
+			var returnAsset = Paths.returnGraphic(this.texture + "/bottom_right",null);
+			tmp.loadGraphic(returnAsset);
+			this.resize(size_0,size_1);
+		}
+		return value;
+	}
+	,__class__: dge_obj_ui_NinesliceSprite
+	,__properties__: $extend(flixel_group_FlxTypedSpriteGroup.prototype.__properties__,{set_texture:"set_texture"})
+});
 var dge_shaders_BlackAndWhite = function() {
 	this.shader = new dge_shaders_BlackAndWhiteShader();
 	this.set_mult(1);
@@ -58615,12 +58931,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 					var increase = 1 / snap;
 					if(flixel_FlxG.mouse.wheel > 0) {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap - increase;
 						flixel_FlxG.sound.music.set_time(Conductor.beatToSeconds(fuck));
 					} else {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap + increase;
 						flixel_FlxG.sound.music.set_time(Conductor.beatToSeconds(fuck));
 					}
@@ -58683,12 +58999,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 					var _this = flixel_FlxG.keys.pressed;
 					if(_this.keyManager.checkStatusUnsafe(38,_this.status)) {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap - increase;
 						flixel_FlxG.sound.music.set_time(Conductor.beatToSeconds(fuck));
 					} else {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap + increase;
 						flixel_FlxG.sound.music.set_time(Conductor.beatToSeconds(fuck));
 					}
@@ -58765,12 +59081,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 					var _this = flixel_FlxG.keys.pressed;
 					if(_this.keyManager.checkStatusUnsafe(38,_this.status)) {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap - increase;
 						feces = Conductor.beatToSeconds(fuck);
 					} else {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 36, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap + increase;
 						feces = Conductor.beatToSeconds(fuck);
 					}
@@ -61071,13 +61387,13 @@ editors_DialogueCharacterEditorState.prototype = $extend(MusicBeatState.prototyp
 		this._file.removeEventListener("select",$bind(this,this.onLoadComplete));
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
-		haxe_Log.trace("File couldn't be loaded! You aren't on Desktop, are you?",{ fileName : "source/editors/DialogueCharacterEditorState.hx", lineNumber : 876, className : "editors.DialogueCharacterEditorState", methodName : "onLoadComplete"});
+		haxe_Log.trace("File couldn't be loaded! You aren't on Desktop, are you?",{ fileName : "source/editors/DialogueCharacterEditorState.hx", lineNumber : 875, className : "editors.DialogueCharacterEditorState", methodName : "onLoadComplete"});
 	}
 	,charDiagCode: function(name,jsonCode) {
 		var loadedChar = JSON.parse(jsonCode);
 		if(loadedChar.dialogue_pos != null) {
 			var cutName = HxOverrides.substr(name,0,name.length - 5);
-			haxe_Log.trace("Successfully loaded file: " + cutName,{ fileName : "source/editors/DialogueCharacterEditorState.hx", lineNumber : 885, className : "editors.DialogueCharacterEditorState", methodName : "charDiagCode"});
+			haxe_Log.trace("Successfully loaded file: " + cutName,{ fileName : "source/editors/DialogueCharacterEditorState.hx", lineNumber : 884, className : "editors.DialogueCharacterEditorState", methodName : "charDiagCode"});
 			this.character.jsonFile = loadedChar;
 			this.reloadCharacter();
 			this.reloadAnimationsDropDown();
@@ -61097,14 +61413,14 @@ editors_DialogueCharacterEditorState.prototype = $extend(MusicBeatState.prototyp
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
 		this._file = null;
-		haxe_Log.trace("Cancelled file loading.",{ fileName : "source/editors/DialogueCharacterEditorState.hx", lineNumber : 910, className : "editors.DialogueCharacterEditorState", methodName : "onLoadCancel"});
+		haxe_Log.trace("Cancelled file loading.",{ fileName : "source/editors/DialogueCharacterEditorState.hx", lineNumber : 909, className : "editors.DialogueCharacterEditorState", methodName : "onLoadCancel"});
 	}
 	,onLoadError: function(_) {
 		this._file.removeEventListener("select",$bind(this,this.onLoadComplete));
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
 		this._file = null;
-		haxe_Log.trace("Problem loading file",{ fileName : "source/editors/DialogueCharacterEditorState.hx", lineNumber : 922, className : "editors.DialogueCharacterEditorState", methodName : "onLoadError"});
+		haxe_Log.trace("Problem loading file",{ fileName : "source/editors/DialogueCharacterEditorState.hx", lineNumber : 921, className : "editors.DialogueCharacterEditorState", methodName : "onLoadError"});
 	}
 	,saveCharacter: function() {
 		var data = JSON.stringify(this.character.jsonFile,null,ClientPrefs.minEditorJson ? null : "\t");
@@ -61715,13 +62031,13 @@ editors_DialogueEditorState.prototype = $extend(MusicBeatState.prototype,{
 		this._file.removeEventListener("select",$bind(this,this.onLoadComplete));
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
-		haxe_Log.trace("File couldn't be loaded! You aren't on Desktop, are you?",{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 512, className : "editors.DialogueEditorState", methodName : "onLoadComplete"});
+		haxe_Log.trace("File couldn't be loaded! You aren't on Desktop, are you?",{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 511, className : "editors.DialogueEditorState", methodName : "onLoadComplete"});
 	}
 	,dialogueCode: function(name,rawJson) {
 		var loadedDialog = JSON.parse(rawJson);
 		if(loadedDialog.dialogue != null && loadedDialog.dialogue.length > 0) {
 			var cutName = HxOverrides.substr(name,0,name.length - 5);
-			haxe_Log.trace("Successfully loaded file: " + cutName,{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 520, className : "editors.DialogueEditorState", methodName : "dialogueCode"});
+			haxe_Log.trace("Successfully loaded file: " + cutName,{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 519, className : "editors.DialogueEditorState", methodName : "dialogueCode"});
 			this.dialogueFile = loadedDialog;
 			this.changeText();
 			name = null;
@@ -61733,14 +62049,14 @@ editors_DialogueEditorState.prototype = $extend(MusicBeatState.prototype,{
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
 		this._file = null;
-		haxe_Log.trace("Cancelled file loading.",{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 537, className : "editors.DialogueEditorState", methodName : "onLoadCancel"});
+		haxe_Log.trace("Cancelled file loading.",{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 536, className : "editors.DialogueEditorState", methodName : "onLoadCancel"});
 	}
 	,onLoadError: function(_) {
 		this._file.removeEventListener("select",$bind(this,this.onLoadComplete));
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
 		this._file = null;
-		haxe_Log.trace("Problem loading file",{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 549, className : "editors.DialogueEditorState", methodName : "onLoadError"});
+		haxe_Log.trace("Problem loading file",{ fileName : "source/editors/DialogueEditorState.hx", lineNumber : 548, className : "editors.DialogueEditorState", methodName : "onLoadError"});
 	}
 	,saveDialogue: function() {
 		var data = JSON.stringify(this.dialogueFile,null,ClientPrefs.minEditorJson ? null : "\t");
@@ -63317,13 +63633,13 @@ editors_MenuCharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 		this._file.removeEventListener("select",$bind(this,this.onLoadComplete));
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
-		haxe_Log.trace("File couldn't be loaded! You aren't on Desktop, are you?",{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 400, className : "editors.MenuCharacterEditorState", methodName : "onLoadComplete"});
+		haxe_Log.trace("File couldn't be loaded! You aren't on Desktop, are you?",{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 399, className : "editors.MenuCharacterEditorState", methodName : "onLoadComplete"});
 	}
 	,menuCharCode: function(name,rawJson) {
 		var loadedChar = JSON.parse(rawJson);
 		if(loadedChar.idle_anim != null && loadedChar.confirm_anim != null) {
 			var cutName = HxOverrides.substr(name,0,name.length - 5);
-			haxe_Log.trace("Successfully loaded file: " + cutName,{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 409, className : "editors.MenuCharacterEditorState", methodName : "menuCharCode"});
+			haxe_Log.trace("Successfully loaded file: " + cutName,{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 408, className : "editors.MenuCharacterEditorState", methodName : "menuCharCode"});
 			this.characterFile = loadedChar;
 			this.reloadSelectedCharacter();
 			this.imageInputText.set_text(this.characterFile.image);
@@ -63340,14 +63656,14 @@ editors_MenuCharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
 		this._file = null;
-		haxe_Log.trace("Cancelled file loading.",{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 431, className : "editors.MenuCharacterEditorState", methodName : "onLoadCancel"});
+		haxe_Log.trace("Cancelled file loading.",{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 430, className : "editors.MenuCharacterEditorState", methodName : "onLoadCancel"});
 	}
 	,onLoadError: function(_) {
 		this._file.removeEventListener("select",$bind(this,this.onLoadComplete));
 		this._file.removeEventListener("cancel",$bind(this,this.onLoadCancel));
 		this._file.removeEventListener("ioError",$bind(this,this.onLoadError));
 		this._file = null;
-		haxe_Log.trace("Problem loading file",{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 443, className : "editors.MenuCharacterEditorState", methodName : "onLoadError"});
+		haxe_Log.trace("Problem loading file",{ fileName : "source/editors/MenuCharacterEditorState.hx", lineNumber : 442, className : "editors.MenuCharacterEditorState", methodName : "onLoadError"});
 	}
 	,saveCharacter: function() {
 		var data = JSON.stringify(this.characterFile,null,ClientPrefs.minEditorJson ? null : "\t");
@@ -64001,7 +64317,6 @@ editors_WeekEditorState.prototype = $extend(MusicBeatState.prototype,{
 var editors_WeekEditorFreeplayState = function(weekFile) {
 	this.blockPressWhileTypingOn = [];
 	this.curSelected = 0;
-	this.iconArray = [];
 	this.weekFile = null;
 	MusicBeatState.call(this);
 	this.weekFile = WeekData.createWeekFile();
@@ -64016,7 +64331,6 @@ editors_WeekEditorFreeplayState.prototype = $extend(MusicBeatState.prototype,{
 	weekFile: null
 	,bg: null
 	,grpSongs: null
-	,iconArray: null
 	,curSelected: null
 	,create: function() {
 		editors_WeekEditorState.instance = this;
@@ -64033,15 +64347,13 @@ editors_WeekEditorFreeplayState.prototype = $extend(MusicBeatState.prototype,{
 		var _g1 = this.weekFile.songs.length;
 		while(_g < _g1) {
 			var i = _g++;
-			var songText = new Alphabet(90,320,this.weekFile.songs[i][0],true);
-			songText.isMenuItem = true;
-			songText.targetY = i;
-			this.grpSongs.add(songText);
-			songText.snapToPosition();
-			var icon = new HealthIcon(this.weekFile.songs[i][1]);
-			icon.sprTracker = songText;
-			this.iconArray.push(icon);
-			this.add(icon);
+			if(this.weekFile.songs[i][3] == null || this.weekFile.songs[i][3].length < 1) {
+				this.weekFile.songs[i][3] = "ui/nineslice";
+			}
+			var songPanel = new dge_obj_ui_MenuItem(90,320,this.weekFile.songs[i][0],this.weekFile.songs[i][1],this.weekFile.songs[i][3]);
+			songPanel.targetY = i;
+			songPanel.snapToPosition();
+			this.grpSongs.add(songPanel);
 		}
 		this.addEditorBox();
 		this.changeSelection();
@@ -64158,8 +64470,14 @@ editors_WeekEditorFreeplayState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,getEvent: function(id,sender,data,params) {
 		if(id == "change_input_text" && ((sender) instanceof flixel_addons_ui_FlxUIInputText)) {
-			this.weekFile.songs[this.curSelected][1] = this.iconInputText.text;
-			this.iconArray[this.curSelected].changeIcon(this.iconInputText.text);
+			if(sender == this.iconInputText) {
+				this.weekFile.songs[this.curSelected][1] = this.iconInputText.text;
+				this.grpSongs.members[this.curSelected].changeIcon(this.iconInputText.text);
+			}
+			if(sender == this.borderInputText) {
+				this.weekFile.songs[this.curSelected][3] = this.borderInputText.text;
+				this.grpSongs.members[this.curSelected].changeTexture(this.borderInputText.text);
+			}
 		} else if(id == "change_numeric_stepper" && ((sender) instanceof flixel_addons_ui_FlxUINumericStepper)) {
 			if(sender == this.bgColorStepperR || sender == this.bgColorStepperG || sender == this.bgColorStepperB) {
 				this.updateBG();
@@ -64170,6 +64488,7 @@ editors_WeekEditorFreeplayState.prototype = $extend(MusicBeatState.prototype,{
 	,bgColorStepperG: null
 	,bgColorStepperB: null
 	,iconInputText: null
+	,borderInputText: null
 	,addFreeplayUI: function() {
 		var _gthis = this;
 		var tab_group = new flixel_addons_ui_FlxUI(null,this.UI_box);
@@ -64207,6 +64526,7 @@ editors_WeekEditorFreeplayState.prototype = $extend(MusicBeatState.prototype,{
 			}
 		});
 		this.iconInputText = new flixel_addons_ui_FlxUIInputText(10,this.bgColorStepperR.y + 70,100,"",8);
+		this.borderInputText = new flixel_addons_ui_FlxUIInputText(140,this.bgColorStepperR.y + 70,100,"",8);
 		var hideFreeplayCheckbox = new flixel_addons_ui_FlxUICheckBox(10,this.iconInputText.y + 30,null,null,"Hide Week from Freeplay?",100);
 		hideFreeplayCheckbox.set_checked(this.weekFile.hideFreeplay);
 		hideFreeplayCheckbox.callback = function() {
@@ -64214,12 +64534,14 @@ editors_WeekEditorFreeplayState.prototype = $extend(MusicBeatState.prototype,{
 		};
 		tab_group.add(new flixel_text_FlxText(10,this.bgColorStepperR.y - 18,0,"Selected background Color R/G/B:"));
 		tab_group.add(new flixel_text_FlxText(10,this.iconInputText.y - 18,0,"Selected icon:"));
+		tab_group.add(new flixel_text_FlxText(140,this.borderInputText.y - 18,0,"Selected border:"));
 		tab_group.add(this.bgColorStepperR);
 		tab_group.add(this.bgColorStepperG);
 		tab_group.add(this.bgColorStepperB);
 		tab_group.add(copyColor);
 		tab_group.add(pasteColor);
 		tab_group.add(this.iconInputText);
+		tab_group.add(this.borderInputText);
 		tab_group.add(hideFreeplayCheckbox);
 		this.UI_box.addGroup(tab_group);
 	}
@@ -64260,13 +64582,6 @@ editors_WeekEditorFreeplayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var bullShit = 0;
 		var _g = 0;
-		var _g1 = this.iconArray.length;
-		while(_g < _g1) {
-			var i = _g++;
-			this.iconArray[i].set_alpha(0.6);
-		}
-		this.iconArray[this.curSelected].set_alpha(1);
-		var _g = 0;
 		var _g1 = this.grpSongs.members;
 		while(_g < _g1.length) {
 			var item = _g1[_g];
@@ -64278,8 +64593,9 @@ editors_WeekEditorFreeplayState.prototype = $extend(MusicBeatState.prototype,{
 				item.set_alpha(1);
 			}
 		}
-		haxe_Log.trace(this.weekFile.songs[this.curSelected],{ fileName : "source/editors/WeekEditorState.hx", lineNumber : 830, className : "editors.WeekEditorFreeplayState", methodName : "changeSelection"});
+		haxe_Log.trace(this.weekFile.songs[this.curSelected],{ fileName : "source/editors/WeekEditorState.hx", lineNumber : 838, className : "editors.WeekEditorFreeplayState", methodName : "changeSelection"});
 		this.iconInputText.set_text(this.weekFile.songs[this.curSelected][1]);
+		this.borderInputText.set_text(this.weekFile.songs[this.curSelected][3]);
 		this.bgColorStepperR.set_value(Math.round(this.weekFile.songs[this.curSelected][2][0]));
 		this.bgColorStepperG.set_value(Math.round(this.weekFile.songs[this.curSelected][2][1]));
 		this.bgColorStepperB.set_value(Math.round(this.weekFile.songs[this.curSelected][2][2]));
@@ -64294,7 +64610,7 @@ editors_WeekEditorFreeplayState.prototype = $extend(MusicBeatState.prototype,{
 			editors_WeekEditorState.loadedWeek = null;
 			return;
 		}
-		if(this.iconInputText.hasFocus) {
+		if(this.iconInputText.hasFocus || this.borderInputText.hasFocus) {
 			flixel_FlxG.sound.muteKeys = [];
 			flixel_FlxG.sound.volumeDownKeys = [];
 			flixel_FlxG.sound.volumeUpKeys = [];
@@ -71566,7 +71882,7 @@ flixel_addons_ui_BorderDef.prototype = {
 	}
 	,__class__: flixel_addons_ui_BorderDef
 };
-var flixel_addons_ui_ButtonLabelStyle = function(Font,Align,Color,Border) {
+var flixel_addons_ui_ButtonLabelStyle = function(Font,Align1,Color,Border) {
 	this.align = null;
 	this.color = null;
 	this.border = null;
@@ -71574,7 +71890,7 @@ var flixel_addons_ui_ButtonLabelStyle = function(Font,Align,Color,Border) {
 	this.font = Font;
 	this.border = Border;
 	this.color = Color;
-	this.align = Align;
+	this.align = Align1;
 };
 $hxClasses["flixel.addons.ui.ButtonLabelStyle"] = flixel_addons_ui_ButtonLabelStyle;
 flixel_addons_ui_ButtonLabelStyle.__name__ = "flixel.addons.ui.ButtonLabelStyle";
@@ -85971,10 +86287,10 @@ flixel_addons_ui_FlxUIRadioGroup.prototype = $extend(flixel_addons_ui_FlxUIGroup
 	,__class__: flixel_addons_ui_FlxUIRadioGroup
 	,__properties__: $extend(flixel_addons_ui_FlxUIGroup.prototype.__properties__,{set_params:"set_params",set_skipButtonUpdate:"set_skipButtonUpdate",get_numRadios:"get_numRadios",set_inactiveStyle:"set_inactiveStyle",set_activeStyle:"set_activeStyle",set_selectedIndex:"set_selectedIndex",get_selectedIndex:"get_selectedIndex",set_selectedLabel:"set_selectedLabel",get_selectedLabel:"get_selectedLabel",set_selectedId:"set_selectedId",get_selectedId:"get_selectedId",set_clickable:"set_clickable",get_clickable:"get_clickable"})
 });
-var flixel_addons_ui_CheckStyle = function(CheckColor,Font,Align,Color,Border) {
+var flixel_addons_ui_CheckStyle = function(CheckColor,Font,Align1,Color,Border) {
 	this.checkColor = null;
 	this.checkColor = CheckColor;
-	flixel_addons_ui_ButtonLabelStyle.call(this,Font,Align,Color,Border);
+	flixel_addons_ui_ButtonLabelStyle.call(this,Font,Align1,Color,Border);
 };
 $hxClasses["flixel.addons.ui.CheckStyle"] = flixel_addons_ui_CheckStyle;
 flixel_addons_ui_CheckStyle.__name__ = "flixel.addons.ui.CheckStyle";
@@ -142339,7 +142655,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 492621;
+	this.version = 501148;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
