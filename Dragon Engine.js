@@ -6567,12 +6567,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "383";
+	app.meta.h["build"] = "386";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.12.0";
+	app.meta.h["version"] = "26.12.1";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -33297,6 +33297,7 @@ var HealthIcon = function(char,isPlayer) {
 		char = "bf";
 	}
 	this.iconOffsets = [0,0];
+	this.danceEveryNumBeats = 2;
 	this.offsetMap = new haxe_ds_StringMap();
 	this.spriteSheet = false;
 	this.isCustom = false;
@@ -33322,6 +33323,7 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 	,isCustom: null
 	,spriteSheet: null
 	,offsetMap: null
+	,danceEveryNumBeats: null
 	,update: function(elapsed) {
 		flixel_FlxSprite.prototype.update.call(this,elapsed);
 		if(this.sprTracker != null) {
@@ -33422,6 +33424,9 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 		flixel_FlxSprite.prototype.updateHitbox.call(this);
 		this.changeOffsets();
 	}
+	,updateHitboxNoOffset: function() {
+		flixel_FlxSprite.prototype.updateHitbox.call(this);
+	}
 	,getCharacter: function() {
 		return this.char;
 	}
@@ -33499,18 +33504,18 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 		if(Data.netral.flipX) {
 			isFlip = !isFlip;
 		}
-		this.animation.addByPrefix("netral",Data.netral.xmlName,Data.netral.fps,Data.netral.loop,isFlip,Data.netral.flipY);
+		this.animation.addByPrefix("netral",Data.netral.xmlName,Data.netral.fps,((flixel_FlxG.game._state) instanceof PlayState) ? Data.netral.loop : true,isFlip,Data.netral.flipY);
 		var isFlip = this.isPlayer;
 		if(Data.lose.flipX) {
 			isFlip = !isFlip;
 		}
-		this.animation.addByPrefix("lose",Data.lose.xmlName,Data.lose.fps,Data.lose.loop,isFlip,Data.lose.flipY);
+		this.animation.addByPrefix("lose",Data.lose.xmlName,Data.lose.fps,((flixel_FlxG.game._state) instanceof PlayState) ? Data.lose.loop : true,isFlip,Data.lose.flipY);
 		if(Data.win != null) {
 			var isFlip = this.isPlayer;
 			if(Data.win.flipX) {
 				isFlip = !isFlip;
 			}
-			this.animation.addByPrefix("win",Data.win.xmlName,Data.win.fps,Data.win.loop,isFlip,Data.win.flipY);
+			this.animation.addByPrefix("win",Data.win.xmlName,Data.win.fps,((flixel_FlxG.game._state) instanceof PlayState) ? Data.win.loop : true,isFlip,Data.win.flipY);
 		}
 		this.updateHitbox();
 	}
@@ -33521,7 +33526,7 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 		if(this.spriteSheet && this.animation != null && this.animation._curAnim != null && this.animation._curAnim.name != name || force) {
 			var currentFrame = this.animation._curAnim.curFrame;
 			var frameLength = this.animation._animations.h[name] != null ? this.animation._animations.h[name].frames.length : 0;
-			this.animation.play(name);
+			this.animation.play(name,true);
 			if(frameLength > 0 && currentFrame <= frameLength - 1) {
 				this.animation._curAnim.set_curFrame(currentFrame);
 			} else if(currentFrame > frameLength - 1 && frameLength > 0) {
@@ -33545,6 +33550,15 @@ HealthIcon.prototype = $extend(flixel_FlxSprite.prototype,{
 	,changeOffsets: function() {
 		this.offset.set_x(this.iconOffsets[0]);
 		this.offset.set_y(this.iconOffsets[1]);
+	}
+	,danceIcon: function(state) {
+		if(state == null) {
+			state = "netral";
+		}
+		if(this.animation == null) {
+			return;
+		}
+		this.animation.play(state,false);
 	}
 	,__class__: HealthIcon
 });
@@ -34561,7 +34575,7 @@ ManifestResources.init = function(config) {
 	lime_utils_Assets.libraryPaths.h["week6"] = v;
 	var v = ManifestResources.rootPath + "manifest/week7.json";
 	lime_utils_Assets.libraryPaths.h["week7"] = v;
-	var data = "{\"name\":null,\"assets\":\"aoy4:pathy33:assets%2Fcharacters%2Fbf-car.jsony4:sizei2527y4:typey4:TEXTy2:idR1y7:preloadtgoR0y39:assets%2Fcharacters%2Fbf-christmas.jsonR2i1747R3R4R5R7R6tgoR0y34:assets%2Fcharacters%2Fbf-dead.jsonR2i709R3R4R5R8R6tgoR0y45:assets%2Fcharacters%2Fbf-holding-gf-dead.jsonR2i740R3R4R5R9R6tgoR0y40:assets%2Fcharacters%2Fbf-holding-gf.jsonR2i1751R3R4R5R10R6tgoR0y40:assets%2Fcharacters%2Fbf-pixel-dead.jsonR2i721R3R4R5R11R6tgoR0y44:assets%2Fcharacters%2Fbf-pixel-opponent.jsonR2i1567R3R4R5R12R6tgoR0y35:assets%2Fcharacters%2Fbf-pixel.jsonR2i1563R3R4R5R13R6tgoR0y29:assets%2Fcharacters%2Fbf.jsonR2i2467R3R4R5R14R6tgoR0y30:assets%2Fcharacters%2Fdad.jsonR2i1762R3R4R5R15R6tgoR0y41:assets%2Fcharacters%2FDubEnderDragon.jsonR2i1039R3R4R5R16R6tgoR0y33:assets%2Fcharacters%2Fgf-car.jsonR2i993R3R4R5R17R6tgoR0y39:assets%2Fcharacters%2Fgf-christmas.jsonR2i2137R3R4R5R18R6tgoR0y35:assets%2Fcharacters%2Fgf-pixel.jsonR2i937R3R4R5R19R6tgoR0y37:assets%2Fcharacters%2Fgf-tankmen.jsonR2i1066R3R4R5R20R6tgoR0y29:assets%2Fcharacters%2Fgf.jsonR2i2326R3R4R5R21R6tgoR0y42:assets%2Fcharacters%2FMintEnderDragon.jsonR2i1044R3R4R5R22R6tgoR0y34:assets%2Fcharacters%2Fmom-car.jsonR2i1892R3R4R5R23R6tgoR0y30:assets%2Fcharacters%2Fmom.jsonR2i988R3R4R5R24R6tgoR0y44:assets%2Fcharacters%2Fmonster-christmas.jsonR2i1905R3R4R5R25R6tgoR0y34:assets%2Fcharacters%2Fmonster.jsonR2i1904R3R4R5R26R6tgoR0y44:assets%2Fcharacters%2Fparents-christmas.jsonR2i3427R3R4R5R27R6tgoR0y38:assets%2Fcharacters%2Fpico-player.jsonR2i1635R3R4R5R28R6tgoR0y39:assets%2Fcharacters%2Fpico-speaker.jsonR2i1554R3R4R5R29R6tgoR0y31:assets%2Fcharacters%2Fpico.jsonR2i1636R3R4R5R30R6tgoR0y39:assets%2Fcharacters%2Fsenpai-angry.jsonR2i1039R3R4R5R31R6tgoR0y33:assets%2Fcharacters%2Fsenpai.jsonR2i1009R3R4R5R32R6tgoR0y33:assets%2Fcharacters%2Fspirit.jsonR2i992R3R4R5R33R6tgoR0y33:assets%2Fcharacters%2Fspooky.jsonR2i1384R3R4R5R34R6tgoR0y41:assets%2Fcharacters%2Ftankman-player.jsonR2i1976R3R4R5R35R6tgoR0y34:assets%2Fcharacters%2Ftankman.jsonR2i1974R3R4R5R36R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-easy.jsonR2i8488R3R4R5R37R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-hard.jsonR2i12097R3R4R5R38R6tgoR0y38:assets%2Fdata%2Fblammed%2Fblammed.jsonR2i9687R3R4R5R39R6tgoR0y37:assets%2Fdata%2Fblammed%2Fevents.jsonR2i10344R3R4R5R40R6tgoR0y44:assets%2Fdata%2Fbopeebo%2Fbopeebo-boobs.jsonR2i4140R3R4R5R41R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-easy.jsonR2i9178R3R4R5R42R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-hard.jsonR2i4140R3R4R5R43R6tgoR0y38:assets%2Fdata%2Fbopeebo%2Fbopeebo.jsonR2i9542R3R4R5R44R6tgoR0y37:assets%2Fdata%2Fbopeebo%2Fevents.jsonR2i5047R3R4R5R45R6tgoR0y33:assets%2Fdata%2FcharacterList.txtR2i284R3R4R5R46R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-easy.jsonR2i7062R3R4R5R47R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-hard.jsonR2i10443R3R4R5R48R6tgoR0y34:assets%2Fdata%2Fcocoa%2Fcocoa.jsonR2i8278R3R4R5R49R6tgoR0y35:assets%2Fdata%2Fcocoa%2Fevents.jsonR2i3644R3R4R5R50R6tgoR0y32:assets%2Fdata%2FcrashConfig.jsonR2i739R3R4R5R51R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-easy.jsonR2i7937R3R4R5R52R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-hard.jsonR2i9756R3R4R5R53R6tgoR0y44:assets%2Fdata%2Fdad-battle%2Fdad-battle.jsonR2i8913R3R4R5R54R6tgoR0y40:assets%2Fdata%2Fdad-battle%2Fevents.jsonR2i2614R3R4R5R55R6tgoR0y34:assets%2Fdata%2Fdata-goes-here.txtR2zR3R4R5R56R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-easy.jsonR2i9239R3R4R5R57R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-hard.jsonR2i11689R3R4R5R58R6tgoR0y36:assets%2Fdata%2Feggnog%2Feggnog.jsonR2i10333R3R4R5R59R6tgoR0y36:assets%2Fdata%2Feggnog%2Fevents.jsonR2i4881R3R4R5R60R6tgoR0y34:assets%2Fdata%2FfreeplayColors.txtR2i76R3R4R5R61R6tgoR0y35:assets%2Fdata%2Ffresh%2Fevents.jsonR2i3201R3R4R5R62R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-easy.jsonR2i5857R3R4R5R63R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-hard.jsonR2i6905R3R4R5R64R6tgoR0y34:assets%2Fdata%2Ffresh%2Ffresh.jsonR2i6493R3R4R5R65R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-easy.jsonR2i15146R3R4R5R66R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-hard.jsonR2i23500R3R4R5R67R6tgoR0y32:assets%2Fdata%2Fguns%2Fguns.jsonR2i20620R3R4R5R68R6tgoR0y34:assets%2Fdata%2Fhigh%2Fevents.jsonR2i4558R3R4R5R69R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-easy.jsonR2i8563R3R4R5R70R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-hard.jsonR2i11553R3R4R5R71R6tgoR0y32:assets%2Fdata%2Fhigh%2Fhigh.jsonR2i9757R3R4R5R72R6tgoR0y29:assets%2Fdata%2FintroText.txtR2i2103R3R4R5R73R6tgoR0y29:assets%2Fdata%2Fmain-view.xmlR2i123R3R4R5R74R6tgoR0y34:assets%2Fdata%2Fmilf%2Fevents.jsonR2i7488R3R4R5R75R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-easy.jsonR2i13522R3R4R5R76R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-hard.jsonR2i18135R3R4R5R77R6tgoR0y32:assets%2Fdata%2Fmilf%2Fmilf.jsonR2i15192R3R4R5R78R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-easy.jsonR2i12175R3R4R5R79R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-hard.jsonR2i14163R3R4R5R80R6tgoR0y38:assets%2Fdata%2Fmonster%2Fmonster.jsonR2i13445R3R4R5R81R6tgoR0y41:assets%2Fdata%2Fphilly-nice%2Fevents.jsonR2i5191R3R4R5R82R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-easy.jsonR2i8067R3R4R5R83R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-hard.jsonR2i12556R3R4R5R84R6tgoR0y46:assets%2Fdata%2Fphilly-nice%2Fphilly-nice.jsonR2i10103R3R4R5R85R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-easy.jsonR2i6089R3R4R5R86R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-hard.jsonR2i8768R3R4R5R87R6tgoR0y32:assets%2Fdata%2Fpico%2Fpico.jsonR2i7493R3R4R5R88R6tgoR0y34:assets%2Fdata%2Fridge%2Fridge.jsonR2i34473R3R4R5R89R6tgoR0y35:assets%2Fdata%2Froses%2Fevents.jsonR2i8786R3R4R5R90R6tgoR0y39:assets%2Fdata%2Froses%2Froses-easy.jsonR2i6725R3R4R5R91R6tgoR0y39:assets%2Fdata%2Froses%2Froses-hard.jsonR2i10432R3R4R5R92R6tgoR0y34:assets%2Fdata%2Froses%2Froses.jsonR2i8609R3R4R5R93R6tgoR0y41:assets%2Fdata%2Froses%2FrosesDialogue.txtR2i153R3R4R5R94R6tgoR0y43:assets%2Fdata%2Fsatin-panties%2Fevents.jsonR2i3177R3R4R5R95R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-easy.jsonR2i8817R3R4R5R96R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-hard.jsonR2i12704R3R4R5R97R6tgoR0y50:assets%2Fdata%2Fsatin-panties%2Fsatin-panties.jsonR2i10725R3R4R5R98R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-easy.jsonR2i9027R3R4R5R99R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-hard.jsonR2i10778R3R4R5R100R6tgoR0y36:assets%2Fdata%2Fsenpai%2Fsenpai.jsonR2i10016R3R4R5R101R6tgoR0y43:assets%2Fdata%2Fsenpai%2FsenpaiDialogue.txtR2i162R3R4R5R102R6tgoR0y34:assets%2Fdata%2Fsmash%2Fsmash.jsonR2i23961R3R4R5R103R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-easy.jsonR2i8435R3R4R5R104R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-hard.jsonR2i10170R3R4R5R105R6tgoR0y34:assets%2Fdata%2Fsouth%2Fsouth.jsonR2i10097R3R4R5R106R6tgoR0y33:assets%2Fdata%2FspecialThanks.txtR2i300R3R4R5R107R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-easy.jsonR2i7965R3R4R5R108R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-hard.jsonR2i9429R3R4R5R109R6tgoR0y40:assets%2Fdata%2Fspookeez%2Fspookeez.jsonR2i8875R3R4R5R110R6tgoR0y29:assets%2Fdata%2FstageList.txtR2i61R3R4R5R111R6tgoR0y36:assets%2Fdata%2Fstress%2Fevents.jsonR2i747R3R4R5R112R6tgoR0y41:assets%2Fdata%2Fstress%2Fpicospeaker.jsonR2i18286R3R4R5R113R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-easy.jsonR2i33455R3R4R5R114R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-hard.jsonR2i53679R3R4R5R115R6tgoR0y36:assets%2Fdata%2Fstress%2Fstress.jsonR2i45928R3R4R5R116R6tgoR0y32:assets%2Fdata%2Ftest%2Ftest.jsonR2i75208R3R4R5R117R6tgoR0y40:assets%2Fdata%2Ftest-dev%2Ftest-dev.jsonR2i49834R3R4R5R118R6tgoR0y36:assets%2Fdata%2Fthorns%2Fevents.jsonR2i8104R3R4R5R119R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-easy.jsonR2i10437R3R4R5R120R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-hard.jsonR2i15444R3R4R5R121R6tgoR0y36:assets%2Fdata%2Fthorns%2Fthorns.jsonR2i12691R3R4R5R122R6tgoR0y43:assets%2Fdata%2Fthorns%2FthornsDialogue.txtR2i305R3R4R5R123R6tgoR0y38:assets%2Fdata%2Ftutorial%2Fevents.jsonR2i2702R3R4R5R124R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-easy.jsonR2i5739R3R4R5R125R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-hard.jsonR2i6335R3R4R5R126R6tgoR0y40:assets%2Fdata%2Ftutorial%2Ftutorial.jsonR2i5739R3R4R5R127R6tgoR0y33:assets%2Fdata%2Fugh%2Fevents.jsonR2i1345R3R4R5R128R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-easy.jsonR2i8550R3R4R5R129R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-hard.jsonR2i12496R3R4R5R130R6tgoR0y30:assets%2Fdata%2Fugh%2Fugh.jsonR2i11354R3R4R5R131R6tgoR0y47:assets%2Fdata%2Fwinter-horrorland%2Fevents.jsonR2i6197R3R4R5R132R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-easy.jsonR2i11846R3R4R5R133R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-hard.jsonR2i14558R3R4R5R134R6tgoR0y58:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland.jsonR2i12808R3R4R5R135R6tgoR0y45:assets%2Fimages%2Fachievements%2Fbirthday.pngR2i10948R3y5:IMAGER5R136R6tgoR0y45:assets%2Fimages%2Fachievements%2Fdebugger.pngR2i7554R3R137R5R138R6tgoR0y54:assets%2Fimages%2Fachievements%2Ffriday_night_play.pngR2i7661R3R137R5R139R6tgoR0y41:assets%2Fimages%2Fachievements%2Fhype.pngR2i23694R3R137R5R140R6tgoR0y54:assets%2Fimages%2Fachievements%2Flockedachievement.pngR2i1709R3R137R5R141R6tgoR0y48:assets%2Fimages%2Fachievements%2Foversinging.pngR2i19900R3R137R5R142R6tgoR0y56:assets%2Fimages%2Fachievements%2Froadkill_enthusiast.pngR2i5996R3R137R5R143R6tgoR0y44:assets%2Fimages%2Fachievements%2Ftoastie.pngR2i3094R3R137R5R144R6tgoR0y45:assets%2Fimages%2Fachievements%2Ftwo_keys.pngR2i27127R3R137R5R145R6tgoR0y43:assets%2Fimages%2Fachievements%2Fur_bad.pngR2i22017R3R137R5R146R6tgoR0y44:assets%2Fimages%2Fachievements%2Fur_good.pngR2i3467R3R137R5R147R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek1_nomiss.pngR2i20155R3R137R5R148R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek2_nomiss.pngR2i9304R3R137R5R149R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek3_nomiss.pngR2i21984R3R137R5R150R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek4_nomiss.pngR2i13430R3R137R5R151R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek5_nomiss.pngR2i21894R3R137R5R152R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek6_nomiss.pngR2i552R3R137R5R153R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek7_nomiss.pngR2i7249R3R137R5R154R6tgoR0y30:assets%2Fimages%2Falphabet.pngR2i177267R3R137R5R155R6tgoR0y30:assets%2Fimages%2Falphabet.xmlR2i57385R3R4R5R156R6tgoR0y34:assets%2Fimages%2FalphabetDark.pngR2i120330R3R137R5R157R6tgoR0y34:assets%2Fimages%2FalphabetDark.xmlR2i57389R3R4R5R158R6tgoR0y33:assets%2Fimages%2FalphabetOld.pngR2i90070R3R137R5R159R6tgoR0y33:assets%2Fimages%2FalphabetOld.xmlR2i52093R3R4R5R160R6tgoR0y38:assets%2Fimages%2Fbutton%2Fa-hover.pngR2i9818R3R137R5R161R6tgoR0y42:assets%2Fimages%2Fbutton%2Fa-hoverDark.pngR2i9677R3R137R5R162R6tgoR0y32:assets%2Fimages%2Fbutton%2Fa.pngR2i8053R3R137R5R163R6tgoR0y36:assets%2Fimages%2Fbutton%2FaDark.pngR2i7859R3R137R5R164R6tgoR0y40:assets%2Fimages%2Fbutton%2Falt-hover.pngR2i10795R3R137R5R165R6tgoR0y44:assets%2Fimages%2Fbutton%2Falt-hoverDark.pngR2i10294R3R137R5R166R6tgoR0y34:assets%2Fimages%2Fbutton%2Falt.pngR2i9075R3R137R5R167R6tgoR0y38:assets%2Fimages%2Fbutton%2FaltDark.pngR2i8397R3R137R5R168R6tgoR0y41:assets%2Fimages%2Fbutton%2Fback-hover.pngR2i10662R3R137R5R169R6tgoR0y45:assets%2Fimages%2Fbutton%2Fback-hoverDark.pngR2i10381R3R137R5R170R6tgoR0y35:assets%2Fimages%2Fbutton%2Fback.pngR2i9279R3R137R5R171R6tgoR0y39:assets%2Fimages%2Fbutton%2FbackDark.pngR2i8503R3R137R5R172R6tgoR0y41:assets%2Fimages%2Fbutton%2Fctrl-hover.pngR2i11612R3R137R5R173R6tgoR0y45:assets%2Fimages%2Fbutton%2Fctrl-hoverDark.pngR2i11311R3R137R5R174R6tgoR0y35:assets%2Fimages%2Fbutton%2Fctrl.pngR2i9607R3R137R5R175R6tgoR0y39:assets%2Fimages%2Fbutton%2FctrlDark.pngR2i8838R3R137R5R176R6tgoR0y38:assets%2Fimages%2Fbutton%2Fd-hover.pngR2i11142R3R137R5R177R6tgoR0y42:assets%2Fimages%2Fbutton%2Fd-hoverDark.pngR2i10476R3R137R5R178R6tgoR0y32:assets%2Fimages%2Fbutton%2Fd.pngR2i9363R3R137R5R179R6tgoR0y36:assets%2Fimages%2Fbutton%2FdDark.pngR2i8614R3R137R5R180R6tgoR0y41:assets%2Fimages%2Fbutton%2Fdown-hover.pngR2i11291R3R137R5R181R6tgoR0y45:assets%2Fimages%2Fbutton%2Fdown-hoverDark.pngR2i10758R3R137R5R182R6tgoR0y35:assets%2Fimages%2Fbutton%2Fdown.pngR2i9327R3R137R5R183R6tgoR0y39:assets%2Fimages%2Fbutton%2FdownDark.pngR2i8715R3R137R5R184R6tgoR0y38:assets%2Fimages%2Fbutton%2Fe-hover.pngR2i10420R3R137R5R185R6tgoR0y42:assets%2Fimages%2Fbutton%2Fe-hoverDark.pngR2i10032R3R137R5R186R6tgoR0y32:assets%2Fimages%2Fbutton%2Fe.pngR2i8707R3R137R5R187R6tgoR0y36:assets%2Fimages%2Fbutton%2FeDark.pngR2i8132R3R137R5R188R6tgoR0y42:assets%2Fimages%2Fbutton%2Fenter-hover.pngR2i11879R3R137R5R189R6tgoR0y46:assets%2Fimages%2Fbutton%2Fenter-hoverDark.pngR2i10628R3R137R5R190R6tgoR0y36:assets%2Fimages%2Fbutton%2Fenter.pngR2i9976R3R137R5R191R6tgoR0y40:assets%2Fimages%2Fbutton%2FenterDark.pngR2i8756R3R137R5R192R6tgoR0y38:assets%2Fimages%2Fbutton%2Fh-hover.pngR2i9483R3R137R5R193R6tgoR0y42:assets%2Fimages%2Fbutton%2Fh-hoverDark.pngR2i9212R3R137R5R194R6tgoR0y32:assets%2Fimages%2Fbutton%2Fh.pngR2i7864R3R137R5R195R6tgoR0y41:assets%2Fimages%2Fbutton%2Fhand-hover.pngR2i12156R3R137R5R196R6tgoR0y45:assets%2Fimages%2Fbutton%2Fhand-hoverDark.pngR2i11520R3R137R5R197R6tgoR0y35:assets%2Fimages%2Fbutton%2Fhand.pngR2i10176R3R137R5R198R6tgoR0y39:assets%2Fimages%2Fbutton%2FhandDark.pngR2i9169R3R137R5R199R6tgoR0y36:assets%2Fimages%2Fbutton%2FhDark.pngR2i7605R3R137R5R200R6tgoR0y41:assets%2Fimages%2Fbutton%2Fleft-hover.pngR2i11243R3R137R5R201R6tgoR0y45:assets%2Fimages%2Fbutton%2Fleft-hoverDark.pngR2i10491R3R137R5R202R6tgoR0y35:assets%2Fimages%2Fbutton%2Fleft.pngR2i9441R3R137R5R203R6tgoR0y39:assets%2Fimages%2Fbutton%2FleftDark.pngR2i8311R3R137R5R204R6tgoR0y49:assets%2Fimages%2Fbutton%2Fleft_bracket-hover.pngR2i9250R3R137R5R205R6tgoR0y53:assets%2Fimages%2Fbutton%2Fleft_bracket-hoverDark.pngR2i9022R3R137R5R206R6tgoR0y43:assets%2Fimages%2Fbutton%2Fleft_bracket.pngR2i8192R3R137R5R207R6tgoR0y47:assets%2Fimages%2Fbutton%2Fleft_bracketDark.pngR2i7672R3R137R5R208R6tgoR0y38:assets%2Fimages%2Fbutton%2Fo-hover.pngR2i9783R3R137R5R209R6tgoR0y42:assets%2Fimages%2Fbutton%2Fo-hoverDark.pngR2i9417R3R137R5R210R6tgoR0y32:assets%2Fimages%2Fbutton%2Fo.pngR2i8136R3R137R5R211R6tgoR0y36:assets%2Fimages%2Fbutton%2FoDark.pngR2i7730R3R137R5R212R6tgoR0y38:assets%2Fimages%2Fbutton%2Fp-hover.pngR2i9654R3R137R5R213R6tgoR0y42:assets%2Fimages%2Fbutton%2Fp-hoverDark.pngR2i9311R3R137R5R214R6tgoR0y32:assets%2Fimages%2Fbutton%2Fp.pngR2i8326R3R137R5R215R6tgoR0y42:assets%2Fimages%2Fbutton%2Fpause-hover.pngR2i9233R3R137R5R216R6tgoR0y46:assets%2Fimages%2Fbutton%2Fpause-hoverDark.pngR2i9009R3R137R5R217R6tgoR0y36:assets%2Fimages%2Fbutton%2Fpause.pngR2i7630R3R137R5R218R6tgoR0y40:assets%2Fimages%2Fbutton%2FpauseDark.pngR2i7317R3R137R5R219R6tgoR0y36:assets%2Fimages%2Fbutton%2FpDark.pngR2i7859R3R137R5R220R6tgoR0y50:assets%2Fimages%2Fbutton%2Fplayback_rate-hover.pngR2i9213R3R137R5R221R6tgoR0y54:assets%2Fimages%2Fbutton%2Fplayback_rate-hoverDark.pngR2i9088R3R137R5R222R6tgoR0y44:assets%2Fimages%2Fbutton%2Fplayback_rate.pngR2i7970R3R137R5R223R6tgoR0y48:assets%2Fimages%2Fbutton%2Fplayback_rateDark.pngR2i7824R3R137R5R224R6tgoR0y38:assets%2Fimages%2Fbutton%2Fq-hover.pngR2i10269R3R137R5R225R6tgoR0y42:assets%2Fimages%2Fbutton%2Fq-hoverDark.pngR2i9768R3R137R5R226R6tgoR0y32:assets%2Fimages%2Fbutton%2Fq.pngR2i8629R3R137R5R227R6tgoR0y36:assets%2Fimages%2Fbutton%2FqDark.pngR2i8082R3R137R5R228R6tgoR0y38:assets%2Fimages%2Fbutton%2Fr-hover.pngR2i10374R3R137R5R229R6tgoR0y42:assets%2Fimages%2Fbutton%2Fr-hoverDark.pngR2i9831R3R137R5R230R6tgoR0y32:assets%2Fimages%2Fbutton%2Fr.pngR2i8742R3R137R5R231R6tgoR0y36:assets%2Fimages%2Fbutton%2FrDark.pngR2i7920R3R137R5R232R6tgoR0y42:assets%2Fimages%2Fbutton%2Fright-hover.pngR2i11204R3R137R5R233R6tgoR0y46:assets%2Fimages%2Fbutton%2Fright-hoverDark.pngR2i10494R3R137R5R234R6tgoR0y36:assets%2Fimages%2Fbutton%2Fright.pngR2i9386R3R137R5R235R6tgoR0y40:assets%2Fimages%2Fbutton%2FrightDark.pngR2i8278R3R137R5R236R6tgoR0y50:assets%2Fimages%2Fbutton%2Fright_bracket-hover.pngR2i9415R3R137R5R237R6tgoR0y54:assets%2Fimages%2Fbutton%2Fright_bracket-hoverDark.pngR2i9003R3R137R5R238R6tgoR0y44:assets%2Fimages%2Fbutton%2Fright_bracket.pngR2i8203R3R137R5R239R6tgoR0y48:assets%2Fimages%2Fbutton%2Fright_bracketDark.pngR2i7685R3R137R5R240R6tgoR0y38:assets%2Fimages%2Fbutton%2Fs-hover.pngR2i10516R3R137R5R241R6tgoR0y42:assets%2Fimages%2Fbutton%2Fs-hoverDark.pngR2i10006R3R137R5R242R6tgoR0y32:assets%2Fimages%2Fbutton%2Fs.pngR2i8744R3R137R5R243R6tgoR0y36:assets%2Fimages%2Fbutton%2FsDark.pngR2i8061R3R137R5R244R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsection-hover.pngR2i10161R3R137R5R245R6tgoR0y48:assets%2Fimages%2Fbutton%2Fsection-hoverDark.pngR2i10068R3R137R5R246R6tgoR0y38:assets%2Fimages%2Fbutton%2Fsection.pngR2i8425R3R137R5R247R6tgoR0y42:assets%2Fimages%2Fbutton%2FsectionDark.pngR2i8300R3R137R5R248R6tgoR0y42:assets%2Fimages%2Fbutton%2Fshift-hover.pngR2i11227R3R137R5R249R6tgoR0y46:assets%2Fimages%2Fbutton%2Fshift-hoverDark.pngR2i10498R3R137R5R250R6tgoR0y36:assets%2Fimages%2Fbutton%2Fshift.pngR2i9321R3R137R5R251R6tgoR0y40:assets%2Fimages%2Fbutton%2FshiftDark.pngR2i8423R3R137R5R252R6tgoR0y46:assets%2Fimages%2Fbutton%2Fsnap_grid-hover.pngR2i10584R3R137R5R253R6tgoR0y50:assets%2Fimages%2Fbutton%2Fsnap_grid-hoverDark.pngR2i10016R3R137R5R254R6tgoR0y40:assets%2Fimages%2Fbutton%2Fsnap_grid.pngR2i8674R3R137R5R255R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsnap_gridDark.pngR2i8175R3R137R5R256R6tgoR0y42:assets%2Fimages%2Fbutton%2Fspace-hover.pngR2i9210R3R137R5R257R6tgoR0y46:assets%2Fimages%2Fbutton%2Fspace-hoverDark.pngR2i8760R3R137R5R258R6tgoR0y36:assets%2Fimages%2Fbutton%2Fspace.pngR2i7893R3R137R5R259R6tgoR0y40:assets%2Fimages%2Fbutton%2FspaceDark.pngR2i7277R3R137R5R260R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsustain-hover.pngR2i10807R3R137R5R261R6tgoR0y48:assets%2Fimages%2Fbutton%2Fsustain-hoverDark.pngR2i10166R3R137R5R262R6tgoR0y38:assets%2Fimages%2Fbutton%2Fsustain.pngR2i9058R3R137R5R263R6tgoR0y42:assets%2Fimages%2Fbutton%2FsustainDark.pngR2i8448R3R137R5R264R6tgoR0y38:assets%2Fimages%2Fbutton%2Ft-hover.pngR2i9341R3R137R5R265R6tgoR0y42:assets%2Fimages%2Fbutton%2Ft-hoverDark.pngR2i8860R3R137R5R266R6tgoR0y32:assets%2Fimages%2Fbutton%2Ft.pngR2i7916R3R137R5R267R6tgoR0y45:assets%2Fimages%2Fbutton%2Ftamplate-hover.pngR2i7778R3R137R5R268R6tgoR0y49:assets%2Fimages%2Fbutton%2Ftamplate-hoverDark.pngR2i7442R3R137R5R269R6tgoR0y39:assets%2Fimages%2Fbutton%2Ftamplate.pngR2i6924R3R137R5R270R6tgoR0y43:assets%2Fimages%2Fbutton%2FtamplateDark.pngR2i6617R3R137R5R271R6tgoR0y36:assets%2Fimages%2Fbutton%2FtDark.pngR2i7683R3R137R5R272R6tgoR0y39:assets%2Fimages%2Fbutton%2Fup-hover.pngR2i11312R3R137R5R273R6tgoR0y43:assets%2Fimages%2Fbutton%2Fup-hoverDark.pngR2i10783R3R137R5R274R6tgoR0y33:assets%2Fimages%2Fbutton%2Fup.pngR2i9306R3R137R5R275R6tgoR0y37:assets%2Fimages%2Fbutton%2FupDark.pngR2i8745R3R137R5R276R6tgoR0y38:assets%2Fimages%2Fbutton%2Fw-hover.pngR2i9805R3R137R5R277R6tgoR0y42:assets%2Fimages%2Fbutton%2Fw-hoverDark.pngR2i9561R3R137R5R278R6tgoR0y32:assets%2Fimages%2Fbutton%2Fw.pngR2i8235R3R137R5R279R6tgoR0y36:assets%2Fimages%2Fbutton%2FwDark.pngR2i7738R3R137R5R280R6tgoR0y38:assets%2Fimages%2Fbutton%2Fx-hover.pngR2i12388R3R137R5R281R6tgoR0y42:assets%2Fimages%2Fbutton%2Fx-hoverDark.pngR2i11499R3R137R5R282R6tgoR0y32:assets%2Fimages%2Fbutton%2Fx.pngR2i10418R3R137R5R283R6tgoR0y36:assets%2Fimages%2Fbutton%2FxDark.pngR2i9356R3R137R5R284R6tgoR0y87:assets%2Fimages%2Fbutton%2Fyou%20can%20use%20any%20resolution%20of%20image%20button.txtR2zR3R4R5R285R6tgoR0y38:assets%2Fimages%2Fbutton%2Fz-hover.pngR2i10489R3R137R5R286R6tgoR0y42:assets%2Fimages%2Fbutton%2Fz-hoverDark.pngR2i9825R3R137R5R287R6tgoR0y32:assets%2Fimages%2Fbutton%2Fz.pngR2i8703R3R137R5R288R6tgoR0y36:assets%2Fimages%2Fbutton%2FzDark.pngR2i8115R3R137R5R289R6tgoR0y41:assets%2Fimages%2Fbutton%2Fzoom-hover.pngR2i10632R3R137R5R290R6tgoR0y45:assets%2Fimages%2Fbutton%2Fzoom-hoverDark.pngR2i10245R3R137R5R291R6tgoR0y35:assets%2Fimages%2Fbutton%2Fzoom.pngR2i8952R3R137R5R292R6tgoR0y39:assets%2Fimages%2Fbutton%2FzoomDark.pngR2i8381R3R137R5R293R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.pngR2i3044R3R137R5R294R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.xmlR2i597R3R4R5R295R6tgoR0y33:assets%2Fimages%2Fchart_quant.pngR2i3143R3R137R5R296R6tgoR0y33:assets%2Fimages%2Fchart_quant.xmlR2i1028R3R4R5R297R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.pngR2i16546R3R137R5R298R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.xmlR2i1976R3R4R5R299R6tgoR0y34:assets%2Fimages%2Fcredits%2Fbb.pngR2i5485R3R137R5R300R6tgoR0y39:assets%2Fimages%2Fcredits%2Fdiscord.pngR2i1510R3R137R5R301R6tgoR0y35:assets%2Fimages%2Fcredits%2Fdub.pngR2i1153R3R137R5R302R6tgoR0y40:assets%2Fimages%2Fcredits%2Fevilsk8r.pngR2i7497R3R137R5R303R6tgoR0y38:assets%2Fimages%2Fcredits%2Fflicky.pngR2i6462R3R137R5R304R6tgoR0y36:assets%2Fimages%2Fcredits%2Fkade.pngR2i9684R3R137R5R305R6tgoR0y43:assets%2Fimages%2Fcredits%2Fkawaisprite.pngR2i3953R3R137R5R306R6tgoR0y38:assets%2Fimages%2Fcredits%2Fkeoiki.pngR2i3918R3R137R5R307R6tgoR0y42:assets%2Fimages%2Fcredits%2Fmastereric.pngR2i11899R3R137R5R308R6tgoR0y38:assets%2Fimages%2Fcredits%2Fnebula.pngR2i5644R3R137R5R309R6tgoR0y45:assets%2Fimages%2Fcredits%2Fninjamuffin99.pngR2i5850R3R137R5R310R6tgoR0y45:assets%2Fimages%2Fcredits%2Fphantomarcade.pngR2i9615R3R137R5R311R6tgoR0y37:assets%2Fimages%2Fcredits%2Fproxy.pngR2i7645R3R137R5R312R6tgoR0y37:assets%2Fimages%2Fcredits%2Friver.pngR2i8283R3R137R5R313R6tgoR0y43:assets%2Fimages%2Fcredits%2Fshadowmario.pngR2i3679R3R137R5R314R6tgoR0y37:assets%2Fimages%2Fcredits%2Fshubs.pngR2i6829R3R137R5R315R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsmokey.pngR2i9145R3R137R5R316R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsqirra.pngR2i8258R3R137R5R317R6tgoR0y34:assets%2Fimages%2Fcry_about_it.pngR2i380631R3R137R5R318R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fbf.jsonR2i987R3R4R5R319R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fgf.jsonR2i807R3R4R5R320R6tgoR0y28:assets%2Fimages%2Ffunkay.pngR2i135548R3R137R5R321R6tgoR0y35:assets%2Fimages%2FgfDanceTitle.jsonR2i124R3R4R5R322R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.pngR2i745426R3R137R5R323R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.xmlR2i4259R3R4R5R324R6tgoR0y30:assets%2Fimages%2Fhahadumb.pngR2i16097R3R137R5R325R6tgoR0y28:assets%2Fimages%2Fhitbox.pngR2i620R3R137R5R326R6tgoR0y27:assets%2Fimages%2FhugeW.pngR2i18069R3R137R5R327R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-bf-old.pngR2i4101R3R137R5R328R6tgoR0y43:assets%2Fimages%2Ficons%2Ficon-bf-pixel.pngR2i538R3R137R5R329R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-bf.pngR2i22287R3R137R5R330R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-dad.pngR2i12384R3R137R5R331R6tgoR0y49:assets%2Fimages%2Ficons%2Ficon-dubenderdragon.pngR2i8798R3R137R5R332R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-face.pngR2i3549R3R137R5R333R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-gf.pngR2i10205R3R137R5R334R6tgoR0y50:assets%2Fimages%2Ficons%2Ficon-mintenderdragon.pngR2i9431R3R137R5R335R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-mom.pngR2i9237R3R137R5R336R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-monster.pngR2i17792R3R137R5R337R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-parents.pngR2i15547R3R137R5R338R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-pico.pngR2i14208R3R137R5R339R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-senpai-pixel.pngR2i622R3R137R5R340R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-spirit-pixel.pngR2i509R3R137R5R341R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-spooky.pngR2i6907R3R137R5R342R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-tankman.pngR2i3493R3R137R5R343R6tgoR0y26:assets%2Fimages%2Flogo.pngR2i86924R3R137R5R344R6tgoR0y32:assets%2Fimages%2FlogoBumpin.pngR2i578147R3R137R5R345R6tgoR0y32:assets%2Fimages%2FlogoBumpin.xmlR2i2177R3R4R5R346R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.pngR2i28858R3R137R5R347R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.xmlR2i1380R3R4R5R348R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.pngR2i28734R3R137R5R349R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.xmlR2i1385R3R4R5R350R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.pngR2i24842R3R137R5R351R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.xmlR2i1375R3R4R5R352R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.pngR2i30316R3R137R5R353R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.xmlR2i1399R3R4R5R354R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.pngR2i22741R3R137R5R355R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.xmlR2i1644R3R4R5R356R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.pngR2i27299R3R137R5R357R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.xmlR2i1332R3R4R5R358R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.pngR2i54659R3R137R5R359R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.xmlR2i1444R3R4R5R360R6tgoR0y38:assets%2Fimages%2FMCButton%2Fhover.pngR2i906R3R137R5R361R6tgoR0y39:assets%2Fimages%2FMCButton%2Fnormal.pngR2i908R3R137R5R362R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_christmas.pngR2i16696R3R137R5R363R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_halloween.pngR2i7474R3R137R5R364R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_limo.pngR2i6842R3R137R5R365R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_philly.pngR2i19689R3R137R5R366R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_school.pngR2i1963R3R137R5R367R6tgoR0y50:assets%2Fimages%2Fmenubackgrounds%2Fmenu_stage.pngR2i21287R3R137R5R368R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_tank.pngR2i21289R3R137R5R369R6tgoR0y28:assets%2Fimages%2FmenuBG.pngR2i474435R3R137R5R370R6tgoR0y32:assets%2Fimages%2FmenuBGBlue.pngR2i454823R3R137R5R371R6tgoR0y35:assets%2Fimages%2FmenuBGMagenta.pngR2i446604R3R137R5R372R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fbf.jsonR2i125R3R4R5R373R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fdad.jsonR2i126R3R4R5R374R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fgf.jsonR2i125R3R4R5R375R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.pngR2i231974R3R137R5R376R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.xmlR2i5582R3R4R5R377R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.pngR2i111851R3R137R5R378R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.xmlR2i2115R3R4R5R379R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.pngR2i314273R3R137R5R380R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.xmlR2i3802R3R4R5R381R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.pngR2i152414R3R137R5R382R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.xmlR2i2113R3R4R5R383R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.pngR2i335745R3R137R5R384R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.xmlR2i2188R3R4R5R385R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.pngR2i109825R3R137R5R386R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.xmlR2i2142R3R4R5R387R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.pngR2i64463R3R137R5R388R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.xmlR2i1348R3R4R5R389R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.pngR2i80071R3R137R5R390R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.xmlR2i2543R3R4R5R391R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.pngR2i117065R3R137R5R392R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.xmlR2i2164R3R4R5R393R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fmom.jsonR2i125R3R4R5R394R6tgoR0y57:assets%2Fimages%2Fmenucharacters%2Fparents-christmas.jsonR2i135R3R4R5R395R6tgoR0y44:assets%2Fimages%2Fmenucharacters%2Fpico.jsonR2i129R3R4R5R396R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fsenpai.jsonR2i133R3R4R5R397R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fspooky.jsonR2i142R3R4R5R398R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2Ftankman.jsonR2i134R3R4R5R399R6tgoR0y31:assets%2Fimages%2FmenuDesat.pngR2i215613R3R137R5R400R6tgoR0y35:assets%2Fimages%2FmenuDesatDark.pngR2i455541R3R137R5R401R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Feasy.pngR2i3453R3R137R5R402R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Fhard.pngR2i3880R3R137R5R403R6tgoR0y47:assets%2Fimages%2Fmenudifficulties%2Fnormal.pngR2i4853R3R137R5R404R6tgoR0y33:assets%2Fimages%2FMenu_Tracks.pngR2i1254R3R137R5R405R6tgoR0y37:assets%2Fimages%2Fnewgrounds_logo.pngR2i40016R3R137R5R406R6tgoR0y26:assets%2Fimages%2Fnum0.pngR2i1816R3R137R5R407R6tgoR0y26:assets%2Fimages%2Fnum1.pngR2i1639R3R137R5R408R6tgoR0y26:assets%2Fimages%2Fnum2.pngR2i1985R3R137R5R409R6tgoR0y26:assets%2Fimages%2Fnum3.pngR2i1990R3R137R5R410R6tgoR0y26:assets%2Fimages%2Fnum4.pngR2i1955R3R137R5R411R6tgoR0y26:assets%2Fimages%2Fnum5.pngR2i2023R3R137R5R412R6tgoR0y26:assets%2Fimages%2Fnum6.pngR2i2082R3R137R5R413R6tgoR0y26:assets%2Fimages%2Fnum7.pngR2i1881R3R137R5R414R6tgoR0y26:assets%2Fimages%2Fnum8.pngR2i2024R3R137R5R415R6tgoR0y26:assets%2Fimages%2Fnum9.pngR2i1851R3R137R5R416R6tgoR0y42:assets%2Fimages%2Fstorymenu%2Ftutorial.pngR2i7056R3R137R5R417R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek1.pngR2i6261R3R137R5R418R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek2.pngR2i6517R3R137R5R419R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek3.pngR2i7148R3R137R5R420R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek4.pngR2i6262R3R137R5R421R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek5.pngR2i6440R3R137R5R422R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek6.pngR2i8979R3R137R5R423R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek7.pngR2i7349R3R137R5R424R6tgoR0y32:assets%2Fimages%2FtitleEnter.pngR2i26291R3R137R5R425R6tgoR0y32:assets%2Fimages%2FtitleEnter.xmlR2i518R3R4R5R426R6tgoR0y31:assets%2Fimages%2Fui%2Ffile.pngR2i1056R3R137R5R427R6tgoR0y33:assets%2Fimages%2Fui%2Ffolder.pngR2i883R3R137R5R428R6tgoR0y31:assets%2Fimages%2Fui%2Fjson.pngR2i1960R3R137R5R429R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left-hover.pngR2i170R3R137R5R430R6tgoR0y60:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left-hoverDark.pngR2i169R3R137R5R431R6tgoR0y50:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left.pngR2i166R3R137R5R432R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_leftDark.pngR2i175R3R137R5R433R6tgoR0y58:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle-hover.pngR2i157R3R137R5R434R6tgoR0y62:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle-hoverDark.pngR2i157R3R137R5R435R6tgoR0y52:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle.pngR2i154R3R137R5R436R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middleDark.pngR2i158R3R137R5R437R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right-hover.pngR2i171R3R137R5R438R6tgoR0y61:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right-hoverDark.pngR2i168R3R137R5R439R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right.pngR2i167R3R137R5R440R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_rightDark.pngR2i166R3R137R5R441R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fcenter-hover.pngR2i149R3R137R5R442R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fcenter-hoverDark.pngR2i149R3R137R5R443R6tgoR0y45:assets%2Fimages%2Fui%2Fnineslice%2Fcenter.pngR2i147R3R137R5R444R6tgoR0y49:assets%2Fimages%2Fui%2Fnineslice%2FcenterDark.pngR2i146R3R137R5R445R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left-hover.pngR2i160R3R137R5R446R6tgoR0y60:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left-hoverDark.pngR2i161R3R137R5R447R6tgoR0y50:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left.pngR2i159R3R137R5R448R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_leftDark.pngR2i161R3R137R5R449R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right-hover.pngR2i158R3R137R5R450R6tgoR0y61:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right-hoverDark.pngR2i157R3R137R5R451R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right.pngR2i155R3R137R5R452R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_rightDark.pngR2i157R3R137R5R453R6tgoR0y53:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left-hover.pngR2i169R3R137R5R454R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left-hoverDark.pngR2i169R3R137R5R455R6tgoR0y47:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left.pngR2i164R3R137R5R456R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Ftop_leftDark.pngR2i170R3R137R5R457R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle-hover.pngR2i161R3R137R5R458R6tgoR0y59:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle-hoverDark.pngR2i161R3R137R5R459R6tgoR0y49:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle.pngR2i154R3R137R5R460R6tgoR0y53:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middleDark.pngR2i154R3R137R5R461R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right-hover.pngR2i170R3R137R5R462R6tgoR0y58:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right-hoverDark.pngR2i169R3R137R5R463R6tgoR0y48:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right.pngR2i164R3R137R5R464R6tgoR0y52:assets%2Fimages%2Fui%2Fnineslice%2Ftop_rightDark.pngR2i166R3R137R5R465R6tgoR0y34:assets%2Fimages%2Fui%2Fpicture.pngR2i1887R3R137R5R466R6tgoR0y31:assets%2Fimages%2Fui%2Fplay.pngR2i697R3R137R5R467R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_1.pngR2i52419R3R137R5R468R6tgoR0y43:assets%2Fimages%2Fui%2FsplashLoad_1Dark.pngR2i51758R3R137R5R469R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_2.pngR2i10521R3R137R5R470R6tgoR0y43:assets%2Fimages%2Fui%2FsplashLoad_2Dark.pngR2i11238R3R137R5R471R6tgoR0y30:assets%2Fimages%2Fui%2Fzip.pngR2i1416R3R137R5R472R6tgoR0y32:assets%2Fimages%2FunknownMod.pngR2i2387R3R137R5R473R6tgoR2i2309657R3y5:MUSICR5y31:assets%2Fmusic%2FfreakyMenu.mp3y9:pathGroupaR475hR6tgoR2i2402257R3R474R5y31:assets%2Fmusic%2FoffsetSong.mp3R476aR477hR6tgoR2i17762R3R474R5y32:assets%2Fsounds%2FcancelMenu.mp3R476aR478hR6tgoR2i2114R3R474R5y34:assets%2Fsounds%2FchangeVolume.mp3R476aR479hR6tgoR2i91950R3R474R5y33:assets%2Fsounds%2FconfirmMenu.mp3R476aR480hR6tgoR2i9155R3R474R5y34:assets%2Fsounds%2Fintro1-pixel.mp3R476aR481hR6tgoR2i9912R3R474R5y34:assets%2Fsounds%2Fintro2-pixel.mp3R476aR482hR6tgoR2i9128R3R474R5y34:assets%2Fsounds%2Fintro3-pixel.mp3R476aR483hR6tgoR2i21651R3R474R5y35:assets%2Fsounds%2FintroGo-pixel.mp3R476aR484hR6tgoR2i17762R3R474R5y32:assets%2Fsounds%2FscrollMenu.mp3R476aR485hR6tgoR0y27:assets%2Fstages%2Flimo.jsonR2i289R3R4R5R486R6tgoR0y27:assets%2Fstages%2Fmall.jsonR2i287R3R4R5R487R6tgoR0y31:assets%2Fstages%2FmallEvil.jsonR2i285R3R4R5R488R6tgoR0y29:assets%2Fstages%2Fphilly.jsonR2i285R3R4R5R489R6tgoR0y29:assets%2Fstages%2Fschool.jsonR2i290R3R4R5R490R6tgoR0y33:assets%2Fstages%2FschoolEvil.jsonR2i290R3R4R5R491R6tgoR0y29:assets%2Fstages%2Fspooky.jsonR2i285R3R4R5R492R6tgoR0y28:assets%2Fstages%2Fstage.jsonR2i279R3R4R5R493R6tgoR0y27:assets%2Fstages%2Ftank.jsonR2i147R3R4R5R494R6tgoR0y30:assets%2Fweeks%2Ftutorial.jsonR2i274R3R4R5R495R6tgoR0y27:assets%2Fweeks%2Fweek1.jsonR2i369R3R4R5R496R6tgoR0y27:assets%2Fweeks%2Fweek2.jsonR2i371R3R4R5R497R6tgoR0y27:assets%2Fweeks%2Fweek3.jsonR2i356R3R4R5R498R6tgoR0y27:assets%2Fweeks%2Fweek4.jsonR2i369R3R4R5R499R6tgoR0y27:assets%2Fweeks%2Fweek5.jsonR2i397R3R4R5R500R6tgoR0y27:assets%2Fweeks%2Fweek6.jsonR2i408R3R4R5R501R6tgoR0y27:assets%2Fweeks%2Fweek7.jsonR2i491R3R4R5R502R6tgoR0y29:assets%2Fweeks%2FweekList.txtR2i50R3R4R5R503R6tgoR0y21:do%20NOT%20readme.txtR2i4326R3R4R5R504R6tgoR0y34:assets%2Ffonts%2Ffonts-go-here.txtR2zR3R4R5R505R6tgoR2i14656R3y4:FONTy9:classNamey31:__ASSET__assets_fonts_pixel_otfR5y26:assets%2Ffonts%2Fpixel.otfR6tgoR2i75864R3R506R507y29:__ASSET__assets_fonts_vcr_ttfR5y24:assets%2Ffonts%2Fvcr.ttfR6tgoR2i2114R3R474R5y26:flixel%2Fsounds%2Fbeep.mp3R476aR512y26:flixel%2Fsounds%2Fbeep.ogghR6tgoR2i39706R3R474R5y28:flixel%2Fsounds%2Fflixel.mp3R476aR514y28:flixel%2Fsounds%2Fflixel.ogghR6tgoR2i5794R3y5:SOUNDR5R513R476aR512R513hgoR2i33629R3R516R5R515R476aR514R515hgoR2i15744R3R506R507y35:__ASSET__flixel_fonts_nokiafc22_ttfR5y30:flixel%2Ffonts%2Fnokiafc22.ttfR6tgoR2i29724R3R506R507y36:__ASSET__flixel_fonts_monsterrat_ttfR5y31:flixel%2Ffonts%2Fmonsterrat.ttfR6tgoR0y33:flixel%2Fimages%2Fui%2Fbutton.pngR2i519R3R137R5R521R6tgoR0y36:flixel%2Fimages%2Flogo%2Fdefault.pngR2i3280R3R137R5R522R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Fbox.pngR2i912R3R137R5R523R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fbutton.pngR2i433R3R137R5R524R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_down.pngR2i446R3R137R5R525R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_left.pngR2i459R3R137R5R526R6tgoR0y49:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_right.pngR2i511R3R137R5R527R6tgoR0y46:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_up.pngR2i493R3R137R5R528R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fbutton_thin.pngR2i247R3R137R5R529R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fbutton_toggle.pngR2i534R3R137R5R530R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fcheck_box.pngR2i922R3R137R5R531R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fcheck_mark.pngR2i946R3R137R5R532R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fchrome.pngR2i253R3R137R5R533R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fchrome_flat.pngR2i212R3R137R5R534R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_inset.pngR2i192R3R137R5R535R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_light.pngR2i214R3R137R5R536R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fdropdown_mark.pngR2i156R3R137R5R537R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Ffinger_big.pngR2i1724R3R137R5R538R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Ffinger_small.pngR2i294R3R137R5R539R6tgoR0y38:flixel%2Fflixel-ui%2Fimg%2Fhilight.pngR2i129R3R137R5R540R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Finvis.pngR2i128R3R137R5R541R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fminus_mark.pngR2i136R3R137R5R542R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fplus_mark.pngR2i147R3R137R5R543R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Fradio.pngR2i191R3R137R5R544R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fradio_dot.pngR2i153R3R137R5R545R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fswatch.pngR2i185R3R137R5R546R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Ftab.pngR2i201R3R137R5R547R6tgoR0y39:flixel%2Fflixel-ui%2Fimg%2Ftab_back.pngR2i210R3R137R5R548R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Ftooltip_arrow.pngR2i18509R3R137R5R549R6tgoR0y39:flixel%2Fflixel-ui%2Fxml%2Fdefaults.xmlR2i1263R3R4R5R550R6tgoR0y53:flixel%2Fflixel-ui%2Fxml%2Fdefault_loading_screen.xmlR2i1953R3R4R5R551R6tgoR0y44:flixel%2Fflixel-ui%2Fxml%2Fdefault_popup.xmlR2i1848R3R4R5R552R6tgh\",\"rootPath\":null,\"version\":2,\"libraryArgs\":[],\"libraryType\":null}";
+	var data = "{\"name\":null,\"assets\":\"aoy4:pathy33:assets%2Fcharacters%2Fbf-car.jsony4:sizei2527y4:typey4:TEXTy2:idR1y7:preloadtgoR0y39:assets%2Fcharacters%2Fbf-christmas.jsonR2i1747R3R4R5R7R6tgoR0y34:assets%2Fcharacters%2Fbf-dead.jsonR2i709R3R4R5R8R6tgoR0y45:assets%2Fcharacters%2Fbf-holding-gf-dead.jsonR2i740R3R4R5R9R6tgoR0y40:assets%2Fcharacters%2Fbf-holding-gf.jsonR2i1751R3R4R5R10R6tgoR0y40:assets%2Fcharacters%2Fbf-pixel-dead.jsonR2i721R3R4R5R11R6tgoR0y44:assets%2Fcharacters%2Fbf-pixel-opponent.jsonR2i1567R3R4R5R12R6tgoR0y35:assets%2Fcharacters%2Fbf-pixel.jsonR2i1563R3R4R5R13R6tgoR0y29:assets%2Fcharacters%2Fbf.jsonR2i2467R3R4R5R14R6tgoR0y30:assets%2Fcharacters%2Fdad.jsonR2i1762R3R4R5R15R6tgoR0y41:assets%2Fcharacters%2FDubEnderDragon.jsonR2i662R3R4R5R16R6tgoR0y33:assets%2Fcharacters%2Fgf-car.jsonR2i993R3R4R5R17R6tgoR0y39:assets%2Fcharacters%2Fgf-christmas.jsonR2i2137R3R4R5R18R6tgoR0y35:assets%2Fcharacters%2Fgf-pixel.jsonR2i937R3R4R5R19R6tgoR0y37:assets%2Fcharacters%2Fgf-tankmen.jsonR2i1066R3R4R5R20R6tgoR0y29:assets%2Fcharacters%2Fgf.jsonR2i2326R3R4R5R21R6tgoR0y42:assets%2Fcharacters%2FMintEnderDragon.jsonR2i664R3R4R5R22R6tgoR0y34:assets%2Fcharacters%2Fmom-car.jsonR2i1892R3R4R5R23R6tgoR0y30:assets%2Fcharacters%2Fmom.jsonR2i988R3R4R5R24R6tgoR0y44:assets%2Fcharacters%2Fmonster-christmas.jsonR2i1905R3R4R5R25R6tgoR0y34:assets%2Fcharacters%2Fmonster.jsonR2i1904R3R4R5R26R6tgoR0y44:assets%2Fcharacters%2Fparents-christmas.jsonR2i3427R3R4R5R27R6tgoR0y38:assets%2Fcharacters%2Fpico-player.jsonR2i1635R3R4R5R28R6tgoR0y39:assets%2Fcharacters%2Fpico-speaker.jsonR2i1554R3R4R5R29R6tgoR0y31:assets%2Fcharacters%2Fpico.jsonR2i1636R3R4R5R30R6tgoR0y39:assets%2Fcharacters%2Fsenpai-angry.jsonR2i1039R3R4R5R31R6tgoR0y33:assets%2Fcharacters%2Fsenpai.jsonR2i1009R3R4R5R32R6tgoR0y33:assets%2Fcharacters%2Fspirit.jsonR2i992R3R4R5R33R6tgoR0y33:assets%2Fcharacters%2Fspooky.jsonR2i1384R3R4R5R34R6tgoR0y41:assets%2Fcharacters%2Ftankman-player.jsonR2i1976R3R4R5R35R6tgoR0y34:assets%2Fcharacters%2Ftankman.jsonR2i1974R3R4R5R36R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-easy.jsonR2i8488R3R4R5R37R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-hard.jsonR2i12097R3R4R5R38R6tgoR0y38:assets%2Fdata%2Fblammed%2Fblammed.jsonR2i9687R3R4R5R39R6tgoR0y37:assets%2Fdata%2Fblammed%2Fevents.jsonR2i10344R3R4R5R40R6tgoR0y44:assets%2Fdata%2Fbopeebo%2Fbopeebo-boobs.jsonR2i4140R3R4R5R41R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-easy.jsonR2i9178R3R4R5R42R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-hard.jsonR2i4140R3R4R5R43R6tgoR0y38:assets%2Fdata%2Fbopeebo%2Fbopeebo.jsonR2i9542R3R4R5R44R6tgoR0y37:assets%2Fdata%2Fbopeebo%2Fevents.jsonR2i5047R3R4R5R45R6tgoR0y33:assets%2Fdata%2FcharacterList.txtR2i284R3R4R5R46R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-easy.jsonR2i7062R3R4R5R47R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-hard.jsonR2i10443R3R4R5R48R6tgoR0y34:assets%2Fdata%2Fcocoa%2Fcocoa.jsonR2i8278R3R4R5R49R6tgoR0y35:assets%2Fdata%2Fcocoa%2Fevents.jsonR2i3644R3R4R5R50R6tgoR0y32:assets%2Fdata%2FcrashConfig.jsonR2i739R3R4R5R51R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-easy.jsonR2i7937R3R4R5R52R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-hard.jsonR2i9756R3R4R5R53R6tgoR0y44:assets%2Fdata%2Fdad-battle%2Fdad-battle.jsonR2i8913R3R4R5R54R6tgoR0y40:assets%2Fdata%2Fdad-battle%2Fevents.jsonR2i2614R3R4R5R55R6tgoR0y34:assets%2Fdata%2Fdata-goes-here.txtR2zR3R4R5R56R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-easy.jsonR2i9239R3R4R5R57R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-hard.jsonR2i11689R3R4R5R58R6tgoR0y36:assets%2Fdata%2Feggnog%2Feggnog.jsonR2i10333R3R4R5R59R6tgoR0y36:assets%2Fdata%2Feggnog%2Fevents.jsonR2i4881R3R4R5R60R6tgoR0y34:assets%2Fdata%2FfreeplayColors.txtR2i76R3R4R5R61R6tgoR0y35:assets%2Fdata%2Ffresh%2Fevents.jsonR2i3201R3R4R5R62R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-easy.jsonR2i5857R3R4R5R63R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-hard.jsonR2i6905R3R4R5R64R6tgoR0y34:assets%2Fdata%2Ffresh%2Ffresh.jsonR2i6493R3R4R5R65R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-easy.jsonR2i15146R3R4R5R66R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-hard.jsonR2i23500R3R4R5R67R6tgoR0y32:assets%2Fdata%2Fguns%2Fguns.jsonR2i20620R3R4R5R68R6tgoR0y34:assets%2Fdata%2Fhigh%2Fevents.jsonR2i4558R3R4R5R69R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-easy.jsonR2i8563R3R4R5R70R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-hard.jsonR2i11553R3R4R5R71R6tgoR0y32:assets%2Fdata%2Fhigh%2Fhigh.jsonR2i9757R3R4R5R72R6tgoR0y29:assets%2Fdata%2FintroText.txtR2i2103R3R4R5R73R6tgoR0y29:assets%2Fdata%2Fmain-view.xmlR2i123R3R4R5R74R6tgoR0y34:assets%2Fdata%2Fmilf%2Fevents.jsonR2i7488R3R4R5R75R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-easy.jsonR2i13522R3R4R5R76R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-hard.jsonR2i18135R3R4R5R77R6tgoR0y32:assets%2Fdata%2Fmilf%2Fmilf.jsonR2i15192R3R4R5R78R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-easy.jsonR2i12175R3R4R5R79R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-hard.jsonR2i14163R3R4R5R80R6tgoR0y38:assets%2Fdata%2Fmonster%2Fmonster.jsonR2i13445R3R4R5R81R6tgoR0y41:assets%2Fdata%2Fphilly-nice%2Fevents.jsonR2i5191R3R4R5R82R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-easy.jsonR2i8067R3R4R5R83R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-hard.jsonR2i12556R3R4R5R84R6tgoR0y46:assets%2Fdata%2Fphilly-nice%2Fphilly-nice.jsonR2i10103R3R4R5R85R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-easy.jsonR2i6089R3R4R5R86R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-hard.jsonR2i8768R3R4R5R87R6tgoR0y32:assets%2Fdata%2Fpico%2Fpico.jsonR2i7493R3R4R5R88R6tgoR0y34:assets%2Fdata%2Fridge%2Fridge.jsonR2i34473R3R4R5R89R6tgoR0y35:assets%2Fdata%2Froses%2Fevents.jsonR2i8786R3R4R5R90R6tgoR0y39:assets%2Fdata%2Froses%2Froses-easy.jsonR2i6725R3R4R5R91R6tgoR0y39:assets%2Fdata%2Froses%2Froses-hard.jsonR2i10432R3R4R5R92R6tgoR0y34:assets%2Fdata%2Froses%2Froses.jsonR2i8609R3R4R5R93R6tgoR0y41:assets%2Fdata%2Froses%2FrosesDialogue.txtR2i153R3R4R5R94R6tgoR0y43:assets%2Fdata%2Fsatin-panties%2Fevents.jsonR2i3177R3R4R5R95R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-easy.jsonR2i8817R3R4R5R96R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-hard.jsonR2i12704R3R4R5R97R6tgoR0y50:assets%2Fdata%2Fsatin-panties%2Fsatin-panties.jsonR2i10725R3R4R5R98R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-easy.jsonR2i9027R3R4R5R99R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-hard.jsonR2i10778R3R4R5R100R6tgoR0y36:assets%2Fdata%2Fsenpai%2Fsenpai.jsonR2i10016R3R4R5R101R6tgoR0y43:assets%2Fdata%2Fsenpai%2FsenpaiDialogue.txtR2i162R3R4R5R102R6tgoR0y34:assets%2Fdata%2Fsmash%2Fsmash.jsonR2i23961R3R4R5R103R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-easy.jsonR2i8435R3R4R5R104R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-hard.jsonR2i10170R3R4R5R105R6tgoR0y34:assets%2Fdata%2Fsouth%2Fsouth.jsonR2i10097R3R4R5R106R6tgoR0y33:assets%2Fdata%2FspecialThanks.txtR2i300R3R4R5R107R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-easy.jsonR2i7965R3R4R5R108R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-hard.jsonR2i9429R3R4R5R109R6tgoR0y40:assets%2Fdata%2Fspookeez%2Fspookeez.jsonR2i8875R3R4R5R110R6tgoR0y29:assets%2Fdata%2FstageList.txtR2i61R3R4R5R111R6tgoR0y36:assets%2Fdata%2Fstress%2Fevents.jsonR2i747R3R4R5R112R6tgoR0y41:assets%2Fdata%2Fstress%2Fpicospeaker.jsonR2i18286R3R4R5R113R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-easy.jsonR2i33455R3R4R5R114R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-hard.jsonR2i53679R3R4R5R115R6tgoR0y36:assets%2Fdata%2Fstress%2Fstress.jsonR2i45928R3R4R5R116R6tgoR0y32:assets%2Fdata%2Ftest%2Ftest.jsonR2i75208R3R4R5R117R6tgoR0y40:assets%2Fdata%2Ftest-dev%2Ftest-dev.jsonR2i49834R3R4R5R118R6tgoR0y36:assets%2Fdata%2Fthorns%2Fevents.jsonR2i8104R3R4R5R119R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-easy.jsonR2i10437R3R4R5R120R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-hard.jsonR2i15444R3R4R5R121R6tgoR0y36:assets%2Fdata%2Fthorns%2Fthorns.jsonR2i12691R3R4R5R122R6tgoR0y43:assets%2Fdata%2Fthorns%2FthornsDialogue.txtR2i305R3R4R5R123R6tgoR0y38:assets%2Fdata%2Ftutorial%2Fevents.jsonR2i2702R3R4R5R124R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-easy.jsonR2i5739R3R4R5R125R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-hard.jsonR2i6335R3R4R5R126R6tgoR0y40:assets%2Fdata%2Ftutorial%2Ftutorial.jsonR2i5739R3R4R5R127R6tgoR0y33:assets%2Fdata%2Fugh%2Fevents.jsonR2i1345R3R4R5R128R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-easy.jsonR2i8550R3R4R5R129R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-hard.jsonR2i12496R3R4R5R130R6tgoR0y30:assets%2Fdata%2Fugh%2Fugh.jsonR2i11354R3R4R5R131R6tgoR0y47:assets%2Fdata%2Fwinter-horrorland%2Fevents.jsonR2i6197R3R4R5R132R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-easy.jsonR2i11846R3R4R5R133R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-hard.jsonR2i14558R3R4R5R134R6tgoR0y58:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland.jsonR2i12808R3R4R5R135R6tgoR0y45:assets%2Fimages%2Fachievements%2Fbirthday.pngR2i10948R3y5:IMAGER5R136R6tgoR0y45:assets%2Fimages%2Fachievements%2Fdebugger.pngR2i7554R3R137R5R138R6tgoR0y54:assets%2Fimages%2Fachievements%2Ffriday_night_play.pngR2i7661R3R137R5R139R6tgoR0y41:assets%2Fimages%2Fachievements%2Fhype.pngR2i23694R3R137R5R140R6tgoR0y54:assets%2Fimages%2Fachievements%2Flockedachievement.pngR2i1709R3R137R5R141R6tgoR0y48:assets%2Fimages%2Fachievements%2Foversinging.pngR2i19900R3R137R5R142R6tgoR0y56:assets%2Fimages%2Fachievements%2Froadkill_enthusiast.pngR2i5996R3R137R5R143R6tgoR0y44:assets%2Fimages%2Fachievements%2Ftoastie.pngR2i3094R3R137R5R144R6tgoR0y45:assets%2Fimages%2Fachievements%2Ftwo_keys.pngR2i27127R3R137R5R145R6tgoR0y43:assets%2Fimages%2Fachievements%2Fur_bad.pngR2i22017R3R137R5R146R6tgoR0y44:assets%2Fimages%2Fachievements%2Fur_good.pngR2i3467R3R137R5R147R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek1_nomiss.pngR2i20155R3R137R5R148R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek2_nomiss.pngR2i9304R3R137R5R149R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek3_nomiss.pngR2i21984R3R137R5R150R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek4_nomiss.pngR2i13430R3R137R5R151R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek5_nomiss.pngR2i21894R3R137R5R152R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek6_nomiss.pngR2i552R3R137R5R153R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek7_nomiss.pngR2i7249R3R137R5R154R6tgoR0y30:assets%2Fimages%2Falphabet.pngR2i177267R3R137R5R155R6tgoR0y30:assets%2Fimages%2Falphabet.xmlR2i57385R3R4R5R156R6tgoR0y34:assets%2Fimages%2FalphabetDark.pngR2i120330R3R137R5R157R6tgoR0y34:assets%2Fimages%2FalphabetDark.xmlR2i57389R3R4R5R158R6tgoR0y33:assets%2Fimages%2FalphabetOld.pngR2i90070R3R137R5R159R6tgoR0y33:assets%2Fimages%2FalphabetOld.xmlR2i52093R3R4R5R160R6tgoR0y38:assets%2Fimages%2Fbutton%2Fa-hover.pngR2i9818R3R137R5R161R6tgoR0y42:assets%2Fimages%2Fbutton%2Fa-hoverDark.pngR2i9677R3R137R5R162R6tgoR0y32:assets%2Fimages%2Fbutton%2Fa.pngR2i8053R3R137R5R163R6tgoR0y36:assets%2Fimages%2Fbutton%2FaDark.pngR2i7859R3R137R5R164R6tgoR0y40:assets%2Fimages%2Fbutton%2Falt-hover.pngR2i10795R3R137R5R165R6tgoR0y44:assets%2Fimages%2Fbutton%2Falt-hoverDark.pngR2i10294R3R137R5R166R6tgoR0y34:assets%2Fimages%2Fbutton%2Falt.pngR2i9075R3R137R5R167R6tgoR0y38:assets%2Fimages%2Fbutton%2FaltDark.pngR2i8397R3R137R5R168R6tgoR0y41:assets%2Fimages%2Fbutton%2Fback-hover.pngR2i10662R3R137R5R169R6tgoR0y45:assets%2Fimages%2Fbutton%2Fback-hoverDark.pngR2i10381R3R137R5R170R6tgoR0y35:assets%2Fimages%2Fbutton%2Fback.pngR2i9279R3R137R5R171R6tgoR0y39:assets%2Fimages%2Fbutton%2FbackDark.pngR2i8503R3R137R5R172R6tgoR0y41:assets%2Fimages%2Fbutton%2Fctrl-hover.pngR2i11612R3R137R5R173R6tgoR0y45:assets%2Fimages%2Fbutton%2Fctrl-hoverDark.pngR2i11311R3R137R5R174R6tgoR0y35:assets%2Fimages%2Fbutton%2Fctrl.pngR2i9607R3R137R5R175R6tgoR0y39:assets%2Fimages%2Fbutton%2FctrlDark.pngR2i8838R3R137R5R176R6tgoR0y38:assets%2Fimages%2Fbutton%2Fd-hover.pngR2i11142R3R137R5R177R6tgoR0y42:assets%2Fimages%2Fbutton%2Fd-hoverDark.pngR2i10476R3R137R5R178R6tgoR0y32:assets%2Fimages%2Fbutton%2Fd.pngR2i9363R3R137R5R179R6tgoR0y36:assets%2Fimages%2Fbutton%2FdDark.pngR2i8614R3R137R5R180R6tgoR0y41:assets%2Fimages%2Fbutton%2Fdown-hover.pngR2i11291R3R137R5R181R6tgoR0y45:assets%2Fimages%2Fbutton%2Fdown-hoverDark.pngR2i10758R3R137R5R182R6tgoR0y35:assets%2Fimages%2Fbutton%2Fdown.pngR2i9327R3R137R5R183R6tgoR0y39:assets%2Fimages%2Fbutton%2FdownDark.pngR2i8715R3R137R5R184R6tgoR0y38:assets%2Fimages%2Fbutton%2Fe-hover.pngR2i10420R3R137R5R185R6tgoR0y42:assets%2Fimages%2Fbutton%2Fe-hoverDark.pngR2i10032R3R137R5R186R6tgoR0y32:assets%2Fimages%2Fbutton%2Fe.pngR2i8707R3R137R5R187R6tgoR0y36:assets%2Fimages%2Fbutton%2FeDark.pngR2i8132R3R137R5R188R6tgoR0y42:assets%2Fimages%2Fbutton%2Fenter-hover.pngR2i11879R3R137R5R189R6tgoR0y46:assets%2Fimages%2Fbutton%2Fenter-hoverDark.pngR2i10628R3R137R5R190R6tgoR0y36:assets%2Fimages%2Fbutton%2Fenter.pngR2i9976R3R137R5R191R6tgoR0y40:assets%2Fimages%2Fbutton%2FenterDark.pngR2i8756R3R137R5R192R6tgoR0y38:assets%2Fimages%2Fbutton%2Fh-hover.pngR2i9483R3R137R5R193R6tgoR0y42:assets%2Fimages%2Fbutton%2Fh-hoverDark.pngR2i9212R3R137R5R194R6tgoR0y32:assets%2Fimages%2Fbutton%2Fh.pngR2i7864R3R137R5R195R6tgoR0y41:assets%2Fimages%2Fbutton%2Fhand-hover.pngR2i12156R3R137R5R196R6tgoR0y45:assets%2Fimages%2Fbutton%2Fhand-hoverDark.pngR2i11520R3R137R5R197R6tgoR0y35:assets%2Fimages%2Fbutton%2Fhand.pngR2i10176R3R137R5R198R6tgoR0y39:assets%2Fimages%2Fbutton%2FhandDark.pngR2i9169R3R137R5R199R6tgoR0y36:assets%2Fimages%2Fbutton%2FhDark.pngR2i7605R3R137R5R200R6tgoR0y41:assets%2Fimages%2Fbutton%2Fleft-hover.pngR2i11243R3R137R5R201R6tgoR0y45:assets%2Fimages%2Fbutton%2Fleft-hoverDark.pngR2i10491R3R137R5R202R6tgoR0y35:assets%2Fimages%2Fbutton%2Fleft.pngR2i9441R3R137R5R203R6tgoR0y39:assets%2Fimages%2Fbutton%2FleftDark.pngR2i8311R3R137R5R204R6tgoR0y49:assets%2Fimages%2Fbutton%2Fleft_bracket-hover.pngR2i9250R3R137R5R205R6tgoR0y53:assets%2Fimages%2Fbutton%2Fleft_bracket-hoverDark.pngR2i9022R3R137R5R206R6tgoR0y43:assets%2Fimages%2Fbutton%2Fleft_bracket.pngR2i8192R3R137R5R207R6tgoR0y47:assets%2Fimages%2Fbutton%2Fleft_bracketDark.pngR2i7672R3R137R5R208R6tgoR0y38:assets%2Fimages%2Fbutton%2Fo-hover.pngR2i9783R3R137R5R209R6tgoR0y42:assets%2Fimages%2Fbutton%2Fo-hoverDark.pngR2i9417R3R137R5R210R6tgoR0y32:assets%2Fimages%2Fbutton%2Fo.pngR2i8136R3R137R5R211R6tgoR0y36:assets%2Fimages%2Fbutton%2FoDark.pngR2i7730R3R137R5R212R6tgoR0y38:assets%2Fimages%2Fbutton%2Fp-hover.pngR2i9654R3R137R5R213R6tgoR0y42:assets%2Fimages%2Fbutton%2Fp-hoverDark.pngR2i9311R3R137R5R214R6tgoR0y32:assets%2Fimages%2Fbutton%2Fp.pngR2i8326R3R137R5R215R6tgoR0y42:assets%2Fimages%2Fbutton%2Fpause-hover.pngR2i9233R3R137R5R216R6tgoR0y46:assets%2Fimages%2Fbutton%2Fpause-hoverDark.pngR2i9009R3R137R5R217R6tgoR0y36:assets%2Fimages%2Fbutton%2Fpause.pngR2i7630R3R137R5R218R6tgoR0y40:assets%2Fimages%2Fbutton%2FpauseDark.pngR2i7317R3R137R5R219R6tgoR0y36:assets%2Fimages%2Fbutton%2FpDark.pngR2i7859R3R137R5R220R6tgoR0y50:assets%2Fimages%2Fbutton%2Fplayback_rate-hover.pngR2i9213R3R137R5R221R6tgoR0y54:assets%2Fimages%2Fbutton%2Fplayback_rate-hoverDark.pngR2i9088R3R137R5R222R6tgoR0y44:assets%2Fimages%2Fbutton%2Fplayback_rate.pngR2i7970R3R137R5R223R6tgoR0y48:assets%2Fimages%2Fbutton%2Fplayback_rateDark.pngR2i7824R3R137R5R224R6tgoR0y38:assets%2Fimages%2Fbutton%2Fq-hover.pngR2i10269R3R137R5R225R6tgoR0y42:assets%2Fimages%2Fbutton%2Fq-hoverDark.pngR2i9768R3R137R5R226R6tgoR0y32:assets%2Fimages%2Fbutton%2Fq.pngR2i8629R3R137R5R227R6tgoR0y36:assets%2Fimages%2Fbutton%2FqDark.pngR2i8082R3R137R5R228R6tgoR0y38:assets%2Fimages%2Fbutton%2Fr-hover.pngR2i10374R3R137R5R229R6tgoR0y42:assets%2Fimages%2Fbutton%2Fr-hoverDark.pngR2i9831R3R137R5R230R6tgoR0y32:assets%2Fimages%2Fbutton%2Fr.pngR2i8742R3R137R5R231R6tgoR0y36:assets%2Fimages%2Fbutton%2FrDark.pngR2i7920R3R137R5R232R6tgoR0y42:assets%2Fimages%2Fbutton%2Fright-hover.pngR2i11204R3R137R5R233R6tgoR0y46:assets%2Fimages%2Fbutton%2Fright-hoverDark.pngR2i10494R3R137R5R234R6tgoR0y36:assets%2Fimages%2Fbutton%2Fright.pngR2i9386R3R137R5R235R6tgoR0y40:assets%2Fimages%2Fbutton%2FrightDark.pngR2i8278R3R137R5R236R6tgoR0y50:assets%2Fimages%2Fbutton%2Fright_bracket-hover.pngR2i9415R3R137R5R237R6tgoR0y54:assets%2Fimages%2Fbutton%2Fright_bracket-hoverDark.pngR2i9003R3R137R5R238R6tgoR0y44:assets%2Fimages%2Fbutton%2Fright_bracket.pngR2i8203R3R137R5R239R6tgoR0y48:assets%2Fimages%2Fbutton%2Fright_bracketDark.pngR2i7685R3R137R5R240R6tgoR0y38:assets%2Fimages%2Fbutton%2Fs-hover.pngR2i10516R3R137R5R241R6tgoR0y42:assets%2Fimages%2Fbutton%2Fs-hoverDark.pngR2i10006R3R137R5R242R6tgoR0y32:assets%2Fimages%2Fbutton%2Fs.pngR2i8744R3R137R5R243R6tgoR0y36:assets%2Fimages%2Fbutton%2FsDark.pngR2i8061R3R137R5R244R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsection-hover.pngR2i10161R3R137R5R245R6tgoR0y48:assets%2Fimages%2Fbutton%2Fsection-hoverDark.pngR2i10068R3R137R5R246R6tgoR0y38:assets%2Fimages%2Fbutton%2Fsection.pngR2i8425R3R137R5R247R6tgoR0y42:assets%2Fimages%2Fbutton%2FsectionDark.pngR2i8300R3R137R5R248R6tgoR0y42:assets%2Fimages%2Fbutton%2Fshift-hover.pngR2i11227R3R137R5R249R6tgoR0y46:assets%2Fimages%2Fbutton%2Fshift-hoverDark.pngR2i10498R3R137R5R250R6tgoR0y36:assets%2Fimages%2Fbutton%2Fshift.pngR2i9321R3R137R5R251R6tgoR0y40:assets%2Fimages%2Fbutton%2FshiftDark.pngR2i8423R3R137R5R252R6tgoR0y46:assets%2Fimages%2Fbutton%2Fsnap_grid-hover.pngR2i10584R3R137R5R253R6tgoR0y50:assets%2Fimages%2Fbutton%2Fsnap_grid-hoverDark.pngR2i10016R3R137R5R254R6tgoR0y40:assets%2Fimages%2Fbutton%2Fsnap_grid.pngR2i8674R3R137R5R255R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsnap_gridDark.pngR2i8175R3R137R5R256R6tgoR0y42:assets%2Fimages%2Fbutton%2Fspace-hover.pngR2i9210R3R137R5R257R6tgoR0y46:assets%2Fimages%2Fbutton%2Fspace-hoverDark.pngR2i8760R3R137R5R258R6tgoR0y36:assets%2Fimages%2Fbutton%2Fspace.pngR2i7893R3R137R5R259R6tgoR0y40:assets%2Fimages%2Fbutton%2FspaceDark.pngR2i7277R3R137R5R260R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsustain-hover.pngR2i10807R3R137R5R261R6tgoR0y48:assets%2Fimages%2Fbutton%2Fsustain-hoverDark.pngR2i10166R3R137R5R262R6tgoR0y38:assets%2Fimages%2Fbutton%2Fsustain.pngR2i9058R3R137R5R263R6tgoR0y42:assets%2Fimages%2Fbutton%2FsustainDark.pngR2i8448R3R137R5R264R6tgoR0y38:assets%2Fimages%2Fbutton%2Ft-hover.pngR2i9341R3R137R5R265R6tgoR0y42:assets%2Fimages%2Fbutton%2Ft-hoverDark.pngR2i8860R3R137R5R266R6tgoR0y32:assets%2Fimages%2Fbutton%2Ft.pngR2i7916R3R137R5R267R6tgoR0y45:assets%2Fimages%2Fbutton%2Ftamplate-hover.pngR2i7778R3R137R5R268R6tgoR0y49:assets%2Fimages%2Fbutton%2Ftamplate-hoverDark.pngR2i7442R3R137R5R269R6tgoR0y39:assets%2Fimages%2Fbutton%2Ftamplate.pngR2i6924R3R137R5R270R6tgoR0y43:assets%2Fimages%2Fbutton%2FtamplateDark.pngR2i6617R3R137R5R271R6tgoR0y36:assets%2Fimages%2Fbutton%2FtDark.pngR2i7683R3R137R5R272R6tgoR0y39:assets%2Fimages%2Fbutton%2Fup-hover.pngR2i11312R3R137R5R273R6tgoR0y43:assets%2Fimages%2Fbutton%2Fup-hoverDark.pngR2i10783R3R137R5R274R6tgoR0y33:assets%2Fimages%2Fbutton%2Fup.pngR2i9306R3R137R5R275R6tgoR0y37:assets%2Fimages%2Fbutton%2FupDark.pngR2i8745R3R137R5R276R6tgoR0y38:assets%2Fimages%2Fbutton%2Fw-hover.pngR2i9805R3R137R5R277R6tgoR0y42:assets%2Fimages%2Fbutton%2Fw-hoverDark.pngR2i9561R3R137R5R278R6tgoR0y32:assets%2Fimages%2Fbutton%2Fw.pngR2i8235R3R137R5R279R6tgoR0y36:assets%2Fimages%2Fbutton%2FwDark.pngR2i7738R3R137R5R280R6tgoR0y38:assets%2Fimages%2Fbutton%2Fx-hover.pngR2i12388R3R137R5R281R6tgoR0y42:assets%2Fimages%2Fbutton%2Fx-hoverDark.pngR2i11499R3R137R5R282R6tgoR0y32:assets%2Fimages%2Fbutton%2Fx.pngR2i10418R3R137R5R283R6tgoR0y36:assets%2Fimages%2Fbutton%2FxDark.pngR2i9356R3R137R5R284R6tgoR0y87:assets%2Fimages%2Fbutton%2Fyou%20can%20use%20any%20resolution%20of%20image%20button.txtR2zR3R4R5R285R6tgoR0y38:assets%2Fimages%2Fbutton%2Fz-hover.pngR2i10489R3R137R5R286R6tgoR0y42:assets%2Fimages%2Fbutton%2Fz-hoverDark.pngR2i9825R3R137R5R287R6tgoR0y32:assets%2Fimages%2Fbutton%2Fz.pngR2i8703R3R137R5R288R6tgoR0y36:assets%2Fimages%2Fbutton%2FzDark.pngR2i8115R3R137R5R289R6tgoR0y41:assets%2Fimages%2Fbutton%2Fzoom-hover.pngR2i10632R3R137R5R290R6tgoR0y45:assets%2Fimages%2Fbutton%2Fzoom-hoverDark.pngR2i10245R3R137R5R291R6tgoR0y35:assets%2Fimages%2Fbutton%2Fzoom.pngR2i8952R3R137R5R292R6tgoR0y39:assets%2Fimages%2Fbutton%2FzoomDark.pngR2i8381R3R137R5R293R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.pngR2i3044R3R137R5R294R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.xmlR2i597R3R4R5R295R6tgoR0y33:assets%2Fimages%2Fchart_quant.pngR2i3143R3R137R5R296R6tgoR0y33:assets%2Fimages%2Fchart_quant.xmlR2i1028R3R4R5R297R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.pngR2i16546R3R137R5R298R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.xmlR2i1976R3R4R5R299R6tgoR0y34:assets%2Fimages%2Fcredits%2Fbb.pngR2i5485R3R137R5R300R6tgoR0y39:assets%2Fimages%2Fcredits%2Fdiscord.pngR2i1510R3R137R5R301R6tgoR0y35:assets%2Fimages%2Fcredits%2Fdub.pngR2i1153R3R137R5R302R6tgoR0y40:assets%2Fimages%2Fcredits%2Fevilsk8r.pngR2i7497R3R137R5R303R6tgoR0y38:assets%2Fimages%2Fcredits%2Fflicky.pngR2i6462R3R137R5R304R6tgoR0y36:assets%2Fimages%2Fcredits%2Fkade.pngR2i9684R3R137R5R305R6tgoR0y43:assets%2Fimages%2Fcredits%2Fkawaisprite.pngR2i3953R3R137R5R306R6tgoR0y38:assets%2Fimages%2Fcredits%2Fkeoiki.pngR2i3918R3R137R5R307R6tgoR0y42:assets%2Fimages%2Fcredits%2Fmastereric.pngR2i11899R3R137R5R308R6tgoR0y38:assets%2Fimages%2Fcredits%2Fnebula.pngR2i5644R3R137R5R309R6tgoR0y45:assets%2Fimages%2Fcredits%2Fninjamuffin99.pngR2i5850R3R137R5R310R6tgoR0y45:assets%2Fimages%2Fcredits%2Fphantomarcade.pngR2i9615R3R137R5R311R6tgoR0y37:assets%2Fimages%2Fcredits%2Fproxy.pngR2i7645R3R137R5R312R6tgoR0y37:assets%2Fimages%2Fcredits%2Friver.pngR2i8283R3R137R5R313R6tgoR0y43:assets%2Fimages%2Fcredits%2Fshadowmario.pngR2i3679R3R137R5R314R6tgoR0y37:assets%2Fimages%2Fcredits%2Fshubs.pngR2i6829R3R137R5R315R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsmokey.pngR2i9145R3R137R5R316R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsqirra.pngR2i8258R3R137R5R317R6tgoR0y34:assets%2Fimages%2Fcry_about_it.pngR2i380631R3R137R5R318R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fbf.jsonR2i987R3R4R5R319R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fgf.jsonR2i807R3R4R5R320R6tgoR0y28:assets%2Fimages%2Ffunkay.pngR2i135548R3R137R5R321R6tgoR0y35:assets%2Fimages%2FgfDanceTitle.jsonR2i124R3R4R5R322R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.pngR2i745426R3R137R5R323R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.xmlR2i4259R3R4R5R324R6tgoR0y30:assets%2Fimages%2Fhahadumb.pngR2i16097R3R137R5R325R6tgoR0y28:assets%2Fimages%2Fhitbox.pngR2i620R3R137R5R326R6tgoR0y27:assets%2Fimages%2FhugeW.pngR2i18069R3R137R5R327R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-bf-old.pngR2i4101R3R137R5R328R6tgoR0y43:assets%2Fimages%2Ficons%2Ficon-bf-pixel.pngR2i538R3R137R5R329R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-bf.pngR2i22287R3R137R5R330R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-dad.pngR2i12384R3R137R5R331R6tgoR0y49:assets%2Fimages%2Ficons%2Ficon-dubenderdragon.pngR2i8798R3R137R5R332R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-face.pngR2i3549R3R137R5R333R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-gf.pngR2i10205R3R137R5R334R6tgoR0y50:assets%2Fimages%2Ficons%2Ficon-mintenderdragon.pngR2i9431R3R137R5R335R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-mom.pngR2i9237R3R137R5R336R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-monster.pngR2i17792R3R137R5R337R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-parents.pngR2i15547R3R137R5R338R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-pico.pngR2i14208R3R137R5R339R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-senpai-pixel.pngR2i622R3R137R5R340R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-spirit-pixel.pngR2i509R3R137R5R341R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-spooky.pngR2i6907R3R137R5R342R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-tankman.pngR2i3493R3R137R5R343R6tgoR0y26:assets%2Fimages%2Flogo.pngR2i86924R3R137R5R344R6tgoR0y32:assets%2Fimages%2FlogoBumpin.pngR2i578147R3R137R5R345R6tgoR0y32:assets%2Fimages%2FlogoBumpin.xmlR2i2177R3R4R5R346R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.pngR2i28858R3R137R5R347R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.xmlR2i1380R3R4R5R348R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.pngR2i28734R3R137R5R349R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.xmlR2i1385R3R4R5R350R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.pngR2i24842R3R137R5R351R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.xmlR2i1375R3R4R5R352R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.pngR2i30316R3R137R5R353R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.xmlR2i1399R3R4R5R354R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.pngR2i22741R3R137R5R355R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.xmlR2i1644R3R4R5R356R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.pngR2i27299R3R137R5R357R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.xmlR2i1332R3R4R5R358R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.pngR2i54659R3R137R5R359R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.xmlR2i1444R3R4R5R360R6tgoR0y38:assets%2Fimages%2FMCButton%2Fhover.pngR2i906R3R137R5R361R6tgoR0y39:assets%2Fimages%2FMCButton%2Fnormal.pngR2i908R3R137R5R362R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_christmas.pngR2i16696R3R137R5R363R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_halloween.pngR2i7474R3R137R5R364R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_limo.pngR2i6842R3R137R5R365R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_philly.pngR2i19689R3R137R5R366R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_school.pngR2i1963R3R137R5R367R6tgoR0y50:assets%2Fimages%2Fmenubackgrounds%2Fmenu_stage.pngR2i21287R3R137R5R368R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_tank.pngR2i21289R3R137R5R369R6tgoR0y28:assets%2Fimages%2FmenuBG.pngR2i474435R3R137R5R370R6tgoR0y32:assets%2Fimages%2FmenuBGBlue.pngR2i454823R3R137R5R371R6tgoR0y35:assets%2Fimages%2FmenuBGMagenta.pngR2i446604R3R137R5R372R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fbf.jsonR2i125R3R4R5R373R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fdad.jsonR2i126R3R4R5R374R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fgf.jsonR2i125R3R4R5R375R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.pngR2i231974R3R137R5R376R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.xmlR2i5582R3R4R5R377R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.pngR2i111851R3R137R5R378R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.xmlR2i2115R3R4R5R379R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.pngR2i314273R3R137R5R380R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.xmlR2i3802R3R4R5R381R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.pngR2i152414R3R137R5R382R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.xmlR2i2113R3R4R5R383R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.pngR2i335745R3R137R5R384R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.xmlR2i2188R3R4R5R385R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.pngR2i109825R3R137R5R386R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.xmlR2i2142R3R4R5R387R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.pngR2i64463R3R137R5R388R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.xmlR2i1348R3R4R5R389R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.pngR2i80071R3R137R5R390R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.xmlR2i2543R3R4R5R391R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.pngR2i117065R3R137R5R392R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.xmlR2i2164R3R4R5R393R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fmom.jsonR2i125R3R4R5R394R6tgoR0y57:assets%2Fimages%2Fmenucharacters%2Fparents-christmas.jsonR2i135R3R4R5R395R6tgoR0y44:assets%2Fimages%2Fmenucharacters%2Fpico.jsonR2i129R3R4R5R396R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fsenpai.jsonR2i133R3R4R5R397R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fspooky.jsonR2i142R3R4R5R398R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2Ftankman.jsonR2i134R3R4R5R399R6tgoR0y31:assets%2Fimages%2FmenuDesat.pngR2i215613R3R137R5R400R6tgoR0y35:assets%2Fimages%2FmenuDesatDark.pngR2i455541R3R137R5R401R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Feasy.pngR2i3453R3R137R5R402R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Fhard.pngR2i3880R3R137R5R403R6tgoR0y47:assets%2Fimages%2Fmenudifficulties%2Fnormal.pngR2i4853R3R137R5R404R6tgoR0y33:assets%2Fimages%2FMenu_Tracks.pngR2i1254R3R137R5R405R6tgoR0y37:assets%2Fimages%2Fnewgrounds_logo.pngR2i40016R3R137R5R406R6tgoR0y26:assets%2Fimages%2Fnum0.pngR2i1816R3R137R5R407R6tgoR0y26:assets%2Fimages%2Fnum1.pngR2i1639R3R137R5R408R6tgoR0y26:assets%2Fimages%2Fnum2.pngR2i1985R3R137R5R409R6tgoR0y26:assets%2Fimages%2Fnum3.pngR2i1990R3R137R5R410R6tgoR0y26:assets%2Fimages%2Fnum4.pngR2i1955R3R137R5R411R6tgoR0y26:assets%2Fimages%2Fnum5.pngR2i2023R3R137R5R412R6tgoR0y26:assets%2Fimages%2Fnum6.pngR2i2082R3R137R5R413R6tgoR0y26:assets%2Fimages%2Fnum7.pngR2i1881R3R137R5R414R6tgoR0y26:assets%2Fimages%2Fnum8.pngR2i2024R3R137R5R415R6tgoR0y26:assets%2Fimages%2Fnum9.pngR2i1851R3R137R5R416R6tgoR0y42:assets%2Fimages%2Fstorymenu%2Ftutorial.pngR2i7056R3R137R5R417R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek1.pngR2i6261R3R137R5R418R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek2.pngR2i6517R3R137R5R419R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek3.pngR2i7148R3R137R5R420R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek4.pngR2i6262R3R137R5R421R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek5.pngR2i6440R3R137R5R422R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek6.pngR2i8979R3R137R5R423R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek7.pngR2i7349R3R137R5R424R6tgoR0y32:assets%2Fimages%2FtitleEnter.pngR2i26291R3R137R5R425R6tgoR0y32:assets%2Fimages%2FtitleEnter.xmlR2i518R3R4R5R426R6tgoR0y45:assets%2Fimages%2Fui%2Fchart%2Farrow_icon.pngR2i1358R3R137R5R427R6tgoR0y31:assets%2Fimages%2Fui%2Ffile.pngR2i1056R3R137R5R428R6tgoR0y33:assets%2Fimages%2Fui%2Ffolder.pngR2i883R3R137R5R429R6tgoR0y31:assets%2Fimages%2Fui%2Fjson.pngR2i1960R3R137R5R430R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left-hover.pngR2i170R3R137R5R431R6tgoR0y60:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left-hoverDark.pngR2i169R3R137R5R432R6tgoR0y50:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left.pngR2i166R3R137R5R433R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_leftDark.pngR2i175R3R137R5R434R6tgoR0y58:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle-hover.pngR2i157R3R137R5R435R6tgoR0y62:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle-hoverDark.pngR2i157R3R137R5R436R6tgoR0y52:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle.pngR2i154R3R137R5R437R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middleDark.pngR2i158R3R137R5R438R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right-hover.pngR2i171R3R137R5R439R6tgoR0y61:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right-hoverDark.pngR2i168R3R137R5R440R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right.pngR2i167R3R137R5R441R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_rightDark.pngR2i166R3R137R5R442R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fcenter-hover.pngR2i149R3R137R5R443R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fcenter-hoverDark.pngR2i149R3R137R5R444R6tgoR0y45:assets%2Fimages%2Fui%2Fnineslice%2Fcenter.pngR2i147R3R137R5R445R6tgoR0y49:assets%2Fimages%2Fui%2Fnineslice%2FcenterDark.pngR2i146R3R137R5R446R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left-hover.pngR2i160R3R137R5R447R6tgoR0y60:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left-hoverDark.pngR2i161R3R137R5R448R6tgoR0y50:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left.pngR2i159R3R137R5R449R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_leftDark.pngR2i161R3R137R5R450R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right-hover.pngR2i158R3R137R5R451R6tgoR0y61:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right-hoverDark.pngR2i157R3R137R5R452R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right.pngR2i155R3R137R5R453R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_rightDark.pngR2i157R3R137R5R454R6tgoR0y53:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left-hover.pngR2i169R3R137R5R455R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left-hoverDark.pngR2i169R3R137R5R456R6tgoR0y47:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left.pngR2i164R3R137R5R457R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Ftop_leftDark.pngR2i170R3R137R5R458R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle-hover.pngR2i161R3R137R5R459R6tgoR0y59:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle-hoverDark.pngR2i161R3R137R5R460R6tgoR0y49:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle.pngR2i154R3R137R5R461R6tgoR0y53:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middleDark.pngR2i154R3R137R5R462R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right-hover.pngR2i170R3R137R5R463R6tgoR0y58:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right-hoverDark.pngR2i169R3R137R5R464R6tgoR0y48:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right.pngR2i164R3R137R5R465R6tgoR0y52:assets%2Fimages%2Fui%2Fnineslice%2Ftop_rightDark.pngR2i166R3R137R5R466R6tgoR0y34:assets%2Fimages%2Fui%2Fpicture.pngR2i1887R3R137R5R467R6tgoR0y31:assets%2Fimages%2Fui%2Fplay.pngR2i697R3R137R5R468R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_1.pngR2i52419R3R137R5R469R6tgoR0y43:assets%2Fimages%2Fui%2FsplashLoad_1Dark.pngR2i51758R3R137R5R470R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_2.pngR2i10521R3R137R5R471R6tgoR0y43:assets%2Fimages%2Fui%2FsplashLoad_2Dark.pngR2i11238R3R137R5R472R6tgoR0y30:assets%2Fimages%2Fui%2Fzip.pngR2i1416R3R137R5R473R6tgoR0y32:assets%2Fimages%2FunknownMod.pngR2i2387R3R137R5R474R6tgoR2i2309657R3y5:MUSICR5y31:assets%2Fmusic%2FfreakyMenu.mp3y9:pathGroupaR476hR6tgoR2i2402257R3R475R5y31:assets%2Fmusic%2FoffsetSong.mp3R477aR478hR6tgoR2i17762R3R475R5y32:assets%2Fsounds%2FcancelMenu.mp3R477aR479hR6tgoR2i2114R3R475R5y34:assets%2Fsounds%2FchangeVolume.mp3R477aR480hR6tgoR2i91950R3R475R5y33:assets%2Fsounds%2FconfirmMenu.mp3R477aR481hR6tgoR2i9155R3R475R5y34:assets%2Fsounds%2Fintro1-pixel.mp3R477aR482hR6tgoR2i9912R3R475R5y34:assets%2Fsounds%2Fintro2-pixel.mp3R477aR483hR6tgoR2i9128R3R475R5y34:assets%2Fsounds%2Fintro3-pixel.mp3R477aR484hR6tgoR2i21651R3R475R5y35:assets%2Fsounds%2FintroGo-pixel.mp3R477aR485hR6tgoR2i17762R3R475R5y32:assets%2Fsounds%2FscrollMenu.mp3R477aR486hR6tgoR0y27:assets%2Fstages%2Flimo.jsonR2i289R3R4R5R487R6tgoR0y27:assets%2Fstages%2Fmall.jsonR2i287R3R4R5R488R6tgoR0y31:assets%2Fstages%2FmallEvil.jsonR2i285R3R4R5R489R6tgoR0y29:assets%2Fstages%2Fphilly.jsonR2i285R3R4R5R490R6tgoR0y29:assets%2Fstages%2Fschool.jsonR2i290R3R4R5R491R6tgoR0y33:assets%2Fstages%2FschoolEvil.jsonR2i290R3R4R5R492R6tgoR0y29:assets%2Fstages%2Fspooky.jsonR2i285R3R4R5R493R6tgoR0y28:assets%2Fstages%2Fstage.jsonR2i279R3R4R5R494R6tgoR0y27:assets%2Fstages%2Ftank.jsonR2i147R3R4R5R495R6tgoR0y30:assets%2Fweeks%2Ftutorial.jsonR2i274R3R4R5R496R6tgoR0y27:assets%2Fweeks%2Fweek1.jsonR2i369R3R4R5R497R6tgoR0y27:assets%2Fweeks%2Fweek2.jsonR2i371R3R4R5R498R6tgoR0y27:assets%2Fweeks%2Fweek3.jsonR2i356R3R4R5R499R6tgoR0y27:assets%2Fweeks%2Fweek4.jsonR2i369R3R4R5R500R6tgoR0y27:assets%2Fweeks%2Fweek5.jsonR2i397R3R4R5R501R6tgoR0y27:assets%2Fweeks%2Fweek6.jsonR2i408R3R4R5R502R6tgoR0y27:assets%2Fweeks%2Fweek7.jsonR2i491R3R4R5R503R6tgoR0y29:assets%2Fweeks%2FweekList.txtR2i50R3R4R5R504R6tgoR0y21:do%20NOT%20readme.txtR2i4326R3R4R5R505R6tgoR0y34:assets%2Ffonts%2Ffonts-go-here.txtR2zR3R4R5R506R6tgoR2i14656R3y4:FONTy9:classNamey31:__ASSET__assets_fonts_pixel_otfR5y26:assets%2Ffonts%2Fpixel.otfR6tgoR2i75864R3R507R508y29:__ASSET__assets_fonts_vcr_ttfR5y24:assets%2Ffonts%2Fvcr.ttfR6tgoR2i2114R3R475R5y26:flixel%2Fsounds%2Fbeep.mp3R477aR513y26:flixel%2Fsounds%2Fbeep.ogghR6tgoR2i39706R3R475R5y28:flixel%2Fsounds%2Fflixel.mp3R477aR515y28:flixel%2Fsounds%2Fflixel.ogghR6tgoR2i5794R3y5:SOUNDR5R514R477aR513R514hgoR2i33629R3R517R5R516R477aR515R516hgoR2i15744R3R507R508y35:__ASSET__flixel_fonts_nokiafc22_ttfR5y30:flixel%2Ffonts%2Fnokiafc22.ttfR6tgoR2i29724R3R507R508y36:__ASSET__flixel_fonts_monsterrat_ttfR5y31:flixel%2Ffonts%2Fmonsterrat.ttfR6tgoR0y33:flixel%2Fimages%2Fui%2Fbutton.pngR2i519R3R137R5R522R6tgoR0y36:flixel%2Fimages%2Flogo%2Fdefault.pngR2i3280R3R137R5R523R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Fbox.pngR2i912R3R137R5R524R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fbutton.pngR2i433R3R137R5R525R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_down.pngR2i446R3R137R5R526R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_left.pngR2i459R3R137R5R527R6tgoR0y49:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_right.pngR2i511R3R137R5R528R6tgoR0y46:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_up.pngR2i493R3R137R5R529R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fbutton_thin.pngR2i247R3R137R5R530R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fbutton_toggle.pngR2i534R3R137R5R531R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fcheck_box.pngR2i922R3R137R5R532R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fcheck_mark.pngR2i946R3R137R5R533R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fchrome.pngR2i253R3R137R5R534R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fchrome_flat.pngR2i212R3R137R5R535R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_inset.pngR2i192R3R137R5R536R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_light.pngR2i214R3R137R5R537R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fdropdown_mark.pngR2i156R3R137R5R538R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Ffinger_big.pngR2i1724R3R137R5R539R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Ffinger_small.pngR2i294R3R137R5R540R6tgoR0y38:flixel%2Fflixel-ui%2Fimg%2Fhilight.pngR2i129R3R137R5R541R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Finvis.pngR2i128R3R137R5R542R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fminus_mark.pngR2i136R3R137R5R543R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fplus_mark.pngR2i147R3R137R5R544R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Fradio.pngR2i191R3R137R5R545R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fradio_dot.pngR2i153R3R137R5R546R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fswatch.pngR2i185R3R137R5R547R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Ftab.pngR2i201R3R137R5R548R6tgoR0y39:flixel%2Fflixel-ui%2Fimg%2Ftab_back.pngR2i210R3R137R5R549R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Ftooltip_arrow.pngR2i18509R3R137R5R550R6tgoR0y39:flixel%2Fflixel-ui%2Fxml%2Fdefaults.xmlR2i1263R3R4R5R551R6tgoR0y53:flixel%2Fflixel-ui%2Fxml%2Fdefault_loading_screen.xmlR2i1953R3R4R5R552R6tgoR0y44:flixel%2Fflixel-ui%2Fxml%2Fdefault_popup.xmlR2i1848R3R4R5R553R6tgh\",\"rootPath\":null,\"version\":2,\"libraryArgs\":[],\"libraryType\":null}";
 	var manifest = lime_utils_AssetManifest.parse(data,ManifestResources.rootPath);
 	var library = lime_utils_AssetLibrary.fromManifest(manifest);
 	lime_utils_Assets.registerLibrary("default",library);
@@ -35502,6 +35516,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	,animConfirm: null
 	,customField: null
 	,fieldTarget: null
+	,isCustomField: null
 	,sustainTail: null
 	,alignSustainNote: null
 	,hitsound: null
@@ -36297,7 +36312,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g1 ) {
 					haxe_NativeStackTrace.lastError = _g1;
 					var e = haxe_Exception.caught(_g1).unwrap();
-					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1007, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1008, className : "Note", methodName : "setConfig"});
 				}
 			} else {
 				try {
@@ -36312,7 +36327,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g4 ) {
 					haxe_NativeStackTrace.lastError = _g4;
 					var e1 = haxe_Exception.caught(_g4).unwrap();
-					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1018, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1019, className : "Note", methodName : "setConfig"});
 					dge_backend_CacheTools.jsonParse.h[name] = { };
 				}
 			}
@@ -36344,8 +36359,15 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			this.animation.play(animname,true);
 		}
 	}
+	,get_isCustomField: function() {
+		if(this.fieldTarget != null) {
+			return this.fieldTarget.length > 0;
+		} else {
+			return false;
+		}
+	}
 	,__class__: Note
-	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_holdCoverTexture:"set_holdCoverTexture",set_holdCover:"set_holdCover",set_downScroll:"set_downScroll",set_flipScroll:"set_flipScroll",set_hitsound:"set_hitsound",set_alignSustainNote:"set_alignSustainNote",set_noteScale:"set_noteScale",set_texture:"set_texture",set_multSpeed:"set_multSpeed",set_noteSplashTexture:"set_noteSplashTexture",set_gfNote:"set_gfNote",set_noteType:"set_noteType",set_noteData:"set_noteData",set_mustPress:"set_mustPress"})
+	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_holdCoverTexture:"set_holdCoverTexture",set_holdCover:"set_holdCover",set_downScroll:"set_downScroll",set_flipScroll:"set_flipScroll",set_hitsound:"set_hitsound",set_alignSustainNote:"set_alignSustainNote",get_isCustomField:"get_isCustomField",set_noteScale:"set_noteScale",set_texture:"set_texture",set_multSpeed:"set_multSpeed",set_noteSplashTexture:"set_noteSplashTexture",set_gfNote:"set_gfNote",set_noteType:"set_noteType",set_noteData:"set_noteData",set_mustPress:"set_mustPress"})
 });
 var NoteSplash = function(x,y,note,type) {
 	if(type == null) {
@@ -41114,76 +41136,75 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(this.health > 2) {
 			this.health = 2;
 		}
-		if(this.healthBar.get_percent() < 20) {
-			if(!this.iconP1.isCustom) {
-				if(!this.iconP1.spriteSheet) {
-					this.iconP1.animation._curAnim.set_curFrame(1);
-				} else {
-					this.iconP1.playAnim("lose");
-				}
-			}
-			if(this.iconP2.winIcon == true && !this.iconP2.isCustom) {
-				if(!this.iconP2.spriteSheet) {
-					this.iconP2.animation._curAnim.set_curFrame(2);
-				} else {
-					this.iconP2.playAnim("win");
-				}
-			}
-			if(this.iconP3 != null) {
-				if(this.iconP3.winIcon == true && !this.iconP3.isCustom) {
-					if(!this.iconP3.spriteSheet) {
-						this.iconP3.animation._curAnim.set_curFrame(2);
-					} else {
-						this.iconP3.playAnim("win");
+		var iconList = [this.iconP1,this.iconP2,this.iconP3];
+		var netralIcon = [];
+		var loseIcon = [];
+		var winIcon = [];
+		var _g = 0;
+		while(_g < iconList.length) {
+			var icon = iconList[_g];
+			++_g;
+			if(icon != null) {
+				if(this.healthBar.get_percent() > 80) {
+					if(icon == this.iconP1) {
+						if(icon.winIcon) {
+							winIcon.push(icon);
+						} else {
+							netralIcon.push(icon);
+						}
 					}
-				}
-			}
-		} else if(this.healthBar.get_percent() > 80) {
-			if(!this.iconP2.isCustom) {
-				if(!this.iconP2.spriteSheet) {
-					this.iconP2.animation._curAnim.set_curFrame(1);
-				} else {
-					this.iconP2.playAnim("lose");
-				}
-			}
-			if(this.iconP3 != null) {
-				if(!this.iconP3.isCustom) {
-					if(!this.iconP3.spriteSheet) {
-						this.iconP3.animation._curAnim.set_curFrame(1);
-					} else {
-						this.iconP3.playAnim("lose");
+					if(icon == this.iconP2 || icon == this.iconP3) {
+						loseIcon.push(icon);
 					}
-				}
-			}
-			if(this.iconP1.winIcon == true && !this.iconP1.isCustom) {
-				if(!this.iconP1.spriteSheet) {
-					this.iconP1.animation._curAnim.set_curFrame(2);
-				} else {
-					this.iconP1.playAnim("win");
-				}
-			}
-		} else {
-			if(!this.iconP2.isCustom) {
-				if(!this.iconP2.spriteSheet) {
-					this.iconP2.animation._curAnim.set_curFrame(0);
-				} else {
-					this.iconP2.playAnim("netral");
-				}
-			}
-			if(this.iconP3 != null) {
-				if(!this.iconP3.isCustom) {
-					if(!this.iconP3.spriteSheet) {
-						this.iconP3.animation._curAnim.set_curFrame(0);
-					} else {
-						this.iconP3.playAnim("netral");
+				} else if(this.healthBar.get_percent() < 20) {
+					if(icon == this.iconP2 || icon == this.iconP3) {
+						if(icon.winIcon) {
+							winIcon.push(icon);
+						} else {
+							netralIcon.push(icon);
+						}
 					}
+					if(icon == this.iconP1) {
+						loseIcon.push(icon);
+					}
+				} else {
+					netralIcon.push(icon);
 				}
 			}
-			if(!this.iconP1.isCustom) {
-				if(!this.iconP1.spriteSheet) {
-					this.iconP1.animation._curAnim.set_curFrame(0);
+		}
+		if(netralIcon.length > 0) {
+			var _g = 0;
+			while(_g < netralIcon.length) {
+				var icon = netralIcon[_g];
+				++_g;
+				if(icon.spriteSheet) {
+					icon.playAnim("netral");
 				} else {
-					this.iconP1.playAnim("netral");
+					icon.animation._curAnim.set_curFrame(0);
+				}
+			}
+		}
+		if(loseIcon.length > 0) {
+			var _g = 0;
+			while(_g < loseIcon.length) {
+				var icon = loseIcon[_g];
+				++_g;
+				if(icon.spriteSheet) {
+					icon.playAnim("lose");
+				} else {
+					icon.animation._curAnim.set_curFrame(1);
+				}
+			}
+		}
+		if(winIcon.length > 0) {
+			var _g = 0;
+			while(_g < winIcon.length) {
+				var icon = winIcon[_g];
+				++_g;
+				if(icon.spriteSheet) {
+					icon.playAnim("win");
+				} else {
+					icon.animation._curAnim.set_curFrame(3);
 				}
 			}
 		}
@@ -41252,7 +41273,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3979, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3950, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
@@ -41679,10 +41700,11 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if((_gthis.gamemode != "opponent" ? _gthis.gamemode == "bothside" ? true : daNote.mustPress : !daNote.mustPress) && !_gthis.cpuControlled && !daNote.ignoreNote && !_gthis.endingSong && (daNote.tooLate || !daNote.wasGoodHit) && !(daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.fieldTarget.length > 0 : _gthis.playableField.indexOf(daNote.fieldTarget) == -1))) {
 							_gthis.noteMiss(daNote);
 						}
-						_gthis.destroyNote(daNote);
 						if(!daNote.hitByOpponent && !daNote.mustPress || !daNote.wasGoodHit && daNote.mustPress && daNote.isDad) {
 							_gthis.camZooming = true;
 						}
+						_gthis.callOnLuas("onDespawnNote",[_gthis.notes.members.indexOf(daNote),daNote.noteData,daNote.noteType,daNote.isSustainNote]);
+						_gthis.destroyNote(daNote);
 					}
 				});
 			} else {
@@ -42808,12 +42830,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5207, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5179, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5208, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5180, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -42849,7 +42871,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5241, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5213, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -42860,7 +42882,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5252, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5224, className : "PlayState", methodName : "endSong"});
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 					CustomFadeTransition.nextCamera = null;
@@ -42883,7 +42905,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5276, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5248, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -43653,7 +43675,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			if(note.playStrumAnim && !note.fakeNoHit && !ClientPrefs.clsstrum) {
 				this.StrumPlayAnim(time,note);
 			}
-			if(note.fieldTarget.length > 0) {
+			if(note.fieldTarget != null && note.fieldTarget.length > 0) {
 				this.callOnLuas("fieldNoteHit",[note.fieldTarget,this.notes.members.indexOf(note),Math.abs(note.noteData),note.noteType,note.isSustainNote]);
 			} else {
 				this.callOnLuas(note.mustPress ? "goodNoteHit" : "opponentNoteHit",[this.notes.members.indexOf(note),Math.abs(note.noteData),note.noteType,note.isSustainNote]);
@@ -43862,7 +43884,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			var isSus = note.isSustainNote;
 			var leData = Math.round(Math.abs(note.noteData));
 			var leType = note.noteType;
-			if(note.fieldTarget.length > 0) {
+			if(note.fieldTarget != null && note.fieldTarget.length > 0) {
 				this.callOnLuas("fieldNoteHit",[note.fieldTarget,this.notes.members.indexOf(note),leData,leType,isSus]);
 			} else {
 				this.callOnLuas(!note.mustPress || note.isDad ? "opponentNoteHit" : "goodNoteHit",[this.notes.members.indexOf(note),leData,leType,isSus]);
@@ -44124,14 +44146,76 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(this.lastBeatHit >= this.curBeat) {
 			return;
 		}
-		this.iconP1.scale.set(1.2,1.2);
-		this.iconP2.scale.set(1.2,1.2);
-		if(this.iconP3 != null) {
-			this.iconP3.scale.set(1.2,1.2);
-			this.iconP3.updateHitbox();
+		var iconList = [this.iconP1,this.iconP2,this.iconP3];
+		var netralIcon = [];
+		var loseIcon = [];
+		var winIcon = [];
+		var _g = 0;
+		while(_g < iconList.length) {
+			var icon = iconList[_g];
+			++_g;
+			if(icon != null) {
+				icon.scale.set(1.2,1.2);
+				icon.updateHitbox();
+				if(icon.spriteSheet) {
+					if(this.healthBar.get_percent() > 80) {
+						if(icon == this.iconP1) {
+							if(icon.winIcon) {
+								winIcon.push(icon);
+							} else {
+								netralIcon.push(icon);
+							}
+						}
+						if(icon == this.iconP2 || icon == this.iconP3) {
+							loseIcon.push(icon);
+						}
+					} else if(this.healthBar.get_percent() < 20) {
+						if(icon == this.iconP2 || icon == this.iconP3) {
+							if(icon.winIcon) {
+								winIcon.push(icon);
+							} else {
+								netralIcon.push(icon);
+							}
+						}
+						if(icon == this.iconP1) {
+							loseIcon.push(icon);
+						}
+					} else {
+						netralIcon.push(icon);
+					}
+				}
+			}
 		}
-		this.iconP1.updateHitbox();
-		this.iconP2.updateHitbox();
+		if(netralIcon.length > 0) {
+			var _g = 0;
+			while(_g < netralIcon.length) {
+				var ico = netralIcon[_g];
+				++_g;
+				if(this.curBeat % ico.danceEveryNumBeats == 0 && ico.spriteSheet) {
+					ico.danceIcon("netral");
+				}
+			}
+		}
+		if(winIcon.length > 0) {
+			var _g = 0;
+			while(_g < winIcon.length) {
+				var ico = winIcon[_g];
+				++_g;
+				if(this.curBeat % ico.danceEveryNumBeats == 0 && ico.spriteSheet) {
+					ico.danceIcon("win");
+				}
+			}
+		}
+		if(loseIcon.length > 0) {
+			var _g = 0;
+			while(_g < loseIcon.length) {
+				var ico = loseIcon[_g];
+				++_g;
+				if(this.curBeat % ico.danceEveryNumBeats == 0 && ico.spriteSheet) {
+					ico.danceIcon("lose");
+				}
+			}
+		}
 		if(this.gf != null && this.curBeat % Math.round(this.gfSpeed * this.gf.danceEveryNumBeats) == 0 && this.gf.animation._curAnim != null && !StringTools.startsWith(this.gf.animation._curAnim.name,"sing") && !this.gf.stunned) {
 			this.gf.dance();
 		}
@@ -44824,7 +44908,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7252, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7241, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -44850,7 +44934,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7265, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7254, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -45931,9 +46015,11 @@ Song.loadFromJson = function(jsonInput,folder) {
 Song.parseJSONshit = function(rawJson) {
 	try {
 		var jsonParse = JSON.parse(rawJson);
-		var swagShit = jsonParse.song;
-		if(jsonParse.format != null && jsonParse.format == "psych_v1") {
+		var swagShit;
+		if(jsonParse.song == null) {
 			swagShit = jsonParse;
+		} else {
+			swagShit = jsonParse.song;
 		}
 		swagShit.validScore = true;
 		return swagShit;
@@ -45945,9 +46031,9 @@ Song.parseJSONshit = function(rawJson) {
 			Chance = 50;
 		}
 		if(flixel_FlxG.random.float(0,100) < Chance) {
-			haxe_Log.trace("Great someone broke JSON file again, probably a furry infected it. The file may be corrupted or improperly formatted.(" + Std.string(e) + ")",{ fileName : "source/Song.hx", lineNumber : 210, className : "Song", methodName : "parseJSONshit"});
+			haxe_Log.trace("Great someone broke JSON file again, probably a furry infected it. The file may be corrupted or improperly formatted.(" + Std.string(e) + ")",{ fileName : "source/Song.hx", lineNumber : 212, className : "Song", methodName : "parseJSONshit"});
 		} else {
-			haxe_Log.trace("Error parsing JSON data. The file may be corrupted or improperly formatted.(" + Std.string(e) + ")",{ fileName : "source/Song.hx", lineNumber : 212, className : "Song", methodName : "parseJSONshit"});
+			haxe_Log.trace("Error parsing JSON data. The file may be corrupted or improperly formatted.(" + Std.string(e) + ")",{ fileName : "source/Song.hx", lineNumber : 214, className : "Song", methodName : "parseJSONshit"});
 		}
 	}
 	return null;
@@ -45959,9 +46045,9 @@ Song.missingWarning = function(path) {
 	}
 	if(flixel_FlxG.random.float(0,100) < Chance) {
 		var msg = flixel_FlxG.random.getObject_String(Song.eggs);
-		haxe_Log.trace(msg + "(Json file not found: " + path + ").",{ fileName : "source/Song.hx", lineNumber : 228, className : "Song", methodName : "missingWarning"});
+		haxe_Log.trace(msg + "(Json file not found: " + path + ").",{ fileName : "source/Song.hx", lineNumber : 230, className : "Song", methodName : "missingWarning"});
 	} else {
-		haxe_Log.trace("Json file not found: " + path + ".",{ fileName : "source/Song.hx", lineNumber : 230, className : "Song", methodName : "missingWarning"});
+		haxe_Log.trace("Json file not found: " + path + ".",{ fileName : "source/Song.hx", lineNumber : 232, className : "Song", methodName : "missingWarning"});
 	}
 };
 Song.prototype = {
@@ -54119,9 +54205,9 @@ var dge_obj_ui_MenuItem = function(x,y,title,icon,texture) {
 	this.songPanel = new dge_obj_ui_NinesliceSprite(this.iconPanel.x + this.iconPanel.get_width() + 25,0,870 * (flixel_FlxG.width / 1280) | 0,150,texture);
 	this.add(this.songPanel);
 	this.icon = new dge_obj_ui_HealthIcon(icon);
-	CoolUtil.alignItem(this.iconPanel,this.icon);
 	this.icon.setGraphicSize(105,105);
-	this.icon.updateHitbox();
+	this.icon.updateHitboxNoOffset();
+	CoolUtil.alignItem(this.iconPanel,this.icon);
 	this.add(this.icon);
 	this.songName = new flixel_text_FlxText(0,0,0,title.toUpperCase(),60);
 	this.songName.setFormat("assets/fonts/" + "vcr.ttf",60,ClientPrefs.darkmode ? -1 : -16777216,"left");
@@ -54183,9 +54269,9 @@ dge_obj_ui_MenuItem.prototype = $extend(flixel_group_FlxTypedSpriteGroup.prototy
 	}
 	,changeIcon: function(char) {
 		this.icon.changeIcon(char);
-		CoolUtil.alignItem(this.iconPanel,this.icon);
 		this.icon.setGraphicSize(105,105);
-		this.icon.updateHitbox();
+		this.icon.updateHitboxNoOffset();
+		CoolUtil.alignItem(this.iconPanel,this.icon);
 	}
 	,changeTexture: function(tex) {
 		if(this.iconPanel != null) {
@@ -57502,6 +57588,8 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 	,leftIcon: null
 	,rightIcon: null
 	,gfIcon: null
+	,arrowIcon: null
+	,arrowIconGF: null
 	,eventIcon: null
 	,value1InputText: null
 	,value2InputText: null
@@ -57537,10 +57625,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 				var j = _g3[_g2];
 				++_g2;
 				while(j.length > 4) j.remove(j[4]);
-				if(typeof(j[3]) != "string") {
-					j[3] = editors_ChartingState.noteTypeList[j[3] ? 1 : 0];
-					if(j.length > 3 && (j[3] == null || j[3].length < 1)) {
-						j.remove(j[3]);
+				if(j[3] != null) {
+					if(typeof(j[3]) != "string") {
+						j[3] = editors_ChartingState.noteTypeList[j[3] ? 1 : 0];
+						if(j.length > 3 && (j[3] == null || j[3].length < 1)) {
+							j.remove(j[3]);
+						}
 					}
 				}
 			}
@@ -57597,7 +57687,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		var _g = 0;
 		while(_g < 12) {
 			var i = _g++;
-			var note = new StrumNote(editors_ChartingState.GRID_SIZE * (i + 1),this.strumLine.y,i % 4,0);
+			var note = new StrumNote(editors_ChartingState.GRID_SIZE * (i + 1),this.strumLine.y,i % 4,i < 4 ? 1 : 0,i > 7);
 			note.setGraphicSize(editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE);
 			note.updateHitbox();
 			note.playAnim("static",true);
@@ -57612,6 +57702,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		var tmp = new flixel_FlxSprite(0,0);
 		var returnAsset = Paths.returnGraphic("eventArrow",null);
 		this.eventIcon = tmp.loadGraphic(returnAsset);
+		var tmp = new flixel_FlxSprite();
+		var returnAsset = Paths.returnGraphic("ui/chart/arrow_icon",null);
+		this.arrowIcon = tmp.loadGraphic(returnAsset);
+		var tmp = new flixel_FlxSprite();
+		var returnAsset = Paths.returnGraphic("ui/chart/arrow_icon",null);
+		this.arrowIconGF = tmp.loadGraphic(returnAsset);
 		this.leftIcon = new HealthIcon("bf");
 		this.rightIcon = new HealthIcon("dad");
 		this.gfIcon = new HealthIcon("gf");
@@ -57619,11 +57715,17 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.leftIcon.scrollFactor.set(1,0);
 		this.gfIcon.scrollFactor.set(1,0);
 		this.rightIcon.scrollFactor.set(1,0);
+		this.arrowIcon.scrollFactor.set(1,0);
+		this.arrowIconGF.scrollFactor.set(1,0);
 		this.eventIcon.setGraphicSize(0,30);
+		this.arrowIcon.setGraphicSize(30,30);
+		this.arrowIconGF.setGraphicSize(30,30);
 		this.leftIcon.setGraphicSize(0,45);
 		this.gfIcon.setGraphicSize(0,45);
 		this.rightIcon.setGraphicSize(0,45);
 		this.eventIcon.updateHitbox();
+		this.arrowIcon.updateHitbox();
+		this.arrowIconGF.updateHitbox();
 		this.rightIcon.updateHitbox();
 		this.gfIcon.updateHitbox();
 		this.leftIcon.updateHitbox();
@@ -57638,14 +57740,27 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.add(this.leftIcon);
 		this.add(this.gfIcon);
 		this.add(this.rightIcon);
+		this.add(this.arrowIcon);
+		this.add(this.arrowIconGF);
 		this.eventIcon.setPosition(editors_ChartingState.GRID_SIZE / 2 - this.eventIcon.get_width() / 2 - editors_ChartingState.GRID_SIZE,25);
 		this.eventIcon.offset.set(0,0);
+		this.arrowIcon.offset.set(0,0);
+		this.arrowIconGF.offset.set(0,0);
 		this.leftIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 2);
 		this.rightIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 6);
 		this.gfIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 10);
 		this.leftIcon.set_y(this.eventIcon.y);
 		this.rightIcon.set_y(this.eventIcon.y);
 		this.gfIcon.set_y(this.eventIcon.y);
+		this.arrowIcon.set_y(this.eventIcon.y);
+		this.arrowIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 2);
+		var fh = this.arrowIcon;
+		fh.set_x(fh.x + editors_ChartingState.GRID_SIZE);
+		this.arrowIconGF.set_y(this.eventIcon.y);
+		this.arrowIconGF.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 10);
+		var fh = this.arrowIconGF;
+		fh.set_x(fh.x + editors_ChartingState.GRID_SIZE);
+		this.arrowIconGF.set_visible(false);
 		var tabs = [{ name : "Song", label : "Song"},{ name : "Section", label : "Section"},{ name : "Note", label : "Note"},{ name : "Events", label : "Events"},{ name : "Charting", label : "Charting"}];
 		this.UI_box = new flixel_addons_ui_FlxUITabMenu(null,null,tabs,null,true);
 		this.UI_box.resize(325,550);
@@ -57694,14 +57809,16 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		tmp.set_frames(tmp1);
 		this.optChar.animation.addByPrefix("idle","MintEnderDragon Idle",null,true);
+		this.optChar.animation.addByPrefix("idle","idle",null,true);
 		var _g = 0;
 		var _g1 = this.animAssets.length;
 		while(_g < _g1) {
 			var i = _g++;
 			this.optChar.animation.addByPrefix("sing" + this.animAssets[i].toUpperCase(),"MintEnderDragon " + this.animAssets[i],null,false);
+			this.optChar.animation.addByPrefix("sing" + this.animAssets[i].toUpperCase(),this.animAssets[i].toLowerCase(),null,false);
 		}
 		this.optChar.animation.play("idle");
-		this.optChar.scale.set(0.1,0.1);
+		this.optChar.scale.set(0.2,0.2);
 		this.optChar.updateHitbox();
 		this.optChar.set_x(flixel_FlxG.width / 2 + editors_ChartingState.GRID_SIZE / 2);
 		this.optChar.scrollFactor.set(0,0);
@@ -57726,17 +57843,19 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		tmp.set_frames(tmp1);
 		this.plyChar.animation.addByPrefix("idle","DubEnderDragon Idle",null,true);
+		this.plyChar.animation.addByPrefix("idle","idle",null,true);
 		var _g = 0;
 		var _g1 = this.animAssets.length;
 		while(_g < _g1) {
 			var i = _g++;
 			this.plyChar.animation.addByPrefix("sing" + this.animAssets[i].toUpperCase(),"DubEnderDragon " + this.animAssets[i],null,false);
+			this.plyChar.animation.addByPrefix("sing" + this.animAssets[i].toUpperCase(),this.animAssets[i].toLowerCase(),null,false);
 		}
 		this.plyChar.animation.play("idle");
-		this.plyChar.scale.set(0.1,0.1);
+		this.plyChar.scale.set(0.2,0.2);
 		this.plyChar.updateHitbox();
 		this.plyChar.set_flipX(true);
-		this.plyChar.set_x(this.optChar.x + 200);
+		this.plyChar.set_x(this.optChar.x + 150);
 		this.plyChar.scrollFactor.set(0,0);
 		this.add(this.plyChar);
 		this.optChar.set_y(flixel_FlxG.height - this.optChar.get_height());
@@ -57937,6 +58056,15 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			_gthis._song.arrowSkin = _gthis.noteSkinInputText.text;
 			_gthis._song.arrowSkinOpt = _gthis.noteSkinInputTextOpt.text;
 			_gthis._song.arrowSkinSec = _gthis.noteSkinInputTextSec.text;
+			var _g = 0;
+			var _g1 = _gthis.strumLineNotes.members;
+			while(_g < _g1.length) {
+				var strum = _g1[_g];
+				++_g;
+				strum.reloadNote();
+				strum.setGraphicSize(editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE);
+				strum.updateHitbox();
+			}
 			_gthis.updateGrid();
 		});
 		var tab_group_song = new flixel_addons_ui_FlxUI(null,this.UI_box);
@@ -59221,6 +59349,29 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 				note.set_alpha(1);
 				if(_gthis.curSelectedNote != null) {
 					var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
+					if(actualNoteData > -1 && actualNoteData < 12) {
+						if(!_gthis._song.notes[editors_ChartingState.curSec].mustHitSection) {
+							if(!_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
+								if(actualNoteData > 3 && actualNoteData < 8) {
+									actualNoteData -= 4;
+								} else if(actualNoteData > -1 && actualNoteData < 4) {
+									actualNoteData += 4;
+								}
+							} else if(actualNoteData > -1 && actualNoteData < 4) {
+								actualNoteData += 4;
+							} else if(actualNoteData > 7 && actualNoteData < 12) {
+								actualNoteData -= 8;
+							} else if(actualNoteData > 3 && actualNoteData < 8) {
+								actualNoteData += 4;
+							}
+						} else if(_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
+							if(actualNoteData > -1 && actualNoteData < 4) {
+								actualNoteData += 8;
+							} else if(actualNoteData > 7 && actualNoteData < 12) {
+								actualNoteData -= 8;
+							}
+						}
+					}
 					var noteDataToCheck = actualNoteData;
 					if(_gthis.curSelectedNote[0] == note.strumTime && (_gthis.curSelectedNote[2] == null && noteDataToCheck < 0 || _gthis.curSelectedNote[2] != null && _gthis.curSelectedNote[1] == noteDataToCheck)) {
 						_gthis.colorSine += elapsed;
@@ -59289,6 +59440,29 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 				note.set_alpha(1);
 				if(_gthis.curSelectedNote != null) {
 					var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
+					if(actualNoteData > -1 && actualNoteData < 12) {
+						if(!_gthis._song.notes[editors_ChartingState.curSec].mustHitSection) {
+							if(!_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
+								if(actualNoteData > 3 && actualNoteData < 8) {
+									actualNoteData -= 4;
+								} else if(actualNoteData > -1 && actualNoteData < 4) {
+									actualNoteData += 4;
+								}
+							} else if(actualNoteData > -1 && actualNoteData < 4) {
+								actualNoteData += 4;
+							} else if(actualNoteData > 7 && actualNoteData < 12) {
+								actualNoteData -= 8;
+							} else if(actualNoteData > 3 && actualNoteData < 8) {
+								actualNoteData += 4;
+							}
+						} else if(_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
+							if(actualNoteData > -1 && actualNoteData < 4) {
+								actualNoteData += 8;
+							} else if(actualNoteData > 7 && actualNoteData < 12) {
+								actualNoteData -= 8;
+							}
+						}
+					}
 					var noteDataToCheck = actualNoteData;
 					if(_gthis.curSelectedNote[0] == note.strumTime && (_gthis.curSelectedNote[2] == null && noteDataToCheck < 0 || _gthis.curSelectedNote[2] != null && _gthis.curSelectedNote[1] == noteDataToCheck)) {
 						_gthis.colorSine += elapsed;
@@ -59358,6 +59532,29 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			note.set_alpha(1);
 			if(_gthis.curSelectedNote != null) {
 				var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
+				if(actualNoteData > -1 && actualNoteData < 12) {
+					if(!_gthis._song.notes[editors_ChartingState.curSec].mustHitSection) {
+						if(!_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
+							if(actualNoteData > 3 && actualNoteData < 8) {
+								actualNoteData -= 4;
+							} else if(actualNoteData > -1 && actualNoteData < 4) {
+								actualNoteData += 4;
+							}
+						} else if(actualNoteData > -1 && actualNoteData < 4) {
+							actualNoteData += 4;
+						} else if(actualNoteData > 7 && actualNoteData < 12) {
+							actualNoteData -= 8;
+						} else if(actualNoteData > 3 && actualNoteData < 8) {
+							actualNoteData += 4;
+						}
+					} else if(_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
+						if(actualNoteData > -1 && actualNoteData < 4) {
+							actualNoteData += 8;
+						} else if(actualNoteData > 7 && actualNoteData < 12) {
+							actualNoteData -= 8;
+						}
+					}
+				}
 				var noteDataToCheck = actualNoteData;
 				if(_gthis.curSelectedNote[0] == note.strumTime && (_gthis.curSelectedNote[2] == null && noteDataToCheck < 0 || _gthis.curSelectedNote[2] != null && _gthis.curSelectedNote[1] == noteDataToCheck)) {
 					_gthis.colorSine += elapsed;
@@ -59426,6 +59623,29 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			note.set_alpha(1);
 			if(_gthis.curSelectedNote != null) {
 				var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
+				if(actualNoteData > -1 && actualNoteData < 12) {
+					if(!_gthis._song.notes[editors_ChartingState.curSec].mustHitSection) {
+						if(!_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
+							if(actualNoteData > 3 && actualNoteData < 8) {
+								actualNoteData -= 4;
+							} else if(actualNoteData > -1 && actualNoteData < 4) {
+								actualNoteData += 4;
+							}
+						} else if(actualNoteData > -1 && actualNoteData < 4) {
+							actualNoteData += 4;
+						} else if(actualNoteData > 7 && actualNoteData < 12) {
+							actualNoteData -= 8;
+						} else if(actualNoteData > 3 && actualNoteData < 8) {
+							actualNoteData += 4;
+						}
+					} else if(_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
+						if(actualNoteData > -1 && actualNoteData < 4) {
+							actualNoteData += 8;
+						} else if(actualNoteData > 7 && actualNoteData < 12) {
+							actualNoteData -= 8;
+						}
+					}
+				}
 				var noteDataToCheck = actualNoteData;
 				if(_gthis.curSelectedNote[0] == note.strumTime && (_gthis.curSelectedNote[2] == null && noteDataToCheck < 0 || _gthis.curSelectedNote[2] != null && _gthis.curSelectedNote[1] == noteDataToCheck)) {
 					_gthis.colorSine += elapsed;
@@ -59742,28 +59962,20 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		var healthIconP1 = this.loadHealthIconFromCharacter(this._song.player1);
 		var healthIconP2 = this.loadHealthIconFromCharacter(this._song.player2);
 		var healthIconP3 = this.loadHealthIconFromCharacter(this._song.gfVersion);
-		if(healthIconP3 == null) {
+		if(healthIconP3 == null || healthIconP3.length < 1) {
 			healthIconP3 = "gf";
 		}
-		if(this._song.notes[editors_ChartingState.curSec].gfSection) {
-			if(this._song.notes[editors_ChartingState.curSec].mustHitSection) {
-				this.leftIcon.changeIcon(healthIconP3);
-				this.rightIcon.changeIcon(healthIconP2);
-				this.gfIcon.changeIcon(healthIconP1);
-			} else {
-				this.leftIcon.changeIcon(healthIconP3);
-				this.rightIcon.changeIcon(healthIconP1);
-				this.gfIcon.changeIcon(healthIconP2);
-			}
-		} else if(this._song.notes[editors_ChartingState.curSec].mustHitSection) {
-			this.leftIcon.changeIcon(healthIconP1);
-			this.rightIcon.changeIcon(healthIconP2);
-			this.gfIcon.changeIcon(healthIconP3);
+		this.leftIcon.changeIcon(healthIconP1);
+		this.rightIcon.changeIcon(healthIconP2);
+		this.gfIcon.changeIcon(healthIconP3);
+		this.arrowIconGF.set_visible(this._song.notes[editors_ChartingState.curSec].gfSection);
+		if(this._song.notes[editors_ChartingState.curSec].mustHitSection) {
+			this.arrowIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 2);
 		} else {
-			this.leftIcon.changeIcon(healthIconP2);
-			this.rightIcon.changeIcon(healthIconP1);
-			this.gfIcon.changeIcon(healthIconP3);
+			this.arrowIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 6);
 		}
+		var fh = this.arrowIcon;
+		fh.set_x(fh.x + editors_ChartingState.GRID_SIZE);
 	}
 	,loadHealthIconFromCharacter: function(char) {
 		var characterPath = "characters/" + char + ".json";
@@ -60003,12 +60215,59 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		var daNoteInfo = i[1];
 		var daStrumTime = i[0];
 		var daSus = i[2];
-		var gfType = i[3] != null && i[3].indexOf("-gf") != -1 ? true : this._song.notes[editors_ChartingState.curSec + (isNextSection ? 1 : isPrevSection ? -1 : 0)].gfSection ? daNoteInfo > -1 && daNoteInfo < 4 : daNoteInfo > 7 && daNoteInfo < 12;
-		var playerType = i[3] != null && i[3] == "GF Sing Force Opponent" || i[3] != null && i[3].indexOf("-opponent") != -1 ? false : i[3] != null && i[3].indexOf("-player") != -1 ? true : this._song.notes[editors_ChartingState.curSec + (isNextSection ? 1 : isPrevSection ? -1 : 0)].mustHitSection ? daNoteInfo > -1 && daNoteInfo < 4 || daNoteInfo > 7 && daNoteInfo < 12 : daNoteInfo > 3 && daNoteInfo < 8;
-		var note = new Note(daStrumTime,daNoteInfo % 4,null,null,true,playerType,gfType);
+		var curSecDec = editors_ChartingState.curSec;
+		if(isPrevSection) {
+			--curSecDec;
+		} else if(isNextSection) {
+			++curSecDec;
+		}
+		if(daNoteInfo > -1 && daNoteInfo < 12) {
+			if(!this._song.notes[curSecDec].mustHitSection) {
+				if(!this._song.notes[curSecDec].gfSection) {
+					if(daNoteInfo > 3 && daNoteInfo < 8) {
+						daNoteInfo -= 4;
+					} else if(daNoteInfo > -1 && daNoteInfo < 4) {
+						daNoteInfo += 4;
+					}
+				} else if(daNoteInfo > -1 && daNoteInfo < 4) {
+					daNoteInfo += 8;
+				} else if(daNoteInfo > 7 && daNoteInfo < 12) {
+					daNoteInfo -= 4;
+				} else if(daNoteInfo > 3 && daNoteInfo < 8) {
+					daNoteInfo -= 4;
+				}
+			} else if(this._song.notes[curSecDec].gfSection) {
+				if(daNoteInfo > -1 && daNoteInfo < 4) {
+					daNoteInfo += 8;
+				} else if(daNoteInfo > 7 && daNoteInfo < 12) {
+					daNoteInfo -= 8;
+				}
+			}
+		}
+		var mustHitSec = this._song.notes[curSecDec].mustHitSection;
+		var rawNoteType = i[3];
+		if(typeof(rawNoteType) != "string") {
+			rawNoteType = "";
+		}
+		var noteType = rawNoteType;
+		var gfType = daNoteInfo > 7 && daNoteInfo < 12;
+		var playerType = daNoteInfo > -1 && daNoteInfo < 4;
+		if(daNoteInfo > 7 && daNoteInfo < 12) {
+			playerType = mustHitSec;
+		}
+		if(noteType != null) {
+			if(noteType.indexOf("-player") != -1) {
+				playerType = true;
+			} else if(noteType.indexOf("-opponent") != -1 || noteType == "GF Sing Force Opponent") {
+				playerType = false;
+			}
+			if(noteType.indexOf("-gf") != -1) {
+				gfType = true;
+			}
+		}
+		var note = new Note(daStrumTime,daNoteInfo % 4,null,null,true,playerType,gfType,noteType);
 		if(daSus != null) {
 			note.sustainLength = daSus;
-			note.set_noteType(i[3]);
 		} else {
 			var returnAsset = Paths.returnGraphic("eventArrow",null);
 			note.loadGraphic(returnAsset);
@@ -60024,72 +60283,6 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		note.setGraphicSize(editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE);
 		note.updateHitbox();
 		note.set_x(Math.floor(daNoteInfo * editors_ChartingState.GRID_SIZE) + editors_ChartingState.GRID_SIZE);
-		if(isPrevSection) {
-			if(this._song.notes[editors_ChartingState.curSec - 1].mustHitSection != this._song.notes[editors_ChartingState.curSec].mustHitSection) {
-				if(this._song.notes[editors_ChartingState.curSec - 1].gfSection == this._song.notes[editors_ChartingState.curSec].gfSection) {
-					if(this._song.notes[editors_ChartingState.curSec].gfSection) {
-						if(daNoteInfo > 3 && daNoteInfo < 8) {
-							note.set_x(note.x + editors_ChartingState.GRID_SIZE * 4);
-						} else if(daNoteInfo > 7 && daNoteInfo < 12) {
-							note.set_x(note.x - editors_ChartingState.GRID_SIZE * 4);
-						}
-					} else if(daNoteInfo > 3 && daNoteInfo < 8) {
-						note.set_x(note.x - editors_ChartingState.GRID_SIZE * 4);
-					} else if(daNoteInfo > -1 && daNoteInfo < 4) {
-						note.set_x(note.x + editors_ChartingState.GRID_SIZE * 4);
-					}
-				} else if(this._song.notes[editors_ChartingState.curSec].gfSection) {
-					if(daNoteInfo > -1 && daNoteInfo < 8) {
-						note.set_x(note.x + editors_ChartingState.GRID_SIZE * 4);
-					} else {
-						note.set_x(note.x - editors_ChartingState.GRID_SIZE * 8);
-					}
-				} else if(daNoteInfo > 3 && daNoteInfo < 12) {
-					note.set_x(note.x - editors_ChartingState.GRID_SIZE * 4);
-				} else {
-					note.set_x(note.x + editors_ChartingState.GRID_SIZE * 8);
-				}
-			} else if(this._song.notes[editors_ChartingState.curSec - 1].gfSection != this._song.notes[editors_ChartingState.curSec].gfSection) {
-				if(daNoteInfo > -1 && daNoteInfo < 4) {
-					note.set_x(note.x + editors_ChartingState.GRID_SIZE * 8);
-				} else if(daNoteInfo > 7 && daNoteInfo < 12) {
-					note.set_x(note.x - editors_ChartingState.GRID_SIZE * 8);
-				}
-			}
-		}
-		if(isNextSection) {
-			if(this._song.notes[editors_ChartingState.curSec + 1].mustHitSection != this._song.notes[editors_ChartingState.curSec].mustHitSection) {
-				if(this._song.notes[editors_ChartingState.curSec + 1].gfSection == this._song.notes[editors_ChartingState.curSec].gfSection) {
-					if(this._song.notes[editors_ChartingState.curSec].gfSection) {
-						if(daNoteInfo > 3 && daNoteInfo < 8) {
-							note.set_x(note.x + editors_ChartingState.GRID_SIZE * 4);
-						} else if(daNoteInfo > 7 && daNoteInfo < 12) {
-							note.set_x(note.x - editors_ChartingState.GRID_SIZE * 4);
-						}
-					} else if(daNoteInfo > 3 && daNoteInfo < 8) {
-						note.set_x(note.x - editors_ChartingState.GRID_SIZE * 4);
-					} else if(daNoteInfo > -1 && daNoteInfo < 4) {
-						note.set_x(note.x + editors_ChartingState.GRID_SIZE * 4);
-					}
-				} else if(this._song.notes[editors_ChartingState.curSec].gfSection) {
-					if(daNoteInfo > -1 && daNoteInfo < 8) {
-						note.set_x(note.x + editors_ChartingState.GRID_SIZE * 4);
-					} else {
-						note.set_x(note.x - editors_ChartingState.GRID_SIZE * 8);
-					}
-				} else if(daNoteInfo > 3 && daNoteInfo < 12) {
-					note.set_x(note.x - editors_ChartingState.GRID_SIZE * 4);
-				} else {
-					note.set_x(note.x + editors_ChartingState.GRID_SIZE * 8);
-				}
-			} else if(this._song.notes[editors_ChartingState.curSec + 1].gfSection != this._song.notes[editors_ChartingState.curSec].gfSection) {
-				if(daNoteInfo > -1 && daNoteInfo < 4) {
-					note.set_x(note.x + editors_ChartingState.GRID_SIZE * 8);
-				} else if(daNoteInfo > 7 && daNoteInfo < 12) {
-					note.set_x(note.x - editors_ChartingState.GRID_SIZE * 8);
-				}
-			}
-		}
 		var beats = this.getSectionBeats(isNextSection ? 1 : isPrevSection ? -1 : 0);
 		note.set_y(this.getYfromStrumNotes(daStrumTime - this.sectionStartTime(),beats));
 		return note;
@@ -60132,6 +60325,29 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			return;
 		}
 		var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
+		if(actualNoteData > -1 && actualNoteData < 12) {
+			if(!this._song.notes[editors_ChartingState.curSec].mustHitSection) {
+				if(!this._song.notes[editors_ChartingState.curSec].gfSection) {
+					if(actualNoteData > 3 && actualNoteData < 8) {
+						actualNoteData -= 4;
+					} else if(actualNoteData > -1 && actualNoteData < 4) {
+						actualNoteData += 4;
+					}
+				} else if(actualNoteData > -1 && actualNoteData < 4) {
+					actualNoteData += 4;
+				} else if(actualNoteData > 7 && actualNoteData < 12) {
+					actualNoteData -= 8;
+				} else if(actualNoteData > 3 && actualNoteData < 8) {
+					actualNoteData += 4;
+				}
+			} else if(this._song.notes[editors_ChartingState.curSec].gfSection) {
+				if(actualNoteData > -1 && actualNoteData < 4) {
+					actualNoteData += 8;
+				} else if(actualNoteData > 7 && actualNoteData < 12) {
+					actualNoteData -= 8;
+				}
+			}
+		}
 		var noteDataToCheck = actualNoteData;
 		if(noteDataToCheck > -1) {
 			var _g = 0;
@@ -60166,8 +60382,31 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			return;
 		}
 		var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
+		if(actualNoteData > -1 && actualNoteData < 12) {
+			if(!this._song.notes[editors_ChartingState.curSec].mustHitSection) {
+				if(!this._song.notes[editors_ChartingState.curSec].gfSection) {
+					if(actualNoteData > 3 && actualNoteData < 8) {
+						actualNoteData -= 4;
+					} else if(actualNoteData > -1 && actualNoteData < 4) {
+						actualNoteData += 4;
+					}
+				} else if(actualNoteData > -1 && actualNoteData < 4) {
+					actualNoteData += 4;
+				} else if(actualNoteData > 7 && actualNoteData < 12) {
+					actualNoteData -= 8;
+				} else if(actualNoteData > 3 && actualNoteData < 8) {
+					actualNoteData += 4;
+				}
+			} else if(this._song.notes[editors_ChartingState.curSec].gfSection) {
+				if(actualNoteData > -1 && actualNoteData < 4) {
+					actualNoteData += 8;
+				} else if(actualNoteData > 7 && actualNoteData < 12) {
+					actualNoteData -= 8;
+				}
+			}
+		}
 		var noteDataToCheck = actualNoteData;
-		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3493, className : "editors.ChartingState", methodName : "deleteNote"});
+		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3741, className : "editors.ChartingState", methodName : "deleteNote"});
 		if(note.noteData > -1) {
 			var _g = 0;
 			var _g1 = this._song.notes[editors_ChartingState.curSec].sectionNotes;
@@ -60232,7 +60471,6 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		var noteStrum = this.getStrumTime(this.dummyArrow.y * (this.getSectionBeats() / 4),false) + this.sectionStartTime();
 		var noteData = Math.floor((pos - editors_ChartingState.GRID_SIZE) / editors_ChartingState.GRID_SIZE);
-		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3565, className : "editors.ChartingState", methodName : "addNote"});
 		var noteSus = 0;
 		var daAlt = false;
 		var daType = this.currentType;
@@ -60242,6 +60480,30 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		if(data != null) {
 			noteData = data;
 		}
+		if(noteData > -1 && noteData < 12) {
+			if(!this._song.notes[editors_ChartingState.curSec].mustHitSection) {
+				if(!this._song.notes[editors_ChartingState.curSec].gfSection) {
+					if(noteData > 3 && noteData < 8) {
+						noteData -= 4;
+					} else if(noteData > -1 && noteData < 4) {
+						noteData += 4;
+					}
+				} else if(noteData > -1 && noteData < 4) {
+					noteData += 4;
+				} else if(noteData > 7 && noteData < 12) {
+					noteData -= 8;
+				} else if(noteData > 3 && noteData < 8) {
+					noteData += 4;
+				}
+			} else if(this._song.notes[editors_ChartingState.curSec].gfSection) {
+				if(noteData > -1 && noteData < 4) {
+					noteData += 8;
+				} else if(noteData > 7 && noteData < 12) {
+					noteData -= 8;
+				}
+			}
+		}
+		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3846, className : "editors.ChartingState", methodName : "addNote"});
 		if(type != null) {
 			daType = type;
 		}
@@ -142655,7 +142917,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 501148;
+	this.version = 206443;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
