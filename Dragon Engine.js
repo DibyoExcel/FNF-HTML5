@@ -2263,18 +2263,20 @@ flixel_FlxSprite.prototype = $extend(flixel_FlxObject.prototype,{
 		if(cam == null) {
 			cam = flixel_FlxCamera._defaultCameras;
 		}
-		var _g = 0;
-		while(_g < cam.length) {
-			var camera = cam[_g];
-			++_g;
-			if(!camera.visible || !camera.exists || !this.isOnScreen(camera)) {
-				continue;
-			}
-			this.getScreenPosition(this._point,camera).subtractPoint(this.offset);
-			if(this.isSimpleRender(camera)) {
-				this.drawSimple(camera);
-			} else {
-				this.drawComplex(camera);
+		if(cam != null) {
+			var _g = 0;
+			while(_g < cam.length) {
+				var camera = cam[_g];
+				++_g;
+				if(!camera.visible || !camera.exists || !this.isOnScreen(camera)) {
+					continue;
+				}
+				this.getScreenPosition(this._point,camera).subtractPoint(this.offset);
+				if(this.isSimpleRender(camera)) {
+					this.drawSimple(camera);
+				} else {
+					this.drawComplex(camera);
+				}
 			}
 		}
 	}
@@ -6567,12 +6569,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "386";
+	app.meta.h["build"] = "387";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.12.1";
+	app.meta.h["version"] = "26.12.2";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -28181,7 +28183,7 @@ FunkinLua.prototype = {
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4500, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4536, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -142917,7 +142919,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 206443;
+	this.version = 697046;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
