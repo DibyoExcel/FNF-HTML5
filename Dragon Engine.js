@@ -6569,12 +6569,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "387";
+	app.meta.h["build"] = "388";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.12.2";
+	app.meta.h["version"] = "26.12.3";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -28183,7 +28183,7 @@ FunkinLua.prototype = {
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4536, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4520, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -53232,6 +53232,79 @@ dge_backend_StorageManager.getAndroidStorage = function() {
 };
 dge_backend_StorageManager.getEngineDir = function() {
 	return "";
+};
+var dge_frontend_CameraZOrder = function() { };
+$hxClasses["dge.frontend.CameraZOrder"] = dge_frontend_CameraZOrder;
+dge_frontend_CameraZOrder.__name__ = "dge.frontend.CameraZOrder";
+dge_frontend_CameraZOrder.moveBehind = function(camera,targetCamera) {
+	dge_frontend_CameraZOrder.moveCameraOrder(camera,targetCamera,true);
+};
+dge_frontend_CameraZOrder.moveInFront = function(camera,targetCamera) {
+	dge_frontend_CameraZOrder.moveCameraOrder(camera,targetCamera,false);
+};
+dge_frontend_CameraZOrder.moveToFront = function(camera) {
+	if(camera == null || flixel_FlxG.cameras.list.indexOf(camera) == -1) {
+		return;
+	}
+	flixel_FlxG.game.removeChild(camera.flashSprite);
+	HxOverrides.remove(flixel_FlxG.cameras.list,camera);
+	flixel_FlxG.game.addChildAt(camera.flashSprite,flixel_FlxG.game.getChildIndex(flixel_FlxG.game._inputContainer) + 1);
+	flixel_FlxG.cameras.list.push(camera);
+	dge_frontend_CameraZOrder.reloadIDs();
+};
+dge_frontend_CameraZOrder.moveCameraOrder = function(camera,targetCamera,behind) {
+	if(behind == null) {
+		behind = true;
+	}
+	if(camera == null || targetCamera == null || flixel_FlxG.cameras.list.indexOf(camera) == -1 || flixel_FlxG.cameras.list.indexOf(targetCamera) == -1) {
+		return;
+	}
+	flixel_FlxG.game.removeChild(camera.flashSprite);
+	HxOverrides.remove(flixel_FlxG.cameras.list,camera);
+	var targetIndex = flixel_FlxG.game.getChildIndex(targetCamera.flashSprite);
+	var targetList = flixel_FlxG.cameras.list.indexOf(targetCamera);
+	if(behind) {
+		flixel_FlxG.game.addChildAt(camera.flashSprite,targetIndex);
+		flixel_FlxG.cameras.list.splice(targetList,0,camera);
+	} else {
+		flixel_FlxG.game.addChildAt(camera.flashSprite,targetIndex + 1);
+		flixel_FlxG.cameras.list.splice(targetList + 1,0,camera);
+	}
+	dge_frontend_CameraZOrder.reloadIDs();
+};
+dge_frontend_CameraZOrder.reorderCamera = function(cameraList) {
+	var camList = flixel_FlxG.cameras.list;
+	var _g = 0;
+	while(_g < camList.length) {
+		var camera = camList[_g];
+		++_g;
+		if(camera == null || cameraList.indexOf(camera) == -1) {
+			continue;
+		}
+		flixel_FlxG.game.removeChild(camera.flashSprite);
+		HxOverrides.remove(flixel_FlxG.cameras.list,camera);
+	}
+	var _g = 0;
+	while(_g < cameraList.length) {
+		var camera = cameraList[_g];
+		++_g;
+		if(camera == null || camList.indexOf(camera) == -1) {
+			continue;
+		}
+		flixel_FlxG.game.addChildAt(camera.flashSprite,flixel_FlxG.game.getChildIndex(flixel_FlxG.game._inputContainer) + 1);
+		flixel_FlxG.cameras.list.push(camera);
+	}
+	dge_frontend_CameraZOrder.reloadIDs();
+};
+dge_frontend_CameraZOrder.reloadIDs = function() {
+	var _g = 0;
+	var _g1 = flixel_FlxG.cameras.list.length;
+	while(_g < _g1) {
+		var i = _g++;
+		if(flixel_FlxG.cameras.list[i] != null) {
+			flixel_FlxG.cameras.list[i].ID = i;
+		}
+	}
 };
 var dge_obj_Keypress = function(x,y,color) {
 	this.alphaKeyPress = ClientPrefs.keyStrokeAlpha;
@@ -142919,7 +142992,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 697046;
+	this.version = 121507;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -186440,10 +186513,10 @@ openfl_system_System.exit = function(code) {
 openfl_system_System.gc = function() {
 };
 openfl_system_System.pause = function() {
-	openfl_utils__$internal_Lib.notImplemented({ fileName : "openfl/system/System.hx", lineNumber : 213, className : "openfl.system.System", methodName : "pause"});
+	openfl_utils__$internal_Lib.notImplemented({ fileName : "source/openfl/system/System.hx", lineNumber : 213, className : "openfl.system.System", methodName : "pause"});
 };
 openfl_system_System.resume = function() {
-	openfl_utils__$internal_Lib.notImplemented({ fileName : "openfl/system/System.hx", lineNumber : 229, className : "openfl.system.System", methodName : "resume"});
+	openfl_utils__$internal_Lib.notImplemented({ fileName : "source/openfl/system/System.hx", lineNumber : 229, className : "openfl.system.System", methodName : "resume"});
 };
 openfl_system_System.setClipboard = function(string) {
 	lime_system_Clipboard.set_text(string);
