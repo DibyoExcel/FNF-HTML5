@@ -6569,12 +6569,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "389";
+	app.meta.h["build"] = "390";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.12.4";
+	app.meta.h["version"] = "26.12.5";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -28183,7 +28183,7 @@ FunkinLua.prototype = {
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4513, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4534, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -36312,13 +36312,16 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			}
 			var beban = tikus.split(".");
 			var val = Reflect.field(jsonRaw,tikus);
+			if(js_Boot.__instanceof(val,Dynamic) && Type.typeof(val) == ValueType.TObject) {
+				continue;
+			}
 			if(beban.length <= 1) {
 				try {
 					Reflect.setProperty(this,tikus,val);
 				} catch( _g1 ) {
 					haxe_NativeStackTrace.lastError = _g1;
 					var e = haxe_Exception.caught(_g1).unwrap();
-					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1010, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1012, className : "Note", methodName : "setConfig"});
 				}
 			} else {
 				try {
@@ -36333,7 +36336,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g4 ) {
 					haxe_NativeStackTrace.lastError = _g4;
 					var e1 = haxe_Exception.caught(_g4).unwrap();
-					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1021, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1023, className : "Note", methodName : "setConfig"});
 					dge_backend_CacheTools.jsonParse.h[name] = { };
 				}
 			}
@@ -42989,32 +42992,15 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			comboTex = "pixelUI/" + comboTex + "-pixel";
 			numTex = "pixelUI/" + numTex + "-pixel";
 		}
-		var library = null;
-		var this1 = dge_backend_CacheTools.cacheAtlas;
-		var key = Paths.currentModDirectory + comboTex + Paths.darkModeReturn();
-		if(!Object.prototype.hasOwnProperty.call(this1.h,key)) {
-			var returnAsset = Paths.returnGraphic(comboTex,library);
-			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + comboTex + ".xml","TEXT",library));
-			var this1 = dge_backend_CacheTools.cacheAtlas;
-			var key = Paths.currentModDirectory + comboTex + Paths.darkModeReturn();
-			this1.h[key] = atlas;
-		} else {
-			var this1 = dge_backend_CacheTools.cacheAtlas;
-			var key = Paths.currentModDirectory + comboTex + Paths.darkModeReturn();
-		}
-		var library = null;
-		var this1 = dge_backend_CacheTools.cacheAtlas;
-		var key = Paths.currentModDirectory + numTex + Paths.darkModeReturn();
-		if(!Object.prototype.hasOwnProperty.call(this1.h,key)) {
-			var returnAsset = Paths.returnGraphic(numTex,library);
-			var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + numTex + ".xml","TEXT",library));
-			var this1 = dge_backend_CacheTools.cacheAtlas;
-			var key = Paths.currentModDirectory + numTex + Paths.darkModeReturn();
-			this1.h[key] = atlas;
-		} else {
-			var this1 = dge_backend_CacheTools.cacheAtlas;
-			var key = Paths.currentModDirectory + numTex + Paths.darkModeReturn();
-		}
+		var rating = new dge_obj_game_ComboSpr(comboTex);
+		rating.set_alpha(0);
+		this.ratingGroup.add(rating);
+		var comboSpr = new dge_obj_game_ComboSpr(comboTex,"combo");
+		comboSpr.set_alpha(0);
+		this.comboGroup.add(comboSpr);
+		var numRating = new dge_obj_game_ComboSpr(numTex,"num0");
+		numRating.set_alpha(0);
+		this.numRatingGroup.add(numRating);
 	}
 	,spawnRatingSprite: function(note,image) {
 		if(image == null) {
@@ -44869,7 +44855,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7292, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7299, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -44895,7 +44881,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7305, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7312, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -53195,41 +53181,62 @@ dge_backend_StorageManager.getEngineDir = function() {
 var dge_frontend_CameraZOrder = function() { };
 $hxClasses["dge.frontend.CameraZOrder"] = dge_frontend_CameraZOrder;
 dge_frontend_CameraZOrder.__name__ = "dge.frontend.CameraZOrder";
-dge_frontend_CameraZOrder.moveBehind = function(camera,targetCamera) {
-	dge_frontend_CameraZOrder.moveCameraOrder(camera,targetCamera,true);
-};
-dge_frontend_CameraZOrder.moveInFront = function(camera,targetCamera) {
-	dge_frontend_CameraZOrder.moveCameraOrder(camera,targetCamera,false);
-};
-dge_frontend_CameraZOrder.moveToFront = function(camera) {
-	if(camera == null || flixel_FlxG.cameras.list.indexOf(camera) == -1) {
-		return;
-	}
-	flixel_FlxG.game.removeChild(camera.flashSprite);
-	HxOverrides.remove(flixel_FlxG.cameras.list,camera);
-	flixel_FlxG.game.addChildAt(camera.flashSprite,flixel_FlxG.game.getChildIndex(flixel_FlxG.game._inputContainer) + 1);
-	flixel_FlxG.cameras.list.push(camera);
-	dge_frontend_CameraZOrder.reloadIDs();
-};
-dge_frontend_CameraZOrder.moveCameraOrder = function(camera,targetCamera,behind) {
+dge_frontend_CameraZOrder.moveOrderCamera = function(camera,targetCamera,behind) {
 	if(behind == null) {
 		behind = true;
 	}
-	if(camera == null || targetCamera == null || flixel_FlxG.cameras.list.indexOf(camera) == -1 || flixel_FlxG.cameras.list.indexOf(targetCamera) == -1) {
+	if(camera == null || targetCamera == null || dge_frontend_CameraZOrder.getCameraOrder(camera) == -1 || dge_frontend_CameraZOrder.getCameraOrder(targetCamera) == -1) {
+		return;
+	}
+	if(behind) {
+		dge_frontend_CameraZOrder.setCameraOrder(camera,dge_frontend_CameraZOrder.getCameraOrder(targetCamera));
+	} else {
+		dge_frontend_CameraZOrder.setCameraOrder(camera,dge_frontend_CameraZOrder.getCameraOrder(targetCamera) + 1);
+	}
+};
+dge_frontend_CameraZOrder.moveVeryTop = function(camera) {
+	if(camera == null || dge_frontend_CameraZOrder.getCameraOrder(camera) == -1) {
 		return;
 	}
 	flixel_FlxG.game.removeChild(camera.flashSprite);
 	HxOverrides.remove(flixel_FlxG.cameras.list,camera);
-	var targetIndex = flixel_FlxG.game.getChildIndex(targetCamera.flashSprite);
-	var targetList = flixel_FlxG.cameras.list.indexOf(targetCamera);
-	if(behind) {
-		flixel_FlxG.game.addChildAt(camera.flashSprite,targetIndex);
-		flixel_FlxG.cameras.list.splice(targetList,0,camera);
-	} else {
-		flixel_FlxG.game.addChildAt(camera.flashSprite,targetIndex + 1);
-		flixel_FlxG.cameras.list.splice(targetList + 1,0,camera);
-	}
+	flixel_FlxG.game.addChildAt(camera.flashSprite,flixel_FlxG.game.getChildIndex(flixel_FlxG.game._inputContainer));
+	flixel_FlxG.cameras.list.push(camera);
 	dge_frontend_CameraZOrder.reloadIDs();
+};
+dge_frontend_CameraZOrder.moveVeryBehind = function(camera) {
+	if(camera == null || dge_frontend_CameraZOrder.getCameraOrder(camera) == -1) {
+		return;
+	}
+	var childIdx = -1;
+	var _g = 0;
+	var _g1 = flixel_FlxG.cameras.list;
+	while(_g < _g1.length) {
+		var cam = _g1[_g];
+		++_g;
+		if(cam != null) {
+			childIdx = flixel_FlxG.game.getChildIndex(cam.flashSprite);
+			break;
+		}
+	}
+	var _g = 0;
+	var _g1 = flixel_FlxG.cameras.list;
+	while(_g < _g1.length) {
+		var cam = _g1[_g];
+		++_g;
+		if(cam != null) {
+			if(childIdx > flixel_FlxG.game.getChildIndex(cam.flashSprite) && flixel_FlxG.game.getChildIndex(cam.flashSprite) > -1) {
+				childIdx = flixel_FlxG.game.getChildIndex(cam.flashSprite);
+			}
+		}
+	}
+	if(childIdx > -1) {
+		flixel_FlxG.game.removeChild(camera.flashSprite);
+		HxOverrides.remove(flixel_FlxG.cameras.list,camera);
+		flixel_FlxG.cameras.list.splice(0,0,camera);
+		flixel_FlxG.game.addChildAt(camera.flashSprite,childIdx);
+		dge_frontend_CameraZOrder.reloadIDs();
+	}
 };
 dge_frontend_CameraZOrder.reorderCamera = function(cameraList) {
 	var camList = flixel_FlxG.cameras.list;
@@ -53250,10 +53257,62 @@ dge_frontend_CameraZOrder.reorderCamera = function(cameraList) {
 		if(camera == null || camList.indexOf(camera) == -1) {
 			continue;
 		}
-		flixel_FlxG.game.addChildAt(camera.flashSprite,flixel_FlxG.game.getChildIndex(flixel_FlxG.game._inputContainer) + 1);
+		flixel_FlxG.game.addChildAt(camera.flashSprite,flixel_FlxG.game.getChildIndex(flixel_FlxG.game._inputContainer));
 		flixel_FlxG.cameras.list.push(camera);
 	}
 	dge_frontend_CameraZOrder.reloadIDs();
+};
+dge_frontend_CameraZOrder.setCameraOrder = function(camera,index) {
+	if(index < 0) {
+		dge_frontend_CameraZOrder.moveVeryBehind(camera);
+		return;
+	} else if(index >= flixel_FlxG.cameras.list.length) {
+		dge_frontend_CameraZOrder.moveVeryTop(camera);
+		return;
+	}
+	var camObj = flixel_FlxG.cameras.list[index];
+	if(camObj == null || camera == null || dge_frontend_CameraZOrder.getCameraOrder(camera) == -1) {
+		return;
+	}
+	var childIdx = flixel_FlxG.game.getChildIndex(camObj.flashSprite);
+	flixel_FlxG.game.removeChild(camera.flashSprite);
+	HxOverrides.remove(flixel_FlxG.cameras.list,camera);
+	flixel_FlxG.game.addChildAt(camera.flashSprite,childIdx);
+	flixel_FlxG.cameras.list.splice(index,0,camera);
+	dge_frontend_CameraZOrder.reloadIDs();
+};
+dge_frontend_CameraZOrder.insert = function(camera,index,DefaultDrawTarget) {
+	if(DefaultDrawTarget == null) {
+		DefaultDrawTarget = true;
+	}
+	if(camera == null) {
+		return null;
+	}
+	if(index >= flixel_FlxG.cameras.list.length) {
+		return flixel_FlxG.cameras.add(camera,DefaultDrawTarget);
+	} else {
+		while(index < 0) index += flixel_FlxG.cameras.list.length;
+		var camObj = flixel_FlxG.cameras.list[index];
+		if(camObj == null) {
+			return flixel_FlxG.cameras.add(camera,DefaultDrawTarget);
+		} else {
+			var childIdx = flixel_FlxG.game.getChildIndex(camObj.flashSprite);
+			flixel_FlxG.game.addChildAt(camera.flashSprite,childIdx);
+			flixel_FlxG.cameras.list.splice(index,0,camera);
+			if(DefaultDrawTarget) {
+				flixel_FlxG.cameras.defaults.push(camera);
+			}
+			dge_frontend_CameraZOrder.reloadIDs();
+			flixel_FlxG.cameras.cameraAdded.dispatch(camera);
+		}
+	}
+	return camera;
+};
+dge_frontend_CameraZOrder.getCameraOrder = function(camera) {
+	if(camera != null) {
+		return flixel_FlxG.cameras.list.indexOf(camera);
+	}
+	return -1;
 };
 dge_frontend_CameraZOrder.reloadIDs = function() {
 	var _g = 0;
@@ -53409,7 +53468,7 @@ dge_obj_game_ComboSpr.prototype = $extend(flixel_FlxSprite.prototype,{
 			texture = "";
 		}
 		if(texture == null || texture.length < 1) {
-			texture = "comboSpr";
+			texture = "comboAtlas";
 		}
 		this.reset(0,0);
 		this.set_alpha(1);
@@ -143039,7 +143098,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 712781;
+	this.version = 49454;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
