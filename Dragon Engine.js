@@ -1548,20 +1548,7 @@ flixel_FlxObject.prototype = $extend(flixel_FlxBasic.prototype,{
 			Camera = flixel_FlxG.camera;
 		}
 		this.getScreenPosition(this._point,Camera);
-		var point = this._point;
-		var width = this.get_width();
-		var height = this.get_height();
-		if(height == null) {
-			height = 0;
-		}
-		if(width == null) {
-			width = 0;
-		}
-		var contained = point.x + width > Camera.viewOffsetX && point.x < Camera.viewOffsetWidth && point.y + height > Camera.viewOffsetY && point.y < Camera.viewOffsetHeight;
-		if(point._weak) {
-			point.put();
-		}
-		return contained;
+		return Camera.containsPoint(this._point,this.get_width(),this.get_height());
 	}
 	,isPixelPerfectRender: function(Camera) {
 		if(Camera == null) {
@@ -2548,16 +2535,7 @@ flixel_FlxSprite.prototype = $extend(flixel_FlxObject.prototype,{
 		if(camera == null) {
 			camera = flixel_FlxG.camera;
 		}
-		var rect = this.getScreenBounds(this._rect,camera);
-		var contained = rect.x + rect.width > camera.viewOffsetX && rect.x < camera.viewOffsetWidth && rect.y + rect.height > camera.viewOffsetY && rect.y < camera.viewOffsetHeight;
-		if(rect._weak) {
-			if(!rect._inPool) {
-				rect._inPool = true;
-				rect._weak = false;
-				flixel_math_FlxRect._pool.putUnsafe(rect);
-			}
-		}
-		return contained;
+		return camera.containsRect(this.getScreenBounds(this._rect,camera));
 	}
 	,isSimpleRender: function(camera) {
 		if(flixel_FlxG.renderTile) {
@@ -6569,12 +6547,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "390";
+	app.meta.h["build"] = "391";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.12.5";
+	app.meta.h["version"] = "26.12.6";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -9731,10 +9709,10 @@ Character.prototype = $extend(flixel_FlxSprite.prototype,{
 					this.playAnim(this.animation._curAnim.name,false,false,this.animation._curAnim.frames.length - 3);
 				}
 			}
-			if(!this.isPlayer) {
-				if(StringTools.startsWith(this.animation._curAnim.name,"sing")) {
-					this.holdTimer += elapsed;
-				}
+			if(StringTools.startsWith(this.animation._curAnim.name,"sing")) {
+				this.holdTimer += elapsed;
+			} else {
+				this.holdTimer = 0;
 			}
 			if(this.animation._curAnim.finished && this.animation._animations.h[this.animation._curAnim.name + "-loop"] != null) {
 				this.playAnim(this.animation._curAnim.name + "-loop");
@@ -9871,11 +9849,6 @@ Boyfriend.prototype = $extend(Character.prototype,{
 	startedDeath: null
 	,update: function(elapsed) {
 		if(!this.debugMode && this.animation._curAnim != null) {
-			if(StringTools.startsWith(this.animation._curAnim.name,"sing")) {
-				this.holdTimer += elapsed;
-			} else {
-				this.holdTimer = 0;
-			}
 			if(StringTools.endsWith(this.animation._curAnim.name,"miss") && this.animation._curAnim.finished && !this.debugMode) {
 				this.playAnim("idle",true,false,10);
 			}
@@ -34369,11 +34342,7 @@ MainMenuState.prototype = $extend(MusicBeatState.prototype,{
 			menuItem.updateHitbox();
 		}
 		flixel_FlxG.camera.follow(this.camFollowPos,null,1);
-		var versionShit = new flixel_text_FlxText(12,flixel_FlxG.height - 56,0,"Psych Engine v" + MainMenuState.psychEngineVersion + "\nDragon Engine v" + lime_app_Application.current.meta.h["version"],12);
-		versionShit.scrollFactor.set();
-		versionShit.setFormat("VCR OSD Mono",16,-1,"left",flixel_text_FlxTextBorderStyle.OUTLINE,-16777216);
-		this.add(versionShit);
-		var versionShit = new flixel_text_FlxText(12,flixel_FlxG.height - 24,0,"Friday Night Funkin' v0.2.8",12);
+		var versionShit = new flixel_text_FlxText(12,flixel_FlxG.height - 56,0,"Psych Engine v" + MainMenuState.psychEngineVersion + "\nDragon Engine v" + lime_app_Application.current.meta.h["version"] + "\nFriday Night Funkin' v0.2.8",12);
 		versionShit.scrollFactor.set();
 		versionShit.setFormat("VCR OSD Mono",16,-1,"left",flixel_text_FlxTextBorderStyle.OUTLINE,-16777216);
 		this.add(versionShit);
@@ -34401,12 +34370,12 @@ MainMenuState.prototype = $extend(MusicBeatState.prototype,{
 	,giveAchievement: function() {
 		this.add(new AchievementObject("friday_night_play",this.camAchievement));
 		flixel_FlxG.sound.play(Paths.sound("confirmMenu"),0.7);
-		haxe_Log.trace("Giving achievement \"friday_night_play\"",{ fileName : "source/MainMenuState.hx", lineNumber : 191, className : "MainMenuState", methodName : "giveAchievement"});
+		haxe_Log.trace("Giving achievement \"friday_night_play\"",{ fileName : "source/MainMenuState.hx", lineNumber : 187, className : "MainMenuState", methodName : "giveAchievement"});
 	}
 	,giveAchievementDev: function() {
 		this.add(new AchievementObject("birthday",this.camAchievement));
 		flixel_FlxG.sound.play(Paths.sound("confirmMenu"),0.7);
-		haxe_Log.trace("Giving achievement \"birthday\"",{ fileName : "source/MainMenuState.hx", lineNumber : 196, className : "MainMenuState", methodName : "giveAchievementDev"});
+		haxe_Log.trace("Giving achievement \"birthday\"",{ fileName : "source/MainMenuState.hx", lineNumber : 192, className : "MainMenuState", methodName : "giveAchievementDev"});
 	}
 	,selectedSomethin: null
 	,update: function(elapsed) {
@@ -36693,7 +36662,7 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 				this.set_alpha(this.strum.alpha * this.note.noteSplashAlpha);
 			}
 		}
-		if(this.animation._curAnim != null) {
+		if(this.animation != null && this.animation._curAnim != null) {
 			if(this.animation._curAnim.finished) {
 				this.kill();
 			}
@@ -36720,17 +36689,17 @@ OutdatedState.prototype = $extend(MusicBeatState.prototype,{
 		this.add(bg1);
 		var currentVersion = lime_app_Application.current.meta.h["version"];
 		var intCurVer = Std.parseInt(currentVersion.split(".").join(""));
-		var warnTxt = "Sup bro, i think you currently running a\n\n\t\toutdated version of Dragon Engine (" + currentVersion + "),\n\n\t\tplease update to " + TitleState.updateVersion + "!";
+		var warnTxt = "Sup bro, i think you currently running a\n\r\n\t\toutdated version of Dragon Engine (" + currentVersion + "),\n\r\n\t\tplease update to " + TitleState.updateVersion + "!";
 		if(TitleState.confusedLOL) {
-			warnTxt = "Sup bro, i think you currently running a\n\n\t\t\tversion of Dragon Engine (" + currentVersion + ") this version did't even exists yet lmao\n\n\t\t\tplease be sure this version ever exists!(unless you're dev lol)";
+			warnTxt = "Sup bro, i think you currently running a\n\r\n\t\t\tversion of Dragon Engine (" + currentVersion + ") this version did't even exists yet lmao\n\r\n\t\t\tplease be sure this version ever exists!(unless you're dev lol)";
 		}
 		if(ClientPrefs.dragonW) {
-			warnTxt = "Greetings, noble warrior! it appears that you are currently utilizing an\n\n\t\t\toutdated version of Dragon Engine (" + currentVersion + ").\n\n\t\t\tFor a more powerful and enhanced experience, please update to " + TitleState.updateVersion + "!";
+			warnTxt = "Greetings, noble warrior! it appears that you are currently utilizing an\n\r\n\t\t\toutdated version of Dragon Engine (" + currentVersion + ").\n\r\n\t\t\tFor a more powerful and enhanced experience, please update to " + TitleState.updateVersion + "!";
 			if(TitleState.confusedLOL) {
-				warnTxt = "Greetings, noble warrior! it appears that you are currently utilizing a\n\n\t\t\t\tversion of Dragon Engine (" + currentVersion + ") this not even exists yet..\n\n\t\t\t\tplease be sure this version ever exists!(unless you're dev lol)";
+				warnTxt = "Greetings, noble warrior! it appears that you are currently utilizing a\n\r\n\t\t\t\tversion of Dragon Engine (" + currentVersion + ") this not even exists yet..\n\r\n\t\t\t\tplease be sure this version ever exists!(unless you're dev lol)";
 			}
 		}
-		this.warnText = new flixel_text_FlxText(0,0,flixel_FlxG.width,warnTxt + "\n\n\n\t\t\tPress ESCAPE to proceed anyway.\n\n\t\t\t\n\n\t\t\tThank you for using the Engine.",32);
+		this.warnText = new flixel_text_FlxText(0,0,flixel_FlxG.width,warnTxt + "\n\n\r\n\t\t\tPress ESCAPE to proceed anyway.\n\r\n\t\t\t\n\r\n\t\t\tThank you for using the Engine.",32);
 		this.warnText.setFormat("VCR OSD Mono",32,-1,"center");
 		var _this = this.warnText;
 		var axes = flixel_util_FlxAxes.Y;
@@ -56303,7 +56272,7 @@ var dge_states_options_VisualUISubState = function() {
 	this.addOption(option);
 	var option = new options_Option("Opponent Note Splashes","Show Opponent Note Splash","noteSplashesOpt","bool",true);
 	this.addOption(option);
-	var option = new options_Option("Classic Strums","The FNF Classic Strum(Note Splash & Hold Cover Will Disable).","clsstrum","bool",false);
+	var option = new options_Option("Classic Strums","Switch Strum Into Clasic Strum(Note Splash & Hold Cover Will Disable).","clsstrum","bool",false);
 	this.addOption(option);
 	var option = new options_Option("Default Note Skin","Change Default Noteskin.","dflnoteskin","stringfree","NOTE_assets");
 	option.showNote = true;
@@ -63755,7 +63724,7 @@ editors_MenuCharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 		this.txtOffsets.setFormat("VCR OSD Mono",32,-1,"center");
 		this.txtOffsets.set_alpha(0.7);
 		this.add(this.txtOffsets);
-		var tipText = new flixel_text_FlxText(0,540,flixel_FlxG.width,"Arrow Keys - Change Offset (Hold shift for 10x speed)\n\t\t\t\nSpace - Play \"Start Press\" animation (Boyfriend Character Type)",16);
+		var tipText = new flixel_text_FlxText(0,540,flixel_FlxG.width,"Arrow Keys - Change Offset (Hold shift for 10x speed)\r\n\t\t\t\nSpace - Play \"Start Press\" animation (Boyfriend Character Type)",16);
 		tipText.setFormat("assets/fonts/" + "vcr.ttf",16,-1,"center");
 		tipText.scrollFactor.set();
 		this.add(tipText);
@@ -65628,6 +65597,11 @@ var flixel_FlxCamera = function(X,Y,Width,Height,Zoom) {
 	if(X == null) {
 		X = 0;
 	}
+	this._cosAngle = 1;
+	this._sinAngle = 0;
+	this.rotateSprite = false;
+	this.zoomYmult = 1;
+	this.zoomXmult = 1;
 	this._helperPoint = new openfl_geom_Point();
 	this._helperMatrix = new flixel_math_FlxMatrix();
 	var _this = flixel_math_FlxRect._pool.get();
@@ -65827,6 +65801,11 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 	,_headOfDrawStack: null
 	,_headTiles: null
 	,_headTriangles: null
+	,zoomXmult: null
+	,zoomYmult: null
+	,rotateSprite: null
+	,_sinAngle: null
+	,_cosAngle: null
 	,startQuadBatch: function(graphic,colored,hasColorOffsets,blend,smooth,shader) {
 		if(smooth == null) {
 			smooth = false;
@@ -65949,14 +65928,57 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 			this._helperMatrix.copyFrom(matrix);
 			if(this._useBlitMatrix) {
 				this._helperMatrix.concat(this._blitMatrix);
+				if(!this.rotateSprite && this.angle != 0) {
+					var _this = this._helperMatrix;
+					var cos = this._cosAngle;
+					var sin = this._sinAngle;
+					var a1 = _this.a * cos - _this.b * sin;
+					_this.b = _this.a * sin + _this.b * cos;
+					_this.a = a1;
+					var c1 = _this.c * cos - _this.d * sin;
+					_this.d = _this.c * sin + _this.d * cos;
+					_this.c = c1;
+					var tx1 = _this.tx * cos - _this.ty * sin;
+					_this.ty = _this.tx * sin + _this.ty * cos;
+					_this.tx = tx1;
+				}
 				this.buffer.draw(pixels,this._helperMatrix,null,null,null,smoothing || this.antialiasing);
 			} else {
 				this._helperMatrix.translate(-this.viewOffsetX,-this.viewOffsetY);
+				if(!this.rotateSprite && this.angle != 0) {
+					var _this = this._helperMatrix;
+					var cos = this._cosAngle;
+					var sin = this._sinAngle;
+					var a1 = _this.a * cos - _this.b * sin;
+					_this.b = _this.a * sin + _this.b * cos;
+					_this.a = a1;
+					var c1 = _this.c * cos - _this.d * sin;
+					_this.d = _this.c * sin + _this.d * cos;
+					_this.c = c1;
+					var tx1 = _this.tx * cos - _this.ty * sin;
+					_this.ty = _this.tx * sin + _this.ty * cos;
+					_this.tx = tx1;
+				}
 				this.buffer.draw(pixels,this._helperMatrix,null,blend,null,smoothing || this.antialiasing);
 			}
 		} else {
 			var isColored = transform != null && flixel_util_FlxColorTransformUtil.hasRGBMultipliers(transform);
 			var hasColorOffsets = transform != null && flixel_util_FlxColorTransformUtil.hasRGBAOffsets(transform);
+			if(!this.rotateSprite && this.angle != 0) {
+				matrix.translate(-this.width / 2,-this.height / 2);
+				var cos = this._cosAngle;
+				var sin = this._sinAngle;
+				var a1 = matrix.a * cos - matrix.b * sin;
+				matrix.b = matrix.a * sin + matrix.b * cos;
+				matrix.a = a1;
+				var c1 = matrix.c * cos - matrix.d * sin;
+				matrix.d = matrix.c * sin + matrix.d * cos;
+				matrix.c = c1;
+				var tx1 = matrix.tx * cos - matrix.ty * sin;
+				matrix.ty = matrix.tx * sin + matrix.ty * cos;
+				matrix.tx = tx1;
+				matrix.translate(this.width / 2,this.height / 2);
+			}
 			var drawItem = this.startQuadBatch(frame.parent,isColored,hasColorOffsets,blend,smoothing,shader);
 			drawItem.addQuad(frame,matrix,transform);
 		}
@@ -65971,10 +65993,38 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 					this._helperMatrix.identity();
 					this._helperMatrix.translate(destPoint.x,destPoint.y);
 					this._helperMatrix.concat(this._blitMatrix);
+					if(!this.rotateSprite && this.angle != 0) {
+						var _this = this._helperMatrix;
+						var cos = this._cosAngle;
+						var sin = this._sinAngle;
+						var a1 = _this.a * cos - _this.b * sin;
+						_this.b = _this.a * sin + _this.b * cos;
+						_this.a = a1;
+						var c1 = _this.c * cos - _this.d * sin;
+						_this.d = _this.c * sin + _this.d * cos;
+						_this.c = c1;
+						var tx1 = _this.tx * cos - _this.ty * sin;
+						_this.ty = _this.tx * sin + _this.ty * cos;
+						_this.tx = tx1;
+					}
 					this.buffer.draw(pixels,this._helperMatrix,null,null,null,smoothing || this.antialiasing);
 				} else {
 					this._helperPoint.x = destPoint.x - (this.viewOffsetX | 0);
 					this._helperPoint.y = destPoint.y - (this.viewOffsetY | 0);
+					if(!this.rotateSprite && this.angle != 0) {
+						var _this = this._helperMatrix;
+						var cos = this._cosAngle;
+						var sin = this._sinAngle;
+						var a1 = _this.a * cos - _this.b * sin;
+						_this.b = _this.a * sin + _this.b * cos;
+						_this.a = a1;
+						var c1 = _this.c * cos - _this.d * sin;
+						_this.d = _this.c * sin + _this.d * cos;
+						_this.c = c1;
+						var tx1 = _this.tx * cos - _this.ty * sin;
+						_this.ty = _this.tx * sin + _this.ty * cos;
+						_this.tx = tx1;
+					}
 					this.buffer.copyPixels(pixels,sourceRect,this._helperPoint,null,null,true);
 				}
 			} else if(frame != null) {
@@ -67100,22 +67150,54 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 		if(width == null) {
 			width = 0;
 		}
-		var contained = point.x + width > this.viewOffsetX && point.x < this.viewOffsetWidth && point.y + height > this.viewOffsetY && point.y < this.viewOffsetHeight;
-		if(point._weak) {
-			point.put();
+		if(!this.rotateSprite) {
+			var cos = this._cosAngle;
+			var sin = this._sinAngle;
+			var viewCenterX = (this.viewOffsetX + this.viewOffsetWidth) / 2;
+			var viewCenterY = (this.viewOffsetY + this.viewOffsetHeight) / 2;
+			var camHalfW = (Math.abs((this.viewOffsetWidth - this.viewOffsetX) * cos) + Math.abs((this.viewOffsetHeight - this.viewOffsetY) * sin)) / 2;
+			var camHalfH = (Math.abs((this.viewOffsetWidth - this.viewOffsetX) * sin) + Math.abs((this.viewOffsetHeight - this.viewOffsetY) * cos)) / 2;
+			var contained = point.x + width > viewCenterX - camHalfW && point.x < viewCenterX + camHalfW && point.y + height > viewCenterY - camHalfH && point.y < viewCenterY + camHalfH;
+			if(point._weak) {
+				point.put();
+			}
+			return contained;
+		} else {
+			var contained = point.x + width > this.viewOffsetX && point.x < this.viewOffsetWidth && point.y + height > this.viewOffsetY && point.y < this.viewOffsetHeight;
+			if(point._weak) {
+				point.put();
+			}
+			return contained;
 		}
-		return contained;
 	}
 	,containsRect: function(rect) {
-		var contained = rect.x + rect.width > this.viewOffsetX && rect.x < this.viewOffsetWidth && rect.y + rect.height > this.viewOffsetY && rect.y < this.viewOffsetHeight;
-		if(rect._weak) {
-			if(!rect._inPool) {
-				rect._inPool = true;
-				rect._weak = false;
-				flixel_math_FlxRect._pool.putUnsafe(rect);
+		if(!this.rotateSprite) {
+			var cos = this._cosAngle;
+			var sin = this._sinAngle;
+			var viewCenterX = (this.viewOffsetX + this.viewOffsetWidth) / 2;
+			var viewCenterY = (this.viewOffsetY + this.viewOffsetHeight) / 2;
+			var camHalfW = (Math.abs((this.viewOffsetWidth - this.viewOffsetX) * cos) + Math.abs((this.viewOffsetHeight - this.viewOffsetY) * sin)) / 2;
+			var camHalfH = (Math.abs((this.viewOffsetWidth - this.viewOffsetX) * sin) + Math.abs((this.viewOffsetHeight - this.viewOffsetY) * cos)) / 2;
+			var contained = rect.x + rect.width > viewCenterX - camHalfW && rect.x < viewCenterX + camHalfW && rect.y + rect.height > viewCenterY - camHalfH && rect.y < viewCenterY + camHalfH;
+			if(rect._weak) {
+				if(!rect._inPool) {
+					rect._inPool = true;
+					rect._weak = false;
+					flixel_math_FlxRect._pool.putUnsafe(rect);
+				}
 			}
+			return contained;
+		} else {
+			var contained = rect.x + rect.width > this.viewOffsetX && rect.x < this.viewOffsetWidth && rect.y + rect.height > this.viewOffsetY && rect.y < this.viewOffsetHeight;
+			if(rect._weak) {
+				if(!rect._inPool) {
+					rect._inPool = true;
+					rect._weak = false;
+					flixel_math_FlxRect._pool.putUnsafe(rect);
+				}
+			}
+			return contained;
 		}
-		return contained;
 	}
 	,set_followLerp: function(Value) {
 		var Max = 60 / flixel_FlxG.updateFramerate;
@@ -67150,8 +67232,18 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 	}
 	,set_zoom: function(Zoom) {
 		this.zoom = Zoom == 0 ? flixel_FlxCamera.defaultZoom : Zoom;
-		this.setScale(this.zoom,this.zoom);
+		this.setScale(this.initialZoom + (this.zoom - this.initialZoom) * this.zoomXmult,this.initialZoom + (this.zoom - this.initialZoom) * this.zoomYmult);
 		return this.zoom;
+	}
+	,set_zoomXmult: function(value) {
+		this.zoomXmult = value;
+		this.setScale(this.initialZoom + (this.zoom - this.initialZoom) * this.zoomXmult,this.initialZoom + (this.zoom - this.initialZoom) * this.zoomYmult);
+		return value;
+	}
+	,set_zoomYmult: function(value) {
+		this.zoomYmult = value;
+		this.setScale(this.initialZoom + (this.zoom - this.initialZoom) * this.zoomXmult,this.initialZoom + (this.zoom - this.initialZoom) * this.zoomYmult);
+		return value;
 	}
 	,set_alpha: function(Alpha) {
 		var lowerBound = Alpha < 0 ? 0 : Alpha;
@@ -67165,8 +67257,15 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 	}
 	,set_angle: function(Angle) {
 		this.angle = Angle;
-		this.flashSprite.set_rotation(Angle);
+		this.flashSprite.set_rotation(this.rotateSprite ? Angle : 0);
+		this._sinAngle = Math.sin(Angle * Math.PI / 180);
+		this._cosAngle = Math.cos(Angle * Math.PI / 180);
 		return Angle;
+	}
+	,set_rotateSprite: function(value) {
+		this.rotateSprite = value;
+		this.set_angle(this.angle);
+		return value;
 	}
 	,set_color: function(Color) {
 		this.color = Color;
@@ -67223,7 +67322,7 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 		this.viewHeight = this.height - 2 * this.viewOffsetY;
 	}
 	,__class__: flixel_FlxCamera
-	,__properties__: $extend(flixel_FlxBasic.prototype.__properties__,{get_blackAndWhite:"get_blackAndWhite",get_grayScale:"get_grayScale",get_rgbShader:"get_rgbShader",get_posterize:"get_posterize",get_pixelSprite:"get_pixelSprite",get_colorRGBSwap:"get_colorRGBSwap",get_colorSingle:"get_colorSingle",get_colorInvert:"get_colorInvert",get_colorSwap:"get_colorSwap",set_antialiasing:"set_antialiasing",set_color:"set_color",set_angle:"set_angle",set_alpha:"set_alpha",set_zoom:"set_zoom",set_height:"set_height",set_width:"set_width",set_followLerp:"set_followLerp",set_y:"set_y",set_x:"set_x"})
+	,__properties__: $extend(flixel_FlxBasic.prototype.__properties__,{get_blackAndWhite:"get_blackAndWhite",get_grayScale:"get_grayScale",get_rgbShader:"get_rgbShader",get_posterize:"get_posterize",get_pixelSprite:"get_pixelSprite",get_colorRGBSwap:"get_colorRGBSwap",get_colorSingle:"get_colorSingle",get_colorInvert:"get_colorInvert",get_colorSwap:"get_colorSwap",set_rotateSprite:"set_rotateSprite",set_zoomYmult:"set_zoomYmult",set_zoomXmult:"set_zoomXmult",set_antialiasing:"set_antialiasing",set_color:"set_color",set_angle:"set_angle",set_alpha:"set_alpha",set_zoom:"set_zoom",set_height:"set_height",set_width:"set_width",set_followLerp:"set_followLerp",set_y:"set_y",set_x:"set_x"})
 });
 var flixel_FlxCameraFollowStyle = $hxEnums["flixel.FlxCameraFollowStyle"] = { __ename__:"flixel.FlxCameraFollowStyle",__constructs__:null
 	,LOCKON: {_hx_name:"LOCKON",_hx_index:0,__enum__:"flixel.FlxCameraFollowStyle",toString:$estr}
@@ -108701,10 +108800,12 @@ flixel_system_FlxSound.prototype = $extend(flixel_FlxBasic.prototype,{
 		this.y = Y;
 	}
 	,updateTransform: function() {
-		this._transform.volume = (flixel_FlxG.sound.muted ? 0 : 1) * flixel_FlxG.sound.volume * (this.group != null ? this.group.volume : 1) * this._volume * this._volumeAdjust;
-		if(this._channel != null) {
-			this._channel.set_soundTransform(this._transform);
-			var tmp = this._channel.__source != null;
+		if(this._transform != null) {
+			this._transform.volume = (flixel_FlxG.sound.muted ? 0 : 1) * flixel_FlxG.sound.volume * (this.group != null ? this.group.volume : 1) * this._volume * this._volumeAdjust;
+			if(this._channel != null) {
+				this._channel.set_soundTransform(this._transform);
+				var tmp = this._channel.__source != null;
+			}
 		}
 	}
 	,startSound: function(StartTime) {
@@ -143098,7 +143199,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 49454;
+	this.version = 608732;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
