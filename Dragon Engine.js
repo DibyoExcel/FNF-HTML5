@@ -6549,12 +6549,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "395";
+	app.meta.h["build"] = "396";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.12.8";
+	app.meta.h["version"] = "26.12.9";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -67641,6 +67641,9 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 			if(this._flashRect != null) {
 				this._flashRect.width = this.width;
 			}
+			if(this.target != null) {
+				this.follow(this.target,this.style,this.followLerp);
+			}
 			this.viewOffsetX = 0.5 * this.width * (this.scaleX - this.initialZoom) / this.scaleX;
 			this.viewOffsetWidth = this.width - this.viewOffsetX;
 			this.viewWidth = this.width - 2 * this.viewOffsetX;
@@ -67656,6 +67659,9 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 			this.height = Value;
 			if(this._flashRect != null) {
 				this._flashRect.height = this.height;
+			}
+			if(this.target != null) {
+				this.follow(this.target,this.style,this.followLerp);
 			}
 			this.viewOffsetY = 0.5 * this.height * (this.scaleY - this.initialZoom) / this.scaleY;
 			this.viewOffsetHeight = this.height - this.viewOffsetY;
@@ -143535,7 +143541,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 41095;
+	this.version = 142467;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
