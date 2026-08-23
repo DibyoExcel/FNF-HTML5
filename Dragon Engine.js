@@ -6549,12 +6549,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "392";
+	app.meta.h["build"] = "395";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.12.7";
+	app.meta.h["version"] = "26.12.8";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -27926,260 +27926,15 @@ FunkinLua.prototype = {
 	camTarget: null
 	,scriptName: null
 	,closed: null
-	,updateGameSize: function() {
-		var screenWidth = openfl_Lib.get_current().stage.stageWidth;
-		var screenHeight = openfl_Lib.get_current().stage.stageHeight;
-		flixel_FlxG.game.resizeGame(screenWidth,screenHeight);
-		var _this = flixel_FlxG.worldBounds;
-		var X = 0;
-		var Y = 0;
-		var Width = flixel_FlxG.width;
-		var Height = flixel_FlxG.height;
-		if(Height == null) {
-			Height = 0;
-		}
-		if(Width == null) {
-			Width = 0;
-		}
-		if(Y == null) {
-			Y = 0;
-		}
-		if(X == null) {
-			X = 0;
-		}
-		_this.x = X;
-		_this.y = Y;
-		_this.width = Width;
-		_this.height = Height;
-		var game = PlayState.instance;
-		var camGameMult = Math.max(flixel_FlxG.width / 1280,flixel_FlxG.height / 720);
-		game.camGameMult = camGameMult;
-		if(game != null) {
-			this.set("screenWidth",flixel_FlxG.width);
-			this.set("screenHeight",flixel_FlxG.height);
-			this.set("camGameMult",camGameMult);
-			game.setOnLuas("screenWidth",flixel_FlxG.width);
-			game.setOnLuas("screenHeight",flixel_FlxG.height);
-			game.setOnLuas("camGameMult",camGameMult);
-		}
-	}
-	,updateGameLayout: function() {
-		var game = PlayState.instance;
-		var _this = game.timeBar;
-		var axes = flixel_util_FlxAxes.X;
-		if(axes == null) {
-			axes = flixel_util_FlxAxes.XY;
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 0:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			_this.set_x((flixel_FlxG.width - _this.get_width()) / 2);
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 1:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
-		}
-		var _this = game.botplayTxt;
-		var axes = flixel_util_FlxAxes.X;
-		if(axes == null) {
-			axes = flixel_util_FlxAxes.XY;
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 0:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			_this.set_x((flixel_FlxG.width - _this.get_width()) / 2);
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 1:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
-		}
-		var _this = game.timeTxt;
-		var axes = flixel_util_FlxAxes.X;
-		if(axes == null) {
-			axes = flixel_util_FlxAxes.XY;
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 0:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			_this.set_x((flixel_FlxG.width - _this.get_width()) / 2);
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 1:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
-		}
-		game.timeTxt.set_y(19);
-		if(ClientPrefs.downScroll) {
-			game.timeTxt.set_y(flixel_FlxG.height - 44);
-		}
-		var timeBarY = game.timeTxt.y + game.timeTxt.get_height() / 4;
-		game.timeBar.set_y(timeBarY + 4);
-		game.botplayTxt.set_y(timeBarY + 55);
-		if(ClientPrefs.downScroll) {
-			game.botplayTxt.set_y(timeBarY - 78);
-		}
-		var _this = game.healthBar;
-		var axes = flixel_util_FlxAxes.X;
-		if(axes == null) {
-			axes = flixel_util_FlxAxes.XY;
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 0:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			_this.set_x((flixel_FlxG.width - _this.get_width()) / 2);
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 1:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
-		}
-		var helthBARBGY = 0.89 * flixel_FlxG.height;
-		if(ClientPrefs.downScroll) {
-			helthBARBGY = 0.11 * flixel_FlxG.height;
-		}
-		game.healthBar.set_y(helthBARBGY + 4);
-		game.iconP1.set_y(game.healthBar.y - 75);
-		game.iconP2.set_y(game.healthBar.y - 75);
-		if(game.iconP3 != null) {
-			game.iconP3.set_y(game.healthBar.y - 75);
-		}
-		var _this = game.scoreTxt;
-		var axes = flixel_util_FlxAxes.X;
-		if(axes == null) {
-			axes = flixel_util_FlxAxes.XY;
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 0:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			_this.set_x((flixel_FlxG.width - _this.get_width()) / 2);
-		}
-		var tmp;
-		switch(axes._hx_index) {
-		case 1:case 2:
-			tmp = true;
-			break;
-		default:
-			tmp = false;
-		}
-		if(tmp) {
-			_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
-		}
-		game.scoreTxt.set_y(helthBARBGY + 36);
-	}
-	,updateStrumLayout: function() {
-		var playerStrums = PlayState.instance.playerStrums;
-		var opponentStrums = PlayState.instance.opponentStrums;
-		var gamemode = PlayState.instance.gamemode;
-		var strumLine = PlayState.instance.strumLine;
-		strumLine.set_y(50);
-		if(ClientPrefs.downScroll) {
-			strumLine.set_y(flixel_FlxG.height - 150);
-		}
-		var _g = 0;
-		var _g1 = playerStrums.length;
-		while(_g < _g1) {
-			var i = _g++;
-			if(gamemode == "bothside" && PlayState.SONG.secOpt) {
-				var noteSize = Note.swagWidth * Math.min(0.75,0.7 * (flixel_FlxG.width / 1280));
-				var number = (PlayState.SONG.secOpt && gamemode == "bothside" ? -Note.swagWidth * 4 : -Note.swagWidth * 2) + Note.swagWidth * i;
-				playerStrums.members[i].set_x((ClientPrefs.middleScroll || gamemode == "bothside" ? flixel_FlxG.width / 2 : flixel_FlxG.width * 0.75) + number);
-			} else {
-				playerStrums.members[i].set_x((ClientPrefs.middleScroll || gamemode == "bothside" ? flixel_FlxG.width / 2 : flixel_FlxG.width * 0.75) - Note.swagWidth * 2 + Note.swagWidth * i);
-			}
-			playerStrums.members[i].set_y(strumLine.y);
-		}
-		var _g = 0;
-		var _g1 = opponentStrums.length;
-		while(_g < _g1) {
-			var i = _g++;
-			if(PlayState.SONG.secOpt) {
-				var noteSize = Note.swagWidth * Math.min(0.75,0.7 * (flixel_FlxG.width / 1280));
-				var noteSizeSub = Note.swagWidth * Math.min(0.125,0.15 * (flixel_FlxG.width / 1280));
-				var number = -(noteSize * 4) + noteSize * i;
-				opponentStrums.members[i].set_x((ClientPrefs.middleScroll || gamemode == "bothside" ? flixel_FlxG.width / 2 : flixel_FlxG.width * 0.25) - Note.swagWidth * 2 + number - noteSizeSub);
-				if(ClientPrefs.middleScroll) {
-					if(i > 3) {
-						var fh = opponentStrums.members[i];
-						fh.set_x(fh.x + flixel_FlxG.width / 4);
-					} else {
-						var fh1 = opponentStrums.members[i];
-						fh1.set_x(fh1.x - flixel_FlxG.width / 4);
-					}
-				}
-			} else {
-				opponentStrums.members[i].set_x((ClientPrefs.middleScroll || gamemode == "bothside" ? flixel_FlxG.width / 2 : flixel_FlxG.width * 0.25) - Note.swagWidth * 2 + Note.swagWidth * i);
-				if(ClientPrefs.middleScroll) {
-					if(i > 1) {
-						var fh2 = opponentStrums.members[i];
-						fh2.set_x(fh2.x + flixel_FlxG.width / 4);
-					} else {
-						var fh3 = opponentStrums.members[i];
-						fh3.set_x(fh3.x - flixel_FlxG.width / 4);
-					}
-				}
-			}
-			opponentStrums.members[i].set_y(strumLine.y);
-		}
+	,updateSizeLua: function() {
+		this.set("screenWidth",flixel_FlxG.width);
+		this.set("screenHeight",flixel_FlxG.height);
+		var camGameM = Math.max(flixel_FlxG.width / 1280,flixel_FlxG.height / 720);
+		this.set("camGameMult",camGameM);
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4559, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4470, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -40575,7 +40330,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			var _g = 0;
 			while(_g < 4) {
 				var i = _g++;
-				var babyArrow = new StrumNote(flixel_FlxG.width * this.strumPointMiddle - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,1280) / 1280) * i,this.strumLine.y,i,1);
+				var babyArrow = new StrumNote(flixel_FlxG.width * this.strumPointMiddle - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,1);
 				if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 					babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 				}
@@ -40605,7 +40360,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var _g = 0;
 				while(_g < 4) {
 					var i = _g++;
-					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,1280) / 1280) * i,this.strumLine.y,i,0);
+					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,0);
 					if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 						babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 					}
@@ -40636,7 +40391,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var _g = 0;
 				while(_g < 4) {
 					var i = _g++;
-					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,1280) / 1280) * i,this.strumLine.y,i,1);
+					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,1);
 					if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 						babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 					}
@@ -40668,7 +40423,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			var _g = 0;
 			while(_g < 4) {
 				var i = _g++;
-				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,1280) / 1280) * i,this.strumLine.y,i,0);
+				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,0);
 				if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 					babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 				}
@@ -40702,7 +40457,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var _g = 0;
 				while(_g < 4) {
 					var i = _g++;
-					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,1280) / 1280) * i,this.strumLine.y,i,0,true);
+					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,0,true);
 					if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 						babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 					}
@@ -40735,7 +40490,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			var _g = 0;
 			while(_g < 4) {
 				var i = _g++;
-				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,1280) / 1280) * i,this.strumLine.y,i,1);
+				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,1);
 				if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 					babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 				}
@@ -45182,6 +44937,320 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			}
 		}
 		return value;
+	}
+	,updateLayout: function() {
+		if(this.timeTxt != null) {
+			var _this = this.timeTxt;
+			var axes = flixel_util_FlxAxes.X;
+			if(axes == null) {
+				axes = flixel_util_FlxAxes.XY;
+			}
+			var tmp;
+			switch(axes._hx_index) {
+			case 0:case 2:
+				tmp = true;
+				break;
+			default:
+				tmp = false;
+			}
+			if(tmp) {
+				_this.set_x((flixel_FlxG.width - _this.get_width()) / 2);
+			}
+			var tmp;
+			switch(axes._hx_index) {
+			case 1:case 2:
+				tmp = true;
+				break;
+			default:
+				tmp = false;
+			}
+			if(tmp) {
+				_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
+			}
+			this.timeTxt.set_y(19);
+			if(ClientPrefs.downScroll) {
+				this.timeTxt.set_y(flixel_FlxG.height - 44);
+			}
+			if(this.timeBar != null) {
+				var _this = this.timeBar;
+				var axes = flixel_util_FlxAxes.X;
+				if(axes == null) {
+					axes = flixel_util_FlxAxes.XY;
+				}
+				var tmp;
+				switch(axes._hx_index) {
+				case 0:case 2:
+					tmp = true;
+					break;
+				default:
+					tmp = false;
+				}
+				if(tmp) {
+					_this.set_x((flixel_FlxG.width - _this.get_width()) / 2);
+				}
+				var tmp;
+				switch(axes._hx_index) {
+				case 1:case 2:
+					tmp = true;
+					break;
+				default:
+					tmp = false;
+				}
+				if(tmp) {
+					_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
+				}
+				var timeBarY = this.timeTxt.y + this.timeTxt.get_height() / 4;
+				this.timeBar.set_y(timeBarY + 4);
+				if(this.botplayTxt != null) {
+					var _this = this.botplayTxt;
+					var axes = flixel_util_FlxAxes.X;
+					if(axes == null) {
+						axes = flixel_util_FlxAxes.XY;
+					}
+					var tmp;
+					switch(axes._hx_index) {
+					case 0:case 2:
+						tmp = true;
+						break;
+					default:
+						tmp = false;
+					}
+					if(tmp) {
+						_this.set_x((flixel_FlxG.width - _this.get_width()) / 2);
+					}
+					var tmp;
+					switch(axes._hx_index) {
+					case 1:case 2:
+						tmp = true;
+						break;
+					default:
+						tmp = false;
+					}
+					if(tmp) {
+						_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
+					}
+					this.botplayTxt.set_y(timeBarY + 55);
+					if(ClientPrefs.downScroll) {
+						this.botplayTxt.set_y(timeBarY - 78);
+					}
+				}
+			}
+		}
+		if(this.healthBar != null) {
+			var _this = this.healthBar;
+			var axes = flixel_util_FlxAxes.X;
+			if(axes == null) {
+				axes = flixel_util_FlxAxes.XY;
+			}
+			var tmp;
+			switch(axes._hx_index) {
+			case 0:case 2:
+				tmp = true;
+				break;
+			default:
+				tmp = false;
+			}
+			if(tmp) {
+				_this.set_x((flixel_FlxG.width - _this.get_width()) / 2);
+			}
+			var tmp;
+			switch(axes._hx_index) {
+			case 1:case 2:
+				tmp = true;
+				break;
+			default:
+				tmp = false;
+			}
+			if(tmp) {
+				_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
+			}
+			var hBBY = 0.89 * flixel_FlxG.height;
+			if(ClientPrefs.downScroll) {
+				hBBY = 0.11 * flixel_FlxG.height;
+			}
+			this.healthBar.set_y(hBBY + 4);
+			var healthArray = [this.iconP1,this.iconP2,this.iconP3];
+			var _g = 0;
+			while(_g < healthArray.length) {
+				var ico = healthArray[_g];
+				++_g;
+				if(ico != null) {
+					ico.set_y(this.healthBar.y - 75);
+				}
+			}
+			if(this.scoreTxt != null) {
+				var _this = this.scoreTxt;
+				var axes = flixel_util_FlxAxes.X;
+				if(axes == null) {
+					axes = flixel_util_FlxAxes.XY;
+				}
+				var tmp;
+				switch(axes._hx_index) {
+				case 0:case 2:
+					tmp = true;
+					break;
+				default:
+					tmp = false;
+				}
+				if(tmp) {
+					_this.set_x((flixel_FlxG.width - _this.get_width()) / 2);
+				}
+				var tmp;
+				switch(axes._hx_index) {
+				case 1:case 2:
+					tmp = true;
+					break;
+				default:
+					tmp = false;
+				}
+				if(tmp) {
+					_this.set_y((flixel_FlxG.height - _this.get_height()) / 2);
+				}
+				this.scoreTxt.set_y(hBBY + 36);
+			}
+		}
+	}
+	,updateStrumPos: function() {
+		if(this.gamemode == "bothside") {
+			if(this.strumLineNotes != null) {
+				var _g = 0;
+				var _g1 = this.strumLineNotes.length;
+				while(_g < _g1) {
+					var i = _g++;
+					this.strumLineNotes.members[i].set_x(flixel_FlxG.width * this.strumPointMiddle - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i);
+					if(this.strumLine != null) {
+						this.strumLineNotes.members[i].set_y(this.strumLine.y);
+					}
+				}
+			}
+		} else if(this.gamemode == "opponent") {
+			if(this.opponentStrums != null) {
+				var _g = 0;
+				var _g1 = this.opponentStrums.length;
+				while(_g < _g1) {
+					var i = _g++;
+					this.opponentStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i);
+					if(this.strumLine != null) {
+						this.opponentStrums.members[i].set_y(this.strumLine.y);
+					}
+					if(ClientPrefs.middleScroll) {
+						if(i > 1) {
+							var fh = this.opponentStrums.members[i];
+							fh.set_x(fh.x + flixel_FlxG.width * this.strumMiddleDistanceOpponent);
+						} else {
+							var fh1 = this.opponentStrums.members[i];
+							fh1.set_x(fh1.x - flixel_FlxG.width * this.strumMiddleDistanceOpponent);
+						}
+					}
+				}
+			}
+			if(this.playerStrums != null) {
+				var _g = 0;
+				var _g1 = this.playerStrums.length;
+				while(_g < _g1) {
+					var i = _g++;
+					this.playerStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i);
+					if(this.strumLine != null) {
+						this.playerStrums.members[i].set_y(this.strumLine.y);
+					}
+					if(ClientPrefs.middleScroll) {
+						if(i > 1) {
+							var fh = this.playerStrums.members[i];
+							fh.set_x(fh.x + flixel_FlxG.width * this.strumMiddleDistancePlayer);
+						} else {
+							var fh1 = this.playerStrums.members[i];
+							fh1.set_x(fh1.x - flixel_FlxG.width * this.strumMiddleDistancePlayer);
+						}
+					}
+				}
+			}
+		} else {
+			if(this.opponentStrums != null) {
+				var _g = 0;
+				var _g1 = this.opponentStrums.length;
+				while(_g < _g1) {
+					var i = _g++;
+					this.opponentStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i);
+					if(this.strumLine != null) {
+						this.opponentStrums.members[i].set_y(this.strumLine.y);
+					}
+					if(this.isSecOpt) {
+						var fh = this.opponentStrums.members[i];
+						fh.set_y(fh.y - this.strumYOffsetSecondOpt);
+					}
+					if(ClientPrefs.middleScroll) {
+						if(i > 1) {
+							var fh1 = this.opponentStrums.members[i];
+							fh1.set_x(fh1.x + flixel_FlxG.width * this.strumMiddleDistanceOpponent);
+						} else {
+							var fh2 = this.opponentStrums.members[i];
+							fh2.set_x(fh2.x - flixel_FlxG.width * this.strumMiddleDistanceOpponent);
+						}
+					}
+				}
+			}
+			if(this.isSecOpt && this.gfStrums != null) {
+				var _g = 0;
+				var _g1 = this.gfStrums.length;
+				while(_g < _g1) {
+					var i = _g++;
+					this.gfStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i);
+					if(this.strumLine != null) {
+						this.gfStrums.members[i].set_y(this.strumLine.y);
+					}
+					if(this.isSecOpt) {
+						var fh = this.gfStrums.members[i];
+						fh.set_y(fh.y - this.strumYOffsetSecondOpt);
+					}
+					if(ClientPrefs.middleScroll) {
+						if(i > 1) {
+							var fh1 = this.gfStrums.members[i];
+							fh1.set_x(fh1.x + flixel_FlxG.width * this.strumMiddleDistanceGf);
+						} else {
+							var fh2 = this.gfStrums.members[i];
+							fh2.set_x(fh2.x - flixel_FlxG.width * this.strumMiddleDistanceGf);
+						}
+					}
+				}
+			}
+			if(this.playerStrums != null) {
+				var _g = 0;
+				var _g1 = this.playerStrums.length;
+				while(_g < _g1) {
+					var i = _g++;
+					this.playerStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i);
+					if(this.strumLine != null) {
+						this.playerStrums.members[i].set_y(this.strumLine.y);
+					}
+					if(ClientPrefs.middleScroll) {
+						if(i > 1) {
+							var fh = this.playerStrums.members[i];
+							fh.set_x(fh.x + flixel_FlxG.width * this.strumMiddleDistancePlayer);
+						} else {
+							var fh1 = this.playerStrums.members[i];
+							fh1.set_x(fh1.x - flixel_FlxG.width * this.strumMiddleDistancePlayer);
+						}
+					}
+				}
+			}
+		}
+		if(this.strumLineNotes != null) {
+			var _g = 0;
+			var _g1 = this.strumLineNotes.length;
+			while(_g < _g1) {
+				var i = _g++;
+				if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
+					this.strumLineNotes.members[i].set_y(flixel_FlxG.height / 2 - this.strumLineNotes.members[i].get_height() / 2);
+				}
+			}
+		}
+	}
+	,updateGameSize: function() {
+		var camGameM = Math.max(flixel_FlxG.width / 1280,flixel_FlxG.height / 720);
+		this.camGameMult = camGameM;
+		this.setOnLuas("screenWidth",flixel_FlxG.width);
+		this.setOnLuas("screenHeight",flixel_FlxG.height);
+		this.setOnLuas("camGameMult",camGameM);
 	}
 	,__class__: PlayState
 	,__properties__: $extend(MusicBeatState.prototype.__properties__,{set_playableField:"set_playableField",set_fieldNameAsPlayer:"set_fieldNameAsPlayer",set_mergeHealthColor:"set_mergeHealthColor",set_playbackRate:"set_playbackRate",set_songSpeed:"set_songSpeed",set_privateData:"set_privateData"})
@@ -53235,23 +53304,25 @@ dge_frontend_BetterFPSCounter.prototype = $extend(openfl_display_Sprite.prototyp
 		if(this.currentFPS > ClientPrefs.framerate) {
 			this.currentFPS = ClientPrefs.framerate;
 		}
-		var memoryMegas = 0;
-		var formatMegas = "";
-		this.tf.set_text("Dragon Engine");
-		var fh = this.tf;
-		fh.set_text(fh.get_text() + ("\nFPS: " + this.currentFPS + " | SPF: " + Math.floor(1 / this.currentFPS * 10000) / 10000));
-		memoryMegas = Math.abs(openfl_system_System.get_totalMemory() / 1000000);
-		formatMegas = memoryMegas > 1000 ? Math.floor(memoryMegas / 10) / 100 + " GB(" + Math.floor(memoryMegas * 100) / 100 + " MB)" : Math.floor(memoryMegas * 100) / 100 + " MB";
-		var fh = this.tf;
-		fh.set_text(fh.get_text() + ("\nMemory: " + formatMegas));
-		var targetColor = -16711936;
-		if(memoryMegas > 3000 || this.currentFPS <= ClientPrefs.framerate / 4) {
-			targetColor = -65536;
-		} else if(memoryMegas > 1500 || this.currentFPS <= ClientPrefs.framerate / 2) {
-			targetColor = -256;
+		if(currentCount != this.cacheCount) {
+			var memoryMegas = 0;
+			var formatMegas = "";
+			this.tf.set_text("Dragon Engine");
+			var fh = this.tf;
+			fh.set_text(fh.get_text() + ("\nFPS: " + this.currentFPS + " | SPF: " + Math.floor(1 / this.currentFPS * 10000) / 10000));
+			memoryMegas = Math.abs(openfl_system_System.get_totalMemory() / 1000000);
+			formatMegas = memoryMegas > 1000 ? Math.floor(memoryMegas / 10) / 100 + " GB(" + Math.floor(memoryMegas * 100) / 100 + " MB)" : Math.floor(memoryMegas * 100) / 100 + " MB";
+			var fh = this.tf;
+			fh.set_text(fh.get_text() + ("\nMemory: " + formatMegas));
+			var targetColor = -16711936;
+			if(memoryMegas > 3000 || this.currentFPS <= ClientPrefs.framerate / 4) {
+				targetColor = -65536;
+			} else if(memoryMegas > 1500 || this.currentFPS <= ClientPrefs.framerate / 2) {
+				targetColor = -256;
+			}
+			this.setTextColor(targetColor);
+			this.updateBox(targetColor);
 		}
-		this.setTextColor(targetColor);
-		this.updateBox(targetColor);
 		this.cacheCount = currentCount;
 	}
 	,updateBox: function(outlineColor) {
@@ -53425,6 +53496,180 @@ dge_frontend_CameraZOrder.reloadIDs = function() {
 		}
 	}
 };
+var flixel_system_scaleModes_BaseScaleMode = function() {
+	this.verticalAlign = flixel_util_FlxVerticalAlign.CENTER;
+	this.horizontalAlign = flixel_util_FlxHorizontalAlign.CENTER;
+	var point = flixel_math_FlxPoint._pool.get().set(0,0);
+	point._inPool = false;
+	this.deviceSize = point;
+	var point = flixel_math_FlxPoint._pool.get().set(0,0);
+	point._inPool = false;
+	this.gameSize = point;
+	var point = flixel_math_FlxPoint._pool.get().set(0,0);
+	point._inPool = false;
+	this.scale = point;
+	var point = flixel_math_FlxPoint._pool.get().set(0,0);
+	point._inPool = false;
+	this.offset = point;
+};
+$hxClasses["flixel.system.scaleModes.BaseScaleMode"] = flixel_system_scaleModes_BaseScaleMode;
+flixel_system_scaleModes_BaseScaleMode.__name__ = "flixel.system.scaleModes.BaseScaleMode";
+flixel_system_scaleModes_BaseScaleMode.prototype = {
+	deviceSize: null
+	,gameSize: null
+	,scale: null
+	,offset: null
+	,horizontalAlign: null
+	,verticalAlign: null
+	,onMeasure: function(Width,Height) {
+		flixel_FlxG.width = flixel_FlxG.initialWidth;
+		flixel_FlxG.height = flixel_FlxG.initialHeight;
+		this.updateGameSize(Width,Height);
+		this.updateDeviceSize(Width,Height);
+		this.updateScaleOffset();
+		this.updateGamePosition();
+	}
+	,updateGameSize: function(Width,Height) {
+		this.gameSize.set(Width,Height);
+	}
+	,updateDeviceSize: function(Width,Height) {
+		this.deviceSize.set(Width,Height);
+	}
+	,updateScaleOffset: function() {
+		this.scale.set_x(this.gameSize.x / (flixel_FlxG.width * flixel_FlxG.initialZoom));
+		this.scale.set_y(this.gameSize.y / (flixel_FlxG.height * flixel_FlxG.initialZoom));
+		this.updateOffsetX();
+		this.updateOffsetY();
+	}
+	,updateOffsetX: function() {
+		var tmp;
+		switch(this.horizontalAlign._hx_index) {
+		case 0:
+			tmp = 0;
+			break;
+		case 1:
+			tmp = Math.ceil((this.deviceSize.x - this.gameSize.x) * 0.5);
+			break;
+		case 2:
+			tmp = this.deviceSize.x - this.gameSize.x;
+			break;
+		}
+		this.offset.set_x(tmp);
+	}
+	,updateOffsetY: function() {
+		var tmp;
+		switch(this.verticalAlign._hx_index) {
+		case 0:
+			tmp = 0;
+			break;
+		case 1:
+			tmp = Math.ceil((this.deviceSize.y - this.gameSize.y) * 0.5);
+			break;
+		case 2:
+			tmp = this.deviceSize.y - this.gameSize.y;
+			break;
+		}
+		this.offset.set_y(tmp);
+	}
+	,updateGamePosition: function() {
+		if(flixel_FlxG.game == null) {
+			return;
+		}
+		flixel_FlxG.game.set_x(this.offset.x);
+		flixel_FlxG.game.set_y(this.offset.y);
+	}
+	,set_horizontalAlign: function(value) {
+		this.horizontalAlign = value;
+		if(this.offset != null) {
+			this.updateOffsetX();
+			this.updateGamePosition();
+		}
+		return value;
+	}
+	,set_verticalAlign: function(value) {
+		this.verticalAlign = value;
+		if(this.offset != null) {
+			this.updateOffsetY();
+			this.updateGamePosition();
+		}
+		return value;
+	}
+	,__class__: flixel_system_scaleModes_BaseScaleMode
+	,__properties__: {set_verticalAlign:"set_verticalAlign",set_horizontalAlign:"set_horizontalAlign"}
+};
+var dge_frontend_scale_ScreenScaleMode = function(W,H) {
+	if(H == null) {
+		H = 720;
+	}
+	if(W == null) {
+		W = 1280;
+	}
+	dge_frontend_scale_ScreenScaleMode.set_screenWidth(W);
+	dge_frontend_scale_ScreenScaleMode.set_screenHeight(H);
+	flixel_system_scaleModes_BaseScaleMode.call(this);
+};
+$hxClasses["dge.frontend.scale.ScreenScaleMode"] = dge_frontend_scale_ScreenScaleMode;
+dge_frontend_scale_ScreenScaleMode.__name__ = "dge.frontend.scale.ScreenScaleMode";
+dge_frontend_scale_ScreenScaleMode.__properties__ = {set_screenHeight:"set_screenHeight",set_screenWidth:"set_screenWidth",set_allowWideScreen:"set_allowWideScreen"};
+dge_frontend_scale_ScreenScaleMode.set_allowWideScreen = function(value) {
+	dge_frontend_scale_ScreenScaleMode.allowWideScreen = value;
+	flixel_FlxG.game.resizeGame(openfl_Lib.get_current().stage.stageWidth,openfl_Lib.get_current().stage.stageHeight);
+	return value;
+};
+dge_frontend_scale_ScreenScaleMode.set_screenWidth = function(value) {
+	if(dge_frontend_scale_ScreenScaleMode.screenWidth != value) {
+		dge_frontend_scale_ScreenScaleMode.screenWidth = value;
+		dge_frontend_scale_ScreenScaleMode.updateScreenSize();
+	}
+	return value;
+};
+dge_frontend_scale_ScreenScaleMode.set_screenHeight = function(value) {
+	if(dge_frontend_scale_ScreenScaleMode.screenHeight != value) {
+		dge_frontend_scale_ScreenScaleMode.screenHeight = value;
+		dge_frontend_scale_ScreenScaleMode.updateScreenSize();
+	}
+	return value;
+};
+dge_frontend_scale_ScreenScaleMode.updateScreenSize = function() {
+	flixel_FlxG.width = dge_frontend_scale_ScreenScaleMode.screenWidth;
+	flixel_FlxG.height = dge_frontend_scale_ScreenScaleMode.screenHeight;
+	flixel_FlxG.game.resizeGame(openfl_Lib.get_current().stage.stageWidth,openfl_Lib.get_current().stage.stageHeight);
+};
+dge_frontend_scale_ScreenScaleMode.__super__ = flixel_system_scaleModes_BaseScaleMode;
+dge_frontend_scale_ScreenScaleMode.prototype = $extend(flixel_system_scaleModes_BaseScaleMode.prototype,{
+	updateGameSize: function(Width,Height) {
+		if(dge_frontend_scale_ScreenScaleMode.allowWideScreen) {
+			flixel_system_scaleModes_BaseScaleMode.prototype.updateGameSize.call(this,Width,Height);
+		} else {
+			var ratio = flixel_FlxG.width / flixel_FlxG.height;
+			var realRatio = Width / Height;
+			var scaleY = realRatio < ratio;
+			if(scaleY) {
+				this.gameSize.set_x(Width);
+				this.gameSize.set_y(Math.floor(this.gameSize.x / ratio));
+			} else {
+				this.gameSize.set_y(Height);
+				this.gameSize.set_x(Math.floor(this.gameSize.y * ratio));
+			}
+		}
+	}
+	,updateGamePosition: function() {
+		if(dge_frontend_scale_ScreenScaleMode.allowWideScreen) {
+			flixel_FlxG.game.set_x(flixel_FlxG.game.set_y(0));
+		} else {
+			flixel_system_scaleModes_BaseScaleMode.prototype.updateGamePosition.call(this);
+		}
+	}
+	,onMeasure: function(W,H) {
+		flixel_FlxG.width = dge_frontend_scale_ScreenScaleMode.screenWidth;
+		flixel_FlxG.height = dge_frontend_scale_ScreenScaleMode.screenHeight;
+		this.updateGameSize(W,H);
+		this.updateDeviceSize(W,H);
+		this.updateScaleOffset();
+		this.updateGamePosition();
+	}
+	,__class__: dge_frontend_scale_ScreenScaleMode
+});
 var dge_obj_Keypress = function(x,y,color) {
 	this.alphaKeyPress = ClientPrefs.keyStrokeAlpha;
 	this.alphaKey = ClientPrefs.keyStrokeAlpha;
@@ -67393,6 +67638,9 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 	,set_width: function(Value) {
 		if(this.width != Value && Value > 0) {
 			this.width = Value;
+			if(this._flashRect != null) {
+				this._flashRect.width = this.width;
+			}
 			this.viewOffsetX = 0.5 * this.width * (this.scaleX - this.initialZoom) / this.scaleX;
 			this.viewOffsetWidth = this.width - this.viewOffsetX;
 			this.viewWidth = this.width - 2 * this.viewOffsetX;
@@ -67406,6 +67654,9 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 	,set_height: function(Value) {
 		if(this.height != Value && Value > 0) {
 			this.height = Value;
+			if(this._flashRect != null) {
+				this._flashRect.height = this.height;
+			}
 			this.viewOffsetY = 0.5 * this.height * (this.scaleY - this.initialZoom) / this.scaleY;
 			this.viewOffsetHeight = this.height - this.viewOffsetY;
 			this.viewHeight = this.height - 2 * this.viewOffsetY;
@@ -69165,107 +69416,6 @@ flixel_util_FlxSave.prototype = {
 		return true;
 	}
 	,__class__: flixel_util_FlxSave
-};
-var flixel_system_scaleModes_BaseScaleMode = function() {
-	this.verticalAlign = flixel_util_FlxVerticalAlign.CENTER;
-	this.horizontalAlign = flixel_util_FlxHorizontalAlign.CENTER;
-	var point = flixel_math_FlxPoint._pool.get().set(0,0);
-	point._inPool = false;
-	this.deviceSize = point;
-	var point = flixel_math_FlxPoint._pool.get().set(0,0);
-	point._inPool = false;
-	this.gameSize = point;
-	var point = flixel_math_FlxPoint._pool.get().set(0,0);
-	point._inPool = false;
-	this.scale = point;
-	var point = flixel_math_FlxPoint._pool.get().set(0,0);
-	point._inPool = false;
-	this.offset = point;
-};
-$hxClasses["flixel.system.scaleModes.BaseScaleMode"] = flixel_system_scaleModes_BaseScaleMode;
-flixel_system_scaleModes_BaseScaleMode.__name__ = "flixel.system.scaleModes.BaseScaleMode";
-flixel_system_scaleModes_BaseScaleMode.prototype = {
-	deviceSize: null
-	,gameSize: null
-	,scale: null
-	,offset: null
-	,horizontalAlign: null
-	,verticalAlign: null
-	,onMeasure: function(Width,Height) {
-		flixel_FlxG.width = flixel_FlxG.initialWidth;
-		flixel_FlxG.height = flixel_FlxG.initialHeight;
-		this.updateGameSize(Width,Height);
-		this.updateDeviceSize(Width,Height);
-		this.updateScaleOffset();
-		this.updateGamePosition();
-	}
-	,updateGameSize: function(Width,Height) {
-		this.gameSize.set(Width,Height);
-	}
-	,updateDeviceSize: function(Width,Height) {
-		this.deviceSize.set(Width,Height);
-	}
-	,updateScaleOffset: function() {
-		this.scale.set_x(this.gameSize.x / (flixel_FlxG.width * flixel_FlxG.initialZoom));
-		this.scale.set_y(this.gameSize.y / (flixel_FlxG.height * flixel_FlxG.initialZoom));
-		this.updateOffsetX();
-		this.updateOffsetY();
-	}
-	,updateOffsetX: function() {
-		var tmp;
-		switch(this.horizontalAlign._hx_index) {
-		case 0:
-			tmp = 0;
-			break;
-		case 1:
-			tmp = Math.ceil((this.deviceSize.x - this.gameSize.x) * 0.5);
-			break;
-		case 2:
-			tmp = this.deviceSize.x - this.gameSize.x;
-			break;
-		}
-		this.offset.set_x(tmp);
-	}
-	,updateOffsetY: function() {
-		var tmp;
-		switch(this.verticalAlign._hx_index) {
-		case 0:
-			tmp = 0;
-			break;
-		case 1:
-			tmp = Math.ceil((this.deviceSize.y - this.gameSize.y) * 0.5);
-			break;
-		case 2:
-			tmp = this.deviceSize.y - this.gameSize.y;
-			break;
-		}
-		this.offset.set_y(tmp);
-	}
-	,updateGamePosition: function() {
-		if(flixel_FlxG.game == null) {
-			return;
-		}
-		flixel_FlxG.game.set_x(this.offset.x);
-		flixel_FlxG.game.set_y(this.offset.y);
-	}
-	,set_horizontalAlign: function(value) {
-		this.horizontalAlign = value;
-		if(this.offset != null) {
-			this.updateOffsetX();
-			this.updateGamePosition();
-		}
-		return value;
-	}
-	,set_verticalAlign: function(value) {
-		this.verticalAlign = value;
-		if(this.offset != null) {
-			this.updateOffsetY();
-			this.updateGamePosition();
-		}
-		return value;
-	}
-	,__class__: flixel_system_scaleModes_BaseScaleMode
-	,__properties__: {set_verticalAlign:"set_verticalAlign",set_horizontalAlign:"set_horizontalAlign"}
 };
 var flixel_system_scaleModes_RatioScaleMode = function(fillScreen) {
 	if(fillScreen == null) {
@@ -143385,7 +143535,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 557774;
+	this.version = 41095;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -150303,11 +150453,7 @@ var openfl_display_FPS = function(x,y,color) {
 	this.currentFPS = 0;
 	this.set_selectable(false);
 	this.mouseEnabled = false;
-	this.set_defaultTextFormat(new openfl_text_TextFormat("_sans",ClientPrefs.fpsFontSize,color));
-	this.set_background(true);
-	this.set_backgroundColor(-16777216);
-	this.set_autoSize(1);
-	this.set_multiline(true);
+	this.set_defaultTextFormat(new openfl_text_TextFormat("_sans",12,color));
 	this.set_text("FPS: ");
 	this.cacheCount = 0;
 	this.currentTime = 0;
@@ -150327,22 +150473,8 @@ openfl_display_FPS.prototype = $extend(openfl_text_TextField.prototype,{
 		while(this.times[0] < this.currentTime - 1000) this.times.shift();
 		var currentCount = this.times.length;
 		this.currentFPS = Math.round((currentCount + this.cacheCount) / 2);
-		if(this.currentFPS > ClientPrefs.framerate) {
-			this.currentFPS = ClientPrefs.framerate;
-		}
 		if(currentCount != this.cacheCount) {
-			var memoryMegas = 0;
-			var formatMegas = "";
-			this.set_text("Dragon Engine(HTML5)");
-			this.set_text(this.get_text() + ("\nFPS: " + this.currentFPS + " | SPF: " + Math.floor(1 / this.currentFPS * 10000) / 10000));
-			memoryMegas = Math.abs(openfl_system_System.get_totalMemory() / 1000000);
-			formatMegas = memoryMegas > 1000 ? Math.floor(memoryMegas / 10) / 100 + " GB(" + Math.floor(memoryMegas * 100) / 100 + " MB)" : Math.floor(memoryMegas * 100) / 100 + " MB";
-			this.set_text(this.get_text() + ("\nMemory: " + formatMegas));
-			this.set_textColor(-16711936);
-			if(memoryMegas > 3000 || this.currentFPS <= ClientPrefs.framerate / 2) {
-				this.set_textColor(-65536);
-			}
-			this.set_text(this.get_text() + "\n");
+			this.set_text("FPS: " + this.currentFPS);
 		}
 		this.cacheCount = currentCount;
 	}
@@ -195655,6 +195787,9 @@ dge_backend_CacheTools.cacheImage = new haxe_ds_StringMap();
 dge_backend_CacheTools.cacheAtlas = new haxe_ds_StringMap();
 dge_backend_CacheTools.cachePackerAtlas = new haxe_ds_StringMap();
 dge_backend_CacheTools.cacheText = new haxe_ds_StringMap();
+dge_frontend_scale_ScreenScaleMode.allowWideScreen = false;
+dge_frontend_scale_ScreenScaleMode.screenWidth = 960;
+dge_frontend_scale_ScreenScaleMode.screenHeight = 960;
 flixel_ui_FlxButton.NORMAL = 0;
 flixel_ui_FlxButton.HIGHLIGHT = 1;
 flixel_ui_FlxButton.PRESSED = 2;
