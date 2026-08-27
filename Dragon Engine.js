@@ -6549,12 +6549,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "397";
+	app.meta.h["build"] = "400";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.12.10";
+	app.meta.h["version"] = "26.12.11";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -9128,7 +9128,6 @@ var Main = function() {
 	this.startFullscreen = false;
 	this.skipSplash = true;
 	this.framerate = 60;
-	this.zoom = 1;
 	this.initialState = TitleState;
 	this.gameHeight = 720;
 	this.gameWidth = 1280;
@@ -9150,7 +9149,6 @@ Main.prototype = $extend(openfl_display_Sprite.prototype,{
 	gameWidth: null
 	,gameHeight: null
 	,initialState: null
-	,zoom: null
 	,framerate: null
 	,skipSplash: null
 	,startFullscreen: null
@@ -9161,17 +9159,8 @@ Main.prototype = $extend(openfl_display_Sprite.prototype,{
 		this.setupGame();
 	}
 	,setupGame: function() {
-		var stageWidth = 1280;
-		var stageHeight = 720;
-		if(this.zoom == -1) {
-			var ratioX = stageWidth / this.gameWidth;
-			var ratioY = stageHeight / this.gameHeight;
-			this.zoom = Math.min(ratioX,ratioY);
-			this.gameWidth = Math.ceil(stageWidth / this.zoom);
-			this.gameHeight = Math.ceil(stageHeight / this.zoom);
-		}
 		ClientPrefs.loadDefaultKeys();
-		this.addChild(new flixel_FlxGame(this.gameWidth,this.gameHeight,this.initialState,this.zoom,this.framerate,this.framerate,this.skipSplash,this.startFullscreen));
+		this.addChild(new flixel_FlxGame(this.gameWidth,this.gameHeight,this.initialState,1,this.framerate,this.framerate,this.skipSplash,this.startFullscreen));
 		Main.fpsVar = new dge_frontend_BetterFPSCounter(15,15,65280,0,ClientPrefs.fpsBGAlpha);
 		this.addChild(Main.fpsVar);
 		if(Main.fpsVar != null) {
@@ -27926,15 +27915,16 @@ FunkinLua.prototype = {
 	camTarget: null
 	,scriptName: null
 	,closed: null
-	,updateSizeLua: function() {
-		this.set("screenWidth",flixel_FlxG.width);
-		this.set("screenHeight",flixel_FlxG.height);
-		var camGameM = Math.max(flixel_FlxG.width / 1280,flixel_FlxG.height / 720);
+	,updateSizeLua: function(W,H) {
+		this.set("screenWidth",W);
+		this.set("screenHeight",H);
+		var camGameM = Math.max(W / 1280,H / 720);
 		this.set("camGameMult",camGameM);
+		this.call("onGameResolutionChange",[W,H]);
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4480, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4469, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -45111,8 +45101,20 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.scoreTxt.set_y(hBBY + 36);
 			}
 		}
+		if(this.keyPressUI != null && ClientPrefs.extUI) {
+			var _g = 0;
+			var _g1 = this.keyPressUI.length;
+			while(_g < _g1) {
+				var i = _g++;
+				this.keyPressUI.members[i].set_y(flixel_FlxG.height / 2 + 50 * Math.floor(i / 4));
+			}
+		}
 	}
 	,updateStrumPos: function() {
+		this.strumLine.set_y(50);
+		if(ClientPrefs.downScroll) {
+			this.strumLine.set_y(flixel_FlxG.height - 150 * (ClientPrefs.strumsize / 0.7));
+		}
 		if(this.gamemode == "bothside") {
 			if(this.strumLineNotes != null) {
 				var _g = 0;
@@ -45247,15 +45249,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			}
 		}
 	}
-	,updateGameSize: function() {
-		var camGameM = Math.max(flixel_FlxG.width / 1280,flixel_FlxG.height / 720);
-		this.camGameMult = camGameM;
-		this.setOnLuas("screenWidth",flixel_FlxG.width);
-		this.setOnLuas("screenHeight",flixel_FlxG.height);
-		this.setOnLuas("camGameMult",camGameM);
-	}
 	,resolutionChange: function(W,H) {
-		this.callOnLuas("onGameResolutionChange",[W,H]);
+		var camGameM = Math.max(W / 1280,H / 720);
+		this.camGameMult = camGameM;
 	}
 	,__class__: PlayState
 	,__properties__: $extend(MusicBeatState.prototype.__properties__,{set_playableField:"set_playableField",set_fieldNameAsPlayer:"set_fieldNameAsPlayer",set_mergeHealthColor:"set_mergeHealthColor",set_playbackRate:"set_playbackRate",set_songSpeed:"set_songSpeed",set_privateData:"set_privateData"})
@@ -53622,18 +53618,18 @@ dge_frontend_scale_ScreenScaleMode.set_allowWideScreen = function(value) {
 	return value;
 };
 dge_frontend_scale_ScreenScaleMode.set_screenWidth = function(value) {
-	if(dge_frontend_scale_ScreenScaleMode.screenWidth != value) {
-		dge_frontend_scale_ScreenScaleMode.screenWidth = value;
+	if(dge_frontend_scale_ScreenScaleMode.screenWidth != (Math.abs(value) | 0)) {
+		dge_frontend_scale_ScreenScaleMode.screenWidth = Math.abs(value) | 0;
 		dge_frontend_scale_ScreenScaleMode.updateScreenSize();
 	}
-	return value;
+	return Math.abs(value) | 0;
 };
 dge_frontend_scale_ScreenScaleMode.set_screenHeight = function(value) {
-	if(dge_frontend_scale_ScreenScaleMode.screenHeight != value) {
-		dge_frontend_scale_ScreenScaleMode.screenHeight = value;
+	if(dge_frontend_scale_ScreenScaleMode.screenHeight != (Math.abs(value) | 0)) {
+		dge_frontend_scale_ScreenScaleMode.screenHeight = Math.abs(value) | 0;
 		dge_frontend_scale_ScreenScaleMode.updateScreenSize();
 	}
-	return value;
+	return Math.abs(value) | 0;
 };
 dge_frontend_scale_ScreenScaleMode.updateScreenSize = function() {
 	flixel_FlxG.width = dge_frontend_scale_ScreenScaleMode.screenWidth;
@@ -143564,7 +143560,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 744070;
+	this.version = 928887;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
