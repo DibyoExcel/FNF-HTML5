@@ -6549,12 +6549,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "400";
+	app.meta.h["build"] = "401";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.12.11";
+	app.meta.h["version"] = "26.12.12";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -24492,11 +24492,6 @@ CoolUtil.alignItem = function(key,obj,alignType) {
 			obj.set_y(key.y + key.get_height() / 2 - obj.get_height() / 2);
 		}
 	}
-};
-CoolUtil.AABBHandler = function(width,height,sin,cos) {
-	var resultSizeW = Math.abs(width * cos) + Math.abs(height * sin);
-	var resultSizeH = Math.abs(width * sin) + Math.abs(height * cos);
-	return [resultSizeW,resultSizeH];
 };
 var CreditsState = function(TransIn,TransOut) {
 	this.moveTween = null;
@@ -53497,6 +53492,48 @@ dge_frontend_CameraZOrder.reloadIDs = function() {
 		}
 	}
 };
+var dge_frontend_math_BoundHelper = function() { };
+$hxClasses["dge.frontend.math.BoundHelper"] = dge_frontend_math_BoundHelper;
+dge_frontend_math_BoundHelper.__name__ = "dge.frontend.math.BoundHelper";
+dge_frontend_math_BoundHelper.computeAABB = function(rectX,rectY,w,h,angle,originX,originY) {
+	var pivotX = rectX + originX * w;
+	var pivotY = rectY + originY * h;
+	angle = -angle * Math.PI / 180;
+	var corners = [{ x : rectX, y : rectY},{ x : rectX + w, y : rectY},{ x : rectX + w, y : rectY + h},{ x : rectX, y : rectY + h}];
+	var rotated = [];
+	var _g = 0;
+	while(_g < corners.length) {
+		var corner = corners[_g];
+		++_g;
+		var dx = corner.x - pivotX;
+		var dy = corner.y - pivotY;
+		var xRot = pivotX + dx * Math.cos(angle) - dy * Math.sin(angle);
+		var yRot = pivotY + dx * Math.sin(angle) + dy * Math.cos(angle);
+		rotated.push({ x : xRot, y : yRot});
+	}
+	var minX = Infinity;
+	var minY = Infinity;
+	var maxX = -Infinity;
+	var maxY = -Infinity;
+	var _g = 0;
+	while(_g < rotated.length) {
+		var p = rotated[_g];
+		++_g;
+		if(p.x < minX) {
+			minX = p.x;
+		}
+		if(p.x > maxX) {
+			maxX = p.x;
+		}
+		if(p.y < minY) {
+			minY = p.y;
+		}
+		if(p.y > maxY) {
+			maxY = p.y;
+		}
+	}
+	return { minX : minX, minY : minY, maxX : maxX, maxY : maxY};
+};
 var flixel_system_scaleModes_BaseScaleMode = function() {
 	this.verticalAlign = flixel_util_FlxVerticalAlign.CENTER;
 	this.horizontalAlign = flixel_util_FlxHorizontalAlign.CENTER;
@@ -53804,6 +53841,45 @@ dge_obj_Keypress.prototype = $extend(flixel_FlxSprite.prototype,{
 	,__class__: dge_obj_Keypress
 	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_alphaKeyPress:"set_alphaKeyPress",set_alphaKey:"set_alphaKey",set_colorKeyPress:"set_colorKeyPress",set_colorKey:"set_colorKey"})
 });
+var dge_obj_Pointer = function(x,y) {
+	if(y == null) {
+		y = 0;
+	}
+	if(x == null) {
+		x = 0;
+	}
+	this.y = 0;
+	this.x = 0;
+	this.set_x(x);
+	this.set_y(y);
+};
+$hxClasses["dge.obj.Pointer"] = dge_obj_Pointer;
+dge_obj_Pointer.__name__ = "dge.obj.Pointer";
+dge_obj_Pointer.prototype = {
+	x: null
+	,y: null
+	,onChange: null
+	,set_x: function(v) {
+		if(v != this.x) {
+			this.x = v;
+			if(this.onChange != null) {
+				this.onChange(this.x,this.y);
+			}
+		}
+		return v;
+	}
+	,set_y: function(v) {
+		if(v != this.y) {
+			this.y = v;
+			if(this.onChange != null) {
+				this.onChange(this.x,this.y);
+			}
+		}
+		return v;
+	}
+	,__class__: dge_obj_Pointer
+	,__properties__: {set_y:"set_y",set_x:"set_x"}
+};
 var dge_obj_game_ComboSpr = function(texture,anim) {
 	if(anim == null) {
 		anim = "shit";
@@ -65999,6 +66075,11 @@ var flixel_FlxCamera = function(X,Y,Width,Height,Zoom) {
 	}
 	this._cosAngle = 1;
 	this._sinAngle = 0;
+	this.offsetShake = new flixel_math_FlxPoint(0,0);
+	this.oldShake = false;
+	this.rotatePoint = new flixel_math_FlxPoint(0.5,0.5);
+	this.zoomPoint = new dge_obj_Pointer(0.5,0.5);
+	this.offset = new flixel_math_FlxPoint(0,0);
 	this.complexObjectVisibility = true;
 	this.rotateSprite = false;
 	this.zoomYmult = 1;
@@ -66109,6 +66190,7 @@ var flixel_FlxCamera = function(X,Y,Width,Height,Zoom) {
 	this.set_color(-1);
 	this.initialZoom = Zoom == 0 ? flixel_FlxCamera.defaultZoom : Zoom;
 	this.set_zoom(Zoom);
+	this.zoomPoint.onChange = $bind(this,this.onChangePointZoom);
 	this.updateScrollRect();
 	this.updateFlashOffset();
 	this.updateFlashSpritePosition();
@@ -66206,6 +66288,11 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 	,zoomYmult: null
 	,rotateSprite: null
 	,complexObjectVisibility: null
+	,offset: null
+	,zoomPoint: null
+	,rotatePoint: null
+	,oldShake: null
+	,offsetShake: null
 	,_sinAngle: null
 	,_cosAngle: null
 	,startQuadBatch: function(graphic,colored,hasColorOffsets,blend,smooth,shader) {
@@ -66329,12 +66416,18 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 		if(smoothing == null) {
 			smoothing = false;
 		}
+		var offsetX = -(this.offset == null ? 0 : this.offset.x);
+		var offsetY = -(this.offset == null ? 0 : this.offset.y);
+		if(!this.oldShake) {
+			offsetX -= this.offsetShake == null ? 0 : this.offsetShake.x;
+			offsetY -= this.offsetShake == null ? 0 : this.offsetShake.y;
+		}
 		if(flixel_FlxG.renderBlit) {
 			this._helperMatrix.copyFrom(matrix);
 			if(this._useBlitMatrix) {
 				this._helperMatrix.concat(this._blitMatrix);
 				if(!this.rotateSprite && this.angle != 0 && !ignoreAngle) {
-					this._helperMatrix.translate(-this.width / 2,-this.height / 2);
+					this._helperMatrix.translate(-this.width * this.rotatePoint.x,-this.height * this.rotatePoint.y);
 					var _this = this._helperMatrix;
 					var cos = this._cosAngle;
 					var sin = this._sinAngle;
@@ -66347,13 +66440,14 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 					var tx1 = _this.tx * cos - _this.ty * sin;
 					_this.ty = _this.tx * sin + _this.ty * cos;
 					_this.tx = tx1;
-					this._helperMatrix.translate(this.width / 2,this.height / 2);
+					this._helperMatrix.translate(this.width * this.rotatePoint.x,this.height * this.rotatePoint.y);
 				}
+				this._helperMatrix.translate(offsetX,offsetY);
 				this.buffer.draw(pixels,this._helperMatrix,null,null,null,smoothing || this.antialiasing);
 			} else {
 				this._helperMatrix.translate(-this.viewOffsetX,-this.viewOffsetY);
 				if(!this.rotateSprite && this.angle != 0 && !ignoreAngle) {
-					this._helperMatrix.translate(-this.width / 2,-this.height / 2);
+					this._helperMatrix.translate(-this.width * this.rotatePoint.x,-this.height * this.rotatePoint.y);
 					var _this = this._helperMatrix;
 					var cos = this._cosAngle;
 					var sin = this._sinAngle;
@@ -66366,15 +66460,16 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 					var tx1 = _this.tx * cos - _this.ty * sin;
 					_this.ty = _this.tx * sin + _this.ty * cos;
 					_this.tx = tx1;
-					this._helperMatrix.translate(this.width / 2,this.height / 2);
+					this._helperMatrix.translate(this.width * this.rotatePoint.x,this.height * this.rotatePoint.y);
 				}
+				this._helperMatrix.translate(offsetX,offsetY);
 				this.buffer.draw(pixels,this._helperMatrix,null,blend,null,smoothing || this.antialiasing);
 			}
 		} else {
 			var isColored = transform != null && flixel_util_FlxColorTransformUtil.hasRGBMultipliers(transform);
 			var hasColorOffsets = transform != null && flixel_util_FlxColorTransformUtil.hasRGBAOffsets(transform);
 			if(!this.rotateSprite && this.angle != 0 && !ignoreAngle) {
-				matrix.translate(-this.width / 2,-this.height / 2);
+				matrix.translate(-this.width * this.rotatePoint.x,-this.height * this.rotatePoint.y);
 				var cos = this._cosAngle;
 				var sin = this._sinAngle;
 				var a1 = matrix.a * cos - matrix.b * sin;
@@ -66386,8 +66481,9 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 				var tx1 = matrix.tx * cos - matrix.ty * sin;
 				matrix.ty = matrix.tx * sin + matrix.ty * cos;
 				matrix.tx = tx1;
-				matrix.translate(this.width / 2,this.height / 2);
+				matrix.translate(this.width * this.rotatePoint.x,this.height * this.rotatePoint.y);
 			}
+			matrix.translate(offsetX,offsetY);
 			var drawItem = this.startQuadBatch(frame.parent,isColored,hasColorOffsets,blend,smoothing,shader);
 			drawItem.addQuad(frame,matrix,transform);
 		}
@@ -66396,6 +66492,12 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 		if(smoothing == null) {
 			smoothing = false;
 		}
+		var offsetX = -(this.offset == null ? 0 : this.offset.x);
+		var offsetY = -(this.offset == null ? 0 : this.offset.y);
+		if(!this.oldShake) {
+			offsetX -= this.offsetShake == null ? 0 : this.offsetShake.x;
+			offsetY -= this.offsetShake == null ? 0 : this.offsetShake.y;
+		}
 		if(flixel_FlxG.renderBlit) {
 			if(pixels != null) {
 				if(this._useBlitMatrix) {
@@ -66403,7 +66505,7 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 					this._helperMatrix.translate(destPoint.x,destPoint.y);
 					this._helperMatrix.concat(this._blitMatrix);
 					if(!this.rotateSprite && this.angle != 0) {
-						this._helperMatrix.translate(-this.width / 2,-this.height / 2);
+						this._helperMatrix.translate(-this.width * this.rotatePoint.x,-this.height * this.rotatePoint.y);
 						var _this = this._helperMatrix;
 						var cos = this._cosAngle;
 						var sin = this._sinAngle;
@@ -66416,14 +66518,15 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 						var tx1 = _this.tx * cos - _this.ty * sin;
 						_this.ty = _this.tx * sin + _this.ty * cos;
 						_this.tx = tx1;
-						this._helperMatrix.translate(this.width / 2,this.height / 2);
+						this._helperMatrix.translate(this.width * this.rotatePoint.x,this.height * this.rotatePoint.y);
 					}
+					this._helperMatrix.translate(offsetX,offsetY);
 					this.buffer.draw(pixels,this._helperMatrix,null,null,null,smoothing || this.antialiasing);
 				} else {
 					this._helperPoint.x = destPoint.x - (this.viewOffsetX | 0);
 					this._helperPoint.y = destPoint.y - (this.viewOffsetY | 0);
 					if(!this.rotateSprite && this.angle != 0) {
-						this._helperMatrix.translate(-this.width / 2,-this.height / 2);
+						this._helperMatrix.translate(-this.width * this.rotatePoint.x,-this.height * this.rotatePoint.y);
 						var _this = this._helperMatrix;
 						var cos = this._cosAngle;
 						var sin = this._sinAngle;
@@ -66436,8 +66539,9 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 						var tx1 = _this.tx * cos - _this.ty * sin;
 						_this.ty = _this.tx * sin + _this.ty * cos;
 						_this.tx = tx1;
-						this._helperMatrix.translate(this.width / 2,this.height / 2);
+						this._helperMatrix.translate(this.width * this.rotatePoint.x,this.height * this.rotatePoint.y);
 					}
+					this._helperMatrix.translate(offsetX,offsetY);
 					this.buffer.copyPixels(pixels,sourceRect,this._helperPoint,null,null,true);
 				}
 			} else if(frame != null) {
@@ -66447,7 +66551,7 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 			this._helperMatrix.identity();
 			this._helperMatrix.translate(destPoint.x + frame.offset.x,destPoint.y + frame.offset.y);
 			if(!this.rotateSprite && this.angle != 0) {
-				this._helperMatrix.translate(-this.width / 2,-this.height / 2);
+				this._helperMatrix.translate(-this.width * this.rotatePoint.x,-this.height * this.rotatePoint.y);
 				var _this = this._helperMatrix;
 				var cos = this._cosAngle;
 				var sin = this._sinAngle;
@@ -66460,8 +66564,9 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 				var tx1 = _this.tx * cos - _this.ty * sin;
 				_this.ty = _this.tx * sin + _this.ty * cos;
 				_this.tx = tx1;
-				this._helperMatrix.translate(this.width / 2,this.height / 2);
+				this._helperMatrix.translate(this.width * this.rotatePoint.x,this.height * this.rotatePoint.y);
 			}
+			this._helperMatrix.translate(offsetX,offsetY);
 			var isColored = transform != null && flixel_util_FlxColorTransformUtil.hasRGBMultipliers(transform);
 			var hasColorOffsets = transform != null && flixel_util_FlxColorTransformUtil.hasRGBAOffsets(transform);
 			var drawItem = this.startQuadBatch(frame.parent,isColored,hasColorOffsets,blend,smoothing,shader);
@@ -66474,6 +66579,12 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 		}
 		if(repeat == null) {
 			repeat = false;
+		}
+		var offsetX = -(this.offset == null ? 0 : this.offset.x);
+		var offsetY = -(this.offset == null ? 0 : this.offset.y);
+		if(!this.oldShake) {
+			offsetX -= this.offsetShake == null ? 0 : this.offsetShake.x;
+			offsetY -= this.offsetShake == null ? 0 : this.offsetShake.y;
 		}
 		if(flixel_FlxG.renderBlit) {
 			if(position == null) {
@@ -66603,7 +66714,7 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 					this._helperMatrix.translate(-this.viewOffsetX,-this.viewOffsetY);
 				}
 				if(!this.rotateSprite && this.angle != 0) {
-					this._helperMatrix.translate(-this.width / 2,-this.height / 2);
+					this._helperMatrix.translate(-this.width * this.rotatePoint.x,-this.height * this.rotatePoint.y);
 					var _this = this._helperMatrix;
 					var cos = this._cosAngle;
 					var sin = this._sinAngle;
@@ -66616,8 +66727,9 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 					var tx1 = _this.tx * cos - _this.ty * sin;
 					_this.ty = _this.tx * sin + _this.ty * cos;
 					_this.tx = tx1;
-					this._helperMatrix.translate(this.width / 2,this.height / 2);
+					this._helperMatrix.translate(this.width * this.rotatePoint.x,this.height * this.rotatePoint.y);
 				}
+				this._helperMatrix.translate(offsetX,offsetY);
 				this.buffer.draw(flixel_FlxCamera.trianglesSprite,this._helperMatrix);
 			}
 			if(!bounds._inPool) {
@@ -66946,17 +67058,24 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 		if(this._fxShakeDuration > 0) {
 			this._fxShakeDuration -= elapsed;
 			if(this._fxShakeDuration <= 0) {
+				this.offsetShake.set();
 				if(this._fxShakeComplete != null) {
 					this._fxShakeComplete();
 				}
 			} else {
 				if(this._fxShakeAxes != flixel_util_FlxAxes.Y) {
-					var fh = this.flashSprite;
-					fh.set_x(fh.get_x() + flixel_FlxG.random.float(-this._fxShakeIntensity * this.width,this._fxShakeIntensity * this.width) * this.zoom * flixel_FlxG.scaleMode.scale.x);
+					if(this.oldShake) {
+						this.flashSprite.set_x(flixel_FlxG.random.float(-this._fxShakeIntensity * this.width,this._fxShakeIntensity * this.width) * this.zoom * flixel_FlxG.scaleMode.scale.x);
+					} else {
+						this.offsetShake.set_x(flixel_FlxG.random.float(-this._fxShakeIntensity * this.width,this._fxShakeIntensity * this.width) * flixel_FlxG.scaleMode.scale.x);
+					}
 				}
 				if(this._fxShakeAxes != flixel_util_FlxAxes.X) {
-					var fh = this.flashSprite;
-					fh.set_y(fh.get_y() + flixel_FlxG.random.float(-this._fxShakeIntensity * this.height,this._fxShakeIntensity * this.height) * this.zoom * flixel_FlxG.scaleMode.scale.y);
+					if(this.oldShake) {
+						this.flashSprite.set_y(flixel_FlxG.random.float(-this._fxShakeIntensity * this.height,this._fxShakeIntensity * this.height) * this.zoom * flixel_FlxG.scaleMode.scale.y);
+					} else {
+						this.offsetShake.set_y(flixel_FlxG.random.float(-this._fxShakeIntensity * this.height,this._fxShakeIntensity * this.height) * flixel_FlxG.scaleMode.scale.y);
+					}
 				}
 			}
 		}
@@ -66989,8 +67108,8 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 				this._flashBitmap.set_y(0);
 			}
 		} else if(this.canvas != null) {
-			this.canvas.set_x(-0.5 * this.width * (this.scaleX - this.initialZoom) * flixel_FlxG.scaleMode.scale.x);
-			this.canvas.set_y(-0.5 * this.height * (this.scaleY - this.initialZoom) * flixel_FlxG.scaleMode.scale.y);
+			this.canvas.set_x(-this.zoomPoint.x * this.width * (this.scaleX - this.initialZoom) * flixel_FlxG.scaleMode.scale.x);
+			this.canvas.set_y(-this.zoomPoint.y * this.height * (this.scaleY - this.initialZoom) * flixel_FlxG.scaleMode.scale.y);
 			this.canvas.set_scaleX(this.totalScaleX);
 			this.canvas.set_scaleY(this.totalScaleY);
 		}
@@ -67525,12 +67644,14 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 				this._flashBitmap.set_scaleY(this.totalScaleY);
 			}
 		}
-		this.viewOffsetX = 0.5 * this.width * (this.scaleX - this.initialZoom) / this.scaleX;
-		this.viewOffsetWidth = this.width - this.viewOffsetX;
-		this.viewWidth = this.width - 2 * this.viewOffsetX;
-		this.viewOffsetY = 0.5 * this.height * (this.scaleY - this.initialZoom) / this.scaleY;
-		this.viewOffsetHeight = this.height - this.viewOffsetY;
-		this.viewHeight = this.height - 2 * this.viewOffsetY;
+		var pointMath = this.width * (this.scaleX - this.initialZoom) / this.scaleX;
+		this.viewOffsetX = this.zoomPoint.x * pointMath;
+		this.viewOffsetWidth = this.width - (1 - this.zoomPoint.x) * pointMath;
+		this.viewWidth = this.width - 2 * ((1 - this.zoomPoint.x) * pointMath);
+		var pointMath = this.height * (this.scaleY - this.initialZoom) / this.scaleY;
+		this.viewOffsetY = this.zoomPoint.x * pointMath;
+		this.viewOffsetHeight = this.height - (1 - this.zoomPoint.y) * pointMath;
+		this.viewHeight = this.height - 2 * ((1 - this.zoomPoint.y) * pointMath);
 		this.updateScrollRect();
 		this.updateInternalSpritePositions();
 		flixel_FlxG.cameras.cameraResized.dispatch(this);
@@ -67595,21 +67716,27 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 		if(width == null) {
 			width = 0;
 		}
+		var offsetX = this.offset == null ? 0 : this.offset.x;
+		var offsetY = this.offset == null ? 0 : this.offset.y;
+		if(!this.oldShake) {
+			offsetX += this.offsetShake == null ? 0 : this.offsetShake.x;
+			offsetY += this.offsetShake == null ? 0 : this.offsetShake.y;
+		}
 		if(!this.rotateSprite && this.complexObjectVisibility) {
+			var rotX = this.rotatePoint == null ? 0.5 : this.rotatePoint.x;
 			var cos = this._cosAngle;
 			var sin = this._sinAngle;
-			var viewCenterX = (this.viewOffsetX + this.viewOffsetWidth) / 2;
-			var viewCenterY = (this.viewOffsetY + this.viewOffsetHeight) / 2;
-			var camHalf = CoolUtil.AABBHandler(this.viewOffsetWidth - this.viewOffsetX,this.viewOffsetHeight - this.viewOffsetY,sin,cos);
-			var camHalfW = camHalf[0] / 2;
-			var camHalfH = camHalf[1] / 2;
-			var contained = point.x + width > viewCenterX - camHalfW && point.x < viewCenterX + camHalfW && point.y + height > viewCenterY - camHalfH && point.y < viewCenterY + camHalfH;
+			var offsetC_0 = offsetX * cos + offsetY * sin;
+			var offsetC_1 = offsetX * sin + offsetY * cos;
+			var rotY = this.rotatePoint == null ? 0.5 : this.rotatePoint.y;
+			var bound = dge_frontend_math_BoundHelper.computeAABB(this.viewOffsetX,this.viewOffsetY,this.viewOffsetWidth - this.viewOffsetX,this.viewOffsetHeight - this.viewOffsetY,this.angle,rotX,rotY);
+			var contained = point.x + width > bound.minX + offsetC_0 && point.x < bound.maxX + offsetC_0 && point.y + height > bound.minY + offsetC_1 && point.y < bound.maxY + offsetC_1;
 			if(point._weak) {
 				point.put();
 			}
 			return contained;
 		} else {
-			var contained = point.x + width > this.viewOffsetX && point.x < this.viewOffsetWidth && point.y + height > this.viewOffsetY && point.y < this.viewOffsetHeight;
+			var contained = point.x + width > this.viewOffsetX + offsetX && point.x < this.viewOffsetWidth + offsetX && point.y + height > this.viewOffsetY + offsetY && point.y < this.viewOffsetHeight + offsetY;
 			if(point._weak) {
 				point.put();
 			}
@@ -67620,15 +67747,19 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 		if(ignoreAngle == null) {
 			ignoreAngle = false;
 		}
+		var offsetX = this.offset == null ? 0 : this.offset.x;
+		var offsetY = this.offset == null ? 0 : this.offset.y;
+		offsetX += this.offsetShake == null ? 0 : this.offsetShake.x;
+		offsetY += this.offsetShake == null ? 0 : this.offsetShake.y;
 		if(!this.rotateSprite && this.complexObjectVisibility && !ignoreAngle) {
+			var rotX = this.rotatePoint == null ? 0.5 : this.rotatePoint.x;
 			var cos = this._cosAngle;
 			var sin = this._sinAngle;
-			var viewCenterX = (this.viewOffsetX + this.viewOffsetWidth) / 2;
-			var viewCenterY = (this.viewOffsetY + this.viewOffsetHeight) / 2;
-			var camHalf = CoolUtil.AABBHandler(this.viewOffsetWidth - this.viewOffsetX,this.viewOffsetHeight - this.viewOffsetY,sin,cos);
-			var camHalfW = camHalf[0] / 2;
-			var camHalfH = camHalf[1] / 2;
-			var contained = rect.x + rect.width > viewCenterX - camHalfW && rect.x < viewCenterX + camHalfW && rect.y + rect.height > viewCenterY - camHalfH && rect.y < viewCenterY + camHalfH;
+			var offsetC_0 = offsetX * cos + offsetY * sin;
+			var offsetC_1 = offsetX * sin + offsetY * cos;
+			var rotY = this.rotatePoint == null ? 0.5 : this.rotatePoint.y;
+			var bound = dge_frontend_math_BoundHelper.computeAABB(this.viewOffsetX,this.viewOffsetY,this.viewOffsetWidth - this.viewOffsetX,this.viewOffsetHeight - this.viewOffsetY,this.angle,rotX,rotY);
+			var contained = rect.x + rect.width > bound.minX + offsetC_0 && rect.x < bound.maxX + offsetC_0 && rect.y + rect.height > bound.minY + offsetC_1 && rect.y < bound.maxY + offsetC_1;
 			if(rect._weak) {
 				if(!rect._inPool) {
 					rect._inPool = true;
@@ -67638,7 +67769,7 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 			}
 			return contained;
 		} else {
-			var contained = rect.x + rect.width > this.viewOffsetX && rect.x < this.viewOffsetWidth && rect.y + rect.height > this.viewOffsetY && rect.y < this.viewOffsetHeight;
+			var contained = rect.x + rect.width > this.viewOffsetX + offsetX && rect.x < this.viewOffsetWidth + offsetX && rect.y + rect.height > this.viewOffsetY + offsetY && rect.y < this.viewOffsetHeight + offsetY;
 			if(rect._weak) {
 				if(!rect._inPool) {
 					rect._inPool = true;
@@ -67663,9 +67794,10 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 			if(this.target != null) {
 				this.follow(this.target,this.style,this.followLerp);
 			}
-			this.viewOffsetX = 0.5 * this.width * (this.scaleX - this.initialZoom) / this.scaleX;
-			this.viewOffsetWidth = this.width - this.viewOffsetX;
-			this.viewWidth = this.width - 2 * this.viewOffsetX;
+			var pointMath = this.width * (this.scaleX - this.initialZoom) / this.scaleX;
+			this.viewOffsetX = this.zoomPoint.x * pointMath;
+			this.viewOffsetWidth = this.width - (1 - this.zoomPoint.x) * pointMath;
+			this.viewWidth = this.width - 2 * ((1 - this.zoomPoint.x) * pointMath);
 			this.updateFlashOffset();
 			this.updateScrollRect();
 			this.updateInternalSpritePositions();
@@ -67682,9 +67814,10 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 			if(this.target != null) {
 				this.follow(this.target,this.style,this.followLerp);
 			}
-			this.viewOffsetY = 0.5 * this.height * (this.scaleY - this.initialZoom) / this.scaleY;
-			this.viewOffsetHeight = this.height - this.viewOffsetY;
-			this.viewHeight = this.height - 2 * this.viewOffsetY;
+			var pointMath = this.height * (this.scaleY - this.initialZoom) / this.scaleY;
+			this.viewOffsetY = this.zoomPoint.x * pointMath;
+			this.viewOffsetHeight = this.height - (1 - this.zoomPoint.y) * pointMath;
+			this.viewHeight = this.height - 2 * ((1 - this.zoomPoint.y) * pointMath);
 			this.updateFlashOffset();
 			this.updateScrollRect();
 			this.updateInternalSpritePositions();
@@ -67774,17 +67907,39 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 		return this.visible = visible;
 	}
 	,calcOffsetX: function() {
-		this.viewOffsetX = 0.5 * this.width * (this.scaleX - this.initialZoom) / this.scaleX;
-		this.viewOffsetWidth = this.width - this.viewOffsetX;
-		this.viewWidth = this.width - 2 * this.viewOffsetX;
+		var pointMath = this.width * (this.scaleX - this.initialZoom) / this.scaleX;
+		this.viewOffsetX = this.zoomPoint.x * pointMath;
+		this.viewOffsetWidth = this.width - (1 - this.zoomPoint.x) * pointMath;
+		this.viewWidth = this.width - 2 * ((1 - this.zoomPoint.x) * pointMath);
 	}
 	,calcOffsetY: function() {
-		this.viewOffsetY = 0.5 * this.height * (this.scaleY - this.initialZoom) / this.scaleY;
-		this.viewOffsetHeight = this.height - this.viewOffsetY;
-		this.viewHeight = this.height - 2 * this.viewOffsetY;
+		var pointMath = this.height * (this.scaleY - this.initialZoom) / this.scaleY;
+		this.viewOffsetY = this.zoomPoint.x * pointMath;
+		this.viewOffsetHeight = this.height - (1 - this.zoomPoint.y) * pointMath;
+		this.viewHeight = this.height - 2 * ((1 - this.zoomPoint.y) * pointMath);
+	}
+	,set_oldShake: function(v) {
+		if(v != this.oldShake) {
+			this.oldShake = v;
+			if(!v) {
+				this.offsetShake.set();
+			}
+		}
+		return v;
+	}
+	,onChangePointZoom: function(x,y) {
+		var pointMath = this.width * (this.scaleX - this.initialZoom) / this.scaleX;
+		this.viewOffsetX = this.zoomPoint.x * pointMath;
+		this.viewOffsetWidth = this.width - (1 - this.zoomPoint.x) * pointMath;
+		this.viewWidth = this.width - 2 * ((1 - this.zoomPoint.x) * pointMath);
+		var pointMath = this.height * (this.scaleY - this.initialZoom) / this.scaleY;
+		this.viewOffsetY = this.zoomPoint.x * pointMath;
+		this.viewOffsetHeight = this.height - (1 - this.zoomPoint.y) * pointMath;
+		this.viewHeight = this.height - 2 * ((1 - this.zoomPoint.y) * pointMath);
+		this.updateInternalSpritePositions();
 	}
 	,__class__: flixel_FlxCamera
-	,__properties__: $extend(flixel_FlxBasic.prototype.__properties__,{get_blackAndWhite:"get_blackAndWhite",get_grayScale:"get_grayScale",get_rgbShader:"get_rgbShader",get_posterize:"get_posterize",get_pixelSprite:"get_pixelSprite",get_colorRGBSwap:"get_colorRGBSwap",get_colorSingle:"get_colorSingle",get_colorInvert:"get_colorInvert",get_colorSwap:"get_colorSwap",set_rotateSprite:"set_rotateSprite",set_zoomYmult:"set_zoomYmult",set_zoomXmult:"set_zoomXmult",set_antialiasing:"set_antialiasing",set_color:"set_color",set_angle:"set_angle",set_alpha:"set_alpha",set_zoom:"set_zoom",set_height:"set_height",set_width:"set_width",set_followLerp:"set_followLerp",set_y:"set_y",set_x:"set_x"})
+	,__properties__: $extend(flixel_FlxBasic.prototype.__properties__,{get_blackAndWhite:"get_blackAndWhite",get_grayScale:"get_grayScale",get_rgbShader:"get_rgbShader",get_posterize:"get_posterize",get_pixelSprite:"get_pixelSprite",get_colorRGBSwap:"get_colorRGBSwap",get_colorSingle:"get_colorSingle",get_colorInvert:"get_colorInvert",get_colorSwap:"get_colorSwap",set_oldShake:"set_oldShake",set_rotateSprite:"set_rotateSprite",set_zoomYmult:"set_zoomYmult",set_zoomXmult:"set_zoomXmult",set_antialiasing:"set_antialiasing",set_color:"set_color",set_angle:"set_angle",set_alpha:"set_alpha",set_zoom:"set_zoom",set_height:"set_height",set_width:"set_width",set_followLerp:"set_followLerp",set_y:"set_y",set_x:"set_x"})
 });
 var flixel_FlxCameraFollowStyle = $hxEnums["flixel.FlxCameraFollowStyle"] = { __ename__:"flixel.FlxCameraFollowStyle",__constructs__:null
 	,LOCKON: {_hx_name:"LOCKON",_hx_index:0,__enum__:"flixel.FlxCameraFollowStyle",toString:$estr}
@@ -85688,6 +85843,10 @@ flixel_input_FlxPointer.prototype = {
 		}
 		point.set_x((this._globalScreenX - Camera.x + 0.5 * Camera.width * (Camera.zoom - Camera.initialZoom)) / Camera.zoom);
 		point.set_y((this._globalScreenY - Camera.y + 0.5 * Camera.height * (Camera.zoom - Camera.initialZoom)) / Camera.zoom);
+		point.set_x(point.x + Camera.offset.x);
+		point.set_x(point.x + Camera.offsetShake.x);
+		point.set_y(point.y + Camera.offset.y);
+		point.set_y(point.y + Camera.offsetShake.y);
 		return point;
 	}
 	,getPositionInCameraView: function(Camera,point) {
@@ -85701,6 +85860,10 @@ flixel_input_FlxPointer.prototype = {
 		}
 		point.set_x((this._globalScreenX - Camera.x) / Camera.zoom + Camera.viewOffsetX);
 		point.set_y((this._globalScreenY - Camera.y) / Camera.zoom + Camera.viewOffsetY);
+		point.set_x(point.x + Camera.offset.x);
+		point.set_x(point.x + Camera.offsetShake.x);
+		point.set_y(point.y + Camera.offset.y);
+		point.set_y(point.y + Camera.offsetShake.y);
 		return point;
 	}
 	,getPosition: function(point) {
@@ -117161,6 +117324,24 @@ flixel_util_FlxArrayUtil.flatten2DArray_Int = function(array) {
 	}
 	return result;
 };
+flixel_util_FlxArrayUtil.setLength_cacheValue_T = function(array,newLength) {
+	if(newLength < 0) {
+		return array;
+	}
+	var oldLength = array.length;
+	var diff = newLength - oldLength;
+	if(diff >= 0) {
+		return array;
+	}
+	diff = -diff;
+	var _g = 0;
+	var _g1 = diff;
+	while(_g < _g1) {
+		var i = _g++;
+		array.pop();
+	}
+	return array;
+};
 flixel_util_FlxArrayUtil.fastSplice_flixel_tweens_FlxTween = function(array,element) {
 	var index = array.indexOf(element);
 	if(index != -1) {
@@ -117182,24 +117363,6 @@ flixel_util_FlxArrayUtil.fastSplice_flixel_util_FlxTimer = function(array,elemen
 flixel_util_FlxArrayUtil.swapAndPop_fastSplice_T = function(array,index) {
 	array[index] = array[array.length - 1];
 	array.pop();
-	return array;
-};
-flixel_util_FlxArrayUtil.setLength_cacheValue_T = function(array,newLength) {
-	if(newLength < 0) {
-		return array;
-	}
-	var oldLength = array.length;
-	var diff = newLength - oldLength;
-	if(diff >= 0) {
-		return array;
-	}
-	diff = -diff;
-	var _g = 0;
-	var _g1 = diff;
-	while(_g < _g1) {
-		var i = _g++;
-		array.pop();
-	}
 	return array;
 };
 flixel_util_FlxArrayUtil.setLength_flixel_group_FlxTypedGroup_T = function(array,newLength) {
@@ -143560,7 +143723,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 928887;
+	this.version = 378413;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
