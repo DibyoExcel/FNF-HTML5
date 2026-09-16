@@ -6549,12 +6549,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "403";
+	app.meta.h["build"] = "404";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.12.14";
+	app.meta.h["version"] = "26.12.15";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -24493,6 +24493,20 @@ CoolUtil.alignItem = function(key,obj,alignType) {
 		}
 	}
 };
+CoolUtil.arrayFallback = function(arr,backupArr) {
+	var newArray = [];
+	var _g = 0;
+	var _g1 = backupArr.length;
+	while(_g < _g1) {
+		var i = _g++;
+		if(arr != null && i < arr.length && arr[i] != null) {
+			newArray.push(arr[i]);
+		} else {
+			newArray.push(backupArr[i]);
+		}
+	}
+	return newArray;
+};
 var CreditsState = function(TransIn,TransOut) {
 	this.moveTween = null;
 	this.holdTime = 0;
@@ -36053,7 +36067,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g1 ) {
 					haxe_NativeStackTrace.lastError = _g1;
 					var e = haxe_Exception.caught(_g1).unwrap();
-					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1012, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1011, className : "Note", methodName : "setConfig"});
 				}
 			} else {
 				try {
@@ -36068,7 +36082,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g4 ) {
 					haxe_NativeStackTrace.lastError = _g4;
 					var e1 = haxe_Exception.caught(_g4).unwrap();
-					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1023, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1022, className : "Note", methodName : "setConfig"});
 					dge_backend_CacheTools.jsonParse.h[name] = { };
 				}
 			}
@@ -36261,7 +36275,8 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 				} else {
 					texture = skinOpt;
 				}
-			} else {
+			}
+			if(texture == null || texture.length < 1) {
 				texture = "noteSplashes";
 			}
 		}
@@ -37484,6 +37499,8 @@ var PlayState = function(TransIn,TransOut) {
 	this.boyfriendIdled = false;
 	this.boyfriendIdleTime = 0.0;
 	this.keysPressed = [];
+	this.countdownTexturePixel = ["pixelUI/ready-pixel","pixelUI/set-pixel","pixelUI/date-pixel"];
+	this.countdownTexture = ["ready","set","go"];
 	this.numTexture = "comboAtlas";
 	this.comboTexture = "comboAtlas";
 	this.strumYOffsetSecondOpt = Note.swagWidth / 2;
@@ -37804,6 +37821,8 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,strumYOffsetSecondOpt: null
 	,comboTexture: null
 	,numTexture: null
+	,countdownTexture: null
+	,countdownTexturePixel: null
 	,keysPressed: null
 	,boyfriendIdleTime: null
 	,boyfriendIdled: null
@@ -37823,6 +37842,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			PlayState.SONG = Song.loadFromJson("tutorial");
 		}
 		this.isSecOpt = PlayState.SONG.secOpt;
+		dge_frontend_scale_ScreenScaleMode.addEventListener($bind(this,this.resolutionChange));
 		dge_backend_CacheTools.clearCache();
 		Paths.clearStoredMemory();
 		PlayState.instance = this;
@@ -38619,13 +38639,11 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.iconP2.set_visible(!ClientPrefs.hideHud);
 		this.iconP2.set_alpha(ClientPrefs.healthBarAlpha);
 		this.add(this.iconP2);
-		if(this.gf != null) {
-			this.iconP3 = new HealthIcon(this.gf.healthIcon,false);
-			this.iconP3.set_y(this.healthBar.y - 75);
-			this.iconP3.set_visible(!ClientPrefs.hideHud && this.isSecOpt);
-			this.iconP3.set_alpha(ClientPrefs.healthBarAlpha);
-			this.add(this.iconP3);
-		}
+		this.iconP3 = new HealthIcon(this.gf != null ? this.gf.healthIcon : "gf",false);
+		this.iconP3.set_y(this.healthBar.y - 75);
+		this.iconP3.set_visible(!ClientPrefs.hideHud && this.isSecOpt);
+		this.iconP3.set_alpha(ClientPrefs.healthBarAlpha);
+		this.add(this.iconP3);
 		this.set_mergeHealthColor(this.isSecOpt);
 		this.reloadHealthBarColors();
 		this.scoreTxt = new flixel_text_FlxText(0,this.healthBarBG.y + 36,flixel_FlxG.width,"",20);
@@ -38854,7 +38872,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.cachePopUpScore();
 		this.cacheCountdown();
 		this.callOnLuas("onCreatePost",[]);
-		dge_frontend_scale_ScreenScaleMode.addEventListener($bind(this,this.resolutionChange));
 		MusicBeatState.prototype.create.call(this);
 		if(ClientPrefs.startPause) {
 			this.openPauseMenu();
@@ -38942,7 +38959,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.playbackRate = value;
 		flixel_animation_FlxAnimationController.globalSpeed = value;
-		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1764, className : "PlayState", methodName : "set_playbackRate"});
+		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1765, className : "PlayState", methodName : "set_playbackRate"});
 		Conductor.safeZoneOffset = ClientPrefs.safeFrames / 60 * 1000 * value;
 		this.setOnLuas("playbackRate",this.playbackRate);
 		return value;
@@ -39053,10 +39070,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		char.set_x(char.x + char.positionArray[0]);
 		char.set_y(char.y + char.positionArray[1]);
 	}
-	,startVideo: function(name,newType) {
-		if(newType == null) {
-			newType = false;
-		}
+	,startVideo: function(name) {
 		var _gthis = this;
 		this.inCutscene = true;
 		var filepath = Paths.video(name);
@@ -39555,8 +39569,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,countdownGo: null
 	,cacheCountdown: function() {
 		var introAssets_h = Object.create(null);
-		introAssets_h["default"] = ["ready","set","go"];
-		introAssets_h["pixel"] = ["pixelUI/ready-pixel","pixelUI/set-pixel","pixelUI/date-pixel"];
+		var func = CoolUtil.arrayFallback;
+		introAssets_h["default"] = func(this.countdownTexture,["ready","set","go"]);
+		introAssets_h["pixel"] = func(this.countdownTexturePixel,["pixelUI/ready-pixel","pixelUI/set-pixel","pixelUI/date-pixel"]);
 		var introAlts = introAssets_h["default"];
 		if(PlayState.isPixelStage) {
 			introAlts = introAssets_h["pixel"];
@@ -39642,8 +39657,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					_gthis.dad.dance();
 				}
 				var introAssets_h = Object.create(null);
-				introAssets_h["default"] = ["ready","set","go"];
-				introAssets_h["pixel"] = ["pixelUI/ready-pixel","pixelUI/set-pixel","pixelUI/date-pixel"];
+				var func = CoolUtil.arrayFallback;
+				introAssets_h["default"] = func(_gthis.countdownTexture,["ready","set","go"]);
+				introAssets_h["pixel"] = func(_gthis.countdownTexturePixel,["pixelUI/ready-pixel","pixelUI/set-pixel","pixelUI/date-pixel"]);
 				var introAlts = introAssets_h["default"];
 				var antialias = ClientPrefs.globalAntialiasing;
 				if(PlayState.isPixelStage) {
@@ -40179,7 +40195,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,set_mergeHealthColor: function(value) {
 		if(this.mergeHealthColor != value) {
 			this.mergeHealthColor = value;
-			this.iconP3.set_visible(value);
+			if(this.iconP3 != null) {
+				this.iconP3.set_visible(value);
+			}
 			this.reloadHealthBarColors();
 		}
 		return value;
@@ -41138,7 +41156,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3980, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3850, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
@@ -41549,16 +41567,23 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						}
 					}
 					var botCanHit = (daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime < Conductor.songPosition + Conductor.safeZoneOffset * daNote.earlyHitMult && (daNote.parent != null ? daNote.parent.wasGoodHit : true) || !daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime <= Conductor.songPosition) && (daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null);
-					if((_gthis.gamemode == "opponent" ? !daNote.blockHit && !daNote.canFreeze && daNote.mustPress : !daNote.mustPress) && (!daNote.ignoreNote && !daNote.canFreeze) && daNote.fieldTarget.length < 1 && _gthis.gamemode != "bothside" && botCanHit) {
+					var noteField = daNote.fieldTarget != null ? daNote.fieldTarget : "";
+					var fieldCheck = _gthis.playableField.length > 0 && noteField.length > 0 ? _gthis.playableField.indexOf(daNote.fieldTarget) != -1 : true;
+					var fieldCheckO = _gthis.playableField.length > 0 && noteField.length > 0 ? _gthis.playableField.indexOf(daNote.fieldTarget) == -1 : true;
+					var botP = daNote.mustPress && !daNote.blockHit && !daNote.ignoreNote && !daNote.canFreeze && fieldCheck;
+					var botO = !daNote.mustPress && !daNote.ignoreNote && !daNote.canFreeze && fieldCheckO;
+					if(_gthis.gamemode == "opponent") {
+						botO = daNote.mustPress && !daNote.blockHit && !daNote.ignoreNote && !daNote.canFreeze && fieldCheckO;
+						botP = !daNote.mustPress && !daNote.ignoreNote && !daNote.canFreeze && fieldCheck;
+					} else if(_gthis.gamemode == "bothside") {
+						botO = false;
+						botP = !daNote.ignoreNote && fieldCheck && daNote.canFreeze && (daNote.mustPress && !daNote.blockHit || !daNote.mustPress);
+					}
+					var botplayHit = botP && _gthis.cpuControlled;
+					if(botO && botCanHit) {
 						_gthis.opponentNoteHit(daNote);
 					}
-					if((_gthis.gamemode == "opponent" ? !daNote.blockHit && !daNote.canFreeze && daNote.mustPress : !daNote.mustPress) && (!daNote.ignoreNote && !daNote.canFreeze) && daNote.fieldTarget.length > 0 && botCanHit) {
-						_gthis.opponentNoteHit(daNote);
-					}
-					if((_gthis.gamemode != "opponent" ? !daNote.blockHit && !daNote.canFreeze && (_gthis.gamemode == "bothside" ? true : daNote.mustPress) : !daNote.mustPress) && _gthis.cpuControlled && !(daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.fieldTarget.length > 0 : _gthis.playableField.indexOf(daNote.fieldTarget) == -1)) && botCanHit) {
-						_gthis.goodNoteHit(daNote);
-					}
-					if((_gthis.gamemode != "opponent" ? !daNote.blockHit && !daNote.canFreeze && (_gthis.gamemode == "bothside" ? true : daNote.mustPress) : !daNote.mustPress) && (daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.fieldTarget.length > 0 : _gthis.playableField.indexOf(daNote.fieldTarget) == -1)) && botCanHit) {
+					if(botplayHit && botCanHit) {
 						_gthis.goodNoteHit(daNote);
 					}
 					if(Conductor.songPosition > _gthis.noteKillOffset / Math.abs(_gthis.songSpeed * daNote.multSpeed) + (daNote.strumTime + daNote.offsetStrumTime)) {
@@ -42695,12 +42720,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5209, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5083, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5210, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5084, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -42736,7 +42761,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5243, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5117, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -42747,7 +42772,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5254, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5128, className : "PlayState", methodName : "endSong"});
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 					CustomFadeTransition.nextCamera = null;
@@ -42770,7 +42795,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5278, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5152, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -43043,6 +43068,28 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		var keyCheck = flixel_FlxG.keys.checkStatus(eventKey,2);
 		this.customKeyPress(key,keyCheck);
 	}
+	,canHitNote: function(daNote) {
+		var _gthis = this;
+		var allowedPressHandler = function(daNote) {
+			if(daNote != null) {
+				var noteField = daNote.fieldTarget != null ? daNote.fieldTarget : "";
+				if((daNote.mustPress || _gthis.playableField.length > 0 && noteField.length > 0 && _gthis.playableField.indexOf(daNote.fieldTarget) != -1) && !daNote.blockHit || !daNote.mustPress && !daNote.ignoreNote) {
+					return true;
+				}
+			}
+			return false;
+		};
+		var noteField = daNote.fieldTarget != null ? daNote.fieldTarget : "";
+		var basicChecks = daNote.canBeHit && !daNote.tooLate && !daNote.wasGoodHit && allowedPressHandler(daNote) && !daNote.canFreeze && !daNote.autoPress;
+		var gamemodeCheck = this.playableField.length > 0 && this.playableField.indexOf(daNote.fieldTarget) != -1 && noteField.length > 0 ? true : this.gamemodeManager(daNote);
+		var fieldCheck = this.playableField.length < 1 && noteField.length < 1 ? true : this.playableField.indexOf(daNote.fieldTarget) != -1;
+		var strumCheck = daNote.strumNote == null || !daNote.strumNote.isLocked;
+		if(basicChecks && gamemodeCheck && fieldCheck) {
+			return strumCheck;
+		} else {
+			return false;
+		}
+	}
 	,customKeyPress: function(key,keyCheck) {
 		var _gthis = this;
 		if(!this.cpuControlled && this.startedCountdown && !this.paused && key > -1 && (keyCheck || ClientPrefs.controllerMode)) {
@@ -43088,7 +43135,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var notesStopped = false;
 				var sortedNotesList = [];
 				this.notes.forEachAlive(function(daNote) {
-					if(_gthis.strumsBlocked[daNote.noteData] != true && (daNote.canBeHit && (_gthis.gamemode == "opponent" ? !daNote.mustPress : _gthis.gamemode == "bothside" ? true : daNote.mustPress) && !daNote.tooLate && !daNote.wasGoodHit && !daNote.isSustainNote && (_gthis.gamemode == "opponent" ? !daNote.ignoreNote && !daNote.canFreeze : !daNote.blockHit && !daNote.canFreeze) && !daNote.autoPress) && !(_gthis.playableField.length < 1 ? daNote.fieldTarget.length > 0 : _gthis.playableField.indexOf(daNote.fieldTarget) == -1) && (daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null)) {
+					if(_gthis.strumsBlocked[daNote.noteData] != true && !daNote.isSustainNote && _gthis.canHitNote(daNote)) {
 						if(daNote.noteData == key) {
 							sortedNotesList.push(daNote);
 						}
@@ -43234,10 +43281,8 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(this.startedCountdown && !this.boyfriend.stunned && this.generatedMusic) {
 			this.notes.forEachAlive(function(daNote) {
-				if(_gthis.strumsBlocked[daNote.noteData] != true && daNote.isSustainNote && parsedHoldArray[daNote.noteData] && daNote.canBeHit && (_gthis.gamemode != "opponent" ? _gthis.gamemode == "bothside" ? true : daNote.mustPress : !daNote.mustPress) && !daNote.tooLate && !daNote.wasGoodHit && (_gthis.gamemode == "opponent" || _gthis.gamemode == "bothside" && !daNote.mustPress ? !daNote.ignoreNote && !daNote.canFreeze : !daNote.blockHit && !daNote.canFreeze)) {
-					if(daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null) {
-						_gthis.goodNoteHit(daNote);
-					}
+				if(_gthis.strumsBlocked[daNote.noteData] != true && daNote.isSustainNote && parsedHoldArray[daNote.noteData] && _gthis.canHitNote(daNote)) {
+					_gthis.goodNoteHit(daNote);
 				}
 			});
 			if(parsedHoldArray.indexOf(true) != -1 && !this.endingSong) {
@@ -43307,7 +43352,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.totalPlayed++;
 		this.RecalculateRating(true);
-		var char = this.gamemode == "bothside" && !daNote.mustPress || daNote.isDad || this.gamemode == "opponent" ? this.dad : this.boyfriend;
+		var char = this.boyfriend;
+		if(!daNote.mustPress || daNote.isDad) {
+			char = this.dad;
+		}
 		if(daNote.gfNote) {
 			char = this.gf;
 		}
@@ -43315,7 +43363,11 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			var animToPlay = this.singAnimations[Math.abs(daNote.noteData) | 0] + "miss" + daNote.animSuffix;
 			char.playAnim(animToPlay,true);
 		}
-		this.callOnLuas(this.gamemode == "opponent" || this.gamemode == "bothside" && !daNote.mustPress ? "opponentNoteMiss" : "noteMiss",[this.notes.members.indexOf(daNote),daNote.noteData,daNote.noteType,daNote.isSustainNote]);
+		this.callOnLuas(!daNote.mustPress ? "opponentNoteMiss" : "noteMiss",[this.notes.members.indexOf(daNote),daNote.noteData,daNote.noteType,daNote.isSustainNote]);
+		if(!daNote.isSustainNote && daNote.holdCover != null) {
+			daNote.holdCover.kill();
+			daNote.set_holdCover(null);
+		}
 		if(daNote.isSustainNote && daNote.parent != null && daNote.parent.holdCover != null) {
 			daNote.parent.holdCover.kill();
 			daNote.parent.set_holdCover(null);
@@ -43328,13 +43380,17 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(ClientPrefs.ghostTapping) {
 			return;
 		}
+		var char = this.boyfriend;
+		if(this.gamemode == "opponent") {
+			char = this.dad;
+		}
 		if(!this.boyfriend.stunned) {
 			this.health -= 0.05 * this.healthLoss;
 			if(this.instakillOnMiss) {
 				this.vocals.set_volume(0);
 				this.doDeathCheck(true);
 			}
-			if(this.combo > 5 && this.gf != null && Object.prototype.hasOwnProperty.call(this.gf.animOffsets.h,"sad")) {
+			if(this.combo > 5 && this.gf != null && Object.prototype.hasOwnProperty.call(this.gf.animOffsets.h,"sad") && char == this.boyfriend) {
 				this.gf.playAnim("sad");
 			}
 			this.combo = 0;
@@ -43347,8 +43403,8 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.totalPlayed++;
 			this.RecalculateRating(true);
 			flixel_FlxG.sound.play(Paths.sound("missnote" + flixel_FlxG.random.int(1,3),null),flixel_FlxG.random.float(0.1,0.2));
-			if(this.boyfriend.hasMissAnimations) {
-				this.boyfriend.playAnim(this.singAnimations[Math.abs(direction) | 0] + "miss",true);
+			if(char.hasMissAnimations) {
+				char.playAnim(this.singAnimations[Math.abs(direction) | 0] + "miss",true);
 			}
 			this.vocals.set_volume(0);
 		}
@@ -43384,25 +43440,43 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			if(hideChars.split(path1).join("").toLowerCase() != "tutorial" && (!note.mustPress || note.mustPress && note.isDad)) {
 				this.camZooming = true;
 			}
-			if(note.noteType == "Hey!" && Object.prototype.hasOwnProperty.call(this.dad.animOffsets.h,"hey")) {
-				this.dad.playAnim("hey",true);
-				this.dad.specialAnim = true;
-				this.dad.heyTimer = 0.6;
-			} else if(!note.noAnimation) {
-				var altAnim = note.animSuffix;
+			if(!note.noAnimation) {
+				var animToPlay = this.singAnimations[Math.abs(note.noteData) | 0];
+				var animSuffix = note.animSuffix;
 				if(PlayState.SONG.notes[this.curSection] != null) {
 					if(PlayState.SONG.notes[this.curSection].altAnim && !PlayState.SONG.notes[this.curSection].gfSection) {
-						altAnim = "-alt";
+						animSuffix = "-alt";
 					}
 				}
-				var char = this.gamemode == "opponent" ? this.boyfriend : this.dad;
-				var animToPlay = this.singAnimations[Math.abs(note.noteData) | 0] + altAnim;
 				if(note.gfNote) {
-					char = this.gf;
+					if(this.gf != null) {
+						this.gf.playAnim(animToPlay + animSuffix,true,false,0,note.isSustainNote);
+						this.gf.holdTimer = 0;
+					}
+				} else if(!note.mustPress) {
+					this.dad.playAnim(animToPlay + animSuffix,true,false,0,note.isSustainNote);
+					this.dad.holdTimer = 0;
+				} else {
+					this.boyfriend.playAnim(animToPlay + animSuffix,true,false,0,note.isSustainNote);
+					this.boyfriend.holdTimer = 0;
 				}
-				if(char != null) {
-					char.playAnim(animToPlay,true,false,0,note.isSustainNote);
-					char.holdTimer = 0;
+				if(note.noteType == "Hey!") {
+					if(note.mustPress) {
+						if(Object.prototype.hasOwnProperty.call(this.boyfriend.animOffsets.h,"hey")) {
+							this.boyfriend.playAnim("hey",true,false,0,note.isSustainNote);
+							this.boyfriend.specialAnim = true;
+							this.boyfriend.heyTimer = 0.6;
+						}
+						if(this.gf != null && Object.prototype.hasOwnProperty.call(this.gf.animOffsets.h,"cheer")) {
+							this.gf.playAnim("cheer",true);
+							this.gf.specialAnim = true;
+							this.gf.heyTimer = 0.6;
+						}
+					} else if(Object.prototype.hasOwnProperty.call(this.dad.animOffsets.h,"hey")) {
+						this.dad.playAnim("hey",true,false,0,note.isSustainNote);
+						this.dad.specialAnim = true;
+						this.dad.heyTimer = 0.6;
+					}
 				}
 			}
 			if(PlayState.SONG.needsVoices) {
@@ -43572,15 +43646,15 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							this.boyfriend.specialAnim = true;
 							this.boyfriend.heyTimer = 0.6;
 						}
+						if(this.gf != null && Object.prototype.hasOwnProperty.call(this.gf.animOffsets.h,"cheer")) {
+							this.gf.playAnim("cheer",true);
+							this.gf.specialAnim = true;
+							this.gf.heyTimer = 0.6;
+						}
 					} else if(Object.prototype.hasOwnProperty.call(this.dad.animOffsets.h,"hey")) {
 						this.dad.playAnim("hey",true);
 						this.dad.specialAnim = true;
 						this.dad.heyTimer = 0.6;
-					}
-					if(this.gf != null && Object.prototype.hasOwnProperty.call(this.gf.animOffsets.h,"cheer")) {
-						this.gf.playAnim("cheer",true);
-						this.gf.specialAnim = true;
-						this.gf.heyTimer = 0.6;
 					}
 				}
 			}
@@ -44493,7 +44567,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var _g1 = data;
 				while(_g < _g1) {
 					var i = _g++;
-					var babyArrow = new StrumNote(i * Note.swagWidth,this.strumLine.y,i,player ? 1 : 0,gf);
+					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,player ? 1 : 0,gf);
 					babyArrow.scrollFactor.set(sfX,sfY);
 					babyArrow.downScroll = downScroll;
 					babyArrow.postAddedToGroup();
@@ -44672,7 +44746,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7328, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7250, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -44698,7 +44772,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7341, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7263, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -45320,6 +45394,15 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,resolutionChange: function(W,H) {
 		var camGameM = Math.max(W / 1280,H / 720);
 		this.camGameMult = camGameM;
+	}
+	,bfIndex: function(name) {
+		var num = Std.parseInt(name);
+		if(isNaN(num)) {
+			return "bf";
+		} else if(num > 2) {
+			return "2";
+		}
+		return name;
 	}
 	,__class__: PlayState
 	,__properties__: $extend(MusicBeatState.prototype.__properties__,{set_playableField:"set_playableField",set_fieldNameAsPlayer:"set_fieldNameAsPlayer",set_mergeHealthColor:"set_mergeHealthColor",set_playbackRate:"set_playbackRate",set_songSpeed:"set_songSpeed",set_privateData:"set_privateData"})
@@ -47178,30 +47261,33 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 		return flixel_FlxSprite.prototype.set_alpha.call(this,value);
 	}
 	,reloadAnims: function(image) {
-		var skin = PlayState.SONG.arrowSkin;
+		var skin = image;
+		var skinOG = PlayState.SONG.arrowSkin;
 		var skinOpt = PlayState.SONG.arrowSkinOpt;
 		var skinSec = PlayState.SONG.arrowSkinSec;
 		if(skin == null || skin.length < 1) {
+			if(this.player == 1) {
+				skin = skinOG;
+			} else if(this.gfType) {
+				if(skinSec == null || skinSec.length < 1) {
+					if(skinOpt == null || skinOpt.length < 1) {
+						skin = skinOG;
+					} else {
+						skin = skinOpt;
+					}
+				} else {
+					skin = skinSec;
+				}
+			} else if(skinOpt == null || skinOpt.length < 1) {
+				skin = skinOG;
+			} else {
+				skin = skinOpt;
+			}
+		}
+		if(skin == null || skin.length < 1) {
 			skin = ClientPrefs.dflnoteskin;
 		}
-		if(skinOpt == null || skinOpt.length < 1) {
-			skinOpt = skin;
-		}
-		if(skinSec == null || skinSec.length < 1) {
-			if(skinOpt == null || skinOpt.length < 1) {
-				skinOpt = skin;
-			}
-			skinSec = skinOpt;
-		}
-		if(image == "" || image.length < 1) {
-			if(this.player == 1) {
-				image = skin;
-			} else if(this.gfType) {
-				image = skinSec;
-			} else {
-				image = skinOpt;
-			}
-		}
+		image = skin;
 		if(PlayState.isPixelStage) {
 			var returnAsset = Paths.returnGraphic("pixelUI/" + image,null);
 			this.loadGraphic(returnAsset);
@@ -54182,7 +54268,7 @@ var dge_obj_game_HoldCover = function(x,y,type) {
 		}
 		skinSec = skinOpt;
 	}
-	if(type == "bg") {
+	if(type == "bf") {
 		texture = skin;
 	} else if(type == "gf") {
 		texture = skinSec;
@@ -54294,7 +54380,8 @@ dge_obj_game_HoldCover.prototype = $extend(flixel_FlxSprite.prototype,{
 				} else {
 					texture = skinOpt;
 				}
-			} else {
+			}
+			if(texture == null || texture.length < 1) {
 				texture = "holdCover";
 			}
 		}
@@ -54391,7 +54478,8 @@ dge_obj_game_HoldCover.prototype = $extend(flixel_FlxSprite.prototype,{
 			this.setPosition(this.strum.x + this.strum.get_width() / 2 - this.get_width() / 2 + offsetX,this.strum.y + this.strum.get_height() / 2 - this.get_height() / 2 + offsetY);
 		}
 		if(this.timer > 0) {
-			this.timer -= elapsed;
+			var speed = PlayState.instance != null ? PlayState.instance.playbackRate : 1;
+			this.timer -= elapsed * speed;
 			if(this.timer <= 0) {
 				if(this.note != null) {
 					this.playAnim("end" + this.note.noteData % 4);
@@ -61287,7 +61375,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			}
 		}
 		var noteDataToCheck = actualNoteData;
-		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3741, className : "editors.ChartingState", methodName : "deleteNote"});
+		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3656, className : "editors.ChartingState", methodName : "deleteNote"});
 		if(note.noteData > -1) {
 			var _g = 0;
 			var _g1 = this._song.notes[editors_ChartingState.curSec].sectionNotes;
@@ -61384,7 +61472,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 				}
 			}
 		}
-		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3846, className : "editors.ChartingState", methodName : "addNote"});
+		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3761, className : "editors.ChartingState", methodName : "addNote"});
 		if(type != null) {
 			daType = type;
 		}
@@ -143931,7 +144019,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 778542;
+	this.version = 131960;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
