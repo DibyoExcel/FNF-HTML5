@@ -6549,12 +6549,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "404";
+	app.meta.h["build"] = "405";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.12.15";
+	app.meta.h["version"] = "26.12.16";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -40276,6 +40276,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(!Object.prototype.hasOwnProperty.call(this.eventPushedMap.h,event.event)) {
 			this.eventPushedMap.h[event.event] = true;
 		}
+		this.callOnLuas("onEventPushed",[event.event,event.value1,event.value2]);
 	}
 	,eventNoteEarlyTrigger: function(event) {
 		var returnedValue = this.callOnLuas("eventEarlyTrigger",[event.event]);
@@ -41156,7 +41157,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3850, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3851, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
@@ -41569,15 +41570,14 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					var botCanHit = (daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime < Conductor.songPosition + Conductor.safeZoneOffset * daNote.earlyHitMult && (daNote.parent != null ? daNote.parent.wasGoodHit : true) || !daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime <= Conductor.songPosition) && (daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null);
 					var noteField = daNote.fieldTarget != null ? daNote.fieldTarget : "";
 					var fieldCheck = _gthis.playableField.length > 0 && noteField.length > 0 ? _gthis.playableField.indexOf(daNote.fieldTarget) != -1 : true;
-					var fieldCheckO = _gthis.playableField.length > 0 && noteField.length > 0 ? _gthis.playableField.indexOf(daNote.fieldTarget) == -1 : true;
 					var botP = daNote.mustPress && !daNote.blockHit && !daNote.ignoreNote && !daNote.canFreeze && fieldCheck;
-					var botO = !daNote.mustPress && !daNote.ignoreNote && !daNote.canFreeze && fieldCheckO;
+					var botO = (!daNote.mustPress || !fieldCheck) && !daNote.ignoreNote && !daNote.canFreeze;
 					if(_gthis.gamemode == "opponent") {
-						botO = daNote.mustPress && !daNote.blockHit && !daNote.ignoreNote && !daNote.canFreeze && fieldCheckO;
-						botP = !daNote.mustPress && !daNote.ignoreNote && !daNote.canFreeze && fieldCheck;
+						botO = daNote.mustPress && !daNote.blockHit && !daNote.ignoreNote && !daNote.canFreeze;
+						botP = (!daNote.mustPress || !fieldCheck) && !daNote.ignoreNote && !daNote.canFreeze && fieldCheck;
 					} else if(_gthis.gamemode == "bothside") {
 						botO = false;
-						botP = !daNote.ignoreNote && fieldCheck && daNote.canFreeze && (daNote.mustPress && !daNote.blockHit || !daNote.mustPress);
+						botP = !daNote.ignoreNote && daNote.canFreeze && (daNote.mustPress && !daNote.blockHit || !daNote.mustPress);
 					}
 					var botplayHit = botP && _gthis.cpuControlled;
 					if(botO && botCanHit) {
@@ -144019,7 +144019,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 131960;
+	this.version = 899851;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
