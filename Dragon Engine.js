@@ -6549,12 +6549,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "405";
+	app.meta.h["build"] = "406";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.12.16";
+	app.meta.h["version"] = "26.12.17";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -41268,9 +41268,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					var strumGroupR = _gthis.playerStrums;
 					var actualStrum;
 					var fakeStrum;
-					if(daNote.fieldTarget != null && daNote.fieldTarget.length > 0) {
-						if(Object.prototype.hasOwnProperty.call(_gthis.strumGroupMap.h,daNote.fieldTarget) && Object.prototype.hasOwnProperty.call(_gthis.notesGroupMap.h,daNote.fieldTarget)) {
-							strumGroup = _gthis.strumGroupMap.h[daNote.fieldTarget];
+					var noteField = daNote.fieldTarget != null ? daNote.fieldTarget : "";
+					if(noteField.length > 0) {
+						if(Object.prototype.hasOwnProperty.call(_gthis.strumGroupMap.h,noteField) && Object.prototype.hasOwnProperty.call(_gthis.notesGroupMap.h,noteField)) {
+							strumGroup = _gthis.strumGroupMap.h[noteField];
 						} else {
 							daNote.fieldTarget = "";
 						}
@@ -41516,7 +41517,8 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						daNote.strumNote = null;
 					}
 					if(daNote != null) {
-						if(daNote.fieldTarget != null && daNote.fieldTarget.length > 0 && Object.prototype.hasOwnProperty.call(_gthis.notesGroupMap.h,daNote.fieldTarget)) {
+						var noteField = daNote.fieldTarget != null ? daNote.fieldTarget : "";
+						if(noteField.length > 0 && Object.prototype.hasOwnProperty.call(_gthis.notesGroupMap.h,noteField)) {
 							var specialGroup = [_gthis.opponentNotes,_gthis.playerNotes,_gthis.gfNotes];
 							var _g = 0;
 							while(_g < specialGroup.length) {
@@ -41534,7 +41536,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							while(i_current < i_length) {
 								var i = i_keys[i_current++];
 								var getS = _gthis.notesGroupMap.h[i];
-								if(daNote.fieldTarget == i) {
+								if(noteField == i) {
 									if(getS.members.indexOf(daNote) == -1) {
 										getS.insert(0,daNote);
 									}
@@ -41569,25 +41571,29 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 					var botCanHit = (daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime < Conductor.songPosition + Conductor.safeZoneOffset * daNote.earlyHitMult && (daNote.parent != null ? daNote.parent.wasGoodHit : true) || !daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime <= Conductor.songPosition) && (daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null);
 					var noteField = daNote.fieldTarget != null ? daNote.fieldTarget : "";
-					var fieldCheck = _gthis.playableField.length > 0 && noteField.length > 0 ? _gthis.playableField.indexOf(daNote.fieldTarget) != -1 : true;
-					var botP = daNote.mustPress && !daNote.blockHit && !daNote.ignoreNote && !daNote.canFreeze && fieldCheck;
-					var botO = (!daNote.mustPress || !fieldCheck) && !daNote.ignoreNote && !daNote.canFreeze;
+					var fieldCheck = noteField.length > 0 ? _gthis.playableField.length > 0 && _gthis.playableField.indexOf(noteField) != -1 : _gthis.gamemodeManager(daNote);
+					var blockHitField = noteField.length > 0 ? !daNote.blockHit : true;
+					var botP = fieldCheck && !daNote.blockHit;
+					var botO = !fieldCheck && blockHitField;
 					if(_gthis.gamemode == "opponent") {
-						botO = daNote.mustPress && !daNote.blockHit && !daNote.ignoreNote && !daNote.canFreeze;
-						botP = (!daNote.mustPress || !fieldCheck) && !daNote.ignoreNote && !daNote.canFreeze && fieldCheck;
+						botO = !fieldCheck && !daNote.blockHit;
+						botP = fieldCheck && blockHitField;
 					} else if(_gthis.gamemode == "bothside") {
-						botO = false;
-						botP = !daNote.ignoreNote && daNote.canFreeze && (daNote.mustPress && !daNote.blockHit || !daNote.mustPress);
+						botO = !fieldCheck && blockHitField;
+						botP = fieldCheck && !daNote.blockHit || !daNote.mustPress;
 					}
 					var botplayHit = botP && _gthis.cpuControlled;
-					if(botO && botCanHit) {
-						_gthis.opponentNoteHit(daNote);
-					}
-					if(botplayHit && botCanHit) {
-						_gthis.goodNoteHit(daNote);
+					if(!daNote.ignoreNote && !daNote.canFreeze && botCanHit) {
+						if(botO) {
+							_gthis.opponentNoteHit(daNote);
+						}
+						if(botplayHit) {
+							_gthis.goodNoteHit(daNote);
+						}
 					}
 					if(Conductor.songPosition > _gthis.noteKillOffset / Math.abs(_gthis.songSpeed * daNote.multSpeed) + (daNote.strumTime + daNote.offsetStrumTime)) {
-						if((_gthis.gamemode != "opponent" ? _gthis.gamemode == "bothside" ? true : daNote.mustPress : !daNote.mustPress) && !_gthis.cpuControlled && !daNote.ignoreNote && !_gthis.endingSong && (daNote.tooLate || !daNote.wasGoodHit) && !(daNote.autoPress || (_gthis.playableField.length < 1 ? daNote.fieldTarget.length > 0 : _gthis.playableField.indexOf(daNote.fieldTarget) == -1))) {
+						var shouldMiss = !_gthis.cpuControlled && !daNote.ignoreNote && !_gthis.endingSong && (!daNote.wasGoodHit || daNote.tooLate) && !daNote.autoPress && !daNote.canFreeze;
+						if(shouldMiss && fieldCheck) {
 							_gthis.noteMiss(daNote);
 						}
 						if(!daNote.hitByOpponent && !daNote.mustPress || !daNote.wasGoodHit && daNote.mustPress && daNote.isDad) {
@@ -42720,12 +42726,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5083, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5091, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5084, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5092, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -42761,7 +42767,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5117, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5125, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -42772,7 +42778,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5128, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5136, className : "PlayState", methodName : "endSong"});
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 					CustomFadeTransition.nextCamera = null;
@@ -42795,7 +42801,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5152, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5160, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -43029,7 +43035,8 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.vocals.set_volume(1);
 		var score = 350;
 		var daRating = Conductor.judgeNote(note,noteDiff / this.playbackRate);
-		var isPlayer = !note.autoPress && !(this.playableField.length > 0 ? this.playableField.indexOf(note.fieldTarget) == -1 : note.fieldTarget.length > 0);
+		var noteField = note.fieldTarget != null ? note.fieldTarget : "";
+		var isPlayer = !note.autoPress && (this.playableField.length > 0 || noteField.length > 0 ? this.playableField.indexOf(noteField) != -1 : true);
 		note.ratingMod = daRating.ratingMod;
 		if(!note.ratingDisabled && isPlayer && !this.cpuControlled) {
 			daRating.increase();
@@ -43069,22 +43076,18 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.customKeyPress(key,keyCheck);
 	}
 	,canHitNote: function(daNote) {
-		var _gthis = this;
-		var allowedPressHandler = function(daNote) {
-			if(daNote != null) {
-				var noteField = daNote.fieldTarget != null ? daNote.fieldTarget : "";
-				if((daNote.mustPress || _gthis.playableField.length > 0 && noteField.length > 0 && _gthis.playableField.indexOf(daNote.fieldTarget) != -1) && !daNote.blockHit || !daNote.mustPress && !daNote.ignoreNote) {
-					return true;
-				}
-			}
+		if(daNote == null) {
 			return false;
-		};
+		}
 		var noteField = daNote.fieldTarget != null ? daNote.fieldTarget : "";
-		var basicChecks = daNote.canBeHit && !daNote.tooLate && !daNote.wasGoodHit && allowedPressHandler(daNote) && !daNote.canFreeze && !daNote.autoPress;
-		var gamemodeCheck = this.playableField.length > 0 && this.playableField.indexOf(daNote.fieldTarget) != -1 && noteField.length > 0 ? true : this.gamemodeManager(daNote);
-		var fieldCheck = this.playableField.length < 1 && noteField.length < 1 ? true : this.playableField.indexOf(daNote.fieldTarget) != -1;
+		var fieldCheck = noteField.length > 0 ? this.playableField.length > 0 && this.playableField.indexOf(noteField) != -1 : this.gamemodeManager(daNote);
+		var allowedPress = fieldCheck && !daNote.blockHit;
+		if(!daNote.mustPress && noteField.length < 1) {
+			allowedPress = fieldCheck && !daNote.ignoreNote;
+		}
+		var basicChecks = daNote.canBeHit && !daNote.tooLate && !daNote.wasGoodHit && allowedPress && !daNote.canFreeze && !daNote.autoPress;
 		var strumCheck = daNote.strumNote == null || !daNote.strumNote.isLocked;
-		if(basicChecks && gamemodeCheck && fieldCheck) {
+		if(basicChecks && fieldCheck) {
 			return strumCheck;
 		} else {
 			return false;
@@ -43502,8 +43505,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			if(note.playStrumAnim && !note.fakeNoHit && !ClientPrefs.clsstrum) {
 				this.StrumPlayAnim(time,note);
 			}
-			if(note.fieldTarget != null && note.fieldTarget.length > 0) {
-				this.callOnLuas("fieldNoteHit",[note.fieldTarget,this.notes.members.indexOf(note),Math.abs(note.noteData),note.noteType,note.isSustainNote]);
+			var noteField = note.fieldTarget != null ? note.fieldTarget : "";
+			if(noteField.length > 0) {
+				this.callOnLuas("fieldNoteHit",[noteField,this.notes.members.indexOf(note),Math.abs(note.noteData),note.noteType,note.isSustainNote]);
 			} else {
 				this.callOnLuas(note.mustPress ? "goodNoteHit" : "opponentNoteHit",[this.notes.members.indexOf(note),Math.abs(note.noteData),note.noteType,note.isSustainNote]);
 			}
@@ -43526,8 +43530,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(note != null && !ClientPrefs.clsstrum) {
 			if(!note.isSustainNote && (note.sustainLength + (note.strumTime + note.offsetStrumTime - Conductor.songPosition)) / 1000 + note.holdCoverDelaySplash > 0 && (note.tail != null && note.tail.length > 0)) {
 				var groupTarget = this.grpHoldCover;
-				if(note.fieldTarget != null && note.fieldTarget.length > 0 && Object.prototype.hasOwnProperty.call(this.holdCoverGroupMap.h,note.fieldTarget)) {
-					groupTarget = this.holdCoverGroupMap.h[note.fieldTarget];
+				var noteField = note.fieldTarget != null ? note.fieldTarget : "";
+				if(noteField.length > 0 && Object.prototype.hasOwnProperty.call(this.holdCoverGroupMap.h,noteField)) {
+					groupTarget = this.holdCoverGroupMap.h[noteField];
 				} else if(!note.mustPress) {
 					groupTarget = this.grpHoldCoverOpt;
 				} else if(note.gfNote || note.secondOpponent) {
@@ -43555,7 +43560,8 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,goodNoteHit: function(note) {
 		if(!note.wasGoodHit) {
-			if((this.cpuControlled || note.autoPress || (this.playableField.length < 1 ? note.fieldTarget.length > 0 : this.playableField.indexOf(note.fieldTarget) == -1)) && (note.ignoreNote || note.canFreeze || note.hitCausesMiss)) {
+			var noteField = note.fieldTarget != null ? note.fieldTarget : "";
+			if((this.cpuControlled || note.autoPress || (this.playableField.length < 1 ? noteField.length > 0 : this.playableField.indexOf(noteField) == -1)) && (note.ignoreNote || note.canFreeze || note.hitCausesMiss)) {
 				return;
 			}
 			if(ClientPrefs.hitsoundVolume > 0 && !note.hitsoundDisabled || note.forceHitsound) {
@@ -43679,7 +43685,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				if(note.playStrumAnim && !note.fakeNoHit && !ClientPrefs.clsstrum) {
 					this.StrumPlayAnim(time,note);
 				}
-			} else if(note.autoPress || (this.playableField.length < 1 ? note.fieldTarget.length > 0 : this.playableField.indexOf(note.fieldTarget) == -1)) {
+			} else if(note.autoPress || (this.playableField.length < 1 ? noteField.length > 0 : this.playableField.indexOf(noteField) == -1)) {
 				var time = 0.2;
 				if(note.strumNote != null) {
 					time = note.strumNote.resetTime;
@@ -43711,8 +43717,8 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			var isSus = note.isSustainNote;
 			var leData = Math.round(Math.abs(note.noteData));
 			var leType = note.noteType;
-			if(note.fieldTarget != null && note.fieldTarget.length > 0) {
-				this.callOnLuas("fieldNoteHit",[note.fieldTarget,this.notes.members.indexOf(note),leData,leType,isSus]);
+			if(noteField.length > 0) {
+				this.callOnLuas("fieldNoteHit",[noteField,this.notes.members.indexOf(note),leData,leType,isSus]);
 			} else {
 				this.callOnLuas(!note.mustPress || note.isDad ? "opponentNoteHit" : "goodNoteHit",[this.notes.members.indexOf(note),leData,leType,isSus]);
 			}
@@ -43762,9 +43768,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			}
 		}
 		if(note != null) {
+			var noteField = note.fieldTarget != null ? note.fieldTarget : "";
 			var groupTarget = this.grpNoteSplashes;
-			if(note.fieldTarget != null && note.fieldTarget.length > 0 && Object.prototype.hasOwnProperty.call(this.noteSplashGroupMap.h,note.fieldTarget)) {
-				groupTarget = this.noteSplashGroupMap.h[note.fieldTarget];
+			if(noteField.length > 0 && Object.prototype.hasOwnProperty.call(this.noteSplashGroupMap.h,noteField)) {
+				groupTarget = this.noteSplashGroupMap.h[noteField];
 			} else if(!note.mustPress) {
 				groupTarget = this.grpNoteSplashesOpt;
 			} else if(note.gfNote || note.secondOpponent) {
@@ -44746,7 +44753,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7250, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7253, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -44772,7 +44779,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7263, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7266, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -44935,10 +44942,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		note.destroy();
 	}
 	,set_fieldNameAsPlayer: function(value) {
-		if(this.fieldNameAsPlayer != value) {
-			this.fieldNameAsPlayer = value;
-			this.set_playableField([value]);
-		}
+		this.set_playableField([value]);
 		return value;
 	}
 	,set_playableField: function(value) {
@@ -144019,7 +144023,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 899851;
+	this.version = 815943;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
