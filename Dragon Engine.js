@@ -6549,12 +6549,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "406";
+	app.meta.h["build"] = "407";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.12.17";
+	app.meta.h["version"] = "26.12.18";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -40292,15 +40292,61 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(Obj1 == null || Obj2 == null) {
 			return 0;
 		}
-		if(!Obj1.topLayer && Obj2.topLayer || !Obj1.attachStrum && Obj2.attachStrum) {
-			return -1;
-		} else if(Obj1.topLayer && !Obj2.topLayer || Obj1.attachStrum && !Obj2.attachStrum) {
-			return 1;
+		if(Obj1.topLayer != Obj2.topLayer) {
+			if(Obj1.topLayer) {
+				return 1;
+			} else {
+				return -1;
+			}
 		}
-		var time1 = (Obj1.isSustainNote && Obj1.parent != null && Obj1.parent.multSpeed == Obj1.multSpeed && !ClientPrefs.legacyNoteLayer ? Obj1.parent.strumTime + (Obj1.strumTime - Obj1.parent.strumTime) * 0.001 : Obj1.strumTime) + Obj1.offsetStrumTime;
-		var time2 = (Obj2.isSustainNote && Obj2.parent != null && Obj2.parent.multSpeed == Obj2.multSpeed && !ClientPrefs.legacyNoteLayer ? Obj2.parent.strumTime + (Obj2.strumTime - Obj2.parent.strumTime) * 0.001 : Obj2.strumTime) + Obj2.offsetStrumTime;
-		var Value1 = time1 * Obj1.multSpeed;
-		var Value2 = time2 * Obj2.multSpeed;
+		if(Obj1.attachStrum != Obj2.attachStrum) {
+			if(Obj1.attachStrum) {
+				return 1;
+			} else {
+				return -1;
+			}
+		}
+		var groupParent1 = Obj1.isSustainNote && Obj1.parent != null && !ClientPrefs.legacyNoteLayer ? Obj1.parent : Obj1;
+		var groupParent2 = Obj2.isSustainNote && Obj2.parent != null && !ClientPrefs.legacyNoteLayer ? Obj2.parent : Obj2;
+		var obj = Obj1.isSustainNote && Obj1.parent != null && !ClientPrefs.legacyNoteLayer ? Obj1.parent : Obj1;
+		var groupTime1 = obj.strumTime + obj.offsetStrumTime;
+		var obj = Obj2.isSustainNote && Obj2.parent != null && !ClientPrefs.legacyNoteLayer ? Obj2.parent : Obj2;
+		var groupTime2 = obj.strumTime + obj.offsetStrumTime;
+		if(groupParent1 != groupParent2) {
+			var result = 0;
+			if(groupTime1 < groupTime2) {
+				result = Order;
+			} else if(groupTime1 > groupTime2) {
+				result = -Order;
+			}
+			return result;
+		}
+		var Value1;
+		if(!Obj1.isSustainNote) {
+			Value1 = 0;
+		} else {
+			var longNI = 1;
+			if(Obj1.parent != null && Obj1.parent.tail != null && Obj1.parent.tail.length > 0) {
+				var id = Obj1.parent.tail.indexOf(Obj1);
+				if(id != -1) {
+					longNI += id;
+				}
+			}
+			Value1 = longNI;
+		}
+		var Value2;
+		if(!Obj2.isSustainNote) {
+			Value2 = 0;
+		} else {
+			var longNI = 1;
+			if(Obj2.parent != null && Obj2.parent.tail != null && Obj2.parent.tail.length > 0) {
+				var id = Obj2.parent.tail.indexOf(Obj2);
+				if(id != -1) {
+					longNI += id;
+				}
+			}
+			Value2 = longNI;
+		}
 		var result = 0;
 		if(Value1 < Value2) {
 			result = Order;
@@ -40308,6 +40354,29 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			result = -Order;
 		}
 		return result;
+	}
+	,getGroupTime: function(note) {
+		var obj = note.isSustainNote && note.parent != null && !ClientPrefs.legacyNoteLayer ? note.parent : note;
+		return obj.strumTime + obj.offsetStrumTime;
+	}
+	,getParentObject: function(note) {
+		if(note.isSustainNote && note.parent != null && !ClientPrefs.legacyNoteLayer) {
+			return note.parent;
+		}
+		return note;
+	}
+	,getSubLayerPriority: function(note) {
+		if(!note.isSustainNote) {
+			return 0;
+		}
+		var longNI = 1;
+		if(note.parent != null && note.parent.tail != null && note.parent.tail.length > 0) {
+			var id = note.parent.tail.indexOf(note);
+			if(id != -1) {
+				longNI += id;
+			}
+		}
+		return longNI;
 	}
 	,sortByShit: function(Obj1,Obj2) {
 		var Value1 = Obj1.strumTime + Obj1.offsetStrumTime;
@@ -41157,7 +41226,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3851, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3879, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
@@ -41582,7 +41651,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						botO = !fieldCheck && blockHitField;
 						botP = fieldCheck && !daNote.blockHit || !daNote.mustPress;
 					}
-					var botplayHit = botP && _gthis.cpuControlled;
+					var botplayHit = botP && (_gthis.cpuControlled || daNote.autoPress);
 					if(!daNote.ignoreNote && !daNote.canFreeze && botCanHit) {
 						if(botO) {
 							_gthis.opponentNoteHit(daNote);
@@ -42726,12 +42795,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5091, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5119, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5092, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5120, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -42767,7 +42836,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5125, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5153, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -42778,7 +42847,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5136, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5164, className : "PlayState", methodName : "endSong"});
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 					CustomFadeTransition.nextCamera = null;
@@ -42801,7 +42870,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5160, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5188, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -44753,7 +44822,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7253, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7266, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -44779,7 +44848,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7266, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7279, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -53734,42 +53803,30 @@ var dge_frontend_math_BoundHelper = function() { };
 $hxClasses["dge.frontend.math.BoundHelper"] = dge_frontend_math_BoundHelper;
 dge_frontend_math_BoundHelper.__name__ = "dge.frontend.math.BoundHelper";
 dge_frontend_math_BoundHelper.computeAABB = function(rectX,rectY,w,h,angle,originX,originY) {
+	if(angle == 0) {
+		return { minX : rectX, minY : rectY, maxX : rectX + w, maxY : rectY + h};
+	}
 	var pivotX = rectX + originX * w;
 	var pivotY = rectY + originY * h;
-	angle = -angle * Math.PI / 180;
-	var corners = [{ x : rectX, y : rectY},{ x : rectX + w, y : rectY},{ x : rectX + w, y : rectY + h},{ x : rectX, y : rectY + h}];
-	var rotated = [];
-	var _g = 0;
-	while(_g < corners.length) {
-		var corner = corners[_g];
-		++_g;
-		var dx = corner.x - pivotX;
-		var dy = corner.y - pivotY;
-		var xRot = pivotX + dx * Math.cos(angle) - dy * Math.sin(angle);
-		var yRot = pivotY + dx * Math.sin(angle) + dy * Math.cos(angle);
-		rotated.push({ x : xRot, y : yRot});
-	}
-	var minX = Infinity;
-	var minY = Infinity;
-	var maxX = -Infinity;
-	var maxY = -Infinity;
-	var _g = 0;
-	while(_g < rotated.length) {
-		var p = rotated[_g];
-		++_g;
-		if(p.x < minX) {
-			minX = p.x;
-		}
-		if(p.x > maxX) {
-			maxX = p.x;
-		}
-		if(p.y < minY) {
-			minY = p.y;
-		}
-		if(p.y > maxY) {
-			maxY = p.y;
-		}
-	}
+	var rad = -angle * (Math.PI / 180.0);
+	var cos = Math.cos(rad);
+	var sin = Math.sin(rad);
+	var dx0 = rectX - pivotX;
+	var dy0 = rectY - pivotY;
+	var dx1 = dx0 + w;
+	var dy1 = dy0 + h;
+	var x1 = pivotX + dx0 * cos - dy0 * sin;
+	var y1 = pivotY + dx0 * sin + dy0 * cos;
+	var x2 = pivotX + dx1 * cos - dy0 * sin;
+	var y2 = pivotY + dx1 * sin + dy0 * cos;
+	var x3 = pivotX + dx1 * cos - dy1 * sin;
+	var y3 = pivotY + dx1 * sin + dy1 * cos;
+	var x4 = pivotX + dx0 * cos - dy1 * sin;
+	var y4 = pivotY + dx0 * sin + dy1 * cos;
+	var minX = Math.min(Math.min(x1,x2),Math.min(x3,x4));
+	var maxX = Math.max(Math.max(x1,x2),Math.max(x3,x4));
+	var minY = Math.min(Math.min(y1,y2),Math.min(y3,y4));
+	var maxY = Math.max(Math.max(y1,y2),Math.max(y3,y4));
 	return { minX : minX, minY : minY, maxX : maxX, maxY : maxY};
 };
 var flixel_system_scaleModes_BaseScaleMode = function() {
@@ -57076,7 +57133,7 @@ var dge_states_options_VisualUISubState = function() {
 		}
 	};
 	this.addOption(option);
-	var option = new options_Option("Legacy Note Layer","Use legacy Note Layer.","legacyNoteLayer","bool",false);
+	var option = new options_Option("Legacy Long Note Layer","Use legacy Long Note Layer Instead Modern Version.","legacyNoteLayer","bool",false);
 	this.addOption(option);
 	var option = new options_Option("Sticky Note Splash","If Checked, The Note Splash Always Follow Strum Poosition Even Strum Has Moving.","stickyNoteSplash","bool",false);
 	this.addOption(option);
@@ -66376,14 +66433,13 @@ var flixel_FlxCamera = function(X,Y,Width,Height,Zoom) {
 	this._cosAngle = 1;
 	this._sinAngle = 0;
 	this.offsetShake = new flixel_math_FlxPoint(0,0);
+	this.zoomMult = new dge_obj_Pointer(1,1);
 	this.oldShake = false;
-	this.rotatePoint = new flixel_math_FlxPoint(0.5,0.5);
+	this.rotatePoint = new dge_obj_Pointer(0.5,0.5);
 	this.zoomPoint = new dge_obj_Pointer(0.5,0.5);
 	this.offset = new flixel_math_FlxPoint(0,0);
 	this.complexObjectVisibility = true;
 	this.rotateSprite = false;
-	this.zoomYmult = 1;
-	this.zoomXmult = 1;
 	this._helperPoint = new openfl_geom_Point();
 	this._helperMatrix = new flixel_math_FlxMatrix();
 	var _this = flixel_math_FlxRect._pool.get();
@@ -66491,6 +66547,7 @@ var flixel_FlxCamera = function(X,Y,Width,Height,Zoom) {
 	this.initialZoom = Zoom == 0 ? flixel_FlxCamera.defaultZoom : Zoom;
 	this.set_zoom(Zoom);
 	this.zoomPoint.onChange = $bind(this,this.onChangePointZoom);
+	this.zoomMult.onChange = $bind(this,this.onChangeZoomMult);
 	this.updateScrollRect();
 	this.updateFlashOffset();
 	this.updateFlashSpritePosition();
@@ -66584,14 +66641,13 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 	,_headOfDrawStack: null
 	,_headTiles: null
 	,_headTriangles: null
-	,zoomXmult: null
-	,zoomYmult: null
 	,rotateSprite: null
 	,complexObjectVisibility: null
 	,offset: null
 	,zoomPoint: null
 	,rotatePoint: null
 	,oldShake: null
+	,zoomMult: null
 	,offsetShake: null
 	,_sinAngle: null
 	,_cosAngle: null
@@ -68127,18 +68183,11 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 	}
 	,set_zoom: function(Zoom) {
 		this.zoom = Zoom == 0 ? flixel_FlxCamera.defaultZoom : Zoom;
-		this.setScale(this.initialZoom + (this.zoom - this.initialZoom) * this.zoomXmult,this.initialZoom + (this.zoom - this.initialZoom) * this.zoomYmult);
+		this.setScale(this.initialZoom + (this.zoom - this.initialZoom) * this.zoomMult.x,this.initialZoom + (this.zoom - this.initialZoom) * this.zoomMult.y);
 		return this.zoom;
 	}
-	,set_zoomXmult: function(value) {
-		this.zoomXmult = value;
-		this.setScale(this.initialZoom + (this.zoom - this.initialZoom) * this.zoomXmult,this.initialZoom + (this.zoom - this.initialZoom) * this.zoomYmult);
-		return value;
-	}
-	,set_zoomYmult: function(value) {
-		this.zoomYmult = value;
-		this.setScale(this.initialZoom + (this.zoom - this.initialZoom) * this.zoomXmult,this.initialZoom + (this.zoom - this.initialZoom) * this.zoomYmult);
-		return value;
+	,onChangeZoomMult: function(x,y) {
+		this.setScale(this.initialZoom + (this.zoom - this.initialZoom) * x,this.initialZoom + (this.zoom - this.initialZoom) * y);
 	}
 	,set_alpha: function(Alpha) {
 		var lowerBound = Alpha < 0 ? 0 : Alpha;
@@ -68238,8 +68287,24 @@ flixel_FlxCamera.prototype = $extend(flixel_FlxBasic.prototype,{
 		this.viewHeight = this.height - 2 * ((1 - this.zoomPoint.y) * pointMath);
 		this.updateInternalSpritePositions();
 	}
+	,get_camera: function() {
+		haxe_Log.trace("don't reference camera.camera",{ fileName : "source/flixel/FlxCamera.hx", lineNumber : 2222, className : "flixel.FlxCamera", methodName : "get_camera"});
+		return this;
+	}
+	,set_camera: function(value) {
+		haxe_Log.trace("don't reference camera.camera",{ fileName : "source/flixel/FlxCamera.hx", lineNumber : 2229, className : "flixel.FlxCamera", methodName : "set_camera"});
+		return this;
+	}
+	,get_cameras: function() {
+		haxe_Log.trace("don't reference camera.cameras",{ fileName : "source/flixel/FlxCamera.hx", lineNumber : 2236, className : "flixel.FlxCamera", methodName : "get_cameras"});
+		return [this];
+	}
+	,set_cameras: function(value) {
+		haxe_Log.trace("don't reference camera.cameras",{ fileName : "source/flixel/FlxCamera.hx", lineNumber : 2243, className : "flixel.FlxCamera", methodName : "set_cameras"});
+		return [this];
+	}
 	,__class__: flixel_FlxCamera
-	,__properties__: $extend(flixel_FlxBasic.prototype.__properties__,{get_blackAndWhite:"get_blackAndWhite",get_grayScale:"get_grayScale",get_rgbShader:"get_rgbShader",get_posterize:"get_posterize",get_pixelSprite:"get_pixelSprite",get_colorRGBSwap:"get_colorRGBSwap",get_colorSingle:"get_colorSingle",get_colorInvert:"get_colorInvert",get_colorSwap:"get_colorSwap",set_oldShake:"set_oldShake",set_rotateSprite:"set_rotateSprite",set_zoomYmult:"set_zoomYmult",set_zoomXmult:"set_zoomXmult",set_antialiasing:"set_antialiasing",set_color:"set_color",set_angle:"set_angle",set_alpha:"set_alpha",set_zoom:"set_zoom",set_height:"set_height",set_width:"set_width",set_followLerp:"set_followLerp",set_y:"set_y",set_x:"set_x"})
+	,__properties__: $extend(flixel_FlxBasic.prototype.__properties__,{get_blackAndWhite:"get_blackAndWhite",get_grayScale:"get_grayScale",get_rgbShader:"get_rgbShader",get_posterize:"get_posterize",get_pixelSprite:"get_pixelSprite",get_colorRGBSwap:"get_colorRGBSwap",get_colorSingle:"get_colorSingle",get_colorInvert:"get_colorInvert",get_colorSwap:"get_colorSwap",set_oldShake:"set_oldShake",set_rotateSprite:"set_rotateSprite",set_antialiasing:"set_antialiasing",set_color:"set_color",set_angle:"set_angle",set_alpha:"set_alpha",set_zoom:"set_zoom",set_height:"set_height",set_width:"set_width",set_followLerp:"set_followLerp",set_y:"set_y",set_x:"set_x"})
 });
 var flixel_FlxCameraFollowStyle = $hxEnums["flixel.FlxCameraFollowStyle"] = { __ename__:"flixel.FlxCameraFollowStyle",__constructs__:null
 	,LOCKON: {_hx_name:"LOCKON",_hx_index:0,__enum__:"flixel.FlxCameraFollowStyle",toString:$estr}
@@ -144023,7 +144088,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 815943;
+	this.version = 898485;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
