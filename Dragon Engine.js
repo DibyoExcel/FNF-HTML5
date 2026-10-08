@@ -1789,6 +1789,10 @@ var flixel_FlxSprite = function(X,Y,SimpleGraphic) {
 	if(X == null) {
 		X = 0;
 	}
+	this.shadowAlphaMult = 0.5;
+	this.shadowColor = -16777216;
+	this.shadowOffsets = new dge_obj_Pointer(5,5);
+	this.enableShadow = false;
 	this.ignoreCameraAngle = false;
 	this._facingFlip = new haxe_ds_IntMap();
 	this._angleChanged = true;
@@ -1859,6 +1863,10 @@ flixel_FlxSprite.prototype = $extend(flixel_FlxObject.prototype,{
 	,_angleChanged: null
 	,_facingFlip: null
 	,ignoreCameraAngle: null
+	,enableShadow: null
+	,shadowOffsets: null
+	,shadowColor: null
+	,shadowAlphaMult: null
 	,_colorSwap: null
 	,_colorInvert: null
 	,_colorSingle: null
@@ -2237,10 +2245,29 @@ flixel_FlxSprite.prototype = $extend(flixel_FlxObject.prototype,{
 	}
 	,checkEmptyFrame: function() {
 		if(this._frame == null) {
-			this.loadGraphic("flixel/images/logo/default.png");
+			var checkBoard = CoolUtil.makeCheckerboardGraphic();
+			this.loadGraphic(checkBoard);
 		}
 	}
 	,draw: function() {
+		if(this.enableShadow && this.shadowAlphaMult > 0) {
+			var origX = this.x;
+			var origY = this.y;
+			var origColor = this.color;
+			var origAlpha = this.alpha;
+			this.set_x(this.x + this.shadowOffsets.x);
+			this.set_y(this.y + this.shadowOffsets.y);
+			this.set_alpha(this.alpha * this.shadowAlphaMult);
+			this.set_color(this.shadowColor);
+			this.drawObj();
+			this.set_x(origX);
+			this.set_y(origY);
+			this.set_alpha(origAlpha);
+			this.set_color(origColor);
+		}
+		this.drawObj();
+	}
+	,drawObj: function() {
 		this.checkEmptyFrame();
 		if(this.alpha == 0 || this._frame.type == 2) {
 			return;
@@ -5022,7 +5049,7 @@ MusicBeatState.prototype = $extend(flixel_addons_ui_FlxUIState.prototype,{
 	,curDecStep: null
 	,curDecBeat: null
 	,get_controls: function() {
-		return PlayerSettings.player1.controls;
+		return dge_input_Controls.instance;
 	}
 	,create: function() {
 		MusicBeatState.camBeat = flixel_FlxG.camera;
@@ -5206,13 +5233,19 @@ AchievementsMenuState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,update: function(elapsed) {
 		MusicBeatState.prototype.update.call(this,elapsed);
-		if(PlayerSettings.player1.controls._ui_upP.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state)) {
 			this.changeSelection(-1);
 		}
-		if(PlayerSettings.player1.controls._ui_downP.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state)) {
 			this.changeSelection(1);
 		}
-		if(PlayerSettings.player1.controls._back.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
 			flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
 			MusicBeatState.switchState(new MainMenuState());
 		}
@@ -6549,12 +6582,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "408";
+	app.meta.h["build"] = "409";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.13.0";
+	app.meta.h["version"] = "26.14.0";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -9159,14 +9192,15 @@ Main.prototype = $extend(openfl_display_Sprite.prototype,{
 		this.setupGame();
 	}
 	,setupGame: function() {
-		ClientPrefs.loadDefaultKeys();
 		this.addChild(new flixel_FlxGame(this.gameWidth,this.gameHeight,this.initialState,1,this.framerate,this.framerate,this.skipSplash,this.startFullscreen));
+		dge_input_device_KeyboardControls.init();
+		dge_input_device_GamepadControls.init();
 		Main.fpsVar = new dge_frontend_BetterFPSCounter(15,15,65280,0,ClientPrefs.fpsBGAlpha);
 		this.addChild(Main.fpsVar);
 		if(Main.fpsVar != null) {
 			Main.fpsVar.set_visible(ClientPrefs.showFPS);
 		}
-		Note.swagWidth = 160 * ClientPrefs.strumsize;
+		Note.swagWidth = 112. * ClientPrefs.strumsize;
 		openfl_Lib.get_current().stage.align = openfl_display_StageAlign.fromString("tl");
 		openfl_Lib.get_current().stage.set_scaleMode(2);
 		flixel_FlxG.autoPause = false;
@@ -9506,27 +9540,21 @@ var Character = function(x,y,character,isPlayer) {
 	var library = null;
 	var _g = this.curCharacter;
 	var characterPath = "characters/" + this.curCharacter + ".json";
-	var characterPathDark = "characters/" + this.curCharacter + "Dark.json";
-	var file = characterPathDark;
+	var characterDefault = "characters/" + this.curCharacter + ".json";
+	var path = "";
+	var rawJson = null;
+	var file = characterPath;
 	if(file == null) {
 		file = "";
 	}
-	var path = "assets/" + file;
+	path = "assets/" + file;
 	if(!openfl_utils_Assets.exists(path)) {
-		var file = characterPath;
+		var file = characterDefault;
 		if(file == null) {
 			file = "";
 		}
 		path = "assets/" + file;
 	}
-	if(!openfl_utils_Assets.exists(path)) {
-		var file = "characters/" + Character.DEFAULT_CHARACTER + ".json";
-		if(file == null) {
-			file = "";
-		}
-		path = "assets/" + file;
-	}
-	var rawJson = null;
 	rawJson = openfl_utils_Assets.getText(path);
 	var json = JSON.parse(rawJson);
 	var spriteType = "sparrow";
@@ -9941,10 +9969,8 @@ CheckboxThingie.prototype = $extend(flixel_FlxSprite.prototype,{
 var ClientPrefs = function() { };
 $hxClasses["ClientPrefs"] = ClientPrefs;
 ClientPrefs.__name__ = "ClientPrefs";
-ClientPrefs.loadDefaultKeys = function() {
-	ClientPrefs.defaultKeys = haxe_ds_StringMap.createCopy(ClientPrefs.keyBinds.h);
-};
 ClientPrefs.saveSettings = function() {
+	flixel_FlxG.save.data.hitboxHintAlpha = ClientPrefs.hitboxHintAlpha;
 	flixel_FlxG.save.data.fpsBGAlpha = ClientPrefs.fpsBGAlpha;
 	flixel_FlxG.save.data.fillScreen = ClientPrefs.fillScreen;
 	flixel_FlxG.save.data.gpuCaching = ClientPrefs.gpuCaching;
@@ -9985,7 +10011,7 @@ ClientPrefs.saveSettings = function() {
 	flixel_FlxG.save.data.extUI = ClientPrefs.extUI;
 	flixel_FlxG.save.data.darkmode = ClientPrefs.darkmode;
 	flixel_FlxG.save.data.dragonW = ClientPrefs.dragonW;
-	flixel_FlxG.save.data.strumsize = ClientPrefs.strumsize;
+	flixel_FlxG.save.data.strumsizenew = ClientPrefs.strumsize;
 	flixel_FlxG.save.data.dflnoteskin = ClientPrefs.dflnoteskin;
 	flixel_FlxG.save.data.clsstrum = ClientPrefs.clsstrum;
 	flixel_FlxG.save.data.longNoteAlpha = ClientPrefs.longNoteAlpha;
@@ -10005,7 +10031,7 @@ ClientPrefs.saveSettings = function() {
 	flixel_FlxG.save.data.camZooms = ClientPrefs.camZooms;
 	flixel_FlxG.save.data.noteOffset = ClientPrefs.noteOffset;
 	flixel_FlxG.save.data.hideHud = ClientPrefs.hideHud;
-	flixel_FlxG.save.data.arrowHSV = ClientPrefs.arrowHSV;
+	flixel_FlxG.save.data.arrowHSVEK = ClientPrefs.arrowHSV;
 	flixel_FlxG.save.data.ghostTapping = ClientPrefs.ghostTapping;
 	flixel_FlxG.save.data.timeBarType = ClientPrefs.timeBarType;
 	flixel_FlxG.save.data.scoreZoom = ClientPrefs.scoreZoom;
@@ -10026,14 +10052,13 @@ ClientPrefs.saveSettings = function() {
 	flixel_FlxG.save.data.checkForUpdates = ClientPrefs.checkForUpdates;
 	flixel_FlxG.save.data.comboStacking = ClientPrefs.comboStacking;
 	flixel_FlxG.save.flush();
-	var save = new flixel_util_FlxSave();
-	save.bind("controls_v2","ninjamuffin99");
-	save.data.customControls = ClientPrefs.keyBinds;
-	save.flush();
 };
 ClientPrefs.loadPrefs = function() {
 	if(flixel_FlxG.save.data.downScroll != null) {
 		ClientPrefs.downScroll = flixel_FlxG.save.data.downScroll;
+	}
+	if(flixel_FlxG.save.data.hitboxHintAlpha != null) {
+		ClientPrefs.hitboxHintAlpha = flixel_FlxG.save.data.hitboxHintAlpha;
 	}
 	if(flixel_FlxG.save.data.fpsBGAlpha != null) {
 		ClientPrefs.fpsBGAlpha = flixel_FlxG.save.data.fpsBGAlpha;
@@ -10152,8 +10177,8 @@ ClientPrefs.loadPrefs = function() {
 	if(flixel_FlxG.save.data.dflnoteskin != null) {
 		ClientPrefs.dflnoteskin = flixel_FlxG.save.data.dflnoteskin;
 	}
-	if(flixel_FlxG.save.data.strumsize != null) {
-		ClientPrefs.strumsize = flixel_FlxG.save.data.strumsize;
+	if(flixel_FlxG.save.data.strumsizenew != null) {
+		ClientPrefs.strumsize = flixel_FlxG.save.data.strumsizenew;
 	}
 	if(flixel_FlxG.save.data.longNoteAlpha != null) {
 		ClientPrefs.longNoteAlpha = flixel_FlxG.save.data.longNoteAlpha;
@@ -10216,8 +10241,8 @@ ClientPrefs.loadPrefs = function() {
 	if(flixel_FlxG.save.data.noteOffset != null) {
 		ClientPrefs.noteOffset = flixel_FlxG.save.data.noteOffset;
 	}
-	if(flixel_FlxG.save.data.arrowHSV != null) {
-		ClientPrefs.arrowHSV = flixel_FlxG.save.data.arrowHSV;
+	if(flixel_FlxG.save.data.arrowHSVEK != null) {
+		ClientPrefs.arrowHSV = flixel_FlxG.save.data.arrowHSVEK;
 	}
 	if(flixel_FlxG.save.data.ghostTapping != null) {
 		ClientPrefs.ghostTapping = flixel_FlxG.save.data.ghostTapping;
@@ -10289,25 +10314,6 @@ ClientPrefs.loadPrefs = function() {
 	if(flixel_FlxG.save.data.comboStacking != null) {
 		ClientPrefs.comboStacking = flixel_FlxG.save.data.comboStacking;
 	}
-	var save = new flixel_util_FlxSave();
-	save.bind("controls_v2","ninjamuffin99");
-	if(save != null && save.data.customControls != null) {
-		var loadedControls = save.data.customControls;
-		var h = loadedControls.h;
-		var _g_h = h;
-		var _g_keys = Object.keys(h);
-		var _g_length = _g_keys.length;
-		var _g_current = 0;
-		while(_g_current < _g_length) {
-			var key = _g_keys[_g_current++];
-			var _g1_key = key;
-			var _g1_value = _g_h[key];
-			var control = _g1_key;
-			var keys = _g1_value;
-			ClientPrefs.keyBinds.h[control] = keys;
-		}
-		ClientPrefs.reloadControls();
-	}
 };
 ClientPrefs.getGameplaySetting = function(name,defaultValue) {
 	if(Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,name)) {
@@ -10315,15 +10321,6 @@ ClientPrefs.getGameplaySetting = function(name,defaultValue) {
 	} else {
 		return defaultValue;
 	}
-};
-ClientPrefs.reloadControls = function() {
-	PlayerSettings.player1.controls.setKeyboardScheme(KeyboardScheme.Solo);
-	TitleState.muteKeys = ClientPrefs.copyKey(ClientPrefs.keyBinds.h["volume_mute"]);
-	TitleState.volumeDownKeys = ClientPrefs.copyKey(ClientPrefs.keyBinds.h["volume_down"]);
-	TitleState.volumeUpKeys = ClientPrefs.copyKey(ClientPrefs.keyBinds.h["volume_up"]);
-	flixel_FlxG.sound.muteKeys = TitleState.muteKeys;
-	flixel_FlxG.sound.volumeDownKeys = TitleState.volumeDownKeys;
-	flixel_FlxG.sound.volumeUpKeys = TitleState.volumeUpKeys;
 };
 ClientPrefs.copyKey = function(arrayToCopy) {
 	var copiedArray = arrayToCopy.slice();
@@ -10482,13593 +10479,6 @@ Rating.prototype = {
 	}
 	,__class__: Rating
 };
-var Device = $hxEnums["Device"] = { __ename__:"Device",__constructs__:null
-	,Keys: {_hx_name:"Keys",_hx_index:0,__enum__:"Device",toString:$estr}
-	,Gamepad: ($_=function(id) { return {_hx_index:1,id:id,__enum__:"Device",toString:$estr}; },$_._hx_name="Gamepad",$_.__params__ = ["id"],$_)
-};
-Device.__constructs__ = [Device.Keys,Device.Gamepad];
-var Control = $hxEnums["Control"] = { __ename__:"Control",__constructs__:null
-	,UI_UP: {_hx_name:"UI_UP",_hx_index:0,__enum__:"Control",toString:$estr}
-	,UI_LEFT: {_hx_name:"UI_LEFT",_hx_index:1,__enum__:"Control",toString:$estr}
-	,UI_RIGHT: {_hx_name:"UI_RIGHT",_hx_index:2,__enum__:"Control",toString:$estr}
-	,UI_DOWN: {_hx_name:"UI_DOWN",_hx_index:3,__enum__:"Control",toString:$estr}
-	,NOTE_UP: {_hx_name:"NOTE_UP",_hx_index:4,__enum__:"Control",toString:$estr}
-	,NOTE_LEFT: {_hx_name:"NOTE_LEFT",_hx_index:5,__enum__:"Control",toString:$estr}
-	,NOTE_RIGHT: {_hx_name:"NOTE_RIGHT",_hx_index:6,__enum__:"Control",toString:$estr}
-	,NOTE_DOWN: {_hx_name:"NOTE_DOWN",_hx_index:7,__enum__:"Control",toString:$estr}
-	,RESET: {_hx_name:"RESET",_hx_index:8,__enum__:"Control",toString:$estr}
-	,ACCEPT: {_hx_name:"ACCEPT",_hx_index:9,__enum__:"Control",toString:$estr}
-	,BACK: {_hx_name:"BACK",_hx_index:10,__enum__:"Control",toString:$estr}
-	,PAUSE: {_hx_name:"PAUSE",_hx_index:11,__enum__:"Control",toString:$estr}
-};
-Control.__constructs__ = [Control.UI_UP,Control.UI_LEFT,Control.UI_RIGHT,Control.UI_DOWN,Control.NOTE_UP,Control.NOTE_LEFT,Control.NOTE_RIGHT,Control.NOTE_DOWN,Control.RESET,Control.ACCEPT,Control.BACK,Control.PAUSE];
-var KeyboardScheme = $hxEnums["KeyboardScheme"] = { __ename__:"KeyboardScheme",__constructs__:null
-	,Solo: {_hx_name:"Solo",_hx_index:0,__enum__:"KeyboardScheme",toString:$estr}
-	,Duo: ($_=function(first) { return {_hx_index:1,first:first,__enum__:"KeyboardScheme",toString:$estr}; },$_._hx_name="Duo",$_.__params__ = ["first"],$_)
-	,None: {_hx_name:"None",_hx_index:2,__enum__:"KeyboardScheme",toString:$estr}
-	,Custom: {_hx_name:"Custom",_hx_index:3,__enum__:"KeyboardScheme",toString:$estr}
-};
-KeyboardScheme.__constructs__ = [KeyboardScheme.Solo,KeyboardScheme.Duo,KeyboardScheme.None,KeyboardScheme.Custom];
-var flixel_input_actions_FlxActionSet = function(Name,DigitalActions,AnalogActions) {
-	this.active = true;
-	this.name = "";
-	this.name = Name;
-	if(DigitalActions == null) {
-		DigitalActions = [];
-	}
-	if(AnalogActions == null) {
-		AnalogActions = [];
-	}
-	this.digitalActions = DigitalActions;
-	this.analogActions = AnalogActions;
-};
-$hxClasses["flixel.input.actions.FlxActionSet"] = flixel_input_actions_FlxActionSet;
-flixel_input_actions_FlxActionSet.__name__ = "flixel.input.actions.FlxActionSet";
-flixel_input_actions_FlxActionSet.__interfaces__ = [flixel_util_IFlxDestroyable];
-flixel_input_actions_FlxActionSet.fromJson = function(Data,CallbackDigital,CallbackAnalog) {
-	var digitalActions = [];
-	var analogActions = [];
-	if(Data == null) {
-		return null;
-	}
-	if(Data.digitalActions != null) {
-		var arrD = Data.digitalActions;
-		var _g = 0;
-		while(_g < arrD.length) {
-			var d = arrD[_g];
-			++_g;
-			var dName = d;
-			var action = new flixel_input_actions_FlxActionDigital(dName,CallbackDigital);
-			digitalActions.push(action);
-		}
-	}
-	if(Data.analogActions != null) {
-		var arrA = Data.analogActions;
-		var _g = 0;
-		while(_g < arrA.length) {
-			var a = arrA[_g];
-			++_g;
-			var aName = a;
-			var action = new flixel_input_actions_FlxActionAnalog(aName,CallbackAnalog);
-			analogActions.push(action);
-		}
-	}
-	if(Data.name != null) {
-		var name = Data.name;
-		var set = new flixel_input_actions_FlxActionSet(name,digitalActions,analogActions);
-		return set;
-	}
-	return null;
-};
-flixel_input_actions_FlxActionSet.prototype = {
-	name: null
-	,digitalActions: null
-	,analogActions: null
-	,active: null
-	,toJson: function() {
-		var space = "\t";
-		return JSON.stringify(this,function(key,value) {
-			if(((value) instanceof flixel_input_actions_FlxAction)) {
-				var fa = value;
-				return { "type" : fa.type, "name" : fa.name, "steamHandle" : fa.steamHandle};
-			}
-			return value;
-		},space);
-	}
-	,attachSteamController: function(Handle,Attach) {
-		if(Attach == null) {
-			Attach = true;
-		}
-		this.attachSteamControllerSub(Handle,Attach,flixel_input_actions_FlxInputType.DIGITAL,this.digitalActions,null);
-		this.attachSteamControllerSub(Handle,Attach,flixel_input_actions_FlxInputType.ANALOG,null,this.analogActions);
-	}
-	,add: function(Action1) {
-		if(Action1.type == flixel_input_actions_FlxInputType.DIGITAL) {
-			var dAction = Action1;
-			if(this.digitalActions.indexOf(dAction) != -1) {
-				return false;
-			}
-			this.digitalActions.push(dAction);
-			return true;
-		} else if(Action1.type == flixel_input_actions_FlxInputType.ANALOG) {
-			var aAction = Action1;
-			if(this.analogActions.indexOf(aAction) != -1) {
-				return false;
-			}
-			this.analogActions.push(aAction);
-			return true;
-		}
-		return false;
-	}
-	,destroy: function() {
-		this.digitalActions = flixel_util_FlxDestroyUtil.destroyArray(this.digitalActions);
-		this.analogActions = flixel_util_FlxDestroyUtil.destroyArray(this.analogActions);
-	}
-	,remove: function(Action1,Destroy) {
-		if(Destroy == null) {
-			Destroy = true;
-		}
-		var result = false;
-		if(Action1.type == flixel_input_actions_FlxInputType.DIGITAL) {
-			result = HxOverrides.remove(this.digitalActions,Action1);
-			if(result && Destroy) {
-				Action1.destroy();
-			}
-		} else if(Action1.type == flixel_input_actions_FlxInputType.ANALOG) {
-			result = HxOverrides.remove(this.analogActions,Action1);
-			if(result && Destroy) {
-				Action1.destroy();
-			}
-		}
-		return result;
-	}
-	,update: function() {
-		if(!this.active) {
-			return;
-		}
-		var _g = 0;
-		var _g1 = this.digitalActions;
-		while(_g < _g1.length) {
-			var digitalAction = _g1[_g];
-			++_g;
-			digitalAction.update();
-		}
-		var _g = 0;
-		var _g1 = this.analogActions;
-		while(_g < _g1.length) {
-			var analogAction = _g1[_g];
-			++_g;
-			analogAction.update();
-		}
-	}
-	,attachSteamControllerSub: function(Handle,Attach,InputType,DigitalActions,AnalogActions) {
-		var length = InputType == flixel_input_actions_FlxInputType.DIGITAL ? DigitalActions.length : AnalogActions.length;
-		var _g = 0;
-		var _g1 = length;
-		while(_g < _g1) {
-			var i = _g++;
-			var action = InputType == flixel_input_actions_FlxInputType.DIGITAL ? DigitalActions[i] : AnalogActions[i];
-			if(action.steamHandle != -1) {
-				var inputExists = false;
-				var theInput = null;
-				if(action.inputs != null) {
-					var _g2 = 0;
-					var _g3 = action.inputs;
-					while(_g2 < _g3.length) {
-						var input = _g3[_g2];
-						++_g2;
-						if(input.device == flixel_input_actions_FlxInputDevice.STEAM_CONTROLLER && input.deviceID == Handle) {
-							inputExists = true;
-							theInput = input;
-						}
-					}
-				}
-				if(Attach) {
-					if(!inputExists) {
-						if(InputType == flixel_input_actions_FlxInputType.DIGITAL) {
-							DigitalActions[i].add(new flixel_input_actions_FlxActionInputDigitalSteam(action.steamHandle,2,Handle));
-						} else if(InputType == flixel_input_actions_FlxInputType.ANALOG) {
-							AnalogActions[i].add(new flixel_input_actions_FlxActionInputAnalogSteam(action.steamHandle,1,3,Handle));
-						}
-					}
-				} else if(inputExists) {
-					action.remove(theInput);
-				}
-			}
-		}
-	}
-	,__class__: flixel_input_actions_FlxActionSet
-};
-var Controls = function(name,scheme) {
-	if(scheme == null) {
-		scheme = KeyboardScheme.None;
-	}
-	this.keyboardScheme = KeyboardScheme.None;
-	this.gamepadsAdded = [];
-	this.byName = new haxe_ds_StringMap();
-	this._reset = new flixel_input_actions_FlxActionDigital("reset");
-	this._pause = new flixel_input_actions_FlxActionDigital("pause");
-	this._back = new flixel_input_actions_FlxActionDigital("back");
-	this._accept = new flixel_input_actions_FlxActionDigital("accept");
-	this._note_downR = new flixel_input_actions_FlxActionDigital("note_down-release");
-	this._note_rightR = new flixel_input_actions_FlxActionDigital("note_right-release");
-	this._note_leftR = new flixel_input_actions_FlxActionDigital("note_left-release");
-	this._note_upR = new flixel_input_actions_FlxActionDigital("note_up-release");
-	this._note_downP = new flixel_input_actions_FlxActionDigital("note_down-press");
-	this._note_rightP = new flixel_input_actions_FlxActionDigital("note_right-press");
-	this._note_leftP = new flixel_input_actions_FlxActionDigital("note_left-press");
-	this._note_upP = new flixel_input_actions_FlxActionDigital("note_up-press");
-	this._note_down = new flixel_input_actions_FlxActionDigital("note_down");
-	this._note_right = new flixel_input_actions_FlxActionDigital("note_right");
-	this._note_left = new flixel_input_actions_FlxActionDigital("note_left");
-	this._note_up = new flixel_input_actions_FlxActionDigital("note_up");
-	this._ui_downR = new flixel_input_actions_FlxActionDigital("ui_down-release");
-	this._ui_rightR = new flixel_input_actions_FlxActionDigital("ui_right-release");
-	this._ui_leftR = new flixel_input_actions_FlxActionDigital("ui_left-release");
-	this._ui_upR = new flixel_input_actions_FlxActionDigital("ui_up-release");
-	this._ui_downP = new flixel_input_actions_FlxActionDigital("ui_down-press");
-	this._ui_rightP = new flixel_input_actions_FlxActionDigital("ui_right-press");
-	this._ui_leftP = new flixel_input_actions_FlxActionDigital("ui_left-press");
-	this._ui_upP = new flixel_input_actions_FlxActionDigital("ui_up-press");
-	this._ui_down = new flixel_input_actions_FlxActionDigital("ui_down");
-	this._ui_right = new flixel_input_actions_FlxActionDigital("ui_right");
-	this._ui_left = new flixel_input_actions_FlxActionDigital("ui_left");
-	this._ui_up = new flixel_input_actions_FlxActionDigital("ui_up");
-	flixel_input_actions_FlxActionSet.call(this,name);
-	this.add(this._ui_up);
-	this.add(this._ui_left);
-	this.add(this._ui_right);
-	this.add(this._ui_down);
-	this.add(this._ui_upP);
-	this.add(this._ui_leftP);
-	this.add(this._ui_rightP);
-	this.add(this._ui_downP);
-	this.add(this._ui_upR);
-	this.add(this._ui_leftR);
-	this.add(this._ui_rightR);
-	this.add(this._ui_downR);
-	this.add(this._note_up);
-	this.add(this._note_left);
-	this.add(this._note_right);
-	this.add(this._note_down);
-	this.add(this._note_upP);
-	this.add(this._note_leftP);
-	this.add(this._note_rightP);
-	this.add(this._note_downP);
-	this.add(this._note_upR);
-	this.add(this._note_leftR);
-	this.add(this._note_rightR);
-	this.add(this._note_downR);
-	this.add(this._accept);
-	this.add(this._back);
-	this.add(this._pause);
-	this.add(this._reset);
-	var _g = 0;
-	var _g1 = this.digitalActions;
-	while(_g < _g1.length) {
-		var action = _g1[_g];
-		++_g;
-		this.byName.h[action.name] = action;
-	}
-	this.setKeyboardScheme(scheme,false);
-};
-$hxClasses["Controls"] = Controls;
-Controls.__name__ = "Controls";
-Controls.init = function() {
-	var actions = new flixel_input_actions_FlxActionManager();
-	flixel_FlxG.inputs.add_flixel_input_actions_FlxActionManager(actions);
-};
-Controls.addKeys = function(action,keys,state) {
-	var _g = 0;
-	while(_g < keys.length) {
-		var key = keys[_g];
-		++_g;
-		if(key != -1) {
-			action.addKey(key,state);
-		}
-	}
-};
-Controls.removeKeys = function(action,keys) {
-	var i = action.inputs.length;
-	while(i-- > 0) {
-		var input = action.inputs[i];
-		if(input.device == flixel_input_actions_FlxInputDevice.KEYBOARD && keys.indexOf(input.inputID) != -1) {
-			action.remove(input);
-		}
-	}
-};
-Controls.addButtons = function(action,buttons,state,id) {
-	var _g = 0;
-	while(_g < buttons.length) {
-		var button = buttons[_g];
-		++_g;
-		action.addGamepad(button,state,id);
-	}
-};
-Controls.removeButtons = function(action,gamepadID,buttons) {
-	var i = action.inputs.length;
-	while(i-- > 0) {
-		var input = action.inputs[i];
-		if(input.device == flixel_input_actions_FlxInputDevice.GAMEPAD && (gamepadID == -1 || input.deviceID == gamepadID) && buttons.indexOf(input.inputID) != -1) {
-			action.remove(input);
-		}
-	}
-};
-Controls.isDevice = function(input,device) {
-	switch(device._hx_index) {
-	case 0:
-		return input.device == flixel_input_actions_FlxInputDevice.KEYBOARD;
-	case 1:
-		var id = device.id;
-		if(input.device == flixel_input_actions_FlxInputDevice.GAMEPAD) {
-			if(id != -1) {
-				return input.deviceID == id;
-			} else {
-				return true;
-			}
-		} else {
-			return false;
-		}
-		break;
-	}
-};
-Controls.isGamepad = function(input,deviceID) {
-	if(input.device == flixel_input_actions_FlxInputDevice.GAMEPAD) {
-		if(deviceID != -1) {
-			return input.deviceID == deviceID;
-		} else {
-			return true;
-		}
-	} else {
-		return false;
-	}
-};
-Controls.__super__ = flixel_input_actions_FlxActionSet;
-Controls.prototype = $extend(flixel_input_actions_FlxActionSet.prototype,{
-	_ui_up: null
-	,_ui_left: null
-	,_ui_right: null
-	,_ui_down: null
-	,_ui_upP: null
-	,_ui_leftP: null
-	,_ui_rightP: null
-	,_ui_downP: null
-	,_ui_upR: null
-	,_ui_leftR: null
-	,_ui_rightR: null
-	,_ui_downR: null
-	,_note_up: null
-	,_note_left: null
-	,_note_right: null
-	,_note_down: null
-	,_note_upP: null
-	,_note_leftP: null
-	,_note_rightP: null
-	,_note_downP: null
-	,_note_upR: null
-	,_note_leftR: null
-	,_note_rightR: null
-	,_note_downR: null
-	,_accept: null
-	,_back: null
-	,_pause: null
-	,_reset: null
-	,byName: null
-	,gamepadsAdded: null
-	,keyboardScheme: null
-	,get_UI_UP: function() {
-		return this._ui_up.check();
-	}
-	,get_UI_LEFT: function() {
-		return this._ui_left.check();
-	}
-	,get_UI_RIGHT: function() {
-		return this._ui_right.check();
-	}
-	,get_UI_DOWN: function() {
-		return this._ui_down.check();
-	}
-	,get_UI_UP_P: function() {
-		return this._ui_upP.check();
-	}
-	,get_UI_LEFT_P: function() {
-		return this._ui_leftP.check();
-	}
-	,get_UI_RIGHT_P: function() {
-		return this._ui_rightP.check();
-	}
-	,get_UI_DOWN_P: function() {
-		return this._ui_downP.check();
-	}
-	,get_UI_UP_R: function() {
-		return this._ui_upR.check();
-	}
-	,get_UI_LEFT_R: function() {
-		return this._ui_leftR.check();
-	}
-	,get_UI_RIGHT_R: function() {
-		return this._ui_rightR.check();
-	}
-	,get_UI_DOWN_R: function() {
-		return this._ui_downR.check();
-	}
-	,get_NOTE_UP: function() {
-		return this._note_up.check();
-	}
-	,get_NOTE_LEFT: function() {
-		return this._note_left.check();
-	}
-	,get_NOTE_RIGHT: function() {
-		return this._note_right.check();
-	}
-	,get_NOTE_DOWN: function() {
-		return this._note_down.check();
-	}
-	,get_NOTE_UP_P: function() {
-		return this._note_upP.check();
-	}
-	,get_NOTE_LEFT_P: function() {
-		return this._note_leftP.check();
-	}
-	,get_NOTE_RIGHT_P: function() {
-		return this._note_rightP.check();
-	}
-	,get_NOTE_DOWN_P: function() {
-		return this._note_downP.check();
-	}
-	,get_NOTE_UP_R: function() {
-		return this._note_upR.check();
-	}
-	,get_NOTE_LEFT_R: function() {
-		return this._note_leftR.check();
-	}
-	,get_NOTE_RIGHT_R: function() {
-		return this._note_rightR.check();
-	}
-	,get_NOTE_DOWN_R: function() {
-		return this._note_downR.check();
-	}
-	,get_ACCEPT: function() {
-		return this._accept.check();
-	}
-	,get_BACK: function() {
-		return this._back.check();
-	}
-	,get_PAUSE: function() {
-		return this._pause.check();
-	}
-	,get_RESET: function() {
-		return this._reset.check();
-	}
-	,update: function() {
-		flixel_input_actions_FlxActionSet.prototype.update.call(this);
-	}
-	,checkByName: function(name) {
-		return this.byName.h[name].check();
-	}
-	,getDialogueName: function(action) {
-		var input = action.inputs[0];
-		var _g = input.device;
-		switch(_g._hx_index) {
-		case 3:
-			var tmp = input.inputID;
-			return "[" + (tmp == null ? "null" : flixel_input_keyboard_FlxKey.toStringMap.h[tmp]) + "]";
-		case 4:
-			var tmp = input.inputID;
-			return "(" + (tmp == null ? "null" : flixel_input_gamepad_FlxGamepadInputID.toStringMap.h[tmp]) + ")";
-		default:
-			var device = _g;
-			throw haxe_Exception.thrown("unhandled device: " + Std.string(device));
-		}
-	}
-	,getDialogueNameFromToken: function(token) {
-		return this.getDialogueName(this.getActionFromControl(Type.createEnum(Control,token.toUpperCase(),null)));
-	}
-	,getActionFromControl: function(control) {
-		switch(control._hx_index) {
-		case 0:
-			return this._ui_up;
-		case 1:
-			return this._ui_left;
-		case 2:
-			return this._ui_right;
-		case 3:
-			return this._ui_down;
-		case 4:
-			return this._note_up;
-		case 5:
-			return this._note_left;
-		case 6:
-			return this._note_right;
-		case 7:
-			return this._note_down;
-		case 8:
-			return this._reset;
-		case 9:
-			return this._accept;
-		case 10:
-			return this._back;
-		case 11:
-			return this._pause;
-		}
-	}
-	,forEachBound: function(control,func) {
-		switch(control._hx_index) {
-		case 0:
-			func(this._ui_up,1);
-			func(this._ui_upP,2);
-			func(this._ui_upR,-1);
-			break;
-		case 1:
-			func(this._ui_left,1);
-			func(this._ui_leftP,2);
-			func(this._ui_leftR,-1);
-			break;
-		case 2:
-			func(this._ui_right,1);
-			func(this._ui_rightP,2);
-			func(this._ui_rightR,-1);
-			break;
-		case 3:
-			func(this._ui_down,1);
-			func(this._ui_downP,2);
-			func(this._ui_downR,-1);
-			break;
-		case 4:
-			func(this._note_up,1);
-			func(this._note_upP,2);
-			func(this._note_upR,-1);
-			break;
-		case 5:
-			func(this._note_left,1);
-			func(this._note_leftP,2);
-			func(this._note_leftR,-1);
-			break;
-		case 6:
-			func(this._note_right,1);
-			func(this._note_rightP,2);
-			func(this._note_rightR,-1);
-			break;
-		case 7:
-			func(this._note_down,1);
-			func(this._note_downP,2);
-			func(this._note_downR,-1);
-			break;
-		case 8:
-			func(this._reset,2);
-			break;
-		case 9:
-			func(this._accept,2);
-			break;
-		case 10:
-			func(this._back,2);
-			break;
-		case 11:
-			func(this._pause,2);
-			break;
-		}
-	}
-	,replaceBinding: function(control,device,toAdd,toRemove) {
-		if(toAdd == toRemove) {
-			return;
-		}
-		switch(device._hx_index) {
-		case 0:
-			if(toRemove != null) {
-				this.unbindKeys(control,[toRemove]);
-			}
-			if(toAdd != null) {
-				this.bindKeys(control,[toAdd]);
-			}
-			break;
-		case 1:
-			var id = device.id;
-			if(toRemove != null) {
-				this.unbindButtons(control,id,[toRemove]);
-			}
-			if(toAdd != null) {
-				this.bindButtons(control,id,[toAdd]);
-			}
-			break;
-		}
-	}
-	,copyFrom: function(controls,device) {
-		var h = controls.byName.h;
-		var _g_h = h;
-		var _g_keys = Object.keys(h);
-		var _g_length = _g_keys.length;
-		var _g_current = 0;
-		while(_g_current < _g_length) {
-			var key = _g_keys[_g_current++];
-			var _g1_key = key;
-			var _g1_value = _g_h[key];
-			var name = _g1_key;
-			var action = _g1_value;
-			var _g = 0;
-			var _g1 = action.inputs;
-			while(_g < _g1.length) {
-				var input = _g1[_g];
-				++_g;
-				if(device == null || Controls.isDevice(input,device)) {
-					this.byName.h[name].add(input);
-				}
-			}
-		}
-		if(device == null) {
-			var _g = 0;
-			var _g1 = controls.gamepadsAdded;
-			while(_g < _g1.length) {
-				var gamepad = _g1[_g];
-				++_g;
-				if(this.gamepadsAdded.indexOf(gamepad) == -1) {
-					this.gamepadsAdded.push(gamepad);
-				}
-			}
-			this.mergeKeyboardScheme(controls.keyboardScheme);
-		} else {
-			switch(device._hx_index) {
-			case 0:
-				this.mergeKeyboardScheme(controls.keyboardScheme);
-				break;
-			case 1:
-				var id = device.id;
-				this.gamepadsAdded.push(id);
-				break;
-			}
-		}
-	}
-	,copyTo: function(controls,device) {
-		controls.copyFrom(this,device);
-	}
-	,mergeKeyboardScheme: function(scheme) {
-		if(scheme != KeyboardScheme.None) {
-			if(this.keyboardScheme._hx_index == 2) {
-				this.keyboardScheme = scheme;
-			} else {
-				this.keyboardScheme = KeyboardScheme.Custom;
-			}
-		}
-	}
-	,bindKeys: function(control,keys) {
-		var copyKeys = keys.slice();
-		var _g = 0;
-		var _g1 = copyKeys.length;
-		while(_g < _g1) {
-			var i = _g++;
-			if(i == -1) {
-				HxOverrides.remove(copyKeys,i);
-			}
-		}
-		switch(control._hx_index) {
-		case 0:
-			var action = this._ui_up;
-			var state = 1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._ui_upP;
-			var state = 2;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._ui_upR;
-			var state = -1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			break;
-		case 1:
-			var action = this._ui_left;
-			var state = 1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._ui_leftP;
-			var state = 2;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._ui_leftR;
-			var state = -1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			break;
-		case 2:
-			var action = this._ui_right;
-			var state = 1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._ui_rightP;
-			var state = 2;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._ui_rightR;
-			var state = -1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			break;
-		case 3:
-			var action = this._ui_down;
-			var state = 1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._ui_downP;
-			var state = 2;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._ui_downR;
-			var state = -1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			break;
-		case 4:
-			var action = this._note_up;
-			var state = 1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._note_upP;
-			var state = 2;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._note_upR;
-			var state = -1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			break;
-		case 5:
-			var action = this._note_left;
-			var state = 1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._note_leftP;
-			var state = 2;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._note_leftR;
-			var state = -1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			break;
-		case 6:
-			var action = this._note_right;
-			var state = 1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._note_rightP;
-			var state = 2;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._note_rightR;
-			var state = -1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			break;
-		case 7:
-			var action = this._note_down;
-			var state = 1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._note_downP;
-			var state = 2;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			var action = this._note_downR;
-			var state = -1;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			break;
-		case 8:
-			var action = this._reset;
-			var state = 2;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			break;
-		case 9:
-			var action = this._accept;
-			var state = 2;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			break;
-		case 10:
-			var action = this._back;
-			var state = 2;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			break;
-		case 11:
-			var action = this._pause;
-			var state = 2;
-			var _g = 0;
-			while(_g < copyKeys.length) {
-				var key = copyKeys[_g];
-				++_g;
-				if(key != -1) {
-					action.addKey(key,state);
-				}
-			}
-			break;
-		}
-	}
-	,unbindKeys: function(control,keys) {
-		var copyKeys = keys.slice();
-		var _g = 0;
-		var _g1 = copyKeys.length;
-		while(_g < _g1) {
-			var i = _g++;
-			if(i == -1) {
-				HxOverrides.remove(copyKeys,i);
-			}
-		}
-		switch(control._hx_index) {
-		case 0:
-			Controls.removeKeys(this._ui_up,copyKeys);
-			Controls.removeKeys(this._ui_upP,copyKeys);
-			Controls.removeKeys(this._ui_upR,copyKeys);
-			break;
-		case 1:
-			Controls.removeKeys(this._ui_left,copyKeys);
-			Controls.removeKeys(this._ui_leftP,copyKeys);
-			Controls.removeKeys(this._ui_leftR,copyKeys);
-			break;
-		case 2:
-			Controls.removeKeys(this._ui_right,copyKeys);
-			Controls.removeKeys(this._ui_rightP,copyKeys);
-			Controls.removeKeys(this._ui_rightR,copyKeys);
-			break;
-		case 3:
-			Controls.removeKeys(this._ui_down,copyKeys);
-			Controls.removeKeys(this._ui_downP,copyKeys);
-			Controls.removeKeys(this._ui_downR,copyKeys);
-			break;
-		case 4:
-			Controls.removeKeys(this._note_up,copyKeys);
-			Controls.removeKeys(this._note_upP,copyKeys);
-			Controls.removeKeys(this._note_upR,copyKeys);
-			break;
-		case 5:
-			Controls.removeKeys(this._note_left,copyKeys);
-			Controls.removeKeys(this._note_leftP,copyKeys);
-			Controls.removeKeys(this._note_leftR,copyKeys);
-			break;
-		case 6:
-			Controls.removeKeys(this._note_right,copyKeys);
-			Controls.removeKeys(this._note_rightP,copyKeys);
-			Controls.removeKeys(this._note_rightR,copyKeys);
-			break;
-		case 7:
-			Controls.removeKeys(this._note_down,copyKeys);
-			Controls.removeKeys(this._note_downP,copyKeys);
-			Controls.removeKeys(this._note_downR,copyKeys);
-			break;
-		case 8:
-			Controls.removeKeys(this._reset,copyKeys);
-			break;
-		case 9:
-			Controls.removeKeys(this._accept,copyKeys);
-			break;
-		case 10:
-			Controls.removeKeys(this._back,copyKeys);
-			break;
-		case 11:
-			Controls.removeKeys(this._pause,copyKeys);
-			break;
-		}
-	}
-	,setKeyboardScheme: function(scheme,reset) {
-		if(reset == null) {
-			reset = true;
-		}
-		if(reset) {
-			this.removeKeyboard();
-		}
-		this.keyboardScheme = scheme;
-		var keysMap = ClientPrefs.keyBinds;
-		switch(scheme._hx_index) {
-		case 0:
-			var copyKeys = keysMap.h["ui_up"].slice();
-			var _g = 0;
-			var _g1 = copyKeys.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(i == -1) {
-					HxOverrides.remove(copyKeys,i);
-				}
-			}
-			switch(Control.UI_UP._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 1:
-				var action = this._ui_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 2:
-				var action = this._ui_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 3:
-				var action = this._ui_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 4:
-				var action = this._note_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 5:
-				var action = this._note_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 6:
-				var action = this._note_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 7:
-				var action = this._note_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 8:
-				var action = this._reset;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 9:
-				var action = this._accept;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 10:
-				var action = this._back;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 11:
-				var action = this._pause;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			}
-			var copyKeys = keysMap.h["ui_down"].slice();
-			var _g = 0;
-			var _g1 = copyKeys.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(i == -1) {
-					HxOverrides.remove(copyKeys,i);
-				}
-			}
-			switch(Control.UI_DOWN._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 1:
-				var action = this._ui_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 2:
-				var action = this._ui_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 3:
-				var action = this._ui_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 4:
-				var action = this._note_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 5:
-				var action = this._note_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 6:
-				var action = this._note_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 7:
-				var action = this._note_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 8:
-				var action = this._reset;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 9:
-				var action = this._accept;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 10:
-				var action = this._back;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 11:
-				var action = this._pause;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			}
-			var copyKeys = keysMap.h["ui_left"].slice();
-			var _g = 0;
-			var _g1 = copyKeys.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(i == -1) {
-					HxOverrides.remove(copyKeys,i);
-				}
-			}
-			switch(Control.UI_LEFT._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 1:
-				var action = this._ui_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 2:
-				var action = this._ui_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 3:
-				var action = this._ui_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 4:
-				var action = this._note_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 5:
-				var action = this._note_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 6:
-				var action = this._note_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 7:
-				var action = this._note_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 8:
-				var action = this._reset;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 9:
-				var action = this._accept;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 10:
-				var action = this._back;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 11:
-				var action = this._pause;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			}
-			var copyKeys = keysMap.h["ui_right"].slice();
-			var _g = 0;
-			var _g1 = copyKeys.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(i == -1) {
-					HxOverrides.remove(copyKeys,i);
-				}
-			}
-			switch(Control.UI_RIGHT._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 1:
-				var action = this._ui_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 2:
-				var action = this._ui_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 3:
-				var action = this._ui_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 4:
-				var action = this._note_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 5:
-				var action = this._note_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 6:
-				var action = this._note_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 7:
-				var action = this._note_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 8:
-				var action = this._reset;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 9:
-				var action = this._accept;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 10:
-				var action = this._back;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 11:
-				var action = this._pause;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			}
-			var copyKeys = keysMap.h["note_up"].slice();
-			var _g = 0;
-			var _g1 = copyKeys.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(i == -1) {
-					HxOverrides.remove(copyKeys,i);
-				}
-			}
-			switch(Control.NOTE_UP._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 1:
-				var action = this._ui_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 2:
-				var action = this._ui_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 3:
-				var action = this._ui_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 4:
-				var action = this._note_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 5:
-				var action = this._note_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 6:
-				var action = this._note_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 7:
-				var action = this._note_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 8:
-				var action = this._reset;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 9:
-				var action = this._accept;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 10:
-				var action = this._back;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 11:
-				var action = this._pause;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			}
-			var copyKeys = keysMap.h["note_down"].slice();
-			var _g = 0;
-			var _g1 = copyKeys.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(i == -1) {
-					HxOverrides.remove(copyKeys,i);
-				}
-			}
-			switch(Control.NOTE_DOWN._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 1:
-				var action = this._ui_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 2:
-				var action = this._ui_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 3:
-				var action = this._ui_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 4:
-				var action = this._note_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 5:
-				var action = this._note_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 6:
-				var action = this._note_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 7:
-				var action = this._note_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 8:
-				var action = this._reset;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 9:
-				var action = this._accept;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 10:
-				var action = this._back;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 11:
-				var action = this._pause;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			}
-			var copyKeys = keysMap.h["note_left"].slice();
-			var _g = 0;
-			var _g1 = copyKeys.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(i == -1) {
-					HxOverrides.remove(copyKeys,i);
-				}
-			}
-			switch(Control.NOTE_LEFT._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 1:
-				var action = this._ui_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 2:
-				var action = this._ui_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 3:
-				var action = this._ui_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 4:
-				var action = this._note_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 5:
-				var action = this._note_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 6:
-				var action = this._note_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 7:
-				var action = this._note_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 8:
-				var action = this._reset;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 9:
-				var action = this._accept;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 10:
-				var action = this._back;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 11:
-				var action = this._pause;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			}
-			var copyKeys = keysMap.h["note_right"].slice();
-			var _g = 0;
-			var _g1 = copyKeys.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(i == -1) {
-					HxOverrides.remove(copyKeys,i);
-				}
-			}
-			switch(Control.NOTE_RIGHT._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 1:
-				var action = this._ui_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 2:
-				var action = this._ui_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 3:
-				var action = this._ui_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 4:
-				var action = this._note_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 5:
-				var action = this._note_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 6:
-				var action = this._note_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 7:
-				var action = this._note_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 8:
-				var action = this._reset;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 9:
-				var action = this._accept;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 10:
-				var action = this._back;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 11:
-				var action = this._pause;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			}
-			var copyKeys = keysMap.h["accept"].slice();
-			var _g = 0;
-			var _g1 = copyKeys.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(i == -1) {
-					HxOverrides.remove(copyKeys,i);
-				}
-			}
-			switch(Control.ACCEPT._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 1:
-				var action = this._ui_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 2:
-				var action = this._ui_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 3:
-				var action = this._ui_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 4:
-				var action = this._note_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 5:
-				var action = this._note_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 6:
-				var action = this._note_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 7:
-				var action = this._note_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 8:
-				var action = this._reset;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 9:
-				var action = this._accept;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 10:
-				var action = this._back;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 11:
-				var action = this._pause;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			}
-			var copyKeys = keysMap.h["back"].slice();
-			var _g = 0;
-			var _g1 = copyKeys.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(i == -1) {
-					HxOverrides.remove(copyKeys,i);
-				}
-			}
-			switch(Control.BACK._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 1:
-				var action = this._ui_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 2:
-				var action = this._ui_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 3:
-				var action = this._ui_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 4:
-				var action = this._note_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 5:
-				var action = this._note_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 6:
-				var action = this._note_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 7:
-				var action = this._note_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 8:
-				var action = this._reset;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 9:
-				var action = this._accept;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 10:
-				var action = this._back;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 11:
-				var action = this._pause;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			}
-			var copyKeys = keysMap.h["pause"].slice();
-			var _g = 0;
-			var _g1 = copyKeys.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(i == -1) {
-					HxOverrides.remove(copyKeys,i);
-				}
-			}
-			switch(Control.PAUSE._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 1:
-				var action = this._ui_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 2:
-				var action = this._ui_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 3:
-				var action = this._ui_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 4:
-				var action = this._note_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 5:
-				var action = this._note_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 6:
-				var action = this._note_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 7:
-				var action = this._note_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 8:
-				var action = this._reset;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 9:
-				var action = this._accept;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 10:
-				var action = this._back;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 11:
-				var action = this._pause;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			}
-			var copyKeys = keysMap.h["reset"].slice();
-			var _g = 0;
-			var _g1 = copyKeys.length;
-			while(_g < _g1) {
-				var i = _g++;
-				if(i == -1) {
-					HxOverrides.remove(copyKeys,i);
-				}
-			}
-			switch(Control.RESET._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 1:
-				var action = this._ui_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 2:
-				var action = this._ui_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 3:
-				var action = this._ui_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._ui_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 4:
-				var action = this._note_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_upR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 5:
-				var action = this._note_left;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_leftR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 6:
-				var action = this._note_right;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_rightR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 7:
-				var action = this._note_down;
-				var state = 1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downP;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				var action = this._note_downR;
-				var state = -1;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 8:
-				var action = this._reset;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 9:
-				var action = this._accept;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 10:
-				var action = this._back;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			case 11:
-				var action = this._pause;
-				var state = 2;
-				var _g = 0;
-				while(_g < copyKeys.length) {
-					var key = copyKeys[_g];
-					++_g;
-					if(key != -1) {
-						action.addKey(key,state);
-					}
-				}
-				break;
-			}
-			break;
-		case 1:
-			if(scheme.first) {
-				var copyKeys = [87].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.UI_UP._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [83].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.UI_DOWN._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [65].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.UI_LEFT._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [68].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.UI_RIGHT._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [87].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.NOTE_UP._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [83].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.NOTE_DOWN._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [65].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.NOTE_LEFT._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [68].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.NOTE_RIGHT._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [71,90].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.ACCEPT._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [72,88].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.BACK._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [49].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.PAUSE._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [82].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.RESET._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-			} else {
-				var copyKeys = [38].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.UI_UP._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [40].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.UI_DOWN._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [37].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.UI_LEFT._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [39].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.UI_RIGHT._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [38].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.NOTE_UP._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [40].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.NOTE_DOWN._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [37].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.NOTE_LEFT._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [39].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.NOTE_RIGHT._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [79].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.ACCEPT._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [80].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.BACK._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [13].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.PAUSE._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-				var copyKeys = [8].slice();
-				var _g = 0;
-				var _g1 = copyKeys.length;
-				while(_g < _g1) {
-					var i = _g++;
-					if(i == -1) {
-						HxOverrides.remove(copyKeys,i);
-					}
-				}
-				switch(Control.RESET._hx_index) {
-				case 0:
-					var action = this._ui_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 1:
-					var action = this._ui_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 2:
-					var action = this._ui_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 3:
-					var action = this._ui_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._ui_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 4:
-					var action = this._note_up;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_upR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 5:
-					var action = this._note_left;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_leftR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 6:
-					var action = this._note_right;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_rightR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 7:
-					var action = this._note_down;
-					var state = 1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downP;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					var action = this._note_downR;
-					var state = -1;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 8:
-					var action = this._reset;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 9:
-					var action = this._accept;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 10:
-					var action = this._back;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				case 11:
-					var action = this._pause;
-					var state = 2;
-					var _g = 0;
-					while(_g < copyKeys.length) {
-						var key = copyKeys[_g];
-						++_g;
-						if(key != -1) {
-							action.addKey(key,state);
-						}
-					}
-					break;
-				}
-			}
-			break;
-		case 2:
-			break;
-		case 3:
-			break;
-		}
-	}
-	,removeKeyboard: function() {
-		var _g = 0;
-		var _g1 = this.digitalActions;
-		while(_g < _g1.length) {
-			var action = _g1[_g];
-			++_g;
-			var i = action.inputs.length;
-			while(i-- > 0) {
-				var input = action.inputs[i];
-				if(input.device == flixel_input_actions_FlxInputDevice.KEYBOARD) {
-					action.remove(input);
-				}
-			}
-		}
-	}
-	,addGamepad: function(id,buttonMap) {
-		this.gamepadsAdded.push(id);
-		var map = buttonMap;
-		var _g_map = map;
-		var _g_keys = map.keys();
-		while(_g_keys.hasNext()) {
-			var key = _g_keys.next();
-			var _g1_value = _g_map.get(key);
-			var _g1_key = key;
-			var control = _g1_key;
-			var buttons = _g1_value;
-			var id1 = id;
-			var buttons1 = buttons;
-			switch(control._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < buttons1.length) {
-					var button = buttons1[_g];
-					++_g;
-					action.addGamepad(button,state,id1);
-				}
-				var action1 = this._ui_upP;
-				var state1 = 2;
-				var _g1 = 0;
-				while(_g1 < buttons1.length) {
-					var button1 = buttons1[_g1];
-					++_g1;
-					action1.addGamepad(button1,state1,id1);
-				}
-				var action2 = this._ui_upR;
-				var state2 = -1;
-				var _g2 = 0;
-				while(_g2 < buttons1.length) {
-					var button2 = buttons1[_g2];
-					++_g2;
-					action2.addGamepad(button2,state2,id1);
-				}
-				break;
-			case 1:
-				var action3 = this._ui_left;
-				var state3 = 1;
-				var _g3 = 0;
-				while(_g3 < buttons1.length) {
-					var button3 = buttons1[_g3];
-					++_g3;
-					action3.addGamepad(button3,state3,id1);
-				}
-				var action4 = this._ui_leftP;
-				var state4 = 2;
-				var _g4 = 0;
-				while(_g4 < buttons1.length) {
-					var button4 = buttons1[_g4];
-					++_g4;
-					action4.addGamepad(button4,state4,id1);
-				}
-				var action5 = this._ui_leftR;
-				var state5 = -1;
-				var _g5 = 0;
-				while(_g5 < buttons1.length) {
-					var button5 = buttons1[_g5];
-					++_g5;
-					action5.addGamepad(button5,state5,id1);
-				}
-				break;
-			case 2:
-				var action6 = this._ui_right;
-				var state6 = 1;
-				var _g6 = 0;
-				while(_g6 < buttons1.length) {
-					var button6 = buttons1[_g6];
-					++_g6;
-					action6.addGamepad(button6,state6,id1);
-				}
-				var action7 = this._ui_rightP;
-				var state7 = 2;
-				var _g7 = 0;
-				while(_g7 < buttons1.length) {
-					var button7 = buttons1[_g7];
-					++_g7;
-					action7.addGamepad(button7,state7,id1);
-				}
-				var action8 = this._ui_rightR;
-				var state8 = -1;
-				var _g8 = 0;
-				while(_g8 < buttons1.length) {
-					var button8 = buttons1[_g8];
-					++_g8;
-					action8.addGamepad(button8,state8,id1);
-				}
-				break;
-			case 3:
-				var action9 = this._ui_down;
-				var state9 = 1;
-				var _g9 = 0;
-				while(_g9 < buttons1.length) {
-					var button9 = buttons1[_g9];
-					++_g9;
-					action9.addGamepad(button9,state9,id1);
-				}
-				var action10 = this._ui_downP;
-				var state10 = 2;
-				var _g10 = 0;
-				while(_g10 < buttons1.length) {
-					var button10 = buttons1[_g10];
-					++_g10;
-					action10.addGamepad(button10,state10,id1);
-				}
-				var action11 = this._ui_downR;
-				var state11 = -1;
-				var _g11 = 0;
-				while(_g11 < buttons1.length) {
-					var button11 = buttons1[_g11];
-					++_g11;
-					action11.addGamepad(button11,state11,id1);
-				}
-				break;
-			case 4:
-				var action12 = this._note_up;
-				var state12 = 1;
-				var _g12 = 0;
-				while(_g12 < buttons1.length) {
-					var button12 = buttons1[_g12];
-					++_g12;
-					action12.addGamepad(button12,state12,id1);
-				}
-				var action13 = this._note_upP;
-				var state13 = 2;
-				var _g13 = 0;
-				while(_g13 < buttons1.length) {
-					var button13 = buttons1[_g13];
-					++_g13;
-					action13.addGamepad(button13,state13,id1);
-				}
-				var action14 = this._note_upR;
-				var state14 = -1;
-				var _g14 = 0;
-				while(_g14 < buttons1.length) {
-					var button14 = buttons1[_g14];
-					++_g14;
-					action14.addGamepad(button14,state14,id1);
-				}
-				break;
-			case 5:
-				var action15 = this._note_left;
-				var state15 = 1;
-				var _g15 = 0;
-				while(_g15 < buttons1.length) {
-					var button15 = buttons1[_g15];
-					++_g15;
-					action15.addGamepad(button15,state15,id1);
-				}
-				var action16 = this._note_leftP;
-				var state16 = 2;
-				var _g16 = 0;
-				while(_g16 < buttons1.length) {
-					var button16 = buttons1[_g16];
-					++_g16;
-					action16.addGamepad(button16,state16,id1);
-				}
-				var action17 = this._note_leftR;
-				var state17 = -1;
-				var _g17 = 0;
-				while(_g17 < buttons1.length) {
-					var button17 = buttons1[_g17];
-					++_g17;
-					action17.addGamepad(button17,state17,id1);
-				}
-				break;
-			case 6:
-				var action18 = this._note_right;
-				var state18 = 1;
-				var _g18 = 0;
-				while(_g18 < buttons1.length) {
-					var button18 = buttons1[_g18];
-					++_g18;
-					action18.addGamepad(button18,state18,id1);
-				}
-				var action19 = this._note_rightP;
-				var state19 = 2;
-				var _g19 = 0;
-				while(_g19 < buttons1.length) {
-					var button19 = buttons1[_g19];
-					++_g19;
-					action19.addGamepad(button19,state19,id1);
-				}
-				var action20 = this._note_rightR;
-				var state20 = -1;
-				var _g20 = 0;
-				while(_g20 < buttons1.length) {
-					var button20 = buttons1[_g20];
-					++_g20;
-					action20.addGamepad(button20,state20,id1);
-				}
-				break;
-			case 7:
-				var action21 = this._note_down;
-				var state21 = 1;
-				var _g21 = 0;
-				while(_g21 < buttons1.length) {
-					var button21 = buttons1[_g21];
-					++_g21;
-					action21.addGamepad(button21,state21,id1);
-				}
-				var action22 = this._note_downP;
-				var state22 = 2;
-				var _g22 = 0;
-				while(_g22 < buttons1.length) {
-					var button22 = buttons1[_g22];
-					++_g22;
-					action22.addGamepad(button22,state22,id1);
-				}
-				var action23 = this._note_downR;
-				var state23 = -1;
-				var _g23 = 0;
-				while(_g23 < buttons1.length) {
-					var button23 = buttons1[_g23];
-					++_g23;
-					action23.addGamepad(button23,state23,id1);
-				}
-				break;
-			case 8:
-				var action24 = this._reset;
-				var state24 = 2;
-				var _g24 = 0;
-				while(_g24 < buttons1.length) {
-					var button24 = buttons1[_g24];
-					++_g24;
-					action24.addGamepad(button24,state24,id1);
-				}
-				break;
-			case 9:
-				var action25 = this._accept;
-				var state25 = 2;
-				var _g25 = 0;
-				while(_g25 < buttons1.length) {
-					var button25 = buttons1[_g25];
-					++_g25;
-					action25.addGamepad(button25,state25,id1);
-				}
-				break;
-			case 10:
-				var action26 = this._back;
-				var state26 = 2;
-				var _g26 = 0;
-				while(_g26 < buttons1.length) {
-					var button26 = buttons1[_g26];
-					++_g26;
-					action26.addGamepad(button26,state26,id1);
-				}
-				break;
-			case 11:
-				var action27 = this._pause;
-				var state27 = 2;
-				var _g27 = 0;
-				while(_g27 < buttons1.length) {
-					var button27 = buttons1[_g27];
-					++_g27;
-					action27.addGamepad(button27,state27,id1);
-				}
-				break;
-			}
-		}
-	}
-	,addGamepadLiteral: function(id,buttonMap) {
-		this.gamepadsAdded.push(id);
-		var map = buttonMap;
-		var _g_map = map;
-		var _g_keys = map.keys();
-		while(_g_keys.hasNext()) {
-			var key = _g_keys.next();
-			var _g1_value = _g_map.get(key);
-			var _g1_key = key;
-			var control = _g1_key;
-			var buttons = _g1_value;
-			var id1 = id;
-			var buttons1 = buttons;
-			switch(control._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < buttons1.length) {
-					var button = buttons1[_g];
-					++_g;
-					action.addGamepad(button,state,id1);
-				}
-				var action1 = this._ui_upP;
-				var state1 = 2;
-				var _g1 = 0;
-				while(_g1 < buttons1.length) {
-					var button1 = buttons1[_g1];
-					++_g1;
-					action1.addGamepad(button1,state1,id1);
-				}
-				var action2 = this._ui_upR;
-				var state2 = -1;
-				var _g2 = 0;
-				while(_g2 < buttons1.length) {
-					var button2 = buttons1[_g2];
-					++_g2;
-					action2.addGamepad(button2,state2,id1);
-				}
-				break;
-			case 1:
-				var action3 = this._ui_left;
-				var state3 = 1;
-				var _g3 = 0;
-				while(_g3 < buttons1.length) {
-					var button3 = buttons1[_g3];
-					++_g3;
-					action3.addGamepad(button3,state3,id1);
-				}
-				var action4 = this._ui_leftP;
-				var state4 = 2;
-				var _g4 = 0;
-				while(_g4 < buttons1.length) {
-					var button4 = buttons1[_g4];
-					++_g4;
-					action4.addGamepad(button4,state4,id1);
-				}
-				var action5 = this._ui_leftR;
-				var state5 = -1;
-				var _g5 = 0;
-				while(_g5 < buttons1.length) {
-					var button5 = buttons1[_g5];
-					++_g5;
-					action5.addGamepad(button5,state5,id1);
-				}
-				break;
-			case 2:
-				var action6 = this._ui_right;
-				var state6 = 1;
-				var _g6 = 0;
-				while(_g6 < buttons1.length) {
-					var button6 = buttons1[_g6];
-					++_g6;
-					action6.addGamepad(button6,state6,id1);
-				}
-				var action7 = this._ui_rightP;
-				var state7 = 2;
-				var _g7 = 0;
-				while(_g7 < buttons1.length) {
-					var button7 = buttons1[_g7];
-					++_g7;
-					action7.addGamepad(button7,state7,id1);
-				}
-				var action8 = this._ui_rightR;
-				var state8 = -1;
-				var _g8 = 0;
-				while(_g8 < buttons1.length) {
-					var button8 = buttons1[_g8];
-					++_g8;
-					action8.addGamepad(button8,state8,id1);
-				}
-				break;
-			case 3:
-				var action9 = this._ui_down;
-				var state9 = 1;
-				var _g9 = 0;
-				while(_g9 < buttons1.length) {
-					var button9 = buttons1[_g9];
-					++_g9;
-					action9.addGamepad(button9,state9,id1);
-				}
-				var action10 = this._ui_downP;
-				var state10 = 2;
-				var _g10 = 0;
-				while(_g10 < buttons1.length) {
-					var button10 = buttons1[_g10];
-					++_g10;
-					action10.addGamepad(button10,state10,id1);
-				}
-				var action11 = this._ui_downR;
-				var state11 = -1;
-				var _g11 = 0;
-				while(_g11 < buttons1.length) {
-					var button11 = buttons1[_g11];
-					++_g11;
-					action11.addGamepad(button11,state11,id1);
-				}
-				break;
-			case 4:
-				var action12 = this._note_up;
-				var state12 = 1;
-				var _g12 = 0;
-				while(_g12 < buttons1.length) {
-					var button12 = buttons1[_g12];
-					++_g12;
-					action12.addGamepad(button12,state12,id1);
-				}
-				var action13 = this._note_upP;
-				var state13 = 2;
-				var _g13 = 0;
-				while(_g13 < buttons1.length) {
-					var button13 = buttons1[_g13];
-					++_g13;
-					action13.addGamepad(button13,state13,id1);
-				}
-				var action14 = this._note_upR;
-				var state14 = -1;
-				var _g14 = 0;
-				while(_g14 < buttons1.length) {
-					var button14 = buttons1[_g14];
-					++_g14;
-					action14.addGamepad(button14,state14,id1);
-				}
-				break;
-			case 5:
-				var action15 = this._note_left;
-				var state15 = 1;
-				var _g15 = 0;
-				while(_g15 < buttons1.length) {
-					var button15 = buttons1[_g15];
-					++_g15;
-					action15.addGamepad(button15,state15,id1);
-				}
-				var action16 = this._note_leftP;
-				var state16 = 2;
-				var _g16 = 0;
-				while(_g16 < buttons1.length) {
-					var button16 = buttons1[_g16];
-					++_g16;
-					action16.addGamepad(button16,state16,id1);
-				}
-				var action17 = this._note_leftR;
-				var state17 = -1;
-				var _g17 = 0;
-				while(_g17 < buttons1.length) {
-					var button17 = buttons1[_g17];
-					++_g17;
-					action17.addGamepad(button17,state17,id1);
-				}
-				break;
-			case 6:
-				var action18 = this._note_right;
-				var state18 = 1;
-				var _g18 = 0;
-				while(_g18 < buttons1.length) {
-					var button18 = buttons1[_g18];
-					++_g18;
-					action18.addGamepad(button18,state18,id1);
-				}
-				var action19 = this._note_rightP;
-				var state19 = 2;
-				var _g19 = 0;
-				while(_g19 < buttons1.length) {
-					var button19 = buttons1[_g19];
-					++_g19;
-					action19.addGamepad(button19,state19,id1);
-				}
-				var action20 = this._note_rightR;
-				var state20 = -1;
-				var _g20 = 0;
-				while(_g20 < buttons1.length) {
-					var button20 = buttons1[_g20];
-					++_g20;
-					action20.addGamepad(button20,state20,id1);
-				}
-				break;
-			case 7:
-				var action21 = this._note_down;
-				var state21 = 1;
-				var _g21 = 0;
-				while(_g21 < buttons1.length) {
-					var button21 = buttons1[_g21];
-					++_g21;
-					action21.addGamepad(button21,state21,id1);
-				}
-				var action22 = this._note_downP;
-				var state22 = 2;
-				var _g22 = 0;
-				while(_g22 < buttons1.length) {
-					var button22 = buttons1[_g22];
-					++_g22;
-					action22.addGamepad(button22,state22,id1);
-				}
-				var action23 = this._note_downR;
-				var state23 = -1;
-				var _g23 = 0;
-				while(_g23 < buttons1.length) {
-					var button23 = buttons1[_g23];
-					++_g23;
-					action23.addGamepad(button23,state23,id1);
-				}
-				break;
-			case 8:
-				var action24 = this._reset;
-				var state24 = 2;
-				var _g24 = 0;
-				while(_g24 < buttons1.length) {
-					var button24 = buttons1[_g24];
-					++_g24;
-					action24.addGamepad(button24,state24,id1);
-				}
-				break;
-			case 9:
-				var action25 = this._accept;
-				var state25 = 2;
-				var _g25 = 0;
-				while(_g25 < buttons1.length) {
-					var button25 = buttons1[_g25];
-					++_g25;
-					action25.addGamepad(button25,state25,id1);
-				}
-				break;
-			case 10:
-				var action26 = this._back;
-				var state26 = 2;
-				var _g26 = 0;
-				while(_g26 < buttons1.length) {
-					var button26 = buttons1[_g26];
-					++_g26;
-					action26.addGamepad(button26,state26,id1);
-				}
-				break;
-			case 11:
-				var action27 = this._pause;
-				var state27 = 2;
-				var _g27 = 0;
-				while(_g27 < buttons1.length) {
-					var button27 = buttons1[_g27];
-					++_g27;
-					action27.addGamepad(button27,state27,id1);
-				}
-				break;
-			}
-		}
-	}
-	,removeGamepad: function(deviceID) {
-		if(deviceID == null) {
-			deviceID = -1;
-		}
-		var _g = 0;
-		var _g1 = this.digitalActions;
-		while(_g < _g1.length) {
-			var action = _g1[_g];
-			++_g;
-			var i = action.inputs.length;
-			while(i-- > 0) {
-				var input = action.inputs[i];
-				if(input.device == flixel_input_actions_FlxInputDevice.GAMEPAD && (deviceID == -1 || input.deviceID == deviceID)) {
-					action.remove(input);
-				}
-			}
-		}
-		HxOverrides.remove(this.gamepadsAdded,deviceID);
-	}
-	,addDefaultGamepad: function(id) {
-		var _g = new haxe_ds_EnumValueMap();
-		_g.set(Control.ACCEPT,[0,7]);
-		_g.set(Control.BACK,[1]);
-		_g.set(Control.UI_UP,[11,34]);
-		_g.set(Control.UI_DOWN,[12,36]);
-		_g.set(Control.UI_LEFT,[13,37]);
-		_g.set(Control.UI_RIGHT,[14,35]);
-		_g.set(Control.NOTE_UP,[11,34,38,3]);
-		_g.set(Control.NOTE_DOWN,[12,36,40,0]);
-		_g.set(Control.NOTE_LEFT,[13,37,41,2]);
-		_g.set(Control.NOTE_RIGHT,[14,35,39,1]);
-		_g.set(Control.PAUSE,[7]);
-		_g.set(Control.RESET,[8]);
-		this.gamepadsAdded.push(id);
-		var map = _g;
-		var _g_map = map;
-		var _g_keys = map.keys();
-		while(_g_keys.hasNext()) {
-			var key = _g_keys.next();
-			var _g1_value = _g_map.get(key);
-			var _g1_key = key;
-			var control = _g1_key;
-			var buttons = _g1_value;
-			var id1 = id;
-			var buttons1 = buttons;
-			switch(control._hx_index) {
-			case 0:
-				var action = this._ui_up;
-				var state = 1;
-				var _g = 0;
-				while(_g < buttons1.length) {
-					var button = buttons1[_g];
-					++_g;
-					action.addGamepad(button,state,id1);
-				}
-				var action1 = this._ui_upP;
-				var state1 = 2;
-				var _g1 = 0;
-				while(_g1 < buttons1.length) {
-					var button1 = buttons1[_g1];
-					++_g1;
-					action1.addGamepad(button1,state1,id1);
-				}
-				var action2 = this._ui_upR;
-				var state2 = -1;
-				var _g2 = 0;
-				while(_g2 < buttons1.length) {
-					var button2 = buttons1[_g2];
-					++_g2;
-					action2.addGamepad(button2,state2,id1);
-				}
-				break;
-			case 1:
-				var action3 = this._ui_left;
-				var state3 = 1;
-				var _g3 = 0;
-				while(_g3 < buttons1.length) {
-					var button3 = buttons1[_g3];
-					++_g3;
-					action3.addGamepad(button3,state3,id1);
-				}
-				var action4 = this._ui_leftP;
-				var state4 = 2;
-				var _g4 = 0;
-				while(_g4 < buttons1.length) {
-					var button4 = buttons1[_g4];
-					++_g4;
-					action4.addGamepad(button4,state4,id1);
-				}
-				var action5 = this._ui_leftR;
-				var state5 = -1;
-				var _g5 = 0;
-				while(_g5 < buttons1.length) {
-					var button5 = buttons1[_g5];
-					++_g5;
-					action5.addGamepad(button5,state5,id1);
-				}
-				break;
-			case 2:
-				var action6 = this._ui_right;
-				var state6 = 1;
-				var _g6 = 0;
-				while(_g6 < buttons1.length) {
-					var button6 = buttons1[_g6];
-					++_g6;
-					action6.addGamepad(button6,state6,id1);
-				}
-				var action7 = this._ui_rightP;
-				var state7 = 2;
-				var _g7 = 0;
-				while(_g7 < buttons1.length) {
-					var button7 = buttons1[_g7];
-					++_g7;
-					action7.addGamepad(button7,state7,id1);
-				}
-				var action8 = this._ui_rightR;
-				var state8 = -1;
-				var _g8 = 0;
-				while(_g8 < buttons1.length) {
-					var button8 = buttons1[_g8];
-					++_g8;
-					action8.addGamepad(button8,state8,id1);
-				}
-				break;
-			case 3:
-				var action9 = this._ui_down;
-				var state9 = 1;
-				var _g9 = 0;
-				while(_g9 < buttons1.length) {
-					var button9 = buttons1[_g9];
-					++_g9;
-					action9.addGamepad(button9,state9,id1);
-				}
-				var action10 = this._ui_downP;
-				var state10 = 2;
-				var _g10 = 0;
-				while(_g10 < buttons1.length) {
-					var button10 = buttons1[_g10];
-					++_g10;
-					action10.addGamepad(button10,state10,id1);
-				}
-				var action11 = this._ui_downR;
-				var state11 = -1;
-				var _g11 = 0;
-				while(_g11 < buttons1.length) {
-					var button11 = buttons1[_g11];
-					++_g11;
-					action11.addGamepad(button11,state11,id1);
-				}
-				break;
-			case 4:
-				var action12 = this._note_up;
-				var state12 = 1;
-				var _g12 = 0;
-				while(_g12 < buttons1.length) {
-					var button12 = buttons1[_g12];
-					++_g12;
-					action12.addGamepad(button12,state12,id1);
-				}
-				var action13 = this._note_upP;
-				var state13 = 2;
-				var _g13 = 0;
-				while(_g13 < buttons1.length) {
-					var button13 = buttons1[_g13];
-					++_g13;
-					action13.addGamepad(button13,state13,id1);
-				}
-				var action14 = this._note_upR;
-				var state14 = -1;
-				var _g14 = 0;
-				while(_g14 < buttons1.length) {
-					var button14 = buttons1[_g14];
-					++_g14;
-					action14.addGamepad(button14,state14,id1);
-				}
-				break;
-			case 5:
-				var action15 = this._note_left;
-				var state15 = 1;
-				var _g15 = 0;
-				while(_g15 < buttons1.length) {
-					var button15 = buttons1[_g15];
-					++_g15;
-					action15.addGamepad(button15,state15,id1);
-				}
-				var action16 = this._note_leftP;
-				var state16 = 2;
-				var _g16 = 0;
-				while(_g16 < buttons1.length) {
-					var button16 = buttons1[_g16];
-					++_g16;
-					action16.addGamepad(button16,state16,id1);
-				}
-				var action17 = this._note_leftR;
-				var state17 = -1;
-				var _g17 = 0;
-				while(_g17 < buttons1.length) {
-					var button17 = buttons1[_g17];
-					++_g17;
-					action17.addGamepad(button17,state17,id1);
-				}
-				break;
-			case 6:
-				var action18 = this._note_right;
-				var state18 = 1;
-				var _g18 = 0;
-				while(_g18 < buttons1.length) {
-					var button18 = buttons1[_g18];
-					++_g18;
-					action18.addGamepad(button18,state18,id1);
-				}
-				var action19 = this._note_rightP;
-				var state19 = 2;
-				var _g19 = 0;
-				while(_g19 < buttons1.length) {
-					var button19 = buttons1[_g19];
-					++_g19;
-					action19.addGamepad(button19,state19,id1);
-				}
-				var action20 = this._note_rightR;
-				var state20 = -1;
-				var _g20 = 0;
-				while(_g20 < buttons1.length) {
-					var button20 = buttons1[_g20];
-					++_g20;
-					action20.addGamepad(button20,state20,id1);
-				}
-				break;
-			case 7:
-				var action21 = this._note_down;
-				var state21 = 1;
-				var _g21 = 0;
-				while(_g21 < buttons1.length) {
-					var button21 = buttons1[_g21];
-					++_g21;
-					action21.addGamepad(button21,state21,id1);
-				}
-				var action22 = this._note_downP;
-				var state22 = 2;
-				var _g22 = 0;
-				while(_g22 < buttons1.length) {
-					var button22 = buttons1[_g22];
-					++_g22;
-					action22.addGamepad(button22,state22,id1);
-				}
-				var action23 = this._note_downR;
-				var state23 = -1;
-				var _g23 = 0;
-				while(_g23 < buttons1.length) {
-					var button23 = buttons1[_g23];
-					++_g23;
-					action23.addGamepad(button23,state23,id1);
-				}
-				break;
-			case 8:
-				var action24 = this._reset;
-				var state24 = 2;
-				var _g24 = 0;
-				while(_g24 < buttons1.length) {
-					var button24 = buttons1[_g24];
-					++_g24;
-					action24.addGamepad(button24,state24,id1);
-				}
-				break;
-			case 9:
-				var action25 = this._accept;
-				var state25 = 2;
-				var _g25 = 0;
-				while(_g25 < buttons1.length) {
-					var button25 = buttons1[_g25];
-					++_g25;
-					action25.addGamepad(button25,state25,id1);
-				}
-				break;
-			case 10:
-				var action26 = this._back;
-				var state26 = 2;
-				var _g26 = 0;
-				while(_g26 < buttons1.length) {
-					var button26 = buttons1[_g26];
-					++_g26;
-					action26.addGamepad(button26,state26,id1);
-				}
-				break;
-			case 11:
-				var action27 = this._pause;
-				var state27 = 2;
-				var _g27 = 0;
-				while(_g27 < buttons1.length) {
-					var button27 = buttons1[_g27];
-					++_g27;
-					action27.addGamepad(button27,state27,id1);
-				}
-				break;
-			}
-		}
-	}
-	,bindButtons: function(control,id,buttons) {
-		switch(control._hx_index) {
-		case 0:
-			var action = this._ui_up;
-			var state = 1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._ui_upP;
-			var state = 2;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._ui_upR;
-			var state = -1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			break;
-		case 1:
-			var action = this._ui_left;
-			var state = 1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._ui_leftP;
-			var state = 2;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._ui_leftR;
-			var state = -1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			break;
-		case 2:
-			var action = this._ui_right;
-			var state = 1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._ui_rightP;
-			var state = 2;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._ui_rightR;
-			var state = -1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			break;
-		case 3:
-			var action = this._ui_down;
-			var state = 1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._ui_downP;
-			var state = 2;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._ui_downR;
-			var state = -1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			break;
-		case 4:
-			var action = this._note_up;
-			var state = 1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._note_upP;
-			var state = 2;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._note_upR;
-			var state = -1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			break;
-		case 5:
-			var action = this._note_left;
-			var state = 1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._note_leftP;
-			var state = 2;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._note_leftR;
-			var state = -1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			break;
-		case 6:
-			var action = this._note_right;
-			var state = 1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._note_rightP;
-			var state = 2;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._note_rightR;
-			var state = -1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			break;
-		case 7:
-			var action = this._note_down;
-			var state = 1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._note_downP;
-			var state = 2;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			var action = this._note_downR;
-			var state = -1;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			break;
-		case 8:
-			var action = this._reset;
-			var state = 2;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			break;
-		case 9:
-			var action = this._accept;
-			var state = 2;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			break;
-		case 10:
-			var action = this._back;
-			var state = 2;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			break;
-		case 11:
-			var action = this._pause;
-			var state = 2;
-			var _g = 0;
-			while(_g < buttons.length) {
-				var button = buttons[_g];
-				++_g;
-				action.addGamepad(button,state,id);
-			}
-			break;
-		}
-	}
-	,unbindButtons: function(control,gamepadID,buttons) {
-		switch(control._hx_index) {
-		case 0:
-			Controls.removeButtons(this._ui_up,gamepadID,buttons);
-			Controls.removeButtons(this._ui_upP,gamepadID,buttons);
-			Controls.removeButtons(this._ui_upR,gamepadID,buttons);
-			break;
-		case 1:
-			Controls.removeButtons(this._ui_left,gamepadID,buttons);
-			Controls.removeButtons(this._ui_leftP,gamepadID,buttons);
-			Controls.removeButtons(this._ui_leftR,gamepadID,buttons);
-			break;
-		case 2:
-			Controls.removeButtons(this._ui_right,gamepadID,buttons);
-			Controls.removeButtons(this._ui_rightP,gamepadID,buttons);
-			Controls.removeButtons(this._ui_rightR,gamepadID,buttons);
-			break;
-		case 3:
-			Controls.removeButtons(this._ui_down,gamepadID,buttons);
-			Controls.removeButtons(this._ui_downP,gamepadID,buttons);
-			Controls.removeButtons(this._ui_downR,gamepadID,buttons);
-			break;
-		case 4:
-			Controls.removeButtons(this._note_up,gamepadID,buttons);
-			Controls.removeButtons(this._note_upP,gamepadID,buttons);
-			Controls.removeButtons(this._note_upR,gamepadID,buttons);
-			break;
-		case 5:
-			Controls.removeButtons(this._note_left,gamepadID,buttons);
-			Controls.removeButtons(this._note_leftP,gamepadID,buttons);
-			Controls.removeButtons(this._note_leftR,gamepadID,buttons);
-			break;
-		case 6:
-			Controls.removeButtons(this._note_right,gamepadID,buttons);
-			Controls.removeButtons(this._note_rightP,gamepadID,buttons);
-			Controls.removeButtons(this._note_rightR,gamepadID,buttons);
-			break;
-		case 7:
-			Controls.removeButtons(this._note_down,gamepadID,buttons);
-			Controls.removeButtons(this._note_downP,gamepadID,buttons);
-			Controls.removeButtons(this._note_downR,gamepadID,buttons);
-			break;
-		case 8:
-			Controls.removeButtons(this._reset,gamepadID,buttons);
-			break;
-		case 9:
-			Controls.removeButtons(this._accept,gamepadID,buttons);
-			break;
-		case 10:
-			Controls.removeButtons(this._back,gamepadID,buttons);
-			break;
-		case 11:
-			Controls.removeButtons(this._pause,gamepadID,buttons);
-			break;
-		}
-	}
-	,getInputsFor: function(control,device,list) {
-		if(list == null) {
-			list = [];
-		}
-		switch(device._hx_index) {
-		case 0:
-			var _g = 0;
-			var _g1 = this.getActionFromControl(control).inputs;
-			while(_g < _g1.length) {
-				var input = _g1[_g];
-				++_g;
-				if(input.device == flixel_input_actions_FlxInputDevice.KEYBOARD) {
-					list.push(input.inputID);
-				}
-			}
-			break;
-		case 1:
-			var id = device.id;
-			var _g = 0;
-			var _g1 = this.getActionFromControl(control).inputs;
-			while(_g < _g1.length) {
-				var input = _g1[_g];
-				++_g;
-				if(input.deviceID == id) {
-					list.push(input.inputID);
-				}
-			}
-			break;
-		}
-		return list;
-	}
-	,removeDevice: function(device) {
-		switch(device._hx_index) {
-		case 0:
-			this.setKeyboardScheme(KeyboardScheme.None);
-			break;
-		case 1:
-			var id = device.id;
-			this.removeGamepad(id);
-			break;
-		}
-	}
-	,__class__: Controls
-	,__properties__: {get_RESET:"get_RESET",get_PAUSE:"get_PAUSE",get_BACK:"get_BACK",get_ACCEPT:"get_ACCEPT",get_NOTE_DOWN_R:"get_NOTE_DOWN_R",get_NOTE_RIGHT_R:"get_NOTE_RIGHT_R",get_NOTE_LEFT_R:"get_NOTE_LEFT_R",get_NOTE_UP_R:"get_NOTE_UP_R",get_NOTE_DOWN_P:"get_NOTE_DOWN_P",get_NOTE_RIGHT_P:"get_NOTE_RIGHT_P",get_NOTE_LEFT_P:"get_NOTE_LEFT_P",get_NOTE_UP_P:"get_NOTE_UP_P",get_NOTE_DOWN:"get_NOTE_DOWN",get_NOTE_RIGHT:"get_NOTE_RIGHT",get_NOTE_LEFT:"get_NOTE_LEFT",get_NOTE_UP:"get_NOTE_UP",get_UI_DOWN_R:"get_UI_DOWN_R",get_UI_RIGHT_R:"get_UI_RIGHT_R",get_UI_LEFT_R:"get_UI_LEFT_R",get_UI_UP_R:"get_UI_UP_R",get_UI_DOWN_P:"get_UI_DOWN_P",get_UI_RIGHT_P:"get_UI_RIGHT_P",get_UI_LEFT_P:"get_UI_LEFT_P",get_UI_UP_P:"get_UI_UP_P",get_UI_DOWN:"get_UI_DOWN",get_UI_RIGHT:"get_UI_RIGHT",get_UI_LEFT:"get_UI_LEFT",get_UI_UP:"get_UI_UP"}
-});
 var Align = $hxEnums["Align"] = { __ename__:"Align",__constructs__:null
 	,TOP_LEFT: {_hx_name:"TOP_LEFT",_hx_index:0,__enum__:"Align",toString:$estr}
 	,TOP_RIGHT: {_hx_name:"TOP_RIGHT",_hx_index:1,__enum__:"Align",toString:$estr}
@@ -24086,7 +10496,7 @@ $hxClasses["CoolUtil"] = CoolUtil;
 CoolUtil.__name__ = "CoolUtil";
 CoolUtil.quantize = function(f,snap) {
 	var m = Math.round(f * snap);
-	haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
+	haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 50, className : "CoolUtil", methodName : "quantize"});
 	return m / snap;
 };
 CoolUtil.getDifficultyFilePath = function(num) {
@@ -24507,6 +10917,18 @@ CoolUtil.arrayFallback = function(arr,backupArr) {
 	}
 	return newArray;
 };
+CoolUtil.stringToFlxKey = function(key) {
+	var s = key.toUpperCase();
+	s = s.toUpperCase();
+	var keyEnum = Object.prototype.hasOwnProperty.call(flixel_input_keyboard_FlxKey.fromStringMap.h,s) ? flixel_input_keyboard_FlxKey.fromStringMap.h[s] : -1;
+	return keyEnum;
+};
+CoolUtil.stringToGamepadInputId = function(key) {
+	var s = key.toUpperCase();
+	s = s.toUpperCase();
+	var inputIdEnum = Object.prototype.hasOwnProperty.call(flixel_input_gamepad_FlxGamepadInputID.fromStringMap.h,s) ? flixel_input_gamepad_FlxGamepadInputID.fromStringMap.h[s] : -1;
+	return inputIdEnum;
+};
 var CreditsState = function(TransIn,TransOut) {
 	this.moveTween = null;
 	this.holdTime = 0;
@@ -24615,8 +11037,12 @@ CreditsState.prototype = $extend(MusicBeatState.prototype,{
 				if(_this.keyManager.checkStatusUnsafe(16,_this.status)) {
 					shiftMult = 3;
 				}
-				var upP = PlayerSettings.player1.controls._ui_upP.check();
-				var downP = PlayerSettings.player1.controls._ui_downP.check();
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JP;
+				var upP = dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state);
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JP;
+				var downP = dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state);
 				if(upP) {
 					this.changeSelection(-shiftMult);
 					this.holdTime = 0;
@@ -24625,19 +11051,35 @@ CreditsState.prototype = $extend(MusicBeatState.prototype,{
 					this.changeSelection(shiftMult);
 					this.holdTime = 0;
 				}
-				if(PlayerSettings.player1.controls._ui_down.check() || PlayerSettings.player1.controls._ui_up.check()) {
+				var tmp;
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.P;
+				if(!(dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state))) {
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.P;
+					tmp = dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state);
+				} else {
+					tmp = true;
+				}
+				if(tmp) {
 					var checkLastHold = Math.floor((this.holdTime - 0.5) * 10);
 					this.holdTime += elapsed;
 					var checkNewHold = Math.floor((this.holdTime - 0.5) * 10);
 					if(this.holdTime > 0.5 && checkNewHold - checkLastHold > 0) {
-						this.changeSelection((checkNewHold - checkLastHold) * (PlayerSettings.player1.controls._ui_up.check() ? -shiftMult : shiftMult));
+						var _this = dge_input_Controls.instance;
+						var state = dge_input_InputState.P;
+						this.changeSelection((checkNewHold - checkLastHold) * (dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state) ? -shiftMult : shiftMult));
 					}
 				}
 			}
-			if(PlayerSettings.player1.controls._accept.check() && (this.creditsStuff[this.curSelected][3] == null || this.creditsStuff[this.curSelected][3].length > 4)) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if((dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) && (this.creditsStuff[this.curSelected][3] == null || this.creditsStuff[this.curSelected][3].length > 4)) {
 				CoolUtil.browserLoad(this.creditsStuff[this.curSelected][3]);
 			}
-			if(PlayerSettings.player1.controls._back.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
 				if(this.colorTween != null) {
 					this.colorTween.cancel();
 				}
@@ -24834,7 +11276,7 @@ MusicBeatSubstate.prototype = $extend(flixel_FlxSubState.prototype,{
 	,curDecStep: null
 	,curDecBeat: null
 	,get_controls: function() {
-		return PlayerSettings.player1.controls;
+		return dge_input_Controls.instance;
 	}
 	,update: function(elapsed) {
 		var oldStep = this.curStep;
@@ -25380,7 +11822,9 @@ DialogueBox.prototype = $extend(flixel_group_FlxTypedSpriteGroup.prototype,{
 			this.startDialogue();
 			this.dialogueStarted = true;
 		}
-		if(PlayerSettings.player1.controls._accept.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
 			if(this.dialogueEnded) {
 				if(this.dialogueList[1] == null && this.dialogueList[0] != null) {
 					if(!this.isEnding) {
@@ -25595,7 +12039,7 @@ DialogueCharacter.prototype = $extend(flixel_FlxSprite.prototype,{
 			}
 		} else {
 			this.offset.set(0,0);
-			haxe_Log.trace("Offsets not found! Dialogue character is badly formatted, anim: " + leAnim + ", " + (playIdle ? "idle anim" : "loop anim"),{ fileName : "source/DialogueBoxPsych.hx", lineNumber : 163, className : "DialogueCharacter", methodName : "playAnim"});
+			haxe_Log.trace("Offsets not found! Dialogue character is badly formatted, anim: " + leAnim + ", " + (playIdle ? "idle anim" : "loop anim"),{ fileName : "source/DialogueBoxPsych.hx", lineNumber : 164, className : "DialogueCharacter", methodName : "playAnim"});
 		}
 	}
 	,animationIsLoop: function() {
@@ -25803,7 +12247,9 @@ DialogueBoxPsych.prototype = $extend(flixel_group_FlxTypedSpriteGroup.prototype,
 			if(this.bgFade.alpha > 0.5) {
 				this.bgFade.set_alpha(0.5);
 			}
-			var keyTrigger = PlayerSettings.player1.controls._accept.check();
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			var keyTrigger = dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state);
 			var _g = 0;
 			var _g1 = flixel_FlxG.touches.list;
 			while(_g < _g1.length) {
@@ -25811,6 +12257,7 @@ DialogueBoxPsych.prototype = $extend(flixel_group_FlxTypedSpriteGroup.prototype,
 				++_g;
 				if(i.input.current == 2) {
 					keyTrigger = true;
+					break;
 				}
 			}
 			if(keyTrigger) {
@@ -26234,8 +12681,12 @@ FlashingState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,update: function(elapsed) {
 		if(!FlashingState.leftState) {
-			var back = PlayerSettings.player1.controls._back.check();
-			if(PlayerSettings.player1.controls._accept.check() || back) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			var back = dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state);
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state) || back) {
 				FlashingState.leftState = true;
 				flixel_addons_transition_FlxTransitionableState.skipNextTransIn = true;
 				flixel_addons_transition_FlxTransitionableState.skipNextTransOut = true;
@@ -27198,9 +13649,15 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 			this.scoreText.set_text("PERSONAL BEST: " + this.lerpScore + " (" + ratingSplit.join(".") + "%)");
 		}
 		this.positionHighscore();
-		var upP = PlayerSettings.player1.controls._ui_upP.check();
-		var downP = PlayerSettings.player1.controls._ui_downP.check();
-		var accepted = PlayerSettings.player1.controls._accept.check();
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		var upP = dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state);
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		var downP = dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state);
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		var accepted = dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state);
 		var _this = flixel_FlxG.keys.justPressed;
 		var space = _this.keyManager.checkStatusUnsafe(32,_this.status);
 		var _this = flixel_FlxG.keys.justPressed;
@@ -27219,12 +13676,24 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 				this.changeSelection(shiftMult);
 				this.holdTime = 0;
 			}
-			if(PlayerSettings.player1.controls._ui_down.check() || PlayerSettings.player1.controls._ui_up.check()) {
+			var tmp;
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.P;
+			if(!(dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state))) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.P;
+				tmp = dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state);
+			} else {
+				tmp = true;
+			}
+			if(tmp) {
 				var checkLastHold = Math.floor((this.holdTime - 0.5) * 10);
 				this.holdTime += elapsed;
 				var checkNewHold = Math.floor((this.holdTime - 0.5) * 10);
 				if(this.holdTime > 0.5 && checkNewHold - checkLastHold > 0) {
-					this.changeSelection((checkNewHold - checkLastHold) * (PlayerSettings.player1.controls._ui_up.check() ? -shiftMult : shiftMult));
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.P;
+					this.changeSelection((checkNewHold - checkLastHold) * (dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state) ? -shiftMult : shiftMult));
 					this.changeDiff();
 				}
 			}
@@ -27234,14 +13703,22 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 				this.changeDiff();
 			}
 		}
-		if(PlayerSettings.player1.controls._ui_leftP.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state)) {
 			this.changeDiff(-1);
-		} else if(PlayerSettings.player1.controls._ui_rightP.check()) {
-			this.changeDiff(1);
-		} else if(upP || downP) {
-			this.changeDiff();
+		} else {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state)) {
+				this.changeDiff(1);
+			} else if(upP || downP) {
+				this.changeDiff();
+			}
 		}
-		if(PlayerSettings.player1.controls._back.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
 			this.persistentUpdate = false;
 			if(this.colorTween != null) {
 				this.colorTween.cancel();
@@ -27290,17 +13767,21 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 				flixel_FlxG.sound.music.set_volume(0);
 				FreeplayState.destroyFreeplayVocals();
 			}
-		} else if(PlayerSettings.player1.controls._reset.check()) {
-			if(this.songs.length > 0) {
-				this.persistentUpdate = false;
-				this.openSubState(new ResetScoreSubState(this.songs[FreeplayState.curSelected].songName,this.curDifficulty,this.songs[FreeplayState.curSelected].songCharacter));
-				flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
-			} else {
-				var nextState = Type.createInstance(js_Boot.getClass(flixel_FlxG.game._state),[]);
-				if(flixel_FlxG.game._state.switchTo(nextState)) {
-					flixel_FlxG.game._requestedState = nextState;
+		} else {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("reset",state) || dge_input_device_GamepadControls.checkButton("reset",state)) {
+				if(this.songs.length > 0) {
+					this.persistentUpdate = false;
+					this.openSubState(new ResetScoreSubState(this.songs[FreeplayState.curSelected].songName,this.curDifficulty,this.songs[FreeplayState.curSelected].songCharacter));
+					flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
+				} else {
+					var nextState = Type.createInstance(js_Boot.getClass(flixel_FlxG.game._state),[]);
+					if(flixel_FlxG.game._state.switchTo(nextState)) {
+						flixel_FlxG.game._requestedState = nextState;
+					}
+					flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
 				}
-				flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
 			}
 		}
 		MusicBeatState.prototype.update.call(this,elapsed);
@@ -27933,7 +14414,7 @@ FunkinLua.prototype = {
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4684, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4710, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -32466,10 +18947,14 @@ GameOverSubstate.prototype = $extend(MusicBeatSubstate.prototype,{
 			var a1 = this.camFollowPos.y;
 			this.camFollowPos.setPosition(a + lerpVal * (this.camFollow.x - a),a1 + lerpVal * (this.camFollow.y - a1));
 		}
-		if(PlayerSettings.player1.controls._accept.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
 			this.endBullshit();
 		}
-		if(PlayerSettings.player1.controls._back.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
 			var _this = flixel_FlxG.sound.music;
 			_this.cleanup(_this.autoDestroy,true);
 			PlayState.deathCounter = 0;
@@ -32665,12 +19150,6 @@ GameplayChangersSubstate.prototype = $extend(MusicBeatSubstate.prototype,{
 		this.optionsArray.push(option);
 		var option = new GameplayOption("Botplay","botplay","bool",false);
 		this.optionsArray.push(option);
-		var option = new GameplayOption("Note Key","notekey","int",4);
-		option.displayFormat = "%vK";
-		option.minValue = 1;
-		option.maxValue = 4;
-		option.scrollSpeed = 1;
-		this.optionsArray.push(option);
 		var option = new GameplayOption("Health Drain","healthdrain","bool",false);
 		this.optionsArray.push(option);
 		var option = new GameplayOption("Health Drain Multiplier","healthDrainMult","float",1);
@@ -32690,8 +19169,6 @@ GameplayChangersSubstate.prototype = $extend(MusicBeatSubstate.prototype,{
 		option.maxValue = 1000000000;
 		option.scrollSpeed = 10;
 		this.optionsArray.push(option);
-		var option = new GameplayOption("Randomized Note Placement","randomNote","bool",false);
-		this.optionsArray.push(option);
 	}
 	,getOptionByName: function(name) {
 		var _g = 0;
@@ -32710,13 +19187,19 @@ GameplayChangersSubstate.prototype = $extend(MusicBeatSubstate.prototype,{
 	,holdTime: null
 	,holdValue: null
 	,update: function(elapsed) {
-		if(PlayerSettings.player1.controls._ui_upP.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state)) {
 			this.changeSelection(-1);
 		}
-		if(PlayerSettings.player1.controls._ui_downP.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state)) {
 			this.changeSelection(1);
 		}
-		if(PlayerSettings.player1.controls._back.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
 			this.close();
 			ClientPrefs.saveSettings();
 			flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
@@ -32727,96 +19210,139 @@ GameplayChangersSubstate.prototype = $extend(MusicBeatSubstate.prototype,{
 				usesCheckbox = false;
 			}
 			if(usesCheckbox) {
-				if(PlayerSettings.player1.controls._accept.check()) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JP;
+				if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
 					flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 					this.curOption.setValue(this.curOption.getValue() == true ? false : true);
 					this.curOption.change();
 					this.reloadCheckboxes();
 				}
-			} else if(PlayerSettings.player1.controls._ui_left.check() || PlayerSettings.player1.controls._ui_right.check()) {
-				var pressed = PlayerSettings.player1.controls._ui_leftP.check() || PlayerSettings.player1.controls._ui_rightP.check();
-				if(this.holdTime > 0.5 || pressed) {
-					if(pressed) {
-						var add = null;
-						if(this.curOption.get_type() != "string") {
-							add = PlayerSettings.player1.controls._ui_left.check() ? -this.curOption.changeValue : this.curOption.changeValue;
-						}
-						switch(this.curOption.get_type()) {
-						case "float":case "int":case "percent":
-							this.holdValue = this.curOption.getValue() + add;
-							if(this.holdValue < this.curOption.minValue) {
-								this.holdValue = this.curOption.minValue;
-							} else if(this.holdValue > this.curOption.maxValue) {
-								this.holdValue = this.curOption.maxValue;
+			} else {
+				var tmp;
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.P;
+				if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.P;
+					tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+				} else {
+					tmp = true;
+				}
+				if(tmp) {
+					var pressed;
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.JP;
+					if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+						var _this = dge_input_Controls.instance;
+						var state = dge_input_InputState.JP;
+						pressed = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+					} else {
+						pressed = true;
+					}
+					if(this.holdTime > 0.5 || pressed) {
+						if(pressed) {
+							var add = null;
+							if(this.curOption.get_type() != "string") {
+								var _this = dge_input_Controls.instance;
+								var state = dge_input_InputState.P;
+								add = dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state) ? -this.curOption.changeValue : this.curOption.changeValue;
 							}
 							switch(this.curOption.get_type()) {
+							case "float":case "int":case "percent":
+								this.holdValue = this.curOption.getValue() + add;
+								if(this.holdValue < this.curOption.minValue) {
+									this.holdValue = this.curOption.minValue;
+								} else if(this.holdValue > this.curOption.maxValue) {
+									this.holdValue = this.curOption.maxValue;
+								}
+								switch(this.curOption.get_type()) {
+								case "int":
+									this.holdValue = Math.round(this.holdValue);
+									this.curOption.setValue(this.holdValue);
+									break;
+								case "float":case "percent":
+									this.holdValue = flixel_math_FlxMath.roundDecimal(this.holdValue,this.curOption.decimals);
+									this.curOption.setValue(this.holdValue);
+									break;
+								}
+								break;
+							case "string":
+								var num = this.curOption.curOption;
+								var _this = dge_input_Controls.instance;
+								var state = dge_input_InputState.JP;
+								if(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state)) {
+									--num;
+								} else {
+									++num;
+								}
+								if(num < 0) {
+									num = this.curOption.options.length - 1;
+								} else if(num >= this.curOption.options.length) {
+									num = 0;
+								}
+								this.curOption.curOption = num;
+								this.curOption.setValue(this.curOption.options[num]);
+								if(this.curOption.name == "Scroll Type") {
+									var oOption = this.getOptionByName("Scroll Speed");
+									if(oOption != null) {
+										if(this.curOption.getValue() == "constant") {
+											oOption.displayFormat = "%v";
+											oOption.maxValue = 6;
+										} else {
+											oOption.displayFormat = "%vX";
+											oOption.maxValue = 3;
+											if(oOption.getValue() > 3) {
+												oOption.setValue(3);
+											}
+										}
+										this.updateTextFrom(oOption);
+									}
+								}
+								break;
+							}
+							this.updateTextFrom(this.curOption);
+							this.curOption.change();
+							flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
+						} else if(this.curOption.get_type() != "string") {
+							var _this = dge_input_Controls.instance;
+							var state = dge_input_InputState.P;
+							this.holdValue = Math.max(this.curOption.minValue,Math.min(this.curOption.maxValue,this.holdValue + this.curOption.scrollSpeed * elapsed * (dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state) ? -1 : 1)));
+							switch(this.curOption.get_type()) {
 							case "int":
-								this.holdValue = Math.round(this.holdValue);
-								this.curOption.setValue(this.holdValue);
+								this.curOption.setValue(Math.round(this.holdValue));
 								break;
 							case "float":case "percent":
-								this.holdValue = flixel_math_FlxMath.roundDecimal(this.holdValue,this.curOption.decimals);
-								this.curOption.setValue(this.holdValue);
+								var blah = Math.max(this.curOption.minValue,Math.min(this.curOption.maxValue,this.holdValue + this.curOption.changeValue - this.holdValue % this.curOption.changeValue));
+								this.curOption.setValue(flixel_math_FlxMath.roundDecimal(blah,this.curOption.decimals));
 								break;
 							}
-							break;
-						case "string":
-							var num = this.curOption.curOption;
-							if(PlayerSettings.player1.controls._ui_leftP.check()) {
-								--num;
-							} else {
-								++num;
-							}
-							if(num < 0) {
-								num = this.curOption.options.length - 1;
-							} else if(num >= this.curOption.options.length) {
-								num = 0;
-							}
-							this.curOption.curOption = num;
-							this.curOption.setValue(this.curOption.options[num]);
-							if(this.curOption.name == "Scroll Type") {
-								var oOption = this.getOptionByName("Scroll Speed");
-								if(oOption != null) {
-									if(this.curOption.getValue() == "constant") {
-										oOption.displayFormat = "%v";
-										oOption.maxValue = 6;
-									} else {
-										oOption.displayFormat = "%vX";
-										oOption.maxValue = 3;
-										if(oOption.getValue() > 3) {
-											oOption.setValue(3);
-										}
-									}
-									this.updateTextFrom(oOption);
-								}
-							}
-							break;
+							this.updateTextFrom(this.curOption);
+							this.curOption.change();
 						}
-						this.updateTextFrom(this.curOption);
-						this.curOption.change();
-						flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
-					} else if(this.curOption.get_type() != "string") {
-						this.holdValue = Math.max(this.curOption.minValue,Math.min(this.curOption.maxValue,this.holdValue + this.curOption.scrollSpeed * elapsed * (PlayerSettings.player1.controls._ui_left.check() ? -1 : 1)));
-						switch(this.curOption.get_type()) {
-						case "int":
-							this.curOption.setValue(Math.round(this.holdValue));
-							break;
-						case "float":case "percent":
-							var blah = Math.max(this.curOption.minValue,Math.min(this.curOption.maxValue,this.holdValue + this.curOption.changeValue - this.holdValue % this.curOption.changeValue));
-							this.curOption.setValue(flixel_math_FlxMath.roundDecimal(blah,this.curOption.decimals));
-							break;
-						}
-						this.updateTextFrom(this.curOption);
-						this.curOption.change();
+					}
+					if(this.curOption.get_type() != "string") {
+						this.holdTime += elapsed;
+					}
+				} else {
+					var tmp;
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.JR;
+					if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+						var _this = dge_input_Controls.instance;
+						var state = dge_input_InputState.JR;
+						tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+					} else {
+						tmp = true;
+					}
+					if(tmp) {
+						this.clearHold();
 					}
 				}
-				if(this.curOption.get_type() != "string") {
-					this.holdTime += elapsed;
-				}
-			} else if(PlayerSettings.player1.controls._ui_leftR.check() || PlayerSettings.player1.controls._ui_rightR.check()) {
-				this.clearHold();
 			}
-			if(PlayerSettings.player1.controls._reset.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("reset",state) || dge_input_device_GamepadControls.checkButton("reset",state)) {
 				var _g = 0;
 				var _g1 = this.optionsArray.length;
 				while(_g < _g1) {
@@ -33673,7 +20199,7 @@ LoadingState.getNextState = function(target,stopMusic) {
 		directory = weekDir;
 	}
 	Paths.setCurrentLevel(directory);
-	haxe_Log.trace("Setting asset folder to " + directory,{ fileName : "source/LoadingState.hx", lineNumber : 164, className : "LoadingState", methodName : "getNextState"});
+	haxe_Log.trace("Setting asset folder to " + directory,{ fileName : "source/LoadingState.hx", lineNumber : 165, className : "LoadingState", methodName : "getNextState"});
 	var loaded = false;
 	if(PlayState.SONG != null) {
 		loaded = LoadingState.isSoundLoaded(LoadingState.getSongPath()) && (!PlayState.SONG.needsVoices || LoadingState.isSoundLoaded(LoadingState.getVocalPath())) && LoadingState.isLibraryLoaded("shared") && LoadingState.isLibraryLoaded(directory);
@@ -33831,7 +20357,7 @@ LoadingState.prototype = $extend(MusicBeatState.prototype,{
 		}
 	}
 	,checkLibrary: function(library) {
-		haxe_Log.trace(openfl_utils_Assets.hasLibrary(library),{ fileName : "source/LoadingState.hx", lineNumber : 101, className : "LoadingState", methodName : "checkLibrary"});
+		haxe_Log.trace(openfl_utils_Assets.hasLibrary(library),{ fileName : "source/LoadingState.hx", lineNumber : 102, className : "LoadingState", methodName : "checkLibrary"});
 		if(openfl_utils_Assets.getLibrary(library) == null) {
 			if(!Object.prototype.hasOwnProperty.call(lime_utils_Assets.libraryPaths.h,library)) {
 				throw haxe_Exception.thrown("Missing library: " + library);
@@ -33846,7 +20372,9 @@ LoadingState.prototype = $extend(MusicBeatState.prototype,{
 		MusicBeatState.prototype.update.call(this,elapsed);
 		this.funkay.setGraphicSize(0.88 * flixel_FlxG.width + 0.9 * (this.funkay.get_width() - 0.88 * flixel_FlxG.width) | 0);
 		this.funkay.updateHitbox();
-		if(PlayerSettings.player1.controls._accept.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
 			this.funkay.setGraphicSize(this.funkay.get_width() + 60 | 0);
 			this.funkay.updateHitbox();
 		}
@@ -33906,19 +20434,19 @@ MultiCallback.prototype = {
 				_gthis.numRemaining--;
 				if(_gthis.logId != null) {
 					if(_gthis.logId != null) {
-						haxe_Log.trace("" + _gthis.logId + ": " + ("fired " + id + ", " + _gthis.numRemaining + " remaining"),{ fileName : "source/LoadingState.hx", lineNumber : 315, className : "MultiCallback", methodName : "log"});
+						haxe_Log.trace("" + _gthis.logId + ": " + ("fired " + id + ", " + _gthis.numRemaining + " remaining"),{ fileName : "source/LoadingState.hx", lineNumber : 316, className : "MultiCallback", methodName : "log"});
 					}
 				}
 				if(_gthis.numRemaining == 0) {
 					if(_gthis.logId != null) {
 						if(_gthis.logId != null) {
-							haxe_Log.trace("" + _gthis.logId + ": " + "all callbacks fired",{ fileName : "source/LoadingState.hx", lineNumber : 315, className : "MultiCallback", methodName : "log"});
+							haxe_Log.trace("" + _gthis.logId + ": " + "all callbacks fired",{ fileName : "source/LoadingState.hx", lineNumber : 316, className : "MultiCallback", methodName : "log"});
 						}
 					}
 					_gthis.callback();
 				}
 			} else if(_gthis.logId != null) {
-				haxe_Log.trace("" + _gthis.logId + ": " + ("already fired " + id),{ fileName : "source/LoadingState.hx", lineNumber : 315, className : "MultiCallback", methodName : "log"});
+				haxe_Log.trace("" + _gthis.logId + ": " + ("already fired " + id),{ fileName : "source/LoadingState.hx", lineNumber : 316, className : "MultiCallback", methodName : "log"});
 			}
 		};
 		this.unfired.h[id] = func;
@@ -33926,7 +20454,7 @@ MultiCallback.prototype = {
 	}
 	,log: function(msg) {
 		if(this.logId != null) {
-			haxe_Log.trace("" + this.logId + ": " + msg,{ fileName : "source/LoadingState.hx", lineNumber : 315, className : "MultiCallback", methodName : "log"});
+			haxe_Log.trace("" + this.logId + ": " + msg,{ fileName : "source/LoadingState.hx", lineNumber : 316, className : "MultiCallback", methodName : "log"});
 		}
 	}
 	,getFired: function() {
@@ -33963,10 +20491,8 @@ MainMenuState.prototype = $extend(MusicBeatState.prototype,{
 	,magenta: null
 	,camFollow: null
 	,camFollowPos: null
-	,debugKeys: null
 	,create: function() {
 		WeekData.loadTheFirstEnabledMod();
-		this.debugKeys = ClientPrefs.copyKey(ClientPrefs.keyBinds.h["debug_1"]);
 		this.camGame = new flixel_FlxCamera();
 		this.camAchievement = new flixel_FlxCamera();
 		this.camAchievement.bgColor &= 16777215;
@@ -34147,12 +20673,12 @@ MainMenuState.prototype = $extend(MusicBeatState.prototype,{
 	,giveAchievement: function() {
 		this.add(new AchievementObject("friday_night_play",this.camAchievement));
 		flixel_FlxG.sound.play(Paths.sound("confirmMenu"),0.7);
-		haxe_Log.trace("Giving achievement \"friday_night_play\"",{ fileName : "source/MainMenuState.hx", lineNumber : 187, className : "MainMenuState", methodName : "giveAchievement"});
+		haxe_Log.trace("Giving achievement \"friday_night_play\"",{ fileName : "source/MainMenuState.hx", lineNumber : 188, className : "MainMenuState", methodName : "giveAchievement"});
 	}
 	,giveAchievementDev: function() {
 		this.add(new AchievementObject("birthday",this.camAchievement));
 		flixel_FlxG.sound.play(Paths.sound("confirmMenu"),0.7);
-		haxe_Log.trace("Giving achievement \"birthday\"",{ fileName : "source/MainMenuState.hx", lineNumber : 192, className : "MainMenuState", methodName : "giveAchievementDev"});
+		haxe_Log.trace("Giving achievement \"birthday\"",{ fileName : "source/MainMenuState.hx", lineNumber : 193, className : "MainMenuState", methodName : "giveAchievementDev"});
 	}
 	,selectedSomethin: null
 	,update: function(elapsed) {
@@ -34170,20 +20696,28 @@ MainMenuState.prototype = $extend(MusicBeatState.prototype,{
 		var a1 = this.camFollowPos.y;
 		this.camFollowPos.setPosition(a + lerpVal * (this.camFollow.x - a),a1 + lerpVal * (this.camFollow.y - a1));
 		if(!this.selectedSomethin) {
-			if(PlayerSettings.player1.controls._ui_upP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state)) {
 				flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 				this.changeItem(-1);
 			}
-			if(PlayerSettings.player1.controls._ui_downP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state)) {
 				flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 				this.changeItem(1);
 			}
-			if(PlayerSettings.player1.controls._back.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
 				this.selectedSomethin = true;
 				flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
 				MusicBeatState.switchState(new TitleState());
 			}
-			if(PlayerSettings.player1.controls._accept.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
 				if(this.optionShit[MainMenuState.curSelected] == "donate") {
 					CoolUtil.browserLoad("https://ninja-muffin24.itch.io/funkin");
 				} else {
@@ -34323,7 +20857,7 @@ ManifestResources.init = function(config) {
 	lime_utils_Assets.libraryPaths.h["week6"] = v;
 	var v = ManifestResources.rootPath + "manifest/week7.json";
 	lime_utils_Assets.libraryPaths.h["week7"] = v;
-	var data = "{\"name\":null,\"assets\":\"aoy4:pathy33:assets%2Fcharacters%2Fbf-car.jsony4:sizei2527y4:typey4:TEXTy2:idR1y7:preloadtgoR0y39:assets%2Fcharacters%2Fbf-christmas.jsonR2i1747R3R4R5R7R6tgoR0y34:assets%2Fcharacters%2Fbf-dead.jsonR2i709R3R4R5R8R6tgoR0y45:assets%2Fcharacters%2Fbf-holding-gf-dead.jsonR2i740R3R4R5R9R6tgoR0y40:assets%2Fcharacters%2Fbf-holding-gf.jsonR2i1751R3R4R5R10R6tgoR0y40:assets%2Fcharacters%2Fbf-pixel-dead.jsonR2i721R3R4R5R11R6tgoR0y44:assets%2Fcharacters%2Fbf-pixel-opponent.jsonR2i1567R3R4R5R12R6tgoR0y35:assets%2Fcharacters%2Fbf-pixel.jsonR2i1563R3R4R5R13R6tgoR0y29:assets%2Fcharacters%2Fbf.jsonR2i2467R3R4R5R14R6tgoR0y30:assets%2Fcharacters%2Fdad.jsonR2i1762R3R4R5R15R6tgoR0y41:assets%2Fcharacters%2FDubEnderDragon.jsonR2i662R3R4R5R16R6tgoR0y33:assets%2Fcharacters%2Fgf-car.jsonR2i993R3R4R5R17R6tgoR0y39:assets%2Fcharacters%2Fgf-christmas.jsonR2i2137R3R4R5R18R6tgoR0y35:assets%2Fcharacters%2Fgf-pixel.jsonR2i937R3R4R5R19R6tgoR0y37:assets%2Fcharacters%2Fgf-tankmen.jsonR2i1066R3R4R5R20R6tgoR0y29:assets%2Fcharacters%2Fgf.jsonR2i2326R3R4R5R21R6tgoR0y42:assets%2Fcharacters%2FMintEnderDragon.jsonR2i664R3R4R5R22R6tgoR0y34:assets%2Fcharacters%2Fmom-car.jsonR2i1892R3R4R5R23R6tgoR0y30:assets%2Fcharacters%2Fmom.jsonR2i988R3R4R5R24R6tgoR0y44:assets%2Fcharacters%2Fmonster-christmas.jsonR2i1905R3R4R5R25R6tgoR0y34:assets%2Fcharacters%2Fmonster.jsonR2i1904R3R4R5R26R6tgoR0y44:assets%2Fcharacters%2Fparents-christmas.jsonR2i3427R3R4R5R27R6tgoR0y38:assets%2Fcharacters%2Fpico-player.jsonR2i1635R3R4R5R28R6tgoR0y39:assets%2Fcharacters%2Fpico-speaker.jsonR2i1554R3R4R5R29R6tgoR0y31:assets%2Fcharacters%2Fpico.jsonR2i1636R3R4R5R30R6tgoR0y39:assets%2Fcharacters%2Fsenpai-angry.jsonR2i1039R3R4R5R31R6tgoR0y33:assets%2Fcharacters%2Fsenpai.jsonR2i1009R3R4R5R32R6tgoR0y33:assets%2Fcharacters%2Fspirit.jsonR2i992R3R4R5R33R6tgoR0y33:assets%2Fcharacters%2Fspooky.jsonR2i1384R3R4R5R34R6tgoR0y41:assets%2Fcharacters%2Ftankman-player.jsonR2i1976R3R4R5R35R6tgoR0y34:assets%2Fcharacters%2Ftankman.jsonR2i1974R3R4R5R36R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-easy.jsonR2i8488R3R4R5R37R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-hard.jsonR2i12097R3R4R5R38R6tgoR0y38:assets%2Fdata%2Fblammed%2Fblammed.jsonR2i9687R3R4R5R39R6tgoR0y37:assets%2Fdata%2Fblammed%2Fevents.jsonR2i10344R3R4R5R40R6tgoR0y44:assets%2Fdata%2Fbopeebo%2Fbopeebo-boobs.jsonR2i4140R3R4R5R41R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-easy.jsonR2i9178R3R4R5R42R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-hard.jsonR2i4140R3R4R5R43R6tgoR0y38:assets%2Fdata%2Fbopeebo%2Fbopeebo.jsonR2i9542R3R4R5R44R6tgoR0y37:assets%2Fdata%2Fbopeebo%2Fevents.jsonR2i5047R3R4R5R45R6tgoR0y33:assets%2Fdata%2FcharacterList.txtR2i284R3R4R5R46R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-easy.jsonR2i7062R3R4R5R47R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-hard.jsonR2i10443R3R4R5R48R6tgoR0y34:assets%2Fdata%2Fcocoa%2Fcocoa.jsonR2i8278R3R4R5R49R6tgoR0y35:assets%2Fdata%2Fcocoa%2Fevents.jsonR2i3644R3R4R5R50R6tgoR0y32:assets%2Fdata%2FcrashConfig.jsonR2i739R3R4R5R51R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-easy.jsonR2i7937R3R4R5R52R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-hard.jsonR2i9756R3R4R5R53R6tgoR0y44:assets%2Fdata%2Fdad-battle%2Fdad-battle.jsonR2i8913R3R4R5R54R6tgoR0y40:assets%2Fdata%2Fdad-battle%2Fevents.jsonR2i2614R3R4R5R55R6tgoR0y34:assets%2Fdata%2Fdata-goes-here.txtR2zR3R4R5R56R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-easy.jsonR2i9239R3R4R5R57R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-hard.jsonR2i11689R3R4R5R58R6tgoR0y36:assets%2Fdata%2Feggnog%2Feggnog.jsonR2i10333R3R4R5R59R6tgoR0y36:assets%2Fdata%2Feggnog%2Fevents.jsonR2i4881R3R4R5R60R6tgoR0y34:assets%2Fdata%2FfreeplayColors.txtR2i76R3R4R5R61R6tgoR0y35:assets%2Fdata%2Ffresh%2Fevents.jsonR2i3201R3R4R5R62R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-easy.jsonR2i5857R3R4R5R63R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-hard.jsonR2i6905R3R4R5R64R6tgoR0y34:assets%2Fdata%2Ffresh%2Ffresh.jsonR2i6493R3R4R5R65R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-easy.jsonR2i15146R3R4R5R66R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-hard.jsonR2i23500R3R4R5R67R6tgoR0y32:assets%2Fdata%2Fguns%2Fguns.jsonR2i20620R3R4R5R68R6tgoR0y34:assets%2Fdata%2Fhigh%2Fevents.jsonR2i4558R3R4R5R69R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-easy.jsonR2i8563R3R4R5R70R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-hard.jsonR2i11553R3R4R5R71R6tgoR0y32:assets%2Fdata%2Fhigh%2Fhigh.jsonR2i9757R3R4R5R72R6tgoR0y29:assets%2Fdata%2FintroText.txtR2i2103R3R4R5R73R6tgoR0y29:assets%2Fdata%2Fmain-view.xmlR2i123R3R4R5R74R6tgoR0y34:assets%2Fdata%2Fmilf%2Fevents.jsonR2i7488R3R4R5R75R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-easy.jsonR2i13522R3R4R5R76R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-hard.jsonR2i18135R3R4R5R77R6tgoR0y32:assets%2Fdata%2Fmilf%2Fmilf.jsonR2i15192R3R4R5R78R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-easy.jsonR2i12175R3R4R5R79R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-hard.jsonR2i14163R3R4R5R80R6tgoR0y38:assets%2Fdata%2Fmonster%2Fmonster.jsonR2i13445R3R4R5R81R6tgoR0y41:assets%2Fdata%2Fphilly-nice%2Fevents.jsonR2i5191R3R4R5R82R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-easy.jsonR2i8067R3R4R5R83R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-hard.jsonR2i12556R3R4R5R84R6tgoR0y46:assets%2Fdata%2Fphilly-nice%2Fphilly-nice.jsonR2i10103R3R4R5R85R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-easy.jsonR2i6089R3R4R5R86R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-hard.jsonR2i8768R3R4R5R87R6tgoR0y32:assets%2Fdata%2Fpico%2Fpico.jsonR2i7493R3R4R5R88R6tgoR0y34:assets%2Fdata%2Fridge%2Fridge.jsonR2i34473R3R4R5R89R6tgoR0y35:assets%2Fdata%2Froses%2Fevents.jsonR2i8786R3R4R5R90R6tgoR0y39:assets%2Fdata%2Froses%2Froses-easy.jsonR2i6725R3R4R5R91R6tgoR0y39:assets%2Fdata%2Froses%2Froses-hard.jsonR2i10432R3R4R5R92R6tgoR0y34:assets%2Fdata%2Froses%2Froses.jsonR2i8609R3R4R5R93R6tgoR0y41:assets%2Fdata%2Froses%2FrosesDialogue.txtR2i153R3R4R5R94R6tgoR0y43:assets%2Fdata%2Fsatin-panties%2Fevents.jsonR2i3177R3R4R5R95R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-easy.jsonR2i8817R3R4R5R96R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-hard.jsonR2i12704R3R4R5R97R6tgoR0y50:assets%2Fdata%2Fsatin-panties%2Fsatin-panties.jsonR2i10725R3R4R5R98R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-easy.jsonR2i9027R3R4R5R99R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-hard.jsonR2i10778R3R4R5R100R6tgoR0y36:assets%2Fdata%2Fsenpai%2Fsenpai.jsonR2i10016R3R4R5R101R6tgoR0y43:assets%2Fdata%2Fsenpai%2FsenpaiDialogue.txtR2i162R3R4R5R102R6tgoR0y34:assets%2Fdata%2Fsmash%2Fsmash.jsonR2i23961R3R4R5R103R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-easy.jsonR2i8435R3R4R5R104R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-hard.jsonR2i10170R3R4R5R105R6tgoR0y34:assets%2Fdata%2Fsouth%2Fsouth.jsonR2i10097R3R4R5R106R6tgoR0y33:assets%2Fdata%2FspecialThanks.txtR2i300R3R4R5R107R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-easy.jsonR2i7965R3R4R5R108R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-hard.jsonR2i9429R3R4R5R109R6tgoR0y40:assets%2Fdata%2Fspookeez%2Fspookeez.jsonR2i8875R3R4R5R110R6tgoR0y29:assets%2Fdata%2FstageList.txtR2i61R3R4R5R111R6tgoR0y36:assets%2Fdata%2Fstress%2Fevents.jsonR2i747R3R4R5R112R6tgoR0y41:assets%2Fdata%2Fstress%2Fpicospeaker.jsonR2i18286R3R4R5R113R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-easy.jsonR2i33455R3R4R5R114R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-hard.jsonR2i53679R3R4R5R115R6tgoR0y36:assets%2Fdata%2Fstress%2Fstress.jsonR2i45928R3R4R5R116R6tgoR0y32:assets%2Fdata%2Ftest%2Ftest.jsonR2i75208R3R4R5R117R6tgoR0y40:assets%2Fdata%2Ftest-dev%2Ftest-dev.jsonR2i49834R3R4R5R118R6tgoR0y36:assets%2Fdata%2Fthorns%2Fevents.jsonR2i8104R3R4R5R119R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-easy.jsonR2i10437R3R4R5R120R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-hard.jsonR2i15444R3R4R5R121R6tgoR0y36:assets%2Fdata%2Fthorns%2Fthorns.jsonR2i12691R3R4R5R122R6tgoR0y43:assets%2Fdata%2Fthorns%2FthornsDialogue.txtR2i305R3R4R5R123R6tgoR0y38:assets%2Fdata%2Ftutorial%2Fevents.jsonR2i2702R3R4R5R124R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-easy.jsonR2i5739R3R4R5R125R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-hard.jsonR2i6335R3R4R5R126R6tgoR0y40:assets%2Fdata%2Ftutorial%2Ftutorial.jsonR2i5739R3R4R5R127R6tgoR0y33:assets%2Fdata%2Fugh%2Fevents.jsonR2i1345R3R4R5R128R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-easy.jsonR2i8550R3R4R5R129R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-hard.jsonR2i12496R3R4R5R130R6tgoR0y30:assets%2Fdata%2Fugh%2Fugh.jsonR2i11354R3R4R5R131R6tgoR0y47:assets%2Fdata%2Fwinter-horrorland%2Fevents.jsonR2i6197R3R4R5R132R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-easy.jsonR2i11846R3R4R5R133R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-hard.jsonR2i14558R3R4R5R134R6tgoR0y58:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland.jsonR2i12808R3R4R5R135R6tgoR0y45:assets%2Fimages%2Fachievements%2Fbirthday.pngR2i10948R3y5:IMAGER5R136R6tgoR0y45:assets%2Fimages%2Fachievements%2Fdebugger.pngR2i7554R3R137R5R138R6tgoR0y54:assets%2Fimages%2Fachievements%2Ffriday_night_play.pngR2i7661R3R137R5R139R6tgoR0y41:assets%2Fimages%2Fachievements%2Fhype.pngR2i23694R3R137R5R140R6tgoR0y54:assets%2Fimages%2Fachievements%2Flockedachievement.pngR2i1709R3R137R5R141R6tgoR0y48:assets%2Fimages%2Fachievements%2Foversinging.pngR2i19900R3R137R5R142R6tgoR0y56:assets%2Fimages%2Fachievements%2Froadkill_enthusiast.pngR2i5996R3R137R5R143R6tgoR0y44:assets%2Fimages%2Fachievements%2Ftoastie.pngR2i3094R3R137R5R144R6tgoR0y45:assets%2Fimages%2Fachievements%2Ftwo_keys.pngR2i27127R3R137R5R145R6tgoR0y43:assets%2Fimages%2Fachievements%2Fur_bad.pngR2i22017R3R137R5R146R6tgoR0y44:assets%2Fimages%2Fachievements%2Fur_good.pngR2i3467R3R137R5R147R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek1_nomiss.pngR2i20155R3R137R5R148R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek2_nomiss.pngR2i9304R3R137R5R149R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek3_nomiss.pngR2i21984R3R137R5R150R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek4_nomiss.pngR2i13430R3R137R5R151R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek5_nomiss.pngR2i21894R3R137R5R152R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek6_nomiss.pngR2i552R3R137R5R153R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek7_nomiss.pngR2i7249R3R137R5R154R6tgoR0y30:assets%2Fimages%2Falphabet.pngR2i177267R3R137R5R155R6tgoR0y30:assets%2Fimages%2Falphabet.xmlR2i57385R3R4R5R156R6tgoR0y34:assets%2Fimages%2FalphabetDark.pngR2i120330R3R137R5R157R6tgoR0y34:assets%2Fimages%2FalphabetDark.xmlR2i57389R3R4R5R158R6tgoR0y33:assets%2Fimages%2FalphabetOld.pngR2i90070R3R137R5R159R6tgoR0y33:assets%2Fimages%2FalphabetOld.xmlR2i52093R3R4R5R160R6tgoR0y38:assets%2Fimages%2Fbutton%2Fa-hover.pngR2i9818R3R137R5R161R6tgoR0y42:assets%2Fimages%2Fbutton%2Fa-hoverDark.pngR2i9677R3R137R5R162R6tgoR0y32:assets%2Fimages%2Fbutton%2Fa.pngR2i8053R3R137R5R163R6tgoR0y36:assets%2Fimages%2Fbutton%2FaDark.pngR2i7859R3R137R5R164R6tgoR0y40:assets%2Fimages%2Fbutton%2Falt-hover.pngR2i10795R3R137R5R165R6tgoR0y44:assets%2Fimages%2Fbutton%2Falt-hoverDark.pngR2i10294R3R137R5R166R6tgoR0y34:assets%2Fimages%2Fbutton%2Falt.pngR2i9075R3R137R5R167R6tgoR0y38:assets%2Fimages%2Fbutton%2FaltDark.pngR2i8397R3R137R5R168R6tgoR0y41:assets%2Fimages%2Fbutton%2Fback-hover.pngR2i10662R3R137R5R169R6tgoR0y45:assets%2Fimages%2Fbutton%2Fback-hoverDark.pngR2i10381R3R137R5R170R6tgoR0y35:assets%2Fimages%2Fbutton%2Fback.pngR2i9279R3R137R5R171R6tgoR0y39:assets%2Fimages%2Fbutton%2FbackDark.pngR2i8503R3R137R5R172R6tgoR0y41:assets%2Fimages%2Fbutton%2Fctrl-hover.pngR2i11612R3R137R5R173R6tgoR0y45:assets%2Fimages%2Fbutton%2Fctrl-hoverDark.pngR2i11311R3R137R5R174R6tgoR0y35:assets%2Fimages%2Fbutton%2Fctrl.pngR2i9607R3R137R5R175R6tgoR0y39:assets%2Fimages%2Fbutton%2FctrlDark.pngR2i8838R3R137R5R176R6tgoR0y38:assets%2Fimages%2Fbutton%2Fd-hover.pngR2i11142R3R137R5R177R6tgoR0y42:assets%2Fimages%2Fbutton%2Fd-hoverDark.pngR2i10476R3R137R5R178R6tgoR0y32:assets%2Fimages%2Fbutton%2Fd.pngR2i9363R3R137R5R179R6tgoR0y36:assets%2Fimages%2Fbutton%2FdDark.pngR2i8614R3R137R5R180R6tgoR0y41:assets%2Fimages%2Fbutton%2Fdown-hover.pngR2i11291R3R137R5R181R6tgoR0y45:assets%2Fimages%2Fbutton%2Fdown-hoverDark.pngR2i10758R3R137R5R182R6tgoR0y35:assets%2Fimages%2Fbutton%2Fdown.pngR2i9327R3R137R5R183R6tgoR0y39:assets%2Fimages%2Fbutton%2FdownDark.pngR2i8715R3R137R5R184R6tgoR0y38:assets%2Fimages%2Fbutton%2Fe-hover.pngR2i10420R3R137R5R185R6tgoR0y42:assets%2Fimages%2Fbutton%2Fe-hoverDark.pngR2i10032R3R137R5R186R6tgoR0y32:assets%2Fimages%2Fbutton%2Fe.pngR2i8707R3R137R5R187R6tgoR0y36:assets%2Fimages%2Fbutton%2FeDark.pngR2i8132R3R137R5R188R6tgoR0y42:assets%2Fimages%2Fbutton%2Fenter-hover.pngR2i11879R3R137R5R189R6tgoR0y46:assets%2Fimages%2Fbutton%2Fenter-hoverDark.pngR2i10628R3R137R5R190R6tgoR0y36:assets%2Fimages%2Fbutton%2Fenter.pngR2i9976R3R137R5R191R6tgoR0y40:assets%2Fimages%2Fbutton%2FenterDark.pngR2i8756R3R137R5R192R6tgoR0y38:assets%2Fimages%2Fbutton%2Fh-hover.pngR2i9483R3R137R5R193R6tgoR0y42:assets%2Fimages%2Fbutton%2Fh-hoverDark.pngR2i9212R3R137R5R194R6tgoR0y32:assets%2Fimages%2Fbutton%2Fh.pngR2i7864R3R137R5R195R6tgoR0y41:assets%2Fimages%2Fbutton%2Fhand-hover.pngR2i12156R3R137R5R196R6tgoR0y45:assets%2Fimages%2Fbutton%2Fhand-hoverDark.pngR2i11520R3R137R5R197R6tgoR0y35:assets%2Fimages%2Fbutton%2Fhand.pngR2i10176R3R137R5R198R6tgoR0y39:assets%2Fimages%2Fbutton%2FhandDark.pngR2i9169R3R137R5R199R6tgoR0y36:assets%2Fimages%2Fbutton%2FhDark.pngR2i7605R3R137R5R200R6tgoR0y41:assets%2Fimages%2Fbutton%2Fleft-hover.pngR2i11243R3R137R5R201R6tgoR0y45:assets%2Fimages%2Fbutton%2Fleft-hoverDark.pngR2i10491R3R137R5R202R6tgoR0y35:assets%2Fimages%2Fbutton%2Fleft.pngR2i9441R3R137R5R203R6tgoR0y39:assets%2Fimages%2Fbutton%2FleftDark.pngR2i8311R3R137R5R204R6tgoR0y49:assets%2Fimages%2Fbutton%2Fleft_bracket-hover.pngR2i9250R3R137R5R205R6tgoR0y53:assets%2Fimages%2Fbutton%2Fleft_bracket-hoverDark.pngR2i9022R3R137R5R206R6tgoR0y43:assets%2Fimages%2Fbutton%2Fleft_bracket.pngR2i8192R3R137R5R207R6tgoR0y47:assets%2Fimages%2Fbutton%2Fleft_bracketDark.pngR2i7672R3R137R5R208R6tgoR0y38:assets%2Fimages%2Fbutton%2Fo-hover.pngR2i9783R3R137R5R209R6tgoR0y42:assets%2Fimages%2Fbutton%2Fo-hoverDark.pngR2i9417R3R137R5R210R6tgoR0y32:assets%2Fimages%2Fbutton%2Fo.pngR2i8136R3R137R5R211R6tgoR0y36:assets%2Fimages%2Fbutton%2FoDark.pngR2i7730R3R137R5R212R6tgoR0y38:assets%2Fimages%2Fbutton%2Fp-hover.pngR2i9654R3R137R5R213R6tgoR0y42:assets%2Fimages%2Fbutton%2Fp-hoverDark.pngR2i9311R3R137R5R214R6tgoR0y32:assets%2Fimages%2Fbutton%2Fp.pngR2i8326R3R137R5R215R6tgoR0y42:assets%2Fimages%2Fbutton%2Fpause-hover.pngR2i9233R3R137R5R216R6tgoR0y46:assets%2Fimages%2Fbutton%2Fpause-hoverDark.pngR2i9009R3R137R5R217R6tgoR0y36:assets%2Fimages%2Fbutton%2Fpause.pngR2i7630R3R137R5R218R6tgoR0y40:assets%2Fimages%2Fbutton%2FpauseDark.pngR2i7317R3R137R5R219R6tgoR0y36:assets%2Fimages%2Fbutton%2FpDark.pngR2i7859R3R137R5R220R6tgoR0y50:assets%2Fimages%2Fbutton%2Fplayback_rate-hover.pngR2i9213R3R137R5R221R6tgoR0y54:assets%2Fimages%2Fbutton%2Fplayback_rate-hoverDark.pngR2i9088R3R137R5R222R6tgoR0y44:assets%2Fimages%2Fbutton%2Fplayback_rate.pngR2i7970R3R137R5R223R6tgoR0y48:assets%2Fimages%2Fbutton%2Fplayback_rateDark.pngR2i7824R3R137R5R224R6tgoR0y38:assets%2Fimages%2Fbutton%2Fq-hover.pngR2i10269R3R137R5R225R6tgoR0y42:assets%2Fimages%2Fbutton%2Fq-hoverDark.pngR2i9768R3R137R5R226R6tgoR0y32:assets%2Fimages%2Fbutton%2Fq.pngR2i8629R3R137R5R227R6tgoR0y36:assets%2Fimages%2Fbutton%2FqDark.pngR2i8082R3R137R5R228R6tgoR0y38:assets%2Fimages%2Fbutton%2Fr-hover.pngR2i10374R3R137R5R229R6tgoR0y42:assets%2Fimages%2Fbutton%2Fr-hoverDark.pngR2i9831R3R137R5R230R6tgoR0y32:assets%2Fimages%2Fbutton%2Fr.pngR2i8742R3R137R5R231R6tgoR0y36:assets%2Fimages%2Fbutton%2FrDark.pngR2i7920R3R137R5R232R6tgoR0y42:assets%2Fimages%2Fbutton%2Fright-hover.pngR2i11204R3R137R5R233R6tgoR0y46:assets%2Fimages%2Fbutton%2Fright-hoverDark.pngR2i10494R3R137R5R234R6tgoR0y36:assets%2Fimages%2Fbutton%2Fright.pngR2i9386R3R137R5R235R6tgoR0y40:assets%2Fimages%2Fbutton%2FrightDark.pngR2i8278R3R137R5R236R6tgoR0y50:assets%2Fimages%2Fbutton%2Fright_bracket-hover.pngR2i9415R3R137R5R237R6tgoR0y54:assets%2Fimages%2Fbutton%2Fright_bracket-hoverDark.pngR2i9003R3R137R5R238R6tgoR0y44:assets%2Fimages%2Fbutton%2Fright_bracket.pngR2i8203R3R137R5R239R6tgoR0y48:assets%2Fimages%2Fbutton%2Fright_bracketDark.pngR2i7685R3R137R5R240R6tgoR0y38:assets%2Fimages%2Fbutton%2Fs-hover.pngR2i10516R3R137R5R241R6tgoR0y42:assets%2Fimages%2Fbutton%2Fs-hoverDark.pngR2i10006R3R137R5R242R6tgoR0y32:assets%2Fimages%2Fbutton%2Fs.pngR2i8744R3R137R5R243R6tgoR0y36:assets%2Fimages%2Fbutton%2FsDark.pngR2i8061R3R137R5R244R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsection-hover.pngR2i10161R3R137R5R245R6tgoR0y48:assets%2Fimages%2Fbutton%2Fsection-hoverDark.pngR2i10068R3R137R5R246R6tgoR0y38:assets%2Fimages%2Fbutton%2Fsection.pngR2i8425R3R137R5R247R6tgoR0y42:assets%2Fimages%2Fbutton%2FsectionDark.pngR2i8300R3R137R5R248R6tgoR0y42:assets%2Fimages%2Fbutton%2Fshift-hover.pngR2i11227R3R137R5R249R6tgoR0y46:assets%2Fimages%2Fbutton%2Fshift-hoverDark.pngR2i10498R3R137R5R250R6tgoR0y36:assets%2Fimages%2Fbutton%2Fshift.pngR2i9321R3R137R5R251R6tgoR0y40:assets%2Fimages%2Fbutton%2FshiftDark.pngR2i8423R3R137R5R252R6tgoR0y46:assets%2Fimages%2Fbutton%2Fsnap_grid-hover.pngR2i10584R3R137R5R253R6tgoR0y50:assets%2Fimages%2Fbutton%2Fsnap_grid-hoverDark.pngR2i10016R3R137R5R254R6tgoR0y40:assets%2Fimages%2Fbutton%2Fsnap_grid.pngR2i8674R3R137R5R255R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsnap_gridDark.pngR2i8175R3R137R5R256R6tgoR0y42:assets%2Fimages%2Fbutton%2Fspace-hover.pngR2i9210R3R137R5R257R6tgoR0y46:assets%2Fimages%2Fbutton%2Fspace-hoverDark.pngR2i8760R3R137R5R258R6tgoR0y36:assets%2Fimages%2Fbutton%2Fspace.pngR2i7893R3R137R5R259R6tgoR0y40:assets%2Fimages%2Fbutton%2FspaceDark.pngR2i7277R3R137R5R260R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsustain-hover.pngR2i10807R3R137R5R261R6tgoR0y48:assets%2Fimages%2Fbutton%2Fsustain-hoverDark.pngR2i10166R3R137R5R262R6tgoR0y38:assets%2Fimages%2Fbutton%2Fsustain.pngR2i9058R3R137R5R263R6tgoR0y42:assets%2Fimages%2Fbutton%2FsustainDark.pngR2i8448R3R137R5R264R6tgoR0y38:assets%2Fimages%2Fbutton%2Ft-hover.pngR2i9341R3R137R5R265R6tgoR0y42:assets%2Fimages%2Fbutton%2Ft-hoverDark.pngR2i8860R3R137R5R266R6tgoR0y32:assets%2Fimages%2Fbutton%2Ft.pngR2i7916R3R137R5R267R6tgoR0y45:assets%2Fimages%2Fbutton%2Ftamplate-hover.pngR2i7778R3R137R5R268R6tgoR0y49:assets%2Fimages%2Fbutton%2Ftamplate-hoverDark.pngR2i7442R3R137R5R269R6tgoR0y39:assets%2Fimages%2Fbutton%2Ftamplate.pngR2i6924R3R137R5R270R6tgoR0y43:assets%2Fimages%2Fbutton%2FtamplateDark.pngR2i6617R3R137R5R271R6tgoR0y36:assets%2Fimages%2Fbutton%2FtDark.pngR2i7683R3R137R5R272R6tgoR0y39:assets%2Fimages%2Fbutton%2Fup-hover.pngR2i11312R3R137R5R273R6tgoR0y43:assets%2Fimages%2Fbutton%2Fup-hoverDark.pngR2i10783R3R137R5R274R6tgoR0y33:assets%2Fimages%2Fbutton%2Fup.pngR2i9306R3R137R5R275R6tgoR0y37:assets%2Fimages%2Fbutton%2FupDark.pngR2i8745R3R137R5R276R6tgoR0y38:assets%2Fimages%2Fbutton%2Fw-hover.pngR2i9805R3R137R5R277R6tgoR0y42:assets%2Fimages%2Fbutton%2Fw-hoverDark.pngR2i9561R3R137R5R278R6tgoR0y32:assets%2Fimages%2Fbutton%2Fw.pngR2i8235R3R137R5R279R6tgoR0y36:assets%2Fimages%2Fbutton%2FwDark.pngR2i7738R3R137R5R280R6tgoR0y38:assets%2Fimages%2Fbutton%2Fx-hover.pngR2i12388R3R137R5R281R6tgoR0y42:assets%2Fimages%2Fbutton%2Fx-hoverDark.pngR2i11499R3R137R5R282R6tgoR0y32:assets%2Fimages%2Fbutton%2Fx.pngR2i10418R3R137R5R283R6tgoR0y36:assets%2Fimages%2Fbutton%2FxDark.pngR2i9356R3R137R5R284R6tgoR0y87:assets%2Fimages%2Fbutton%2Fyou%20can%20use%20any%20resolution%20of%20image%20button.txtR2zR3R4R5R285R6tgoR0y38:assets%2Fimages%2Fbutton%2Fz-hover.pngR2i10489R3R137R5R286R6tgoR0y42:assets%2Fimages%2Fbutton%2Fz-hoverDark.pngR2i9825R3R137R5R287R6tgoR0y32:assets%2Fimages%2Fbutton%2Fz.pngR2i8703R3R137R5R288R6tgoR0y36:assets%2Fimages%2Fbutton%2FzDark.pngR2i8115R3R137R5R289R6tgoR0y41:assets%2Fimages%2Fbutton%2Fzoom-hover.pngR2i10632R3R137R5R290R6tgoR0y45:assets%2Fimages%2Fbutton%2Fzoom-hoverDark.pngR2i10245R3R137R5R291R6tgoR0y35:assets%2Fimages%2Fbutton%2Fzoom.pngR2i8952R3R137R5R292R6tgoR0y39:assets%2Fimages%2Fbutton%2FzoomDark.pngR2i8381R3R137R5R293R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.pngR2i3044R3R137R5R294R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.xmlR2i597R3R4R5R295R6tgoR0y33:assets%2Fimages%2Fchart_quant.pngR2i3143R3R137R5R296R6tgoR0y33:assets%2Fimages%2Fchart_quant.xmlR2i1028R3R4R5R297R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.pngR2i16546R3R137R5R298R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.xmlR2i1976R3R4R5R299R6tgoR0y32:assets%2Fimages%2FcomboAtlas.pngR2i128570R3R137R5R300R6tgoR0y32:assets%2Fimages%2FcomboAtlas.xmlR2i2246R3R4R5R301R6tgoR0y34:assets%2Fimages%2Fcredits%2Fbb.pngR2i5485R3R137R5R302R6tgoR0y39:assets%2Fimages%2Fcredits%2Fdiscord.pngR2i1510R3R137R5R303R6tgoR0y35:assets%2Fimages%2Fcredits%2Fdub.pngR2i1153R3R137R5R304R6tgoR0y40:assets%2Fimages%2Fcredits%2Fevilsk8r.pngR2i7497R3R137R5R305R6tgoR0y38:assets%2Fimages%2Fcredits%2Fflicky.pngR2i6462R3R137R5R306R6tgoR0y36:assets%2Fimages%2Fcredits%2Fkade.pngR2i9684R3R137R5R307R6tgoR0y43:assets%2Fimages%2Fcredits%2Fkawaisprite.pngR2i3953R3R137R5R308R6tgoR0y38:assets%2Fimages%2Fcredits%2Fkeoiki.pngR2i3918R3R137R5R309R6tgoR0y42:assets%2Fimages%2Fcredits%2Fmastereric.pngR2i11899R3R137R5R310R6tgoR0y38:assets%2Fimages%2Fcredits%2Fnebula.pngR2i5644R3R137R5R311R6tgoR0y45:assets%2Fimages%2Fcredits%2Fninjamuffin99.pngR2i5850R3R137R5R312R6tgoR0y45:assets%2Fimages%2Fcredits%2Fphantomarcade.pngR2i9615R3R137R5R313R6tgoR0y37:assets%2Fimages%2Fcredits%2Fproxy.pngR2i7645R3R137R5R314R6tgoR0y37:assets%2Fimages%2Fcredits%2Friver.pngR2i8283R3R137R5R315R6tgoR0y43:assets%2Fimages%2Fcredits%2Fshadowmario.pngR2i3679R3R137R5R316R6tgoR0y37:assets%2Fimages%2Fcredits%2Fshubs.pngR2i6829R3R137R5R317R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsmokey.pngR2i9145R3R137R5R318R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsqirra.pngR2i8258R3R137R5R319R6tgoR0y34:assets%2Fimages%2Fcry_about_it.pngR2i380631R3R137R5R320R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fbf.jsonR2i987R3R4R5R321R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fgf.jsonR2i807R3R4R5R322R6tgoR0y28:assets%2Fimages%2Ffunkay.pngR2i135548R3R137R5R323R6tgoR0y35:assets%2Fimages%2FgfDanceTitle.jsonR2i124R3R4R5R324R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.pngR2i745426R3R137R5R325R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.xmlR2i4259R3R4R5R326R6tgoR0y30:assets%2Fimages%2Fhahadumb.pngR2i16097R3R137R5R327R6tgoR0y28:assets%2Fimages%2Fhitbox.pngR2i620R3R137R5R328R6tgoR0y27:assets%2Fimages%2FhugeW.pngR2i18069R3R137R5R329R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-bf-old.pngR2i4101R3R137R5R330R6tgoR0y43:assets%2Fimages%2Ficons%2Ficon-bf-pixel.pngR2i538R3R137R5R331R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-bf.pngR2i22287R3R137R5R332R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-dad.pngR2i12384R3R137R5R333R6tgoR0y49:assets%2Fimages%2Ficons%2Ficon-dubenderdragon.pngR2i8798R3R137R5R334R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-face.pngR2i3549R3R137R5R335R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-gf.pngR2i10205R3R137R5R336R6tgoR0y50:assets%2Fimages%2Ficons%2Ficon-mintenderdragon.pngR2i9431R3R137R5R337R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-mom.pngR2i9237R3R137R5R338R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-monster.pngR2i17792R3R137R5R339R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-parents.pngR2i15547R3R137R5R340R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-pico.pngR2i14208R3R137R5R341R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-senpai-pixel.pngR2i622R3R137R5R342R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-spirit-pixel.pngR2i509R3R137R5R343R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-spooky.pngR2i6907R3R137R5R344R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-tankman.pngR2i3493R3R137R5R345R6tgoR0y26:assets%2Fimages%2Flogo.pngR2i86924R3R137R5R346R6tgoR0y32:assets%2Fimages%2FlogoBumpin.pngR2i578147R3R137R5R347R6tgoR0y32:assets%2Fimages%2FlogoBumpin.xmlR2i2177R3R4R5R348R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.pngR2i28858R3R137R5R349R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.xmlR2i1380R3R4R5R350R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.pngR2i28734R3R137R5R351R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.xmlR2i1385R3R4R5R352R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.pngR2i24842R3R137R5R353R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.xmlR2i1375R3R4R5R354R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.pngR2i30316R3R137R5R355R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.xmlR2i1399R3R4R5R356R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.pngR2i22741R3R137R5R357R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.xmlR2i1644R3R4R5R358R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.pngR2i27299R3R137R5R359R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.xmlR2i1332R3R4R5R360R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.pngR2i54659R3R137R5R361R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.xmlR2i1444R3R4R5R362R6tgoR0y38:assets%2Fimages%2FMCButton%2Fhover.pngR2i906R3R137R5R363R6tgoR0y39:assets%2Fimages%2FMCButton%2Fnormal.pngR2i908R3R137R5R364R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_christmas.pngR2i16696R3R137R5R365R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_halloween.pngR2i7474R3R137R5R366R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_limo.pngR2i6842R3R137R5R367R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_philly.pngR2i19689R3R137R5R368R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_school.pngR2i1963R3R137R5R369R6tgoR0y50:assets%2Fimages%2Fmenubackgrounds%2Fmenu_stage.pngR2i21287R3R137R5R370R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_tank.pngR2i21289R3R137R5R371R6tgoR0y28:assets%2Fimages%2FmenuBG.pngR2i474435R3R137R5R372R6tgoR0y32:assets%2Fimages%2FmenuBGBlue.pngR2i454823R3R137R5R373R6tgoR0y35:assets%2Fimages%2FmenuBGMagenta.pngR2i446604R3R137R5R374R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fbf.jsonR2i125R3R4R5R375R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fdad.jsonR2i126R3R4R5R376R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fgf.jsonR2i125R3R4R5R377R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.pngR2i231974R3R137R5R378R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.xmlR2i5582R3R4R5R379R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.pngR2i111851R3R137R5R380R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.xmlR2i2115R3R4R5R381R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.pngR2i314273R3R137R5R382R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.xmlR2i3802R3R4R5R383R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.pngR2i152414R3R137R5R384R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.xmlR2i2113R3R4R5R385R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.pngR2i335745R3R137R5R386R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.xmlR2i2188R3R4R5R387R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.pngR2i109825R3R137R5R388R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.xmlR2i2142R3R4R5R389R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.pngR2i64463R3R137R5R390R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.xmlR2i1348R3R4R5R391R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.pngR2i80071R3R137R5R392R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.xmlR2i2543R3R4R5R393R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.pngR2i117065R3R137R5R394R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.xmlR2i2164R3R4R5R395R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fmom.jsonR2i125R3R4R5R396R6tgoR0y57:assets%2Fimages%2Fmenucharacters%2Fparents-christmas.jsonR2i135R3R4R5R397R6tgoR0y44:assets%2Fimages%2Fmenucharacters%2Fpico.jsonR2i129R3R4R5R398R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fsenpai.jsonR2i133R3R4R5R399R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fspooky.jsonR2i142R3R4R5R400R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2Ftankman.jsonR2i134R3R4R5R401R6tgoR0y31:assets%2Fimages%2FmenuDesat.pngR2i215613R3R137R5R402R6tgoR0y35:assets%2Fimages%2FmenuDesatDark.pngR2i455541R3R137R5R403R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Feasy.pngR2i3453R3R137R5R404R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Fhard.pngR2i3880R3R137R5R405R6tgoR0y47:assets%2Fimages%2Fmenudifficulties%2Fnormal.pngR2i4853R3R137R5R406R6tgoR0y33:assets%2Fimages%2FMenu_Tracks.pngR2i1254R3R137R5R407R6tgoR0y37:assets%2Fimages%2Fnewgrounds_logo.pngR2i40016R3R137R5R408R6tgoR0y42:assets%2Fimages%2Fstorymenu%2Ftutorial.pngR2i7056R3R137R5R409R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek1.pngR2i6261R3R137R5R410R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek2.pngR2i6517R3R137R5R411R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek3.pngR2i7148R3R137R5R412R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek4.pngR2i6262R3R137R5R413R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek5.pngR2i6440R3R137R5R414R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek6.pngR2i8979R3R137R5R415R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek7.pngR2i7349R3R137R5R416R6tgoR0y32:assets%2Fimages%2FtitleEnter.pngR2i26291R3R137R5R417R6tgoR0y32:assets%2Fimages%2FtitleEnter.xmlR2i518R3R4R5R418R6tgoR0y45:assets%2Fimages%2Fui%2Fchart%2Farrow_icon.pngR2i1358R3R137R5R419R6tgoR0y31:assets%2Fimages%2Fui%2Ffile.pngR2i1056R3R137R5R420R6tgoR0y33:assets%2Fimages%2Fui%2Ffolder.pngR2i883R3R137R5R421R6tgoR0y31:assets%2Fimages%2Fui%2Fjson.pngR2i1960R3R137R5R422R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left-hover.pngR2i170R3R137R5R423R6tgoR0y60:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left-hoverDark.pngR2i169R3R137R5R424R6tgoR0y50:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left.pngR2i166R3R137R5R425R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_leftDark.pngR2i175R3R137R5R426R6tgoR0y58:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle-hover.pngR2i157R3R137R5R427R6tgoR0y62:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle-hoverDark.pngR2i157R3R137R5R428R6tgoR0y52:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle.pngR2i154R3R137R5R429R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middleDark.pngR2i158R3R137R5R430R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right-hover.pngR2i171R3R137R5R431R6tgoR0y61:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right-hoverDark.pngR2i168R3R137R5R432R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right.pngR2i167R3R137R5R433R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_rightDark.pngR2i166R3R137R5R434R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fcenter-hover.pngR2i149R3R137R5R435R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fcenter-hoverDark.pngR2i149R3R137R5R436R6tgoR0y45:assets%2Fimages%2Fui%2Fnineslice%2Fcenter.pngR2i147R3R137R5R437R6tgoR0y49:assets%2Fimages%2Fui%2Fnineslice%2FcenterDark.pngR2i146R3R137R5R438R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left-hover.pngR2i160R3R137R5R439R6tgoR0y60:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left-hoverDark.pngR2i161R3R137R5R440R6tgoR0y50:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left.pngR2i159R3R137R5R441R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_leftDark.pngR2i161R3R137R5R442R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right-hover.pngR2i158R3R137R5R443R6tgoR0y61:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right-hoverDark.pngR2i157R3R137R5R444R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right.pngR2i155R3R137R5R445R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_rightDark.pngR2i157R3R137R5R446R6tgoR0y53:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left-hover.pngR2i169R3R137R5R447R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left-hoverDark.pngR2i169R3R137R5R448R6tgoR0y47:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left.pngR2i164R3R137R5R449R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Ftop_leftDark.pngR2i170R3R137R5R450R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle-hover.pngR2i161R3R137R5R451R6tgoR0y59:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle-hoverDark.pngR2i161R3R137R5R452R6tgoR0y49:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle.pngR2i154R3R137R5R453R6tgoR0y53:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middleDark.pngR2i154R3R137R5R454R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right-hover.pngR2i170R3R137R5R455R6tgoR0y58:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right-hoverDark.pngR2i169R3R137R5R456R6tgoR0y48:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right.pngR2i164R3R137R5R457R6tgoR0y52:assets%2Fimages%2Fui%2Fnineslice%2Ftop_rightDark.pngR2i166R3R137R5R458R6tgoR0y34:assets%2Fimages%2Fui%2Fpicture.pngR2i1887R3R137R5R459R6tgoR0y31:assets%2Fimages%2Fui%2Fplay.pngR2i697R3R137R5R460R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_1.pngR2i52419R3R137R5R461R6tgoR0y43:assets%2Fimages%2Fui%2FsplashLoad_1Dark.pngR2i51758R3R137R5R462R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_2.pngR2i10521R3R137R5R463R6tgoR0y43:assets%2Fimages%2Fui%2FsplashLoad_2Dark.pngR2i11238R3R137R5R464R6tgoR0y30:assets%2Fimages%2Fui%2Fzip.pngR2i1416R3R137R5R465R6tgoR0y32:assets%2Fimages%2FunknownMod.pngR2i2387R3R137R5R466R6tgoR2i2309657R3y5:MUSICR5y31:assets%2Fmusic%2FfreakyMenu.mp3y9:pathGroupaR468hR6tgoR2i2402257R3R467R5y31:assets%2Fmusic%2FoffsetSong.mp3R469aR470hR6tgoR2i17762R3R467R5y32:assets%2Fsounds%2FcancelMenu.mp3R469aR471hR6tgoR2i2114R3R467R5y34:assets%2Fsounds%2FchangeVolume.mp3R469aR472hR6tgoR2i91950R3R467R5y33:assets%2Fsounds%2FconfirmMenu.mp3R469aR473hR6tgoR2i9155R3R467R5y34:assets%2Fsounds%2Fintro1-pixel.mp3R469aR474hR6tgoR2i9912R3R467R5y34:assets%2Fsounds%2Fintro2-pixel.mp3R469aR475hR6tgoR2i9128R3R467R5y34:assets%2Fsounds%2Fintro3-pixel.mp3R469aR476hR6tgoR2i21651R3R467R5y35:assets%2Fsounds%2FintroGo-pixel.mp3R469aR477hR6tgoR2i17762R3R467R5y32:assets%2Fsounds%2FscrollMenu.mp3R469aR478hR6tgoR0y27:assets%2Fstages%2Flimo.jsonR2i289R3R4R5R479R6tgoR0y27:assets%2Fstages%2Fmall.jsonR2i287R3R4R5R480R6tgoR0y31:assets%2Fstages%2FmallEvil.jsonR2i285R3R4R5R481R6tgoR0y29:assets%2Fstages%2Fphilly.jsonR2i285R3R4R5R482R6tgoR0y29:assets%2Fstages%2Fschool.jsonR2i290R3R4R5R483R6tgoR0y33:assets%2Fstages%2FschoolEvil.jsonR2i290R3R4R5R484R6tgoR0y29:assets%2Fstages%2Fspooky.jsonR2i285R3R4R5R485R6tgoR0y28:assets%2Fstages%2Fstage.jsonR2i279R3R4R5R486R6tgoR0y27:assets%2Fstages%2Ftank.jsonR2i147R3R4R5R487R6tgoR0y30:assets%2Fweeks%2Ftutorial.jsonR2i274R3R4R5R488R6tgoR0y27:assets%2Fweeks%2Fweek1.jsonR2i369R3R4R5R489R6tgoR0y27:assets%2Fweeks%2Fweek2.jsonR2i371R3R4R5R490R6tgoR0y27:assets%2Fweeks%2Fweek3.jsonR2i356R3R4R5R491R6tgoR0y27:assets%2Fweeks%2Fweek4.jsonR2i369R3R4R5R492R6tgoR0y27:assets%2Fweeks%2Fweek5.jsonR2i397R3R4R5R493R6tgoR0y27:assets%2Fweeks%2Fweek6.jsonR2i408R3R4R5R494R6tgoR0y27:assets%2Fweeks%2Fweek7.jsonR2i491R3R4R5R495R6tgoR0y29:assets%2Fweeks%2FweekList.txtR2i50R3R4R5R496R6tgoR0y21:do%20NOT%20readme.txtR2i4326R3R4R5R497R6tgoR0y34:assets%2Ffonts%2Ffonts-go-here.txtR2zR3R4R5R498R6tgoR2i14656R3y4:FONTy9:classNamey31:__ASSET__assets_fonts_pixel_otfR5y26:assets%2Ffonts%2Fpixel.otfR6tgoR2i75864R3R499R500y29:__ASSET__assets_fonts_vcr_ttfR5y24:assets%2Ffonts%2Fvcr.ttfR6tgoR2i2114R3R467R5y26:flixel%2Fsounds%2Fbeep.mp3R469aR505y26:flixel%2Fsounds%2Fbeep.ogghR6tgoR2i39706R3R467R5y28:flixel%2Fsounds%2Fflixel.mp3R469aR507y28:flixel%2Fsounds%2Fflixel.ogghR6tgoR2i5794R3y5:SOUNDR5R506R469aR505R506hgoR2i33629R3R509R5R508R469aR507R508hgoR2i15744R3R499R500y35:__ASSET__flixel_fonts_nokiafc22_ttfR5y30:flixel%2Ffonts%2Fnokiafc22.ttfR6tgoR2i29724R3R499R500y36:__ASSET__flixel_fonts_monsterrat_ttfR5y31:flixel%2Ffonts%2Fmonsterrat.ttfR6tgoR0y33:flixel%2Fimages%2Fui%2Fbutton.pngR2i519R3R137R5R514R6tgoR0y36:flixel%2Fimages%2Flogo%2Fdefault.pngR2i3280R3R137R5R515R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Fbox.pngR2i912R3R137R5R516R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fbutton.pngR2i433R3R137R5R517R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_down.pngR2i446R3R137R5R518R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_left.pngR2i459R3R137R5R519R6tgoR0y49:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_right.pngR2i511R3R137R5R520R6tgoR0y46:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_up.pngR2i493R3R137R5R521R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fbutton_thin.pngR2i247R3R137R5R522R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fbutton_toggle.pngR2i534R3R137R5R523R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fcheck_box.pngR2i922R3R137R5R524R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fcheck_mark.pngR2i946R3R137R5R525R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fchrome.pngR2i253R3R137R5R526R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fchrome_flat.pngR2i212R3R137R5R527R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_inset.pngR2i192R3R137R5R528R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_light.pngR2i214R3R137R5R529R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fdropdown_mark.pngR2i156R3R137R5R530R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Ffinger_big.pngR2i1724R3R137R5R531R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Ffinger_small.pngR2i294R3R137R5R532R6tgoR0y38:flixel%2Fflixel-ui%2Fimg%2Fhilight.pngR2i129R3R137R5R533R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Finvis.pngR2i128R3R137R5R534R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fminus_mark.pngR2i136R3R137R5R535R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fplus_mark.pngR2i147R3R137R5R536R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Fradio.pngR2i191R3R137R5R537R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fradio_dot.pngR2i153R3R137R5R538R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fswatch.pngR2i185R3R137R5R539R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Ftab.pngR2i201R3R137R5R540R6tgoR0y39:flixel%2Fflixel-ui%2Fimg%2Ftab_back.pngR2i210R3R137R5R541R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Ftooltip_arrow.pngR2i18509R3R137R5R542R6tgoR0y39:flixel%2Fflixel-ui%2Fxml%2Fdefaults.xmlR2i1263R3R4R5R543R6tgoR0y53:flixel%2Fflixel-ui%2Fxml%2Fdefault_loading_screen.xmlR2i1953R3R4R5R544R6tgoR0y44:flixel%2Fflixel-ui%2Fxml%2Fdefault_popup.xmlR2i1848R3R4R5R545R6tgh\",\"rootPath\":null,\"version\":2,\"libraryArgs\":[],\"libraryType\":null}";
+	var data = "{\"name\":null,\"assets\":\"aoy4:pathy33:assets%2Fcharacters%2Fbf-car.jsony4:sizei2527y4:typey4:TEXTy2:idR1y7:preloadtgoR0y39:assets%2Fcharacters%2Fbf-christmas.jsonR2i1747R3R4R5R7R6tgoR0y34:assets%2Fcharacters%2Fbf-dead.jsonR2i709R3R4R5R8R6tgoR0y45:assets%2Fcharacters%2Fbf-holding-gf-dead.jsonR2i740R3R4R5R9R6tgoR0y40:assets%2Fcharacters%2Fbf-holding-gf.jsonR2i1751R3R4R5R10R6tgoR0y40:assets%2Fcharacters%2Fbf-pixel-dead.jsonR2i721R3R4R5R11R6tgoR0y44:assets%2Fcharacters%2Fbf-pixel-opponent.jsonR2i1567R3R4R5R12R6tgoR0y35:assets%2Fcharacters%2Fbf-pixel.jsonR2i1563R3R4R5R13R6tgoR0y29:assets%2Fcharacters%2Fbf.jsonR2i2467R3R4R5R14R6tgoR0y30:assets%2Fcharacters%2Fdad.jsonR2i1762R3R4R5R15R6tgoR0y41:assets%2Fcharacters%2FDubEnderDragon.jsonR2i662R3R4R5R16R6tgoR0y33:assets%2Fcharacters%2Fgf-car.jsonR2i993R3R4R5R17R6tgoR0y39:assets%2Fcharacters%2Fgf-christmas.jsonR2i2137R3R4R5R18R6tgoR0y35:assets%2Fcharacters%2Fgf-pixel.jsonR2i937R3R4R5R19R6tgoR0y37:assets%2Fcharacters%2Fgf-tankmen.jsonR2i1066R3R4R5R20R6tgoR0y29:assets%2Fcharacters%2Fgf.jsonR2i2326R3R4R5R21R6tgoR0y42:assets%2Fcharacters%2FMintEnderDragon.jsonR2i664R3R4R5R22R6tgoR0y34:assets%2Fcharacters%2Fmom-car.jsonR2i1892R3R4R5R23R6tgoR0y30:assets%2Fcharacters%2Fmom.jsonR2i988R3R4R5R24R6tgoR0y44:assets%2Fcharacters%2Fmonster-christmas.jsonR2i1905R3R4R5R25R6tgoR0y34:assets%2Fcharacters%2Fmonster.jsonR2i1904R3R4R5R26R6tgoR0y44:assets%2Fcharacters%2Fparents-christmas.jsonR2i3427R3R4R5R27R6tgoR0y38:assets%2Fcharacters%2Fpico-player.jsonR2i1635R3R4R5R28R6tgoR0y39:assets%2Fcharacters%2Fpico-speaker.jsonR2i1554R3R4R5R29R6tgoR0y31:assets%2Fcharacters%2Fpico.jsonR2i1636R3R4R5R30R6tgoR0y39:assets%2Fcharacters%2Fsenpai-angry.jsonR2i1039R3R4R5R31R6tgoR0y33:assets%2Fcharacters%2Fsenpai.jsonR2i1009R3R4R5R32R6tgoR0y33:assets%2Fcharacters%2Fspirit.jsonR2i992R3R4R5R33R6tgoR0y33:assets%2Fcharacters%2Fspooky.jsonR2i1384R3R4R5R34R6tgoR0y41:assets%2Fcharacters%2Ftankman-player.jsonR2i1976R3R4R5R35R6tgoR0y34:assets%2Fcharacters%2Ftankman.jsonR2i1974R3R4R5R36R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-easy.jsonR2i8488R3R4R5R37R6tgoR0y43:assets%2Fdata%2Fblammed%2Fblammed-hard.jsonR2i12097R3R4R5R38R6tgoR0y38:assets%2Fdata%2Fblammed%2Fblammed.jsonR2i9687R3R4R5R39R6tgoR0y37:assets%2Fdata%2Fblammed%2Fevents.jsonR2i10344R3R4R5R40R6tgoR0y44:assets%2Fdata%2Fbopeebo%2Fbopeebo-boobs.jsonR2i4140R3R4R5R41R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-easy.jsonR2i9178R3R4R5R42R6tgoR0y43:assets%2Fdata%2Fbopeebo%2Fbopeebo-hard.jsonR2i4140R3R4R5R43R6tgoR0y38:assets%2Fdata%2Fbopeebo%2Fbopeebo.jsonR2i9542R3R4R5R44R6tgoR0y37:assets%2Fdata%2Fbopeebo%2Fevents.jsonR2i5047R3R4R5R45R6tgoR0y33:assets%2Fdata%2FcharacterList.txtR2i284R3R4R5R46R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-easy.jsonR2i7062R3R4R5R47R6tgoR0y39:assets%2Fdata%2Fcocoa%2Fcocoa-hard.jsonR2i10443R3R4R5R48R6tgoR0y34:assets%2Fdata%2Fcocoa%2Fcocoa.jsonR2i8278R3R4R5R49R6tgoR0y35:assets%2Fdata%2Fcocoa%2Fevents.jsonR2i3644R3R4R5R50R6tgoR0y32:assets%2Fdata%2FcrashConfig.jsonR2i739R3R4R5R51R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-easy.jsonR2i7937R3R4R5R52R6tgoR0y49:assets%2Fdata%2Fdad-battle%2Fdad-battle-hard.jsonR2i9756R3R4R5R53R6tgoR0y44:assets%2Fdata%2Fdad-battle%2Fdad-battle.jsonR2i8913R3R4R5R54R6tgoR0y40:assets%2Fdata%2Fdad-battle%2Fevents.jsonR2i2614R3R4R5R55R6tgoR0y34:assets%2Fdata%2Fdata-goes-here.txtR2zR3R4R5R56R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-easy.jsonR2i9239R3R4R5R57R6tgoR0y41:assets%2Fdata%2Feggnog%2Feggnog-hard.jsonR2i11689R3R4R5R58R6tgoR0y36:assets%2Fdata%2Feggnog%2Feggnog.jsonR2i10333R3R4R5R59R6tgoR0y36:assets%2Fdata%2Feggnog%2Fevents.jsonR2i4881R3R4R5R60R6tgoR0y34:assets%2Fdata%2FfreeplayColors.txtR2i76R3R4R5R61R6tgoR0y35:assets%2Fdata%2Ffresh%2Fevents.jsonR2i3201R3R4R5R62R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-easy.jsonR2i5857R3R4R5R63R6tgoR0y39:assets%2Fdata%2Ffresh%2Ffresh-hard.jsonR2i6905R3R4R5R64R6tgoR0y34:assets%2Fdata%2Ffresh%2Ffresh.jsonR2i6493R3R4R5R65R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-easy.jsonR2i15146R3R4R5R66R6tgoR0y37:assets%2Fdata%2Fguns%2Fguns-hard.jsonR2i23500R3R4R5R67R6tgoR0y32:assets%2Fdata%2Fguns%2Fguns.jsonR2i20620R3R4R5R68R6tgoR0y34:assets%2Fdata%2Fhigh%2Fevents.jsonR2i4558R3R4R5R69R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-easy.jsonR2i8563R3R4R5R70R6tgoR0y37:assets%2Fdata%2Fhigh%2Fhigh-hard.jsonR2i11553R3R4R5R71R6tgoR0y32:assets%2Fdata%2Fhigh%2Fhigh.jsonR2i9757R3R4R5R72R6tgoR0y29:assets%2Fdata%2FintroText.txtR2i2103R3R4R5R73R6tgoR0y29:assets%2Fdata%2Fmain-view.xmlR2i123R3R4R5R74R6tgoR0y34:assets%2Fdata%2Fmilf%2Fevents.jsonR2i7488R3R4R5R75R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-easy.jsonR2i13522R3R4R5R76R6tgoR0y37:assets%2Fdata%2Fmilf%2Fmilf-hard.jsonR2i18135R3R4R5R77R6tgoR0y32:assets%2Fdata%2Fmilf%2Fmilf.jsonR2i15192R3R4R5R78R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-easy.jsonR2i12175R3R4R5R79R6tgoR0y43:assets%2Fdata%2Fmonster%2Fmonster-hard.jsonR2i14163R3R4R5R80R6tgoR0y38:assets%2Fdata%2Fmonster%2Fmonster.jsonR2i13445R3R4R5R81R6tgoR0y41:assets%2Fdata%2Fphilly-nice%2Fevents.jsonR2i5191R3R4R5R82R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-easy.jsonR2i8067R3R4R5R83R6tgoR0y51:assets%2Fdata%2Fphilly-nice%2Fphilly-nice-hard.jsonR2i12556R3R4R5R84R6tgoR0y46:assets%2Fdata%2Fphilly-nice%2Fphilly-nice.jsonR2i10103R3R4R5R85R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-easy.jsonR2i6089R3R4R5R86R6tgoR0y37:assets%2Fdata%2Fpico%2Fpico-hard.jsonR2i8768R3R4R5R87R6tgoR0y32:assets%2Fdata%2Fpico%2Fpico.jsonR2i7493R3R4R5R88R6tgoR0y34:assets%2Fdata%2Fridge%2Fridge.jsonR2i34473R3R4R5R89R6tgoR0y35:assets%2Fdata%2Froses%2Fevents.jsonR2i8786R3R4R5R90R6tgoR0y39:assets%2Fdata%2Froses%2Froses-easy.jsonR2i6725R3R4R5R91R6tgoR0y39:assets%2Fdata%2Froses%2Froses-hard.jsonR2i10432R3R4R5R92R6tgoR0y34:assets%2Fdata%2Froses%2Froses.jsonR2i8609R3R4R5R93R6tgoR0y41:assets%2Fdata%2Froses%2FrosesDialogue.txtR2i153R3R4R5R94R6tgoR0y43:assets%2Fdata%2Fsatin-panties%2Fevents.jsonR2i3177R3R4R5R95R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-easy.jsonR2i8817R3R4R5R96R6tgoR0y55:assets%2Fdata%2Fsatin-panties%2Fsatin-panties-hard.jsonR2i12704R3R4R5R97R6tgoR0y50:assets%2Fdata%2Fsatin-panties%2Fsatin-panties.jsonR2i10725R3R4R5R98R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-easy.jsonR2i9027R3R4R5R99R6tgoR0y41:assets%2Fdata%2Fsenpai%2Fsenpai-hard.jsonR2i10778R3R4R5R100R6tgoR0y36:assets%2Fdata%2Fsenpai%2Fsenpai.jsonR2i10016R3R4R5R101R6tgoR0y43:assets%2Fdata%2Fsenpai%2FsenpaiDialogue.txtR2i162R3R4R5R102R6tgoR0y34:assets%2Fdata%2Fsmash%2Fsmash.jsonR2i23961R3R4R5R103R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-easy.jsonR2i8435R3R4R5R104R6tgoR0y39:assets%2Fdata%2Fsouth%2Fsouth-hard.jsonR2i10170R3R4R5R105R6tgoR0y34:assets%2Fdata%2Fsouth%2Fsouth.jsonR2i10097R3R4R5R106R6tgoR0y33:assets%2Fdata%2FspecialThanks.txtR2i300R3R4R5R107R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-easy.jsonR2i7965R3R4R5R108R6tgoR0y45:assets%2Fdata%2Fspookeez%2Fspookeez-hard.jsonR2i9429R3R4R5R109R6tgoR0y40:assets%2Fdata%2Fspookeez%2Fspookeez.jsonR2i8875R3R4R5R110R6tgoR0y29:assets%2Fdata%2FstageList.txtR2i61R3R4R5R111R6tgoR0y36:assets%2Fdata%2Fstress%2Fevents.jsonR2i747R3R4R5R112R6tgoR0y41:assets%2Fdata%2Fstress%2Fpicospeaker.jsonR2i18286R3R4R5R113R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-easy.jsonR2i33455R3R4R5R114R6tgoR0y41:assets%2Fdata%2Fstress%2Fstress-hard.jsonR2i53679R3R4R5R115R6tgoR0y36:assets%2Fdata%2Fstress%2Fstress.jsonR2i45928R3R4R5R116R6tgoR0y32:assets%2Fdata%2Ftest%2Ftest.jsonR2i75208R3R4R5R117R6tgoR0y40:assets%2Fdata%2Ftest-dev%2Ftest-dev.jsonR2i49834R3R4R5R118R6tgoR0y36:assets%2Fdata%2Fthorns%2Fevents.jsonR2i8104R3R4R5R119R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-easy.jsonR2i10437R3R4R5R120R6tgoR0y41:assets%2Fdata%2Fthorns%2Fthorns-hard.jsonR2i15444R3R4R5R121R6tgoR0y36:assets%2Fdata%2Fthorns%2Fthorns.jsonR2i12691R3R4R5R122R6tgoR0y43:assets%2Fdata%2Fthorns%2FthornsDialogue.txtR2i305R3R4R5R123R6tgoR0y38:assets%2Fdata%2Ftutorial%2Fevents.jsonR2i2702R3R4R5R124R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-easy.jsonR2i5739R3R4R5R125R6tgoR0y45:assets%2Fdata%2Ftutorial%2Ftutorial-hard.jsonR2i6335R3R4R5R126R6tgoR0y40:assets%2Fdata%2Ftutorial%2Ftutorial.jsonR2i5739R3R4R5R127R6tgoR0y33:assets%2Fdata%2Fugh%2Fevents.jsonR2i1345R3R4R5R128R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-easy.jsonR2i8550R3R4R5R129R6tgoR0y35:assets%2Fdata%2Fugh%2Fugh-hard.jsonR2i12496R3R4R5R130R6tgoR0y30:assets%2Fdata%2Fugh%2Fugh.jsonR2i11354R3R4R5R131R6tgoR0y47:assets%2Fdata%2Fwinter-horrorland%2Fevents.jsonR2i6197R3R4R5R132R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-easy.jsonR2i11846R3R4R5R133R6tgoR0y63:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland-hard.jsonR2i14558R3R4R5R134R6tgoR0y58:assets%2Fdata%2Fwinter-horrorland%2Fwinter-horrorland.jsonR2i12808R3R4R5R135R6tgoR0y45:assets%2Fimages%2Fachievements%2Fbirthday.pngR2i10948R3y5:IMAGER5R136R6tgoR0y45:assets%2Fimages%2Fachievements%2Fdebugger.pngR2i7554R3R137R5R138R6tgoR0y54:assets%2Fimages%2Fachievements%2Ffriday_night_play.pngR2i7661R3R137R5R139R6tgoR0y41:assets%2Fimages%2Fachievements%2Fhype.pngR2i23694R3R137R5R140R6tgoR0y54:assets%2Fimages%2Fachievements%2Flockedachievement.pngR2i1709R3R137R5R141R6tgoR0y48:assets%2Fimages%2Fachievements%2Foversinging.pngR2i19900R3R137R5R142R6tgoR0y56:assets%2Fimages%2Fachievements%2Froadkill_enthusiast.pngR2i5996R3R137R5R143R6tgoR0y44:assets%2Fimages%2Fachievements%2Ftoastie.pngR2i3094R3R137R5R144R6tgoR0y45:assets%2Fimages%2Fachievements%2Ftwo_keys.pngR2i27127R3R137R5R145R6tgoR0y43:assets%2Fimages%2Fachievements%2Fur_bad.pngR2i22017R3R137R5R146R6tgoR0y44:assets%2Fimages%2Fachievements%2Fur_good.pngR2i3467R3R137R5R147R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek1_nomiss.pngR2i20155R3R137R5R148R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek2_nomiss.pngR2i9304R3R137R5R149R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek3_nomiss.pngR2i21984R3R137R5R150R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek4_nomiss.pngR2i13430R3R137R5R151R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek5_nomiss.pngR2i21894R3R137R5R152R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek6_nomiss.pngR2i552R3R137R5R153R6tgoR0y49:assets%2Fimages%2Fachievements%2Fweek7_nomiss.pngR2i7249R3R137R5R154R6tgoR0y30:assets%2Fimages%2Falphabet.pngR2i177267R3R137R5R155R6tgoR0y30:assets%2Fimages%2Falphabet.xmlR2i57385R3R4R5R156R6tgoR0y34:assets%2Fimages%2FalphabetDark.pngR2i120330R3R137R5R157R6tgoR0y34:assets%2Fimages%2FalphabetDark.xmlR2i57389R3R4R5R158R6tgoR0y33:assets%2Fimages%2FalphabetOld.pngR2i90070R3R137R5R159R6tgoR0y33:assets%2Fimages%2FalphabetOld.xmlR2i52093R3R4R5R160R6tgoR0y38:assets%2Fimages%2Fbutton%2Fa-hover.pngR2i9818R3R137R5R161R6tgoR0y42:assets%2Fimages%2Fbutton%2Fa-hoverDark.pngR2i9677R3R137R5R162R6tgoR0y32:assets%2Fimages%2Fbutton%2Fa.pngR2i8053R3R137R5R163R6tgoR0y36:assets%2Fimages%2Fbutton%2FaDark.pngR2i7859R3R137R5R164R6tgoR0y40:assets%2Fimages%2Fbutton%2Falt-hover.pngR2i10795R3R137R5R165R6tgoR0y44:assets%2Fimages%2Fbutton%2Falt-hoverDark.pngR2i10294R3R137R5R166R6tgoR0y34:assets%2Fimages%2Fbutton%2Falt.pngR2i9075R3R137R5R167R6tgoR0y38:assets%2Fimages%2Fbutton%2FaltDark.pngR2i8397R3R137R5R168R6tgoR0y41:assets%2Fimages%2Fbutton%2Fback-hover.pngR2i10662R3R137R5R169R6tgoR0y45:assets%2Fimages%2Fbutton%2Fback-hoverDark.pngR2i10381R3R137R5R170R6tgoR0y35:assets%2Fimages%2Fbutton%2Fback.pngR2i9279R3R137R5R171R6tgoR0y39:assets%2Fimages%2Fbutton%2FbackDark.pngR2i8503R3R137R5R172R6tgoR0y41:assets%2Fimages%2Fbutton%2Fctrl-hover.pngR2i11612R3R137R5R173R6tgoR0y45:assets%2Fimages%2Fbutton%2Fctrl-hoverDark.pngR2i11311R3R137R5R174R6tgoR0y35:assets%2Fimages%2Fbutton%2Fctrl.pngR2i9607R3R137R5R175R6tgoR0y39:assets%2Fimages%2Fbutton%2FctrlDark.pngR2i8838R3R137R5R176R6tgoR0y38:assets%2Fimages%2Fbutton%2Fd-hover.pngR2i11142R3R137R5R177R6tgoR0y42:assets%2Fimages%2Fbutton%2Fd-hoverDark.pngR2i10476R3R137R5R178R6tgoR0y32:assets%2Fimages%2Fbutton%2Fd.pngR2i9363R3R137R5R179R6tgoR0y36:assets%2Fimages%2Fbutton%2FdDark.pngR2i8614R3R137R5R180R6tgoR0y41:assets%2Fimages%2Fbutton%2Fdown-hover.pngR2i11291R3R137R5R181R6tgoR0y45:assets%2Fimages%2Fbutton%2Fdown-hoverDark.pngR2i10758R3R137R5R182R6tgoR0y35:assets%2Fimages%2Fbutton%2Fdown.pngR2i9327R3R137R5R183R6tgoR0y39:assets%2Fimages%2Fbutton%2FdownDark.pngR2i8715R3R137R5R184R6tgoR0y38:assets%2Fimages%2Fbutton%2Fe-hover.pngR2i10420R3R137R5R185R6tgoR0y42:assets%2Fimages%2Fbutton%2Fe-hoverDark.pngR2i10032R3R137R5R186R6tgoR0y32:assets%2Fimages%2Fbutton%2Fe.pngR2i8707R3R137R5R187R6tgoR0y36:assets%2Fimages%2Fbutton%2FeDark.pngR2i8132R3R137R5R188R6tgoR0y42:assets%2Fimages%2Fbutton%2Fenter-hover.pngR2i11879R3R137R5R189R6tgoR0y46:assets%2Fimages%2Fbutton%2Fenter-hoverDark.pngR2i10628R3R137R5R190R6tgoR0y36:assets%2Fimages%2Fbutton%2Fenter.pngR2i9976R3R137R5R191R6tgoR0y40:assets%2Fimages%2Fbutton%2FenterDark.pngR2i8756R3R137R5R192R6tgoR0y38:assets%2Fimages%2Fbutton%2Fh-hover.pngR2i9483R3R137R5R193R6tgoR0y42:assets%2Fimages%2Fbutton%2Fh-hoverDark.pngR2i9212R3R137R5R194R6tgoR0y32:assets%2Fimages%2Fbutton%2Fh.pngR2i7864R3R137R5R195R6tgoR0y41:assets%2Fimages%2Fbutton%2Fhand-hover.pngR2i12156R3R137R5R196R6tgoR0y45:assets%2Fimages%2Fbutton%2Fhand-hoverDark.pngR2i11520R3R137R5R197R6tgoR0y35:assets%2Fimages%2Fbutton%2Fhand.pngR2i10176R3R137R5R198R6tgoR0y39:assets%2Fimages%2Fbutton%2FhandDark.pngR2i9169R3R137R5R199R6tgoR0y36:assets%2Fimages%2Fbutton%2FhDark.pngR2i7605R3R137R5R200R6tgoR0y41:assets%2Fimages%2Fbutton%2Fleft-hover.pngR2i11243R3R137R5R201R6tgoR0y45:assets%2Fimages%2Fbutton%2Fleft-hoverDark.pngR2i10491R3R137R5R202R6tgoR0y35:assets%2Fimages%2Fbutton%2Fleft.pngR2i9441R3R137R5R203R6tgoR0y39:assets%2Fimages%2Fbutton%2FleftDark.pngR2i8311R3R137R5R204R6tgoR0y49:assets%2Fimages%2Fbutton%2Fleft_bracket-hover.pngR2i9250R3R137R5R205R6tgoR0y53:assets%2Fimages%2Fbutton%2Fleft_bracket-hoverDark.pngR2i9022R3R137R5R206R6tgoR0y43:assets%2Fimages%2Fbutton%2Fleft_bracket.pngR2i8192R3R137R5R207R6tgoR0y47:assets%2Fimages%2Fbutton%2Fleft_bracketDark.pngR2i7672R3R137R5R208R6tgoR0y38:assets%2Fimages%2Fbutton%2Fo-hover.pngR2i9783R3R137R5R209R6tgoR0y42:assets%2Fimages%2Fbutton%2Fo-hoverDark.pngR2i9417R3R137R5R210R6tgoR0y32:assets%2Fimages%2Fbutton%2Fo.pngR2i8136R3R137R5R211R6tgoR0y36:assets%2Fimages%2Fbutton%2FoDark.pngR2i7730R3R137R5R212R6tgoR0y38:assets%2Fimages%2Fbutton%2Fp-hover.pngR2i9654R3R137R5R213R6tgoR0y42:assets%2Fimages%2Fbutton%2Fp-hoverDark.pngR2i9311R3R137R5R214R6tgoR0y32:assets%2Fimages%2Fbutton%2Fp.pngR2i8326R3R137R5R215R6tgoR0y42:assets%2Fimages%2Fbutton%2Fpause-hover.pngR2i9233R3R137R5R216R6tgoR0y46:assets%2Fimages%2Fbutton%2Fpause-hoverDark.pngR2i9009R3R137R5R217R6tgoR0y36:assets%2Fimages%2Fbutton%2Fpause.pngR2i7630R3R137R5R218R6tgoR0y40:assets%2Fimages%2Fbutton%2FpauseDark.pngR2i7317R3R137R5R219R6tgoR0y36:assets%2Fimages%2Fbutton%2FpDark.pngR2i7859R3R137R5R220R6tgoR0y50:assets%2Fimages%2Fbutton%2Fplayback_rate-hover.pngR2i9213R3R137R5R221R6tgoR0y54:assets%2Fimages%2Fbutton%2Fplayback_rate-hoverDark.pngR2i9088R3R137R5R222R6tgoR0y44:assets%2Fimages%2Fbutton%2Fplayback_rate.pngR2i7970R3R137R5R223R6tgoR0y48:assets%2Fimages%2Fbutton%2Fplayback_rateDark.pngR2i7824R3R137R5R224R6tgoR0y38:assets%2Fimages%2Fbutton%2Fq-hover.pngR2i10269R3R137R5R225R6tgoR0y42:assets%2Fimages%2Fbutton%2Fq-hoverDark.pngR2i9768R3R137R5R226R6tgoR0y32:assets%2Fimages%2Fbutton%2Fq.pngR2i8629R3R137R5R227R6tgoR0y36:assets%2Fimages%2Fbutton%2FqDark.pngR2i8082R3R137R5R228R6tgoR0y38:assets%2Fimages%2Fbutton%2Fr-hover.pngR2i10374R3R137R5R229R6tgoR0y42:assets%2Fimages%2Fbutton%2Fr-hoverDark.pngR2i9831R3R137R5R230R6tgoR0y32:assets%2Fimages%2Fbutton%2Fr.pngR2i8742R3R137R5R231R6tgoR0y36:assets%2Fimages%2Fbutton%2FrDark.pngR2i7920R3R137R5R232R6tgoR0y42:assets%2Fimages%2Fbutton%2Fright-hover.pngR2i11204R3R137R5R233R6tgoR0y46:assets%2Fimages%2Fbutton%2Fright-hoverDark.pngR2i10494R3R137R5R234R6tgoR0y36:assets%2Fimages%2Fbutton%2Fright.pngR2i9386R3R137R5R235R6tgoR0y40:assets%2Fimages%2Fbutton%2FrightDark.pngR2i8278R3R137R5R236R6tgoR0y50:assets%2Fimages%2Fbutton%2Fright_bracket-hover.pngR2i9415R3R137R5R237R6tgoR0y54:assets%2Fimages%2Fbutton%2Fright_bracket-hoverDark.pngR2i9003R3R137R5R238R6tgoR0y44:assets%2Fimages%2Fbutton%2Fright_bracket.pngR2i8203R3R137R5R239R6tgoR0y48:assets%2Fimages%2Fbutton%2Fright_bracketDark.pngR2i7685R3R137R5R240R6tgoR0y38:assets%2Fimages%2Fbutton%2Fs-hover.pngR2i10516R3R137R5R241R6tgoR0y42:assets%2Fimages%2Fbutton%2Fs-hoverDark.pngR2i10006R3R137R5R242R6tgoR0y32:assets%2Fimages%2Fbutton%2Fs.pngR2i8744R3R137R5R243R6tgoR0y36:assets%2Fimages%2Fbutton%2FsDark.pngR2i8061R3R137R5R244R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsection-hover.pngR2i10161R3R137R5R245R6tgoR0y48:assets%2Fimages%2Fbutton%2Fsection-hoverDark.pngR2i10068R3R137R5R246R6tgoR0y38:assets%2Fimages%2Fbutton%2Fsection.pngR2i8425R3R137R5R247R6tgoR0y42:assets%2Fimages%2Fbutton%2FsectionDark.pngR2i8300R3R137R5R248R6tgoR0y42:assets%2Fimages%2Fbutton%2Fshift-hover.pngR2i11227R3R137R5R249R6tgoR0y46:assets%2Fimages%2Fbutton%2Fshift-hoverDark.pngR2i10498R3R137R5R250R6tgoR0y36:assets%2Fimages%2Fbutton%2Fshift.pngR2i9321R3R137R5R251R6tgoR0y40:assets%2Fimages%2Fbutton%2FshiftDark.pngR2i8423R3R137R5R252R6tgoR0y46:assets%2Fimages%2Fbutton%2Fsnap_grid-hover.pngR2i10584R3R137R5R253R6tgoR0y50:assets%2Fimages%2Fbutton%2Fsnap_grid-hoverDark.pngR2i10016R3R137R5R254R6tgoR0y40:assets%2Fimages%2Fbutton%2Fsnap_grid.pngR2i8674R3R137R5R255R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsnap_gridDark.pngR2i8175R3R137R5R256R6tgoR0y42:assets%2Fimages%2Fbutton%2Fspace-hover.pngR2i9210R3R137R5R257R6tgoR0y46:assets%2Fimages%2Fbutton%2Fspace-hoverDark.pngR2i8760R3R137R5R258R6tgoR0y36:assets%2Fimages%2Fbutton%2Fspace.pngR2i7893R3R137R5R259R6tgoR0y40:assets%2Fimages%2Fbutton%2FspaceDark.pngR2i7277R3R137R5R260R6tgoR0y44:assets%2Fimages%2Fbutton%2Fsustain-hover.pngR2i10807R3R137R5R261R6tgoR0y48:assets%2Fimages%2Fbutton%2Fsustain-hoverDark.pngR2i10166R3R137R5R262R6tgoR0y38:assets%2Fimages%2Fbutton%2Fsustain.pngR2i9058R3R137R5R263R6tgoR0y42:assets%2Fimages%2Fbutton%2FsustainDark.pngR2i8448R3R137R5R264R6tgoR0y38:assets%2Fimages%2Fbutton%2Ft-hover.pngR2i9341R3R137R5R265R6tgoR0y42:assets%2Fimages%2Fbutton%2Ft-hoverDark.pngR2i8860R3R137R5R266R6tgoR0y32:assets%2Fimages%2Fbutton%2Ft.pngR2i7916R3R137R5R267R6tgoR0y45:assets%2Fimages%2Fbutton%2Ftamplate-hover.pngR2i7778R3R137R5R268R6tgoR0y49:assets%2Fimages%2Fbutton%2Ftamplate-hoverDark.pngR2i7442R3R137R5R269R6tgoR0y39:assets%2Fimages%2Fbutton%2Ftamplate.pngR2i6924R3R137R5R270R6tgoR0y43:assets%2Fimages%2Fbutton%2FtamplateDark.pngR2i6617R3R137R5R271R6tgoR0y36:assets%2Fimages%2Fbutton%2FtDark.pngR2i7683R3R137R5R272R6tgoR0y39:assets%2Fimages%2Fbutton%2Fup-hover.pngR2i11312R3R137R5R273R6tgoR0y43:assets%2Fimages%2Fbutton%2Fup-hoverDark.pngR2i10783R3R137R5R274R6tgoR0y33:assets%2Fimages%2Fbutton%2Fup.pngR2i9306R3R137R5R275R6tgoR0y37:assets%2Fimages%2Fbutton%2FupDark.pngR2i8745R3R137R5R276R6tgoR0y38:assets%2Fimages%2Fbutton%2Fw-hover.pngR2i9805R3R137R5R277R6tgoR0y42:assets%2Fimages%2Fbutton%2Fw-hoverDark.pngR2i9561R3R137R5R278R6tgoR0y32:assets%2Fimages%2Fbutton%2Fw.pngR2i8235R3R137R5R279R6tgoR0y36:assets%2Fimages%2Fbutton%2FwDark.pngR2i7738R3R137R5R280R6tgoR0y38:assets%2Fimages%2Fbutton%2Fx-hover.pngR2i12388R3R137R5R281R6tgoR0y42:assets%2Fimages%2Fbutton%2Fx-hoverDark.pngR2i11499R3R137R5R282R6tgoR0y32:assets%2Fimages%2Fbutton%2Fx.pngR2i10418R3R137R5R283R6tgoR0y36:assets%2Fimages%2Fbutton%2FxDark.pngR2i9356R3R137R5R284R6tgoR0y87:assets%2Fimages%2Fbutton%2Fyou%20can%20use%20any%20resolution%20of%20image%20button.txtR2zR3R4R5R285R6tgoR0y38:assets%2Fimages%2Fbutton%2Fz-hover.pngR2i10489R3R137R5R286R6tgoR0y42:assets%2Fimages%2Fbutton%2Fz-hoverDark.pngR2i9825R3R137R5R287R6tgoR0y32:assets%2Fimages%2Fbutton%2Fz.pngR2i8703R3R137R5R288R6tgoR0y36:assets%2Fimages%2Fbutton%2FzDark.pngR2i8115R3R137R5R289R6tgoR0y41:assets%2Fimages%2Fbutton%2Fzoom-hover.pngR2i10632R3R137R5R290R6tgoR0y45:assets%2Fimages%2Fbutton%2Fzoom-hoverDark.pngR2i10245R3R137R5R291R6tgoR0y35:assets%2Fimages%2Fbutton%2Fzoom.pngR2i8952R3R137R5R292R6tgoR0y39:assets%2Fimages%2Fbutton%2FzoomDark.pngR2i8381R3R137R5R293R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.pngR2i3044R3R137R5R294R6tgoR0y45:assets%2Fimages%2Fcampaign_menu_UI_assets.xmlR2i597R3R4R5R295R6tgoR0y33:assets%2Fimages%2Fchart_quant.pngR2i3143R3R137R5R296R6tgoR0y33:assets%2Fimages%2Fchart_quant.xmlR2i1028R3R4R5R297R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.pngR2i16546R3R137R5R298R6tgoR0y34:assets%2Fimages%2Fcheckboxanim.xmlR2i1976R3R4R5R299R6tgoR0y32:assets%2Fimages%2FcomboAtlas.pngR2i128570R3R137R5R300R6tgoR0y32:assets%2Fimages%2FcomboAtlas.xmlR2i2246R3R4R5R301R6tgoR0y34:assets%2Fimages%2Fcredits%2Fbb.pngR2i5485R3R137R5R302R6tgoR0y39:assets%2Fimages%2Fcredits%2Fdiscord.pngR2i1510R3R137R5R303R6tgoR0y35:assets%2Fimages%2Fcredits%2Fdub.pngR2i1153R3R137R5R304R6tgoR0y40:assets%2Fimages%2Fcredits%2Fevilsk8r.pngR2i7497R3R137R5R305R6tgoR0y38:assets%2Fimages%2Fcredits%2Fflicky.pngR2i6462R3R137R5R306R6tgoR0y36:assets%2Fimages%2Fcredits%2Fkade.pngR2i9684R3R137R5R307R6tgoR0y43:assets%2Fimages%2Fcredits%2Fkawaisprite.pngR2i3953R3R137R5R308R6tgoR0y38:assets%2Fimages%2Fcredits%2Fkeoiki.pngR2i3918R3R137R5R309R6tgoR0y42:assets%2Fimages%2Fcredits%2Fmastereric.pngR2i11899R3R137R5R310R6tgoR0y38:assets%2Fimages%2Fcredits%2Fnebula.pngR2i5644R3R137R5R311R6tgoR0y45:assets%2Fimages%2Fcredits%2Fninjamuffin99.pngR2i5850R3R137R5R312R6tgoR0y45:assets%2Fimages%2Fcredits%2Fphantomarcade.pngR2i9615R3R137R5R313R6tgoR0y37:assets%2Fimages%2Fcredits%2Fproxy.pngR2i7645R3R137R5R314R6tgoR0y37:assets%2Fimages%2Fcredits%2Friver.pngR2i8283R3R137R5R315R6tgoR0y43:assets%2Fimages%2Fcredits%2Fshadowmario.pngR2i3679R3R137R5R316R6tgoR0y37:assets%2Fimages%2Fcredits%2Fshubs.pngR2i6829R3R137R5R317R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsmokey.pngR2i9145R3R137R5R318R6tgoR0y38:assets%2Fimages%2Fcredits%2Fsqirra.pngR2i8258R3R137R5R319R6tgoR0y34:assets%2Fimages%2Fcry_about_it.pngR2i380631R3R137R5R320R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fbf.jsonR2i987R3R4R5R321R6tgoR0y36:assets%2Fimages%2Fdialogue%2Fgf.jsonR2i807R3R4R5R322R6tgoR0y28:assets%2Fimages%2Ffunkay.pngR2i135548R3R137R5R323R6tgoR0y35:assets%2Fimages%2FgfDanceTitle.jsonR2i124R3R4R5R324R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.pngR2i745426R3R137R5R325R6tgoR0y34:assets%2Fimages%2FgfDanceTitle.xmlR2i4259R3R4R5R326R6tgoR0y30:assets%2Fimages%2Fhahadumb.pngR2i16097R3R137R5R327R6tgoR0y33:assets%2Fimages%2Fhitbox-hint.pngR2i2128R3R137R5R328R6tgoR0y28:assets%2Fimages%2Fhitbox.pngR2i620R3R137R5R329R6tgoR0y27:assets%2Fimages%2FhugeW.pngR2i18069R3R137R5R330R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-bf-old.pngR2i4101R3R137R5R331R6tgoR0y43:assets%2Fimages%2Ficons%2Ficon-bf-pixel.pngR2i538R3R137R5R332R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-bf.pngR2i22287R3R137R5R333R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-dad.pngR2i12384R3R137R5R334R6tgoR0y49:assets%2Fimages%2Ficons%2Ficon-dubenderdragon.pngR2i8798R3R137R5R335R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-face.pngR2i3549R3R137R5R336R6tgoR0y37:assets%2Fimages%2Ficons%2Ficon-gf.pngR2i10205R3R137R5R337R6tgoR0y50:assets%2Fimages%2Ficons%2Ficon-mintenderdragon.pngR2i9431R3R137R5R338R6tgoR0y38:assets%2Fimages%2Ficons%2Ficon-mom.pngR2i9237R3R137R5R339R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-monster.pngR2i17792R3R137R5R340R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-parents.pngR2i15547R3R137R5R341R6tgoR0y39:assets%2Fimages%2Ficons%2Ficon-pico.pngR2i14208R3R137R5R342R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-senpai-pixel.pngR2i622R3R137R5R343R6tgoR0y47:assets%2Fimages%2Ficons%2Ficon-spirit-pixel.pngR2i509R3R137R5R344R6tgoR0y41:assets%2Fimages%2Ficons%2Ficon-spooky.pngR2i6907R3R137R5R345R6tgoR0y42:assets%2Fimages%2Ficons%2Ficon-tankman.pngR2i3493R3R137R5R346R6tgoR0y26:assets%2Fimages%2Flogo.pngR2i86924R3R137R5R347R6tgoR0y32:assets%2Fimages%2FlogoBumpin.pngR2i578147R3R137R5R348R6tgoR0y32:assets%2Fimages%2FlogoBumpin.xmlR2i2177R3R4R5R349R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.pngR2i28858R3R137R5R350R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_awards.xmlR2i1380R3R4R5R351R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.pngR2i28734R3R137R5R352R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_credits.xmlR2i1385R3R4R5R353R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.pngR2i24842R3R137R5R354R6tgoR0y44:assets%2Fimages%2Fmainmenu%2Fmenu_donate.xmlR2i1375R3R4R5R355R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.pngR2i30316R3R137R5R356R6tgoR0y46:assets%2Fimages%2Fmainmenu%2Fmenu_freeplay.xmlR2i1399R3R4R5R357R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.pngR2i22741R3R137R5R358R6tgoR0y42:assets%2Fimages%2Fmainmenu%2Fmenu_mods.xmlR2i1644R3R4R5R359R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.pngR2i27299R3R137R5R360R6tgoR0y45:assets%2Fimages%2Fmainmenu%2Fmenu_options.xmlR2i1332R3R4R5R361R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.pngR2i54659R3R137R5R362R6tgoR0y48:assets%2Fimages%2Fmainmenu%2Fmenu_story_mode.xmlR2i1444R3R4R5R363R6tgoR0y38:assets%2Fimages%2FMCButton%2Fhover.pngR2i906R3R137R5R364R6tgoR0y39:assets%2Fimages%2FMCButton%2Fnormal.pngR2i908R3R137R5R365R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_christmas.pngR2i16696R3R137R5R366R6tgoR0y54:assets%2Fimages%2Fmenubackgrounds%2Fmenu_halloween.pngR2i7474R3R137R5R367R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_limo.pngR2i6842R3R137R5R368R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_philly.pngR2i19689R3R137R5R369R6tgoR0y51:assets%2Fimages%2Fmenubackgrounds%2Fmenu_school.pngR2i1963R3R137R5R370R6tgoR0y50:assets%2Fimages%2Fmenubackgrounds%2Fmenu_stage.pngR2i21287R3R137R5R371R6tgoR0y49:assets%2Fimages%2Fmenubackgrounds%2Fmenu_tank.pngR2i21289R3R137R5R372R6tgoR0y28:assets%2Fimages%2FmenuBG.pngR2i474435R3R137R5R373R6tgoR0y32:assets%2Fimages%2FmenuBGBlue.pngR2i454823R3R137R5R374R6tgoR0y35:assets%2Fimages%2FmenuBGMagenta.pngR2i446604R3R137R5R375R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fbf.jsonR2i125R3R4R5R376R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fdad.jsonR2i126R3R4R5R377R6tgoR0y42:assets%2Fimages%2Fmenucharacters%2Fgf.jsonR2i125R3R4R5R378R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.pngR2i231974R3R137R5R379R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_BF.xmlR2i5582R3R4R5R380R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.pngR2i111851R3R137R5R381R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Dad.xmlR2i2115R3R4R5R382R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.pngR2i314273R3R137R5R383R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2FMenu_GF.xmlR2i3802R3R4R5R384R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.pngR2i152414R3R137R5R385R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2FMenu_Mom.xmlR2i2113R3R4R5R386R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.pngR2i335745R3R137R5R387R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Parents.xmlR2i2188R3R4R5R388R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.pngR2i109825R3R137R5R389R6tgoR0y48:assets%2Fimages%2Fmenucharacters%2FMenu_Pico.xmlR2i2142R3R4R5R390R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.pngR2i64463R3R137R5R391R6tgoR0y50:assets%2Fimages%2Fmenucharacters%2FMenu_Senpai.xmlR2i1348R3R4R5R392R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.pngR2i80071R3R137R5R393R6tgoR0y55:assets%2Fimages%2Fmenucharacters%2FMenu_Spooky_Kids.xmlR2i2543R3R4R5R394R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.pngR2i117065R3R137R5R395R6tgoR0y51:assets%2Fimages%2Fmenucharacters%2FMenu_Tankman.xmlR2i2164R3R4R5R396R6tgoR0y43:assets%2Fimages%2Fmenucharacters%2Fmom.jsonR2i125R3R4R5R397R6tgoR0y57:assets%2Fimages%2Fmenucharacters%2Fparents-christmas.jsonR2i135R3R4R5R398R6tgoR0y44:assets%2Fimages%2Fmenucharacters%2Fpico.jsonR2i129R3R4R5R399R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fsenpai.jsonR2i133R3R4R5R400R6tgoR0y46:assets%2Fimages%2Fmenucharacters%2Fspooky.jsonR2i142R3R4R5R401R6tgoR0y47:assets%2Fimages%2Fmenucharacters%2Ftankman.jsonR2i134R3R4R5R402R6tgoR0y31:assets%2Fimages%2FmenuDesat.pngR2i215613R3R137R5R403R6tgoR0y35:assets%2Fimages%2FmenuDesatDark.pngR2i455541R3R137R5R404R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Feasy.pngR2i3453R3R137R5R405R6tgoR0y45:assets%2Fimages%2Fmenudifficulties%2Fhard.pngR2i3880R3R137R5R406R6tgoR0y47:assets%2Fimages%2Fmenudifficulties%2Fnormal.pngR2i4853R3R137R5R407R6tgoR0y33:assets%2Fimages%2FMenu_Tracks.pngR2i1254R3R137R5R408R6tgoR0y37:assets%2Fimages%2Fnewgrounds_logo.pngR2i40016R3R137R5R409R6tgoR0y42:assets%2Fimages%2Fstorymenu%2Ftutorial.pngR2i7056R3R137R5R410R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek1.pngR2i6261R3R137R5R411R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek2.pngR2i6517R3R137R5R412R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek3.pngR2i7148R3R137R5R413R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek4.pngR2i6262R3R137R5R414R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek5.pngR2i6440R3R137R5R415R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek6.pngR2i8979R3R137R5R416R6tgoR0y39:assets%2Fimages%2Fstorymenu%2Fweek7.pngR2i7349R3R137R5R417R6tgoR0y32:assets%2Fimages%2FtitleEnter.pngR2i26291R3R137R5R418R6tgoR0y32:assets%2Fimages%2FtitleEnter.xmlR2i518R3R4R5R419R6tgoR0y45:assets%2Fimages%2Fui%2Fchart%2Farrow_icon.pngR2i1358R3R137R5R420R6tgoR0y31:assets%2Fimages%2Fui%2Ffile.pngR2i1056R3R137R5R421R6tgoR0y33:assets%2Fimages%2Fui%2Ffolder.pngR2i883R3R137R5R422R6tgoR0y31:assets%2Fimages%2Fui%2Fjson.pngR2i1960R3R137R5R423R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left-hover.pngR2i170R3R137R5R424R6tgoR0y60:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left-hoverDark.pngR2i169R3R137R5R425R6tgoR0y50:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_left.pngR2i166R3R137R5R426R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_leftDark.pngR2i175R3R137R5R427R6tgoR0y58:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle-hover.pngR2i157R3R137R5R428R6tgoR0y62:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle-hoverDark.pngR2i157R3R137R5R429R6tgoR0y52:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middle.pngR2i154R3R137R5R430R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_middleDark.pngR2i158R3R137R5R431R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right-hover.pngR2i171R3R137R5R432R6tgoR0y61:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right-hoverDark.pngR2i168R3R137R5R433R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_right.pngR2i167R3R137R5R434R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fbottom_rightDark.pngR2i166R3R137R5R435R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fcenter-hover.pngR2i149R3R137R5R436R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fcenter-hoverDark.pngR2i149R3R137R5R437R6tgoR0y45:assets%2Fimages%2Fui%2Fnineslice%2Fcenter.pngR2i147R3R137R5R438R6tgoR0y49:assets%2Fimages%2Fui%2Fnineslice%2FcenterDark.pngR2i146R3R137R5R439R6tgoR0y56:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left-hover.pngR2i160R3R137R5R440R6tgoR0y60:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left-hoverDark.pngR2i161R3R137R5R441R6tgoR0y50:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_left.pngR2i159R3R137R5R442R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_leftDark.pngR2i161R3R137R5R443R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right-hover.pngR2i158R3R137R5R444R6tgoR0y61:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right-hoverDark.pngR2i157R3R137R5R445R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_right.pngR2i155R3R137R5R446R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Fmiddle_rightDark.pngR2i157R3R137R5R447R6tgoR0y53:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left-hover.pngR2i169R3R137R5R448R6tgoR0y57:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left-hoverDark.pngR2i169R3R137R5R449R6tgoR0y47:assets%2Fimages%2Fui%2Fnineslice%2Ftop_left.pngR2i164R3R137R5R450R6tgoR0y51:assets%2Fimages%2Fui%2Fnineslice%2Ftop_leftDark.pngR2i170R3R137R5R451R6tgoR0y55:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle-hover.pngR2i161R3R137R5R452R6tgoR0y59:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle-hoverDark.pngR2i161R3R137R5R453R6tgoR0y49:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middle.pngR2i154R3R137R5R454R6tgoR0y53:assets%2Fimages%2Fui%2Fnineslice%2Ftop_middleDark.pngR2i154R3R137R5R455R6tgoR0y54:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right-hover.pngR2i170R3R137R5R456R6tgoR0y58:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right-hoverDark.pngR2i169R3R137R5R457R6tgoR0y48:assets%2Fimages%2Fui%2Fnineslice%2Ftop_right.pngR2i164R3R137R5R458R6tgoR0y52:assets%2Fimages%2Fui%2Fnineslice%2Ftop_rightDark.pngR2i166R3R137R5R459R6tgoR0y34:assets%2Fimages%2Fui%2Fpicture.pngR2i1887R3R137R5R460R6tgoR0y31:assets%2Fimages%2Fui%2Fplay.pngR2i697R3R137R5R461R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_1.pngR2i52419R3R137R5R462R6tgoR0y43:assets%2Fimages%2Fui%2FsplashLoad_1Dark.pngR2i51758R3R137R5R463R6tgoR0y39:assets%2Fimages%2Fui%2FsplashLoad_2.pngR2i10521R3R137R5R464R6tgoR0y43:assets%2Fimages%2Fui%2FsplashLoad_2Dark.pngR2i11238R3R137R5R465R6tgoR0y30:assets%2Fimages%2Fui%2Fzip.pngR2i1416R3R137R5R466R6tgoR0y32:assets%2Fimages%2FunknownMod.pngR2i2387R3R137R5R467R6tgoR2i2309657R3y5:MUSICR5y31:assets%2Fmusic%2FfreakyMenu.mp3y9:pathGroupaR469hR6tgoR2i2402257R3R468R5y31:assets%2Fmusic%2FoffsetSong.mp3R470aR471hR6tgoR2i17762R3R468R5y32:assets%2Fsounds%2FcancelMenu.mp3R470aR472hR6tgoR2i2114R3R468R5y34:assets%2Fsounds%2FchangeVolume.mp3R470aR473hR6tgoR2i91950R3R468R5y33:assets%2Fsounds%2FconfirmMenu.mp3R470aR474hR6tgoR2i9155R3R468R5y34:assets%2Fsounds%2Fintro1-pixel.mp3R470aR475hR6tgoR2i9912R3R468R5y34:assets%2Fsounds%2Fintro2-pixel.mp3R470aR476hR6tgoR2i9128R3R468R5y34:assets%2Fsounds%2Fintro3-pixel.mp3R470aR477hR6tgoR2i21651R3R468R5y35:assets%2Fsounds%2FintroGo-pixel.mp3R470aR478hR6tgoR2i17762R3R468R5y32:assets%2Fsounds%2FscrollMenu.mp3R470aR479hR6tgoR0y27:assets%2Fstages%2Flimo.jsonR2i289R3R4R5R480R6tgoR0y27:assets%2Fstages%2Fmall.jsonR2i287R3R4R5R481R6tgoR0y31:assets%2Fstages%2FmallEvil.jsonR2i285R3R4R5R482R6tgoR0y29:assets%2Fstages%2Fphilly.jsonR2i285R3R4R5R483R6tgoR0y29:assets%2Fstages%2Fschool.jsonR2i290R3R4R5R484R6tgoR0y33:assets%2Fstages%2FschoolEvil.jsonR2i290R3R4R5R485R6tgoR0y29:assets%2Fstages%2Fspooky.jsonR2i285R3R4R5R486R6tgoR0y28:assets%2Fstages%2Fstage.jsonR2i279R3R4R5R487R6tgoR0y27:assets%2Fstages%2Ftank.jsonR2i147R3R4R5R488R6tgoR0y30:assets%2Fweeks%2Ftutorial.jsonR2i274R3R4R5R489R6tgoR0y27:assets%2Fweeks%2Fweek1.jsonR2i369R3R4R5R490R6tgoR0y27:assets%2Fweeks%2Fweek2.jsonR2i371R3R4R5R491R6tgoR0y27:assets%2Fweeks%2Fweek3.jsonR2i356R3R4R5R492R6tgoR0y27:assets%2Fweeks%2Fweek4.jsonR2i369R3R4R5R493R6tgoR0y27:assets%2Fweeks%2Fweek5.jsonR2i397R3R4R5R494R6tgoR0y27:assets%2Fweeks%2Fweek6.jsonR2i408R3R4R5R495R6tgoR0y27:assets%2Fweeks%2Fweek7.jsonR2i491R3R4R5R496R6tgoR0y29:assets%2Fweeks%2FweekList.txtR2i50R3R4R5R497R6tgoR0y21:do%20NOT%20readme.txtR2i4326R3R4R5R498R6tgoR0y34:assets%2Ffonts%2Ffonts-go-here.txtR2zR3R4R5R499R6tgoR2i14656R3y4:FONTy9:classNamey31:__ASSET__assets_fonts_pixel_otfR5y26:assets%2Ffonts%2Fpixel.otfR6tgoR2i75864R3R500R501y29:__ASSET__assets_fonts_vcr_ttfR5y24:assets%2Ffonts%2Fvcr.ttfR6tgoR2i2114R3R468R5y26:flixel%2Fsounds%2Fbeep.mp3R470aR506y26:flixel%2Fsounds%2Fbeep.ogghR6tgoR2i39706R3R468R5y28:flixel%2Fsounds%2Fflixel.mp3R470aR508y28:flixel%2Fsounds%2Fflixel.ogghR6tgoR2i5794R3y5:SOUNDR5R507R470aR506R507hgoR2i33629R3R510R5R509R470aR508R509hgoR2i15744R3R500R501y35:__ASSET__flixel_fonts_nokiafc22_ttfR5y30:flixel%2Ffonts%2Fnokiafc22.ttfR6tgoR2i29724R3R500R501y36:__ASSET__flixel_fonts_monsterrat_ttfR5y31:flixel%2Ffonts%2Fmonsterrat.ttfR6tgoR0y33:flixel%2Fimages%2Fui%2Fbutton.pngR2i519R3R137R5R515R6tgoR0y36:flixel%2Fimages%2Flogo%2Fdefault.pngR2i3280R3R137R5R516R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Fbox.pngR2i912R3R137R5R517R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fbutton.pngR2i433R3R137R5R518R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_down.pngR2i446R3R137R5R519R6tgoR0y48:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_left.pngR2i459R3R137R5R520R6tgoR0y49:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_right.pngR2i511R3R137R5R521R6tgoR0y46:flixel%2Fflixel-ui%2Fimg%2Fbutton_arrow_up.pngR2i493R3R137R5R522R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fbutton_thin.pngR2i247R3R137R5R523R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fbutton_toggle.pngR2i534R3R137R5R524R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fcheck_box.pngR2i922R3R137R5R525R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fcheck_mark.pngR2i946R3R137R5R526R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fchrome.pngR2i253R3R137R5R527R6tgoR0y42:flixel%2Fflixel-ui%2Fimg%2Fchrome_flat.pngR2i212R3R137R5R528R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_inset.pngR2i192R3R137R5R529R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Fchrome_light.pngR2i214R3R137R5R530R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Fdropdown_mark.pngR2i156R3R137R5R531R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Ffinger_big.pngR2i1724R3R137R5R532R6tgoR0y43:flixel%2Fflixel-ui%2Fimg%2Ffinger_small.pngR2i294R3R137R5R533R6tgoR0y38:flixel%2Fflixel-ui%2Fimg%2Fhilight.pngR2i129R3R137R5R534R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Finvis.pngR2i128R3R137R5R535R6tgoR0y41:flixel%2Fflixel-ui%2Fimg%2Fminus_mark.pngR2i136R3R137R5R536R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fplus_mark.pngR2i147R3R137R5R537R6tgoR0y36:flixel%2Fflixel-ui%2Fimg%2Fradio.pngR2i191R3R137R5R538R6tgoR0y40:flixel%2Fflixel-ui%2Fimg%2Fradio_dot.pngR2i153R3R137R5R539R6tgoR0y37:flixel%2Fflixel-ui%2Fimg%2Fswatch.pngR2i185R3R137R5R540R6tgoR0y34:flixel%2Fflixel-ui%2Fimg%2Ftab.pngR2i201R3R137R5R541R6tgoR0y39:flixel%2Fflixel-ui%2Fimg%2Ftab_back.pngR2i210R3R137R5R542R6tgoR0y44:flixel%2Fflixel-ui%2Fimg%2Ftooltip_arrow.pngR2i18509R3R137R5R543R6tgoR0y39:flixel%2Fflixel-ui%2Fxml%2Fdefaults.xmlR2i1263R3R4R5R544R6tgoR0y53:flixel%2Fflixel-ui%2Fxml%2Fdefault_loading_screen.xmlR2i1953R3R4R5R545R6tgoR0y44:flixel%2Fflixel-ui%2Fxml%2Fdefault_popup.xmlR2i1848R3R4R5R546R6tgh\",\"rootPath\":null,\"version\":2,\"libraryArgs\":[],\"libraryType\":null}";
 	var manifest = lime_utils_AssetManifest.parse(data,ManifestResources.rootPath);
 	var library = lime_utils_AssetLibrary.fromManifest(manifest);
 	lime_utils_Assets.registerLibrary("default",library);
@@ -35075,8 +21609,6 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	this.noteSplashShaderType = "swap";
 	this.noteSplashTexture = null;
 	this.noteSplashDisabled = false;
-	this.pixelInt = [0,1,2,3];
-	this.colArray = ["purple","blue","green","red"];
 	this.lowPriority = false;
 	this.lateHitMult = 1;
 	this.earlyHitMult = 0.5;
@@ -35127,7 +21659,9 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	this.set_x(this.x + Note.swagWidth * noteData);
 	if(!this.isSustainNote) {
 		var animToPlay = "";
-		animToPlay = this.colArray[noteData % this.colArray.length];
+		var mania = dge_backend_EKUtil.getCurrentMania();
+		var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
+		animToPlay = dge_backend_EKUtil.colArray[indexTarget[noteData % indexTarget.length] % dge_backend_EKUtil.colArray.length];
 		var animName = this.animationDownScrollHandle(animToPlay + "Scroll");
 		this.animation.play(animName);
 	}
@@ -35140,7 +21674,10 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 		this.hitsoundDisabled = true;
 		this.copyAngle = false;
 		this.copyFlipY = true;
-		var animName = this.animationDownScrollHandle(this.colArray[noteData % this.colArray.length] + (tail ? "holdend" : "hold"));
+		var mania = dge_backend_EKUtil.getCurrentMania();
+		var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
+		var animToPlay = dge_backend_EKUtil.colArray[indexTarget[noteData % indexTarget.length] % dge_backend_EKUtil.colArray.length];
+		var animName = this.animationDownScrollHandle(animToPlay + (tail ? "holdend" : "hold"));
 		this.animation.play(animName);
 		this.updateHitbox();
 		if(!tail) {
@@ -35206,8 +21743,6 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	,earlyHitMult: null
 	,lateHitMult: null
 	,lowPriority: null
-	,colArray: null
-	,pixelInt: null
 	,noteSplashDisabled: null
 	,noteSplashTexture: null
 	,noteSplashShaderType: null
@@ -35421,10 +21956,12 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		return value;
 	}
 	,set_noteType: function(value) {
-		if(this.noteData > -1 && this.noteData < ClientPrefs.arrowHSV.length) {
-			this.get_colorSwap().set_hue(ClientPrefs.arrowHSV[this.noteData & 4][0] / 360);
-			this.get_colorSwap().set_saturation(ClientPrefs.arrowHSV[this.noteData & 4][1] / 100);
-			this.get_colorSwap().set_brightness(ClientPrefs.arrowHSV[this.noteData & 4][2] / 100);
+		if(this.noteData > -1) {
+			var getColorMania = ClientPrefs.arrowHSV[dge_backend_EKUtil.getCurrentMania() % ClientPrefs.arrowHSV.length];
+			var colroNoteData = getColorMania[this.noteData % getColorMania.length];
+			this.get_colorSwap().set_hue(colroNoteData[0] / 360);
+			this.get_colorSwap().set_saturation(colroNoteData[1] / 100);
+			this.get_colorSwap().set_brightness(colroNoteData[2] / 100);
 		}
 		if(this.noteData > -1 && this.noteType != value) {
 			switch(value) {
@@ -35572,7 +22109,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			if(this.isSustainNote) {
 				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah + "ENDS",null);
 				this.loadGraphic(returnAsset);
-				this.set_width(this.get_width() / 4);
+				this.set_width(this.get_width() / 9);
 				this.set_height(this.get_height() / 2);
 				this.originalHeightForCalcs = this.get_height();
 				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah + "ENDS",null);
@@ -35580,12 +22117,12 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			} else {
 				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah,null);
 				this.loadGraphic(returnAsset);
-				this.set_width(this.get_width() / 4);
+				this.set_width(this.get_width() / 9);
 				this.set_height(this.get_height() / 5);
 				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah,null);
 				this.loadGraphic(returnAsset,true,Math.floor(this.get_width()),Math.floor(this.get_height()));
 			}
-			this.setGraphicSize(this.get_width() * PlayState.daPixelZoom | 0);
+			this.setGraphicSize(this.get_width() * PlayState.daPixelZoom * ClientPrefs.strumsize * dge_backend_EKUtil.getNoteScale(dge_backend_EKUtil.getCurrentMania()) | 0);
 			this.loadPixelNoteAnims();
 			this.set_antialiasing(false);
 		} else {
@@ -35649,7 +22186,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				}
 			}
 			this.loadNoteAnims();
-			this.setGraphicSize(this.get_width() * ClientPrefs.strumsize | 0);
+			this.setGraphicSize(this.get_width() * 0.7 * ClientPrefs.strumsize * dge_backend_EKUtil.getNoteScale(dge_backend_EKUtil.getCurrentMania()) | 0);
 			this.set_antialiasing(ClientPrefs.globalAntialiasing);
 		}
 		if(this.isSustainNote) {
@@ -35666,27 +22203,27 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	}
 	,loadNoteAnims: function() {
 		var _g = 0;
-		var _g1 = this.colArray.length;
+		var _g1 = dge_backend_EKUtil.colArray.length;
 		while(_g < _g1) {
 			var i = _g++;
-			this.animation.addByPrefix(this.colArray[i] + "Scroll",this.colArray[i] + "0");
+			this.animation.addByPrefix(dge_backend_EKUtil.colArray[i] + "Scroll",dge_backend_EKUtil.colArray[i] + "0");
 			this.animation.addByPrefix("purpleholdend","pruple end hold0");
-			this.animation.addByPrefix(this.colArray[i] + "holdend",this.colArray[i] + " hold end0");
-			this.animation.addByPrefix(this.colArray[i] + "hold",this.colArray[i] + " hold piece0");
-			this.animation.addByPrefix(this.colArray[i] + "Scroll_down",this.colArray[i] + "_DownScroll0");
+			this.animation.addByPrefix(dge_backend_EKUtil.colArray[i] + "holdend",dge_backend_EKUtil.colArray[i] + " hold end0");
+			this.animation.addByPrefix(dge_backend_EKUtil.colArray[i] + "hold",dge_backend_EKUtil.colArray[i] + " hold piece0");
+			this.animation.addByPrefix(dge_backend_EKUtil.colArray[i] + "Scroll_down",dge_backend_EKUtil.colArray[i] + "_DownScroll0");
 			this.animation.addByPrefix("purpleholdend_down","pruple end hold_DownScroll0");
-			this.animation.addByPrefix(this.colArray[i] + "holdend_down",this.colArray[i] + " hold end_DownScroll0");
-			this.animation.addByPrefix(this.colArray[i] + "hold_down",this.colArray[i] + " hold piece_DownScroll0");
+			this.animation.addByPrefix(dge_backend_EKUtil.colArray[i] + "holdend_down",dge_backend_EKUtil.colArray[i] + " hold end_DownScroll0");
+			this.animation.addByPrefix(dge_backend_EKUtil.colArray[i] + "hold_down",dge_backend_EKUtil.colArray[i] + " hold piece_DownScroll0");
 		}
 	}
 	,loadPixelNoteAnims: function() {
 		var _g = 0;
-		var _g1 = this.colArray.length;
+		var _g1 = dge_backend_EKUtil.colArray.length;
 		while(_g < _g1) {
 			var i = _g++;
-			this.animation.add(this.colArray[i % this.colArray.length] + "Scroll",[this.pixelInt[i % this.pixelInt.length] + 4]);
-			this.animation.add(this.colArray[i % this.colArray.length] + "holdend",[this.pixelInt[i % this.pixelInt.length] + 4]);
-			this.animation.add(this.colArray[i % this.colArray.length] + "hold",[this.pixelInt[i % this.pixelInt.length]]);
+			this.animation.add(dge_backend_EKUtil.colArray[i % dge_backend_EKUtil.colArray.length] + "Scroll",[dge_backend_EKUtil.pixelInt[i % dge_backend_EKUtil.pixelInt.length] + 9]);
+			this.animation.add(dge_backend_EKUtil.colArray[i % dge_backend_EKUtil.colArray.length] + "holdend",[dge_backend_EKUtil.pixelInt[i % dge_backend_EKUtil.pixelInt.length] + 9]);
+			this.animation.add(dge_backend_EKUtil.colArray[i % dge_backend_EKUtil.colArray.length] + "hold",[dge_backend_EKUtil.pixelInt[i % dge_backend_EKUtil.pixelInt.length]]);
 		}
 	}
 	,update: function(elapsed) {
@@ -35795,12 +22332,14 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	,set_noteData: function(value) {
 		if(this.noteData != value) {
 			this.noteData = value;
+			var animToPlay = "";
+			var mania = dge_backend_EKUtil.getCurrentMania();
+			var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
+			animToPlay = dge_backend_EKUtil.colArray[indexTarget[this.noteData % indexTarget.length] % dge_backend_EKUtil.colArray.length];
 			if(!this.isSustainNote) {
-				var animToPlay = "";
-				animToPlay = this.colArray[this.noteData % this.colArray.length];
 				this.animation.play(this.animationDownScrollHandle(animToPlay + "Scroll"));
 			} else {
-				this.animation.play(this.animationDownScrollHandle(this.colArray[this.noteData % this.colArray.length] + (this.sustainTail ? "holdend" : "hold")));
+				this.animation.play(this.animationDownScrollHandle(animToPlay + (this.sustainTail ? "holdend" : "hold")));
 			}
 		}
 		return value;
@@ -36067,7 +22606,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g1 ) {
 					haxe_NativeStackTrace.lastError = _g1;
 					var e = haxe_Exception.caught(_g1).unwrap();
-					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1011, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1021, className : "Note", methodName : "setConfig"});
 				}
 			} else {
 				try {
@@ -36082,7 +22621,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g4 ) {
 					haxe_NativeStackTrace.lastError = _g4;
 					var e1 = haxe_Exception.caught(_g4).unwrap();
-					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1022, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1032, className : "Note", methodName : "setConfig"});
 					dge_backend_CacheTools.jsonParse.h[name] = { };
 				}
 			}
@@ -36362,10 +22901,13 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 			noteSplashOffsetOriginY = oriNote.noteSplashOffsetOriginY;
 		}
 		this.loadAnims(texture);
-		this.setGraphicSize(this.get_width() * (scale * (ClientPrefs.strumsize / 0.7)) | 0,this.get_height() * (scale * (ClientPrefs.strumsize / 0.7)) | 0);
+		var mania = dge_backend_EKUtil.getCurrentMania();
+		var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
+		var animIndex = indexTarget[note % indexTarget.length];
+		this.setGraphicSize(this.get_width() * (scale * (ClientPrefs.strumsize * dge_backend_EKUtil.getNoteScale(mania))) | 0,this.get_height() * (scale * (ClientPrefs.strumsize * dge_backend_EKUtil.getNoteScale(mania))) | 0);
 		this.setPosition(x + noteWidth / 2 - this.get_width() / 2 + noteSplashOffsetX,y + noteHeight / 2 - this.get_height() / 2 + noteSplashOffsetY);
 		var animNum = flixel_FlxG.random.int(1,2);
-		this.animation.play("note" + note % 4 + "-" + animNum,true);
+		this.animation.play("note" + animIndex % 9 + "-" + animNum,true);
 		if(this.animation._curAnim != null) {
 			this.animation._curAnim.set_frameRate(ClientPrefs.fpsStrumAnim + flixel_FlxG.random.int(-2,2));
 		}
@@ -36414,7 +22956,7 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 			}
 			this.set_frames(tmp);
 		}
-		var col = ["purple","blue","green","red"];
+		var col = dge_backend_EKUtil.colArray;
 		var _g = 0;
 		var _g1 = col.length;
 		while(_g < _g1) {
@@ -36510,11 +23052,17 @@ OutdatedState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,update: function(elapsed) {
 		if(!OutdatedState.leftState) {
-			if(PlayerSettings.player1.controls._accept.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
 				OutdatedState.leftState = true;
 				CoolUtil.browserLoad("https://github.com/DibyoExcel/Dragon-Engine");
-			} else if(PlayerSettings.player1.controls._back.check()) {
-				OutdatedState.leftState = true;
+			} else {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JP;
+				if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
+					OutdatedState.leftState = true;
+				}
 			}
 			if(OutdatedState.leftState) {
 				flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
@@ -36817,13 +23365,11 @@ Paths.returnGraphic = function(key,library) {
 			this1.h[key1] = Paths.currentTrackedAssets.h[path];
 			return Paths.currentTrackedAssets.h[path];
 		}
-		haxe_Log.trace("Missing image asset: " + key + ". Using Checkerboard placeholder.",{ fileName : "source/Paths.hx", lineNumber : 537, className : "Paths", methodName : "returnGraphic"});
-		var checkBoard = CoolUtil.makeCheckerboardGraphic();
-		checkBoard.persist = true;
+		haxe_Log.trace("Missing image asset: " + key + ".",{ fileName : "source/Paths.hx", lineNumber : 537, className : "Paths", methodName : "returnGraphic"});
 		var this1 = dge_backend_CacheTools.cacheImage;
 		var key1 = Paths.currentModDirectory + key + Paths.darkModeReturn();
-		this1.h[key1] = checkBoard;
-		return checkBoard;
+		this1.h[key1] = null;
+		return null;
 	}
 	var this1 = dge_backend_CacheTools.cacheImage;
 	var key1 = Paths.currentModDirectory + key + Paths.darkModeReturn();
@@ -37052,9 +23598,15 @@ PauseSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 		}
 		MusicBeatSubstate.prototype.update.call(this,elapsed);
 		this.updateSkipTextStuff();
-		var upP = PlayerSettings.player1.controls._ui_upP.check();
-		var downP = PlayerSettings.player1.controls._ui_downP.check();
-		var accepted = PlayerSettings.player1.controls._accept.check();
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		var upP = dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state);
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		var downP = dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state);
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		var accepted = dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state);
 		if(upP) {
 			this.changeSelection(-1);
 		}
@@ -37064,20 +23616,36 @@ PauseSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 		var daSelected = this.menuItems[this.curSelected];
 		switch(daSelected) {
 		case "Skip Time":
-			if(PlayerSettings.player1.controls._ui_leftP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state)) {
 				flixel_FlxG.sound.play(Paths.sound("scrollMenu"),0.4);
 				this.curTime -= 1000;
 				this.holdTime = 0;
 			}
-			if(PlayerSettings.player1.controls._ui_rightP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state)) {
 				flixel_FlxG.sound.play(Paths.sound("scrollMenu"),0.4);
 				this.curTime += 1000;
 				this.holdTime = 0;
 			}
-			if(PlayerSettings.player1.controls._ui_left.check() || PlayerSettings.player1.controls._ui_right.check()) {
+			var tmp;
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.P;
+			if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.P;
+				tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+			} else {
+				tmp = true;
+			}
+			if(tmp) {
 				this.holdTime += elapsed;
 				if(this.holdTime > 0.5) {
-					this.curTime += 45000 * elapsed * (PlayerSettings.player1.controls._ui_left.check() ? -1 : 1);
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.P;
+					this.curTime += 45000 * elapsed * (dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state) ? -1 : 1);
 				}
 				if(this.curTime >= flixel_FlxG.sound.music._length) {
 					this.curTime -= flixel_FlxG.sound.music._length;
@@ -37088,20 +23656,36 @@ PauseSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 			}
 			break;
 		case "Time Control":
-			if(PlayerSettings.player1.controls._ui_leftP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state)) {
 				flixel_FlxG.sound.play(Paths.sound("scrollMenu"),0.4);
 				this.curTime -= 1000;
 				this.holdTime = 0;
 			}
-			if(PlayerSettings.player1.controls._ui_rightP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state)) {
 				flixel_FlxG.sound.play(Paths.sound("scrollMenu"),0.4);
 				this.curTime += 1000;
 				this.holdTime = 0;
 			}
-			if(PlayerSettings.player1.controls._ui_left.check() || PlayerSettings.player1.controls._ui_right.check()) {
+			var tmp;
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.P;
+			if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.P;
+				tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+			} else {
+				tmp = true;
+			}
+			if(tmp) {
 				this.holdTime += elapsed;
 				if(this.holdTime > 0.5) {
-					this.curTime += 45000 * elapsed * (PlayerSettings.player1.controls._ui_left.check() ? -1 : 1);
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.P;
+					this.curTime += 45000 * elapsed * (dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state) ? -1 : 1);
 				}
 				if(this.curTime >= flixel_FlxG.sound.music._length) {
 					this.curTime -= flixel_FlxG.sound.music._length;
@@ -37528,7 +24112,7 @@ var PlayState = function(TransIn,TransOut) {
 	this.songLength = 0;
 	this.skipCountdown = false;
 	this.inCutscene = false;
-	this.singAnimations = ["singLEFT","singDOWN","singUP","singRIGHT","singLEFT","singDOWN","singUP","singRIGHT"];
+	this.singAnimations = [];
 	this.defaultCamZoom = 1.05;
 	this.songMisses = 0;
 	this.songHits = 0;
@@ -37546,8 +24130,6 @@ var PlayState = function(TransIn,TransOut) {
 	this.disableLuaSong = false;
 	this.practiceMode = false;
 	this.multNote = 1;
-	this.randomKey = false;
-	this.noteKey = 4;
 	this.modcharttype = "none";
 	this.gamemode = "none";
 	this.healthdrain = false;
@@ -37731,8 +24313,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,healthdrain: null
 	,gamemode: null
 	,modcharttype: null
-	,noteKey: null
-	,randomKey: null
 	,multNote: null
 	,practiceMode: null
 	,disableLuaSong: null
@@ -37834,6 +24414,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,debugKeysChart: null
 	,debugKeysCharacter: null
 	,keysArray: null
+	,bindArray: null
 	,controlArray: null
 	,precacheList: null
 	,gamemodeMap: null
@@ -37843,20 +24424,27 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(PlayState.SONG == null) {
 			PlayState.SONG = Song.loadFromJson("tutorial");
 		}
+		this.singAnimations = dge_backend_EKUtil.getAnimArray();
 		this.isSecOpt = PlayState.SONG.secOpt;
 		dge_frontend_scale_ScreenScaleMode.addEventListener($bind(this,this.resolutionChange));
 		dge_backend_CacheTools.clearCache();
 		Paths.clearStoredMemory();
 		PlayState.instance = this;
-		var colorString = [ClientPrefs.keyPressColor1,ClientPrefs.keyPressColor2,ClientPrefs.keyPressColor3,ClientPrefs.keyPressColor4];
-		var _g = 0;
-		var _g1 = colorString.length;
-		while(_g < _g1) {
-			var i = _g++;
-			this.colorOrder[i] = CoolUtil.hexStringToColor(colorString[i]);
+		var mc = dge_backend_EKUtil.getCurrentMania();
+		var colorString = [];
+		if(mc == 4) {
+			colorString = [ClientPrefs.keyPressColor1,ClientPrefs.keyPressColor2,ClientPrefs.keyPressColor3,ClientPrefs.keyPressColor4];
+			var _g = 0;
+			var _g1 = colorString.length;
+			while(_g < _g1) {
+				var i = _g++;
+				this.colorOrder[i] = CoolUtil.hexStringToColor(colorString[i]);
+			}
+		} else {
+			this.colorOrder = dge_backend_EKUtil.keyPressColor[mc - 1];
 		}
-		this.debugKeysChart = ClientPrefs.copyKey(ClientPrefs.keyBinds.h["debug_1"]);
-		this.debugKeysCharacter = ClientPrefs.copyKey(ClientPrefs.keyBinds.h["debug_2"]);
+		this.debugKeysChart = dge_input_device_KeyboardControls.getKeybind("debug_1");
+		this.debugKeysCharacter = dge_input_device_KeyboardControls.getKeybind("debug_2");
 		PauseSubState.songName = null;
 		this.set_playbackRate(Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"songspeed") ? ClientPrefs.gameplaySettings.h["songspeed"] : 1);
 		this.healthGain = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"healthgain") ? ClientPrefs.gameplaySettings.h["healthgain"] : 1;
@@ -37867,8 +24455,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.healthdrain = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"healthdrain") && ClientPrefs.gameplaySettings.h["healthdrain"];
 		this.gamemode = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"gamemode") ? ClientPrefs.gameplaySettings.h["gamemode"] : "none";
 		this.modcharttype = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"modcharttype") ? ClientPrefs.gameplaySettings.h["modcharttype"] : "none";
-		this.noteKey = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"notekey") ? ClientPrefs.gameplaySettings.h["notekey"] : 4;
-		this.randomKey = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"randomNote") && ClientPrefs.gameplaySettings.h["randomNote"];
 		this.multNote = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"multNote") ? ClientPrefs.gameplaySettings.h["multNote"] : 1;
 		this.disableLuaSong = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"disableLuaSong") && ClientPrefs.gameplaySettings.h["disableLuaSong"];
 		this.disableLuaScript = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"disableLuaScript") && ClientPrefs.gameplaySettings.h["disableLuaScript"];
@@ -37893,7 +24479,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		rating.noteSplash = false;
 		this.ratingsData.push(rating);
 		var _g = 0;
-		var _g1 = this.keysArray.length;
+		var _g1 = dge_backend_EKUtil.getCurrentMania();
 		while(_g < _g1) {
 			var i = _g++;
 			this.keysPressed.push(false);
@@ -38417,7 +25003,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		Conductor.songPosition = -5000 / Conductor.songPosition;
 		this.strumLine = new flixel_FlxSprite(ClientPrefs.middleScroll ? PlayState.STRUM_X_MIDDLESCROLL : PlayState.STRUM_X,50).makeGraphic(flixel_FlxG.width,10);
 		if(ClientPrefs.downScroll) {
-			this.strumLine.set_y(flixel_FlxG.height - 150 * (ClientPrefs.strumsize / 0.7));
+			this.strumLine.set_y(flixel_FlxG.height - 150 * ClientPrefs.strumsize);
 		}
 		this.strumLine.scrollFactor.set();
 		var showTime = ClientPrefs.timeBarType != "Disabled";
@@ -38862,11 +25448,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.keyPressUI = new flixel_group_FlxTypedGroup();
 		this.add(this.keyPressUI);
 		if(ClientPrefs.extUI) {
+			var distance = 50 * dge_backend_EKUtil.getNoteScale(dge_backend_EKUtil.getCurrentMania() - 1) | 0;
 			var _g = 0;
-			var _g1 = this.keysArray.length;
+			var _g1 = dge_backend_EKUtil.getCurrentMania();
 			while(_g < _g1) {
 				var i = _g++;
-				var notePressUISpr = new dge_obj_Keypress(50 + i % 4 * 50,flixel_FlxG.height / 2 + 50 * Math.floor(i / 4),this.colorOrder[i % this.colorOrder.length]);
+				var notePressUISpr = new dge_obj_Keypress(50 + i * distance,flixel_FlxG.height / 2,this.colorOrder[i % this.colorOrder.length]);
 				notePressUISpr.set_cameras([this.camHUD]);
 				this.keyPressUI.add(notePressUISpr);
 			}
@@ -38879,16 +25466,16 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.openPauseMenu();
 		}
 		var h = this.precacheList.h;
-		var _g8_h = h;
-		var _g8_keys = Object.keys(h);
-		var _g8_length = _g8_keys.length;
-		var _g8_current = 0;
-		while(_g8_current < _g8_length) {
-			var key = _g8_keys[_g8_current++];
-			var _g9_key = key;
-			var _g9_value = _g8_h[key];
-			var key1 = _g9_key;
-			var type = _g9_value;
+		var _g6_h = h;
+		var _g6_keys = Object.keys(h);
+		var _g6_length = _g6_keys.length;
+		var _g6_current = 0;
+		while(_g6_current < _g6_length) {
+			var key = _g6_keys[_g6_current++];
+			var _g7_key = key;
+			var _g7_value = _g6_h[key];
+			var key1 = _g7_key;
+			var type = _g7_value;
 			switch(type) {
 			case "image":
 				var returnAsset = Paths.returnGraphic(key1,null);
@@ -38961,7 +25548,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.playbackRate = value;
 		flixel_animation_FlxAnimationController.globalSpeed = value;
-		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1767, className : "PlayState", methodName : "set_playbackRate"});
+		haxe_Log.trace("Anim speed: " + flixel_animation_FlxAnimationController.globalSpeed,{ fileName : "source/PlayState.hx", lineNumber : 1779, className : "PlayState", methodName : "set_playbackRate"});
 		Conductor.safeZoneOffset = ClientPrefs.safeFrames / 60 * 1000 * value;
 		this.setOnLuas("playbackRate",this.playbackRate);
 		return value;
@@ -40009,26 +26596,20 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				}
 			}
 		}
+		var stuff = dge_backend_EKUtil.getCurrentMania();
 		var _g = 0;
 		while(_g < noteData.length) {
 			var section = noteData[_g];
 			++_g;
-			var randomInt = 0;
-			if(this.randomKey) {
-				randomInt = flixel_FlxG.random.int(1,4);
-			}
 			var _g1 = 0;
 			var _g2 = section.sectionNotes;
 			while(_g1 < _g2.length) {
 				var songNotes = _g2[_g1];
 				++_g1;
 				var daStrumTime = songNotes[0];
-				var daNoteData = (songNotes[1] + (this.randomKey ? randomInt : 0)) % 4 | 0;
-				if(this.randomKey && flixel_FlxG.random.float(0,100) < 50) {
-					daNoteData = 3 - daNoteData;
-				}
+				var daNoteData = songNotes[1] % stuff | 0;
 				var gottaHitNote = section.mustHitSection;
-				if(songNotes[1] > 3 && songNotes[1] < 8) {
+				if(songNotes[1] >= stuff && songNotes[1] < stuff * 2) {
 					gottaHitNote = !section.mustHitSection;
 				}
 				var oldNote;
@@ -40037,20 +26618,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				} else {
 					oldNote = null;
 				}
-				var noteDataSet;
-				if(this.noteKey == 1) {
-					noteDataSet = 2;
-				} else if(this.noteKey == 2) {
-					noteDataSet = 1 + (Math.round((daNoteData + 1) / 2) - 1);
-				} else if(this.noteKey == 3) {
-					if(daNoteData > 2) {
-						noteDataSet = 2;
-					} else {
-						noteDataSet = daNoteData;
-					}
-				} else {
-					noteDataSet = daNoteData;
-				}
+				var noteDataSet = daNoteData;
 				var _g3 = 0;
 				var _g4 = this.multNote;
 				while(_g3 < _g4) {
@@ -40074,7 +26642,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					if(check_gf != null) {
 						should_gf = noteTypeData.indexOf("-gf");
 					}
-					var gfSec = section.gfSection && songNotes[1] < 4 || should_gf != -1 || !section.gfSection && songNotes[1] > 7;
+					var gfSec = section.gfSection && songNotes[1] < stuff || should_gf != -1 || !section.gfSection && songNotes[1] >= stuff * 2;
 					var swagNote = new Note(daStrumTime + i * (100 / this.multNote),noteDataSet,oldNote,null,null,songNotes[3] == "GF Sing Force Opponent" || should_opt != -1 ? false : should_ply != -1 ? true : gottaHitNote,gfSec,noteTypeData);
 					swagNote.sustainLength = songNotes[2];
 					if(this.modcharttype == "random flip scroll") {
@@ -40408,6 +26976,8 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			t = true;
 		}
 		var targetAlpha = 1;
+		var maniaCount = dge_backend_EKUtil.getCurrentMania();
+		var maniaScale = dge_backend_EKUtil.getNoteScale(maniaCount);
 		if(player < 1) {
 			if(!ClientPrefs.opponentStrums) {
 				targetAlpha = 0;
@@ -40417,9 +26987,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		if(this.gamemode == "bothside") {
 			var _g = 0;
-			while(_g < 4) {
+			var _g1 = maniaCount;
+			while(_g < _g1) {
 				var i = _g++;
-				var babyArrow = new StrumNote(flixel_FlxG.width * this.strumPointMiddle - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,1);
+				var babyArrow = new StrumNote(flixel_FlxG.width * this.strumPointMiddle - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,1);
 				if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 					babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 				}
@@ -40447,9 +27018,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		} else if(this.gamemode == "opponent") {
 			if(player == 0) {
 				var _g = 0;
-				while(_g < 4) {
+				var _g1 = maniaCount;
+				while(_g < _g1) {
 					var i = _g++;
-					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,0);
+					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) / (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,0);
 					if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 						babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 					}
@@ -40466,7 +27038,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						babyArrow.set_alpha(targetAlpha);
 					}
 					if(ClientPrefs.middleScroll) {
-						if(i > 1) {
+						if(i >= maniaCount / 2) {
 							babyArrow.set_x(babyArrow.x + flixel_FlxG.width * this.strumMiddleDistanceOpponent);
 						} else {
 							babyArrow.set_x(babyArrow.x - flixel_FlxG.width * this.strumMiddleDistanceOpponent);
@@ -40478,9 +27050,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				}
 			} else if(player == 1) {
 				var _g = 0;
-				while(_g < 4) {
+				var _g1 = maniaCount;
+				while(_g < _g1) {
 					var i = _g++;
-					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,1);
+					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) / (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,1);
 					if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 						babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 					}
@@ -40497,7 +27070,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						babyArrow.set_alpha(targetAlpha);
 					}
 					if(ClientPrefs.middleScroll) {
-						if(i > 1) {
+						if(i >= maniaCount / 2) {
 							babyArrow.set_x(babyArrow.x + flixel_FlxG.width * this.strumMiddleDistancePlayer);
 						} else {
 							babyArrow.set_x(babyArrow.x - flixel_FlxG.width * this.strumMiddleDistancePlayer);
@@ -40510,9 +27083,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			}
 		} else if(player == 0) {
 			var _g = 0;
-			while(_g < 4) {
+			var _g1 = maniaCount;
+			while(_g < _g1) {
 				var i = _g++;
-				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,0);
+				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,0);
 				if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 					babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 				}
@@ -40532,7 +27106,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					babyArrow.set_alpha(targetAlpha);
 				}
 				if(ClientPrefs.middleScroll) {
-					if(i > 1) {
+					if(i >= maniaCount / 2) {
 						babyArrow.set_x(babyArrow.x + flixel_FlxG.width * this.strumMiddleDistanceOpponent);
 					} else {
 						babyArrow.set_x(babyArrow.x - flixel_FlxG.width * this.strumMiddleDistanceOpponent);
@@ -40544,9 +27118,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			}
 			if(this.isSecOpt) {
 				var _g = 0;
-				while(_g < 4) {
+				var _g1 = maniaCount;
+				while(_g < _g1) {
 					var i = _g++;
-					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,0,true);
+					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,0,true);
 					if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 						babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 					}
@@ -40564,7 +27139,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						babyArrow.set_alpha(targetAlpha);
 					}
 					if(ClientPrefs.middleScroll) {
-						if(i > 1) {
+						if(i >= maniaCount / 2) {
 							babyArrow.set_x(babyArrow.x + flixel_FlxG.width * this.strumMiddleDistanceGf);
 						} else {
 							babyArrow.set_x(babyArrow.x - flixel_FlxG.width * this.strumMiddleDistanceGf);
@@ -40577,9 +27152,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			}
 		} else if(player == 1) {
 			var _g = 0;
-			while(_g < 4) {
+			var _g1 = maniaCount;
+			while(_g < _g1) {
 				var i = _g++;
-				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,1);
+				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,1);
 				if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 					babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 				}
@@ -40596,7 +27172,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					babyArrow.set_alpha(targetAlpha);
 				}
 				if(ClientPrefs.middleScroll) {
-					if(i > 1) {
+					if(i >= maniaCount / 2) {
 						babyArrow.set_x(babyArrow.x + flixel_FlxG.width * this.strumMiddleDistancePlayer);
 					} else {
 						babyArrow.set_x(babyArrow.x - flixel_FlxG.width * this.strumMiddleDistancePlayer);
@@ -41062,7 +27638,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			this.botplaySine += 180 * elapsed;
 			this.botplayTxt.set_alpha(1 - Math.sin(Math.PI * this.botplaySine / 180));
 		}
-		if(PlayerSettings.player1.controls._pause.check() && this.startedCountdown && this.canPause) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if((dge_input_device_KeyboardControls.checkKey("pause",state) || dge_input_device_GamepadControls.checkButton("pause",state)) && this.startedCountdown && this.canPause) {
 			var ret = this.callOnLuas("onPause",[],false);
 			if(ret != FunkinLua.Function_Stop) {
 				this.openPauseMenu();
@@ -41226,9 +27804,17 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				}
 			}
 		}
-		if(!ClientPrefs.noReset && PlayerSettings.player1.controls._reset.check() && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
+		var tmp;
+		if(!ClientPrefs.noReset) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			tmp = dge_input_device_KeyboardControls.checkKey("reset",state) || dge_input_device_GamepadControls.checkButton("reset",state);
+		} else {
+			tmp = false;
+		}
+		if(tmp && this.canReset && !this.inCutscene && this.startedCountdown && !this.endingSong) {
 			this.health = 0;
-			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3881, className : "PlayState", methodName : "update"});
+			haxe_Log.trace("RESET = True",{ fileName : "source/PlayState.hx", lineNumber : 3876, className : "PlayState", methodName : "update"});
 		}
 		this.doDeathCheck();
 		var noteCount = this.unspawnNotes.length;
@@ -41640,7 +28226,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							}
 						}
 					}
-					var botCanHit = (daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime < Conductor.songPosition + Conductor.safeZoneOffset * daNote.earlyHitMult && (daNote.parent != null ? daNote.parent.wasGoodHit : true) || !daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime <= Conductor.songPosition) && (daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null);
+					var botCanHit = (daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime < Conductor.songPosition + Conductor.safeZoneOffset * daNote.earlyHitMult || !daNote.isSustainNote && daNote.strumTime + daNote.offsetStrumTime <= Conductor.songPosition) && (daNote.strumNote != null && !daNote.strumNote.isLocked || daNote.strumNote == null);
 					var noteField = daNote.fieldTarget != null ? daNote.fieldTarget : "";
 					var fieldCheck = noteField.length > 0 ? _gthis.playableField.length > 0 && _gthis.playableField.indexOf(noteField) != -1 : _gthis.gamemodeManager(daNote);
 					var blockHitField = noteField.length > 0 ? !daNote.blockHit : true;
@@ -41785,7 +28371,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 	}
 	,getControl: function(key) {
-		var pressed = Reflect.getProperty(PlayerSettings.player1.controls,key);
+		var pressed = Reflect.getProperty(dge_input_Controls.instance,key);
 		return pressed;
 	}
 	,triggerEventNote: function(eventName,value1,value2,eventData) {
@@ -42797,12 +29383,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5121, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5106, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5122, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5107, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -42838,7 +29424,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5155, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5140, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -42849,7 +29435,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5166, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5151, className : "PlayState", methodName : "endSong"});
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 					CustomFadeTransition.nextCamera = null;
@@ -42872,7 +29458,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5190, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5175, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -43144,36 +29730,18 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		var eventKey = event.keyCode;
 		var key = this.getKeyFromEvent(eventKey);
 		var keyCheck = flixel_FlxG.keys.checkStatus(eventKey,2);
-		this.customKeyPress(key,keyCheck);
+		this.keyPressHandler(keyCheck,key);
 	}
-	,canHitNote: function(daNote) {
-		if(daNote == null) {
-			return false;
-		}
-		var noteField = daNote.fieldTarget != null ? daNote.fieldTarget : "";
-		var fieldCheck = noteField.length > 0 ? this.playableField.length > 0 && this.playableField.indexOf(noteField) != -1 : this.gamemodeManager(daNote);
-		var allowedPress = fieldCheck && !daNote.blockHit;
-		if(!daNote.mustPress && noteField.length < 1) {
-			allowedPress = fieldCheck && !daNote.ignoreNote;
-		}
-		var basicChecks = daNote.canBeHit && !daNote.tooLate && !daNote.wasGoodHit && allowedPress && !daNote.canFreeze && !daNote.autoPress;
-		var strumCheck = daNote.strumNote == null || !daNote.strumNote.isLocked;
-		if(basicChecks && fieldCheck) {
-			return strumCheck;
-		} else {
-			return false;
-		}
-	}
-	,customKeyPress: function(key,keyCheck) {
+	,keyPressHandler: function(keyCheck,key) {
 		var _gthis = this;
 		if(!this.cpuControlled && this.startedCountdown && !this.paused && key > -1 && (keyCheck || ClientPrefs.controllerMode)) {
 			if(!this.boyfriend.stunned && this.generatedMusic && !this.endingSong) {
 				if(this.playableField.length < 1) {
-					var spr = this.playerStrums.members[key];
+					var spr = this.playerStrums.members[key % this.playerStrums.length];
 					if(this.gamemode == "opponent") {
-						spr = this.opponentStrums.members[key];
+						spr = this.opponentStrums.members[key % this.opponentStrums.length];
 					} else if(this.gamemode == "bothside") {
-						spr = this.bothStrums.members[key];
+						spr = this.bothStrums.members[key % this.bothStrums.length];
 					}
 					if(spr != null && !spr.isLocked) {
 						spr.playAnim("pressed");
@@ -43187,14 +29755,14 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						++_g;
 						var spr = null;
 						if(field == "") {
-							spr = this.playerStrums.members[key];
+							spr = this.playerStrums.members[key % this.playerStrums.length];
 							if(this.gamemode == "opponent") {
-								spr = this.opponentStrums.members[key];
+								spr = this.opponentStrums.members[key % this.opponentStrums.length];
 							} else if(this.gamemode == "bothside") {
-								spr = this.bothStrums.members[key];
+								spr = this.bothStrums.members[key % this.bothStrums.length];
 							}
 						} else if(Object.prototype.hasOwnProperty.call(this.strumGroupMap.h,field)) {
-							spr = this.strumGroupMap.h[field].members[key];
+							spr = this.strumGroupMap.h[field].members[key % this.strumGroupMap.h[field].length];
 						}
 						if(spr != null && !spr.isLocked) {
 							spr.playAnim("pressed");
@@ -43254,6 +29822,73 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			}
 		}
 	}
+	,onKeyRelease: function(event) {
+		var eventKey = event.keyCode;
+		var key = this.getKeyFromEvent(eventKey);
+		this.keyReleaseHandler(key);
+	}
+	,keyReleaseHandler: function(key) {
+		if(!this.cpuControlled && this.startedCountdown && !this.paused && key > -1) {
+			if(this.playableField.length < 1) {
+				var spr = this.playerStrums.members[key % this.playerStrums.length];
+				if(this.gamemode == "opponent") {
+					spr = this.opponentStrums.members[key % this.opponentStrums.length];
+				} else if(this.gamemode == "bothside") {
+					spr = this.bothStrums.members[key % this.bothStrums.length];
+				}
+				if(spr != null && !spr.isLocked) {
+					spr.playAnim("static");
+					spr.resetAnim = 0;
+				}
+			} else {
+				var _g = 0;
+				var _g1 = this.playableField;
+				while(_g < _g1.length) {
+					var field = _g1[_g];
+					++_g;
+					var spr = null;
+					if(field == "") {
+						spr = this.playerStrums.members[key % this.playerStrums.length];
+						if(this.gamemode == "opponent") {
+							spr = this.opponentStrums.members[key % this.opponentStrums.length];
+						} else if(this.gamemode == "bothside") {
+							spr = this.bothStrums.members[key % this.bothStrums.length];
+						}
+					} else if(Object.prototype.hasOwnProperty.call(this.strumGroupMap.h,field)) {
+						spr = this.strumGroupMap.h[field].members[key % this.strumGroupMap.h[field].length];
+					}
+					if(spr != null && !spr.isLocked) {
+						spr.playAnim("static");
+						spr.resetAnim = 0;
+					}
+				}
+			}
+			this.callOnLuas("onKeyRelease",[key]);
+			if(ClientPrefs.extUI) {
+				if(this.keyPressUI.members[key] != null) {
+					this.keyPressUI.members[key].onKey(false);
+				}
+			}
+		}
+	}
+	,canHitNote: function(daNote) {
+		if(daNote == null) {
+			return false;
+		}
+		var noteField = daNote.fieldTarget != null ? daNote.fieldTarget : "";
+		var fieldCheck = noteField.length > 0 ? this.playableField.length > 0 && this.playableField.indexOf(noteField) != -1 : this.gamemodeManager(daNote);
+		var allowedPress = fieldCheck && !daNote.blockHit;
+		if(!daNote.mustPress && noteField.length < 1) {
+			allowedPress = fieldCheck && !daNote.ignoreNote;
+		}
+		var basicChecks = daNote.canBeHit && !daNote.tooLate && !daNote.wasGoodHit && allowedPress && !daNote.canFreeze && !daNote.autoPress;
+		var strumCheck = daNote.strumNote == null || !daNote.strumNote.isLocked;
+		if(basicChecks && fieldCheck) {
+			return strumCheck;
+		} else {
+			return false;
+		}
+	}
 	,sortHitNotes: function(a,b) {
 		if(a.lowPriority && !b.lowPriority) {
 			return 1;
@@ -43269,55 +29904,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			result = 1;
 		}
 		return result;
-	}
-	,onKeyRelease: function(event) {
-		var eventKey = event.keyCode;
-		var key = this.getKeyFromEvent(eventKey);
-		this.customKeyRelease(key);
-	}
-	,customKeyRelease: function(key) {
-		if(!this.cpuControlled && this.startedCountdown && !this.paused && key > -1) {
-			if(this.playableField.length < 1) {
-				var spr = this.playerStrums.members[key];
-				if(this.gamemode == "opponent") {
-					spr = this.opponentStrums.members[key];
-				} else if(this.gamemode == "bothside") {
-					spr = this.bothStrums.members[key];
-				}
-				if(spr != null && !spr.isLocked) {
-					spr.playAnim("static");
-					spr.resetAnim = 0;
-				}
-			} else {
-				var _g = 0;
-				var _g1 = this.playableField;
-				while(_g < _g1.length) {
-					var field = _g1[_g];
-					++_g;
-					var spr = null;
-					if(field == "") {
-						spr = this.playerStrums.members[key];
-						if(this.gamemode == "opponent") {
-							spr = this.opponentStrums.members[key];
-						} else if(this.gamemode == "bothside") {
-							spr = this.bothStrums.members[key];
-						}
-					} else if(Object.prototype.hasOwnProperty.call(this.strumGroupMap.h,field)) {
-						spr = this.strumGroupMap.h[field].members[key];
-					}
-					if(spr != null && !spr.isLocked) {
-						spr.playAnim("static");
-						spr.resetAnim = 0;
-					}
-				}
-			}
-			this.callOnLuas("onKeyRelease",[key]);
-			if(ClientPrefs.extUI) {
-				if(this.keyPressUI.members[key] != null) {
-					this.keyPressUI.members[key].onKey(false);
-				}
-			}
-		}
 	}
 	,getKeyFromEvent: function(key) {
 		if(key != -1) {
@@ -43340,15 +29926,44 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,keyShit: function() {
 		var _gthis = this;
 		var parsedHoldArray = this.parseKeys();
-		if(ClientPrefs.controllerMode) {
-			var parsedArray = this.parseKeys("_P");
+		var gamepad = flixel_FlxG.gamepads.lastActive;
+		if(ClientPrefs.controllerMode && gamepad != null) {
+			var parsedArray = [];
+			var _g = 0;
+			var _g1 = this.bindArray.length;
+			while(_g < _g1) {
+				var i = _g++;
+				var _g2 = 0;
+				var _g3 = this.bindArray[i].length;
+				while(_g2 < _g3) {
+					var j = _g2++;
+					if(!parsedArray[i]) {
+						var ID = this.bindArray[i][j];
+						var Status = 2;
+						var tmp;
+						switch(ID) {
+						case -2:
+							tmp = gamepad.anyButton(Status);
+							break;
+						case -1:
+							tmp = !gamepad.anyButton(Status);
+							break;
+						default:
+							var RawID = gamepad.mapping.getRawID(ID);
+							var button = gamepad.buttons[RawID];
+							tmp = button != null && button.hasState(Status);
+						}
+						parsedArray[i] = tmp;
+					}
+				}
+			}
 			if(parsedArray.indexOf(true) != -1) {
 				var _g = 0;
 				var _g1 = parsedArray.length;
 				while(_g < _g1) {
 					var i = _g++;
 					if(parsedArray[i] && this.strumsBlocked[i] != true) {
-						this.onKeyPress(new openfl_events_KeyboardEvent("keyDown",true,true,-1,this.keysArray[i][0]));
+						this.keyPressHandler(true,i);
 					}
 				}
 			}
@@ -43373,15 +29988,44 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				}
 			}
 		}
-		if(ClientPrefs.controllerMode || this.strumsBlocked.indexOf(true) != -1) {
-			var parsedArray = this.parseKeys("_R");
+		if(ClientPrefs.controllerMode && gamepad != null || this.strumsBlocked.indexOf(true) != -1) {
+			var parsedArray = [];
+			var _g = 0;
+			var _g1 = this.bindArray.length;
+			while(_g < _g1) {
+				var i = _g++;
+				var _g2 = 0;
+				var _g3 = this.bindArray[i].length;
+				while(_g2 < _g3) {
+					var j = _g2++;
+					if(!parsedArray[i]) {
+						var _this = flixel_FlxG.gamepads.lastActive;
+						var ID = this.bindArray[i][j];
+						var Status = -1;
+						var tmp;
+						switch(ID) {
+						case -2:
+							tmp = _this.anyButton(Status);
+							break;
+						case -1:
+							tmp = !_this.anyButton(Status);
+							break;
+						default:
+							var RawID = _this.mapping.getRawID(ID);
+							var button = _this.buttons[RawID];
+							tmp = button != null && button.hasState(Status);
+						}
+						parsedArray[i] = tmp;
+					}
+				}
+			}
 			if(parsedArray.indexOf(true) != -1) {
 				var _g = 0;
 				var _g1 = parsedArray.length;
 				while(_g < _g1) {
 					var i = _g++;
 					if(parsedArray[i] || this.strumsBlocked[i] == true) {
-						this.onKeyRelease(new openfl_events_KeyboardEvent("keyUp",true,true,-1,this.keysArray[i][0]));
+						this.keyReleaseHandler(i);
 					}
 				}
 			}
@@ -43392,11 +30036,52 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 			suffix = "";
 		}
 		var ret = [];
-		var _g = 0;
-		var _g1 = this.controlArray.length;
-		while(_g < _g1) {
-			var i = _g++;
-			ret[i] = Reflect.getProperty(PlayerSettings.player1.controls,this.controlArray[i] + suffix);
+		if(!ClientPrefs.controllerMode) {
+			var _g = 0;
+			var _g1 = this.keysArray.length;
+			while(_g < _g1) {
+				var i = _g++;
+				var _g2 = 0;
+				var _g3 = this.keysArray[i].length;
+				while(_g2 < _g3) {
+					var j = _g2++;
+					if(!ret[i]) {
+						ret[i] = flixel_FlxG.keys.checkStatus(this.keysArray[i][j],suffix != "_P" ? suffix == "_R" ? -1 : 1 : 2);
+					}
+				}
+			}
+		} else {
+			var gamepad = flixel_FlxG.gamepads.lastActive;
+			if(gamepad != null) {
+				var _g = 0;
+				var _g1 = this.bindArray.length;
+				while(_g < _g1) {
+					var i = _g++;
+					var _g2 = 0;
+					var _g3 = this.bindArray[i].length;
+					while(_g2 < _g3) {
+						var j = _g2++;
+						if(!ret[i]) {
+							var ID = this.bindArray[i][j];
+							var Status = suffix != "_P" ? suffix == "_R" ? -1 : 1 : 2;
+							var tmp;
+							switch(ID) {
+							case -2:
+								tmp = gamepad.anyButton(Status);
+								break;
+							case -1:
+								tmp = !gamepad.anyButton(Status);
+								break;
+							default:
+								var RawID = gamepad.mapping.getRawID(ID);
+								var button = gamepad.buttons[RawID];
+								tmp = button != null && button.hasState(Status);
+							}
+							ret[i] = tmp;
+						}
+					}
+				}
+			}
 		}
 		return ret;
 	}
@@ -43623,7 +30308,10 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						holdCover.strum = note.strumNote;
 						holdCover.note = note;
 						note.set_holdCover(holdCover);
-						holdCover.playAnim("hold" + note.noteData % 4);
+						var mania = dge_backend_EKUtil.getCurrentMania();
+						var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
+						var animIndex = indexTarget[note.noteData % indexTarget.length];
+						holdCover.playAnim("hold" + animIndex % 9);
 					}
 				}
 			}
@@ -43827,10 +30515,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(note != null) {
 			data = note.noteData;
 		}
-		if(data > -1 && data % 4 < ClientPrefs.arrowHSV.length) {
-			hue = ClientPrefs.arrowHSV[data % 4][0] / 360;
-			sat = ClientPrefs.arrowHSV[data % 4][1] / 100;
-			brt = ClientPrefs.arrowHSV[data % 4][2] / 100;
+		if(data > -1) {
+			var getColorMania = ClientPrefs.arrowHSV[dge_backend_EKUtil.getCurrentMania() % ClientPrefs.arrowHSV.length];
+			var colroNoteData = getColorMania[data % getColorMania.length];
+			hue = colroNoteData[0] / 360;
+			sat = colroNoteData[1] / 100;
+			brt = colroNoteData[2] / 100;
 			if(note != null) {
 				skin = note.noteSplashTexture;
 				hue = note.noteSplashHue;
@@ -44564,34 +31254,31 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.generateStaticArrows(1,t);
 		var _g = 0;
-		var _g1 = this.playerStrums.length;
-		while(_g < _g1) {
+		while(_g < 9) {
 			var i = _g++;
 			this.setOnLuas("defaultPlayerStrumX" + i,0);
 			this.setOnLuas("defaultPlayerStrumY" + i,0);
-			if(this.playerStrums.length > 0) {
+			if(this.playerStrums.length > 0 && i < this.playerStrums.length) {
 				this.setOnLuas("defaultPlayerStrumX" + i,this.playerStrums.members[i].x);
 				this.setOnLuas("defaultPlayerStrumY" + i,this.playerStrums.members[i].y - (this.oldTransitionNotes ? 20 : 0));
 			}
 		}
 		var _g = 0;
-		var _g1 = this.opponentStrums.length;
-		while(_g < _g1) {
+		while(_g < 9) {
 			var i = _g++;
 			this.setOnLuas("defaultOpponentStrumX" + i,0);
 			this.setOnLuas("defaultOpponentStrumY" + i,0);
-			if(this.opponentStrums.length > 0) {
+			if(this.opponentStrums.length > 0 && i < this.opponentStrums.length) {
 				this.setOnLuas("defaultOpponentStrumX" + i,this.opponentStrums.members[i].x);
 				this.setOnLuas("defaultOpponentStrumY" + i,this.opponentStrums.members[i].y - (this.oldTransitionNotes ? 20 : 0));
 			}
 		}
 		var _g = 0;
-		var _g1 = this.gfStrums.length;
-		while(_g < _g1) {
+		while(_g < 9) {
 			var i = _g++;
 			this.setOnLuas("defaultGfStrumX" + i,0);
 			this.setOnLuas("defaultGfStrumY" + i,0);
-			if(this.gfStrums.length > 0) {
+			if(this.gfStrums.length > 0 && i < this.gfStrums.length) {
 				this.setOnLuas("defaultGfStrumX" + i,this.gfStrums.members[i].x);
 				this.setOnLuas("defaultGfStrumY" + i,this.gfStrums.members[i].y - (this.oldTransitionNotes ? 20 : 0));
 			}
@@ -44789,9 +31476,9 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,setKey: function() {
 		this.keysArray = [];
-		this.controlArray = [];
-		this.keysArray = [ClientPrefs.copyKey(ClientPrefs.keyBinds.h["note_left"]),ClientPrefs.copyKey(ClientPrefs.keyBinds.h["note_down"]),ClientPrefs.copyKey(ClientPrefs.keyBinds.h["note_up"]),ClientPrefs.copyKey(ClientPrefs.keyBinds.h["note_right"])];
-		this.controlArray = ["NOTE_LEFT","NOTE_DOWN","NOTE_UP","NOTE_RIGHT"];
+		this.bindArray = [];
+		this.keysArray = dge_backend_EKUtil.getKeybind();
+		this.bindArray = dge_backend_EKUtil.getButtonbind();
 	}
 	,addCamera: function(name,x,y,width,height,zoom,sectionZoom,insertMode,insertIndex) {
 		if(insertIndex == null) {
@@ -44824,7 +31511,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7268, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7312, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -44850,7 +31537,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7281, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7325, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -45330,15 +32017,17 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,updateStrumPos: function() {
 		this.strumLine.set_y(50);
 		if(ClientPrefs.downScroll) {
-			this.strumLine.set_y(flixel_FlxG.height - 150 * (ClientPrefs.strumsize / 0.7));
+			this.strumLine.set_y(flixel_FlxG.height - 150 * ClientPrefs.strumsize);
 		}
+		var maniaCount = dge_backend_EKUtil.getCurrentMania();
+		var maniaScale = dge_backend_EKUtil.getNoteScale(maniaCount);
 		if(this.gamemode == "bothside") {
 			if(this.strumLineNotes != null) {
 				var _g = 0;
 				var _g1 = this.strumLineNotes.length;
 				while(_g < _g1) {
 					var i = _g++;
-					this.strumLineNotes.members[i].set_x(flixel_FlxG.width * this.strumPointMiddle - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i);
+					this.strumLineNotes.members[i].set_x(flixel_FlxG.width * this.strumPointMiddle - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i);
 					if(this.strumLine != null) {
 						this.strumLineNotes.members[i].set_y(this.strumLine.y);
 					}
@@ -45350,12 +32039,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var _g1 = this.opponentStrums.length;
 				while(_g < _g1) {
 					var i = _g++;
-					this.opponentStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i);
+					this.opponentStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * maniaCount + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i);
 					if(this.strumLine != null) {
 						this.opponentStrums.members[i].set_y(this.strumLine.y);
 					}
 					if(ClientPrefs.middleScroll) {
-						if(i > 1) {
+						if(i >= maniaCount / 2) {
 							var fh = this.opponentStrums.members[i];
 							fh.set_x(fh.x + flixel_FlxG.width * this.strumMiddleDistanceOpponent);
 						} else {
@@ -45370,12 +32059,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var _g1 = this.playerStrums.length;
 				while(_g < _g1) {
 					var i = _g++;
-					this.playerStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i);
+					this.playerStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i);
 					if(this.strumLine != null) {
 						this.playerStrums.members[i].set_y(this.strumLine.y);
 					}
 					if(ClientPrefs.middleScroll) {
-						if(i > 1) {
+						if(i >= maniaCount / 2) {
 							var fh = this.playerStrums.members[i];
 							fh.set_x(fh.x + flixel_FlxG.width * this.strumMiddleDistancePlayer);
 						} else {
@@ -45391,7 +32080,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var _g1 = this.opponentStrums.length;
 				while(_g < _g1) {
 					var i = _g++;
-					this.opponentStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i);
+					this.opponentStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i);
 					if(this.strumLine != null) {
 						this.opponentStrums.members[i].set_y(this.strumLine.y);
 					}
@@ -45400,7 +32089,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						fh.set_y(fh.y - this.strumYOffsetSecondOpt);
 					}
 					if(ClientPrefs.middleScroll) {
-						if(i > 1) {
+						if(i >= maniaCount / 2) {
 							var fh1 = this.opponentStrums.members[i];
 							fh1.set_x(fh1.x + flixel_FlxG.width * this.strumMiddleDistanceOpponent);
 						} else {
@@ -45415,7 +32104,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var _g1 = this.gfStrums.length;
 				while(_g < _g1) {
 					var i = _g++;
-					this.gfStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i);
+					this.gfStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i);
 					if(this.strumLine != null) {
 						this.gfStrums.members[i].set_y(this.strumLine.y);
 					}
@@ -45424,7 +32113,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						fh.set_y(fh.y - this.strumYOffsetSecondOpt);
 					}
 					if(ClientPrefs.middleScroll) {
-						if(i > 1) {
+						if(i >= maniaCount / 2) {
 							var fh1 = this.gfStrums.members[i];
 							fh1.set_x(fh1.x + flixel_FlxG.width * this.strumMiddleDistanceGf);
 						} else {
@@ -45439,12 +32128,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var _g1 = this.playerStrums.length;
 				while(_g < _g1) {
 					var i = _g++;
-					this.playerStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * 2 + Note.swagWidth * (Math.min(flixel_FlxG.width,960) / 960) * i);
+					this.playerStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i);
 					if(this.strumLine != null) {
 						this.playerStrums.members[i].set_y(this.strumLine.y);
 					}
 					if(ClientPrefs.middleScroll) {
-						if(i > 1) {
+						if(i > maniaCount / 2) {
 							var fh = this.playerStrums.members[i];
 							fh.set_x(fh.x + flixel_FlxG.width * this.strumMiddleDistancePlayer);
 						} else {
@@ -45482,87 +32171,6 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 	,__class__: PlayState
 	,__properties__: $extend(MusicBeatState.prototype.__properties__,{set_playableField:"set_playableField",set_fieldNameAsPlayer:"set_fieldNameAsPlayer",set_mergeHealthColor:"set_mergeHealthColor",set_playbackRate:"set_playbackRate",set_songSpeed:"set_songSpeed",set_privateData:"set_privateData"})
 });
-var flixel_util_FlxTypedSignal = {};
-flixel_util_FlxTypedSignal.__properties__ = {get_dispatch:"get_dispatch"};
-flixel_util_FlxTypedSignal.add = function(this1,listener) {
-	this1.add(listener);
-};
-flixel_util_FlxTypedSignal.addOnce = function(this1,listener) {
-	this1.addOnce(listener);
-};
-flixel_util_FlxTypedSignal.remove = function(this1,listener) {
-	this1.remove(listener);
-};
-flixel_util_FlxTypedSignal.has = function(this1,listener) {
-	return this1.has(listener);
-};
-flixel_util_FlxTypedSignal.removeAll = function(this1) {
-	this1.removeAll();
-};
-flixel_util_FlxTypedSignal.get_dispatch = function(this1) {
-	return this1.dispatch;
-};
-flixel_util_FlxTypedSignal.toSignal0 = function(signal) {
-	return new flixel_util__$FlxSignal_FlxSignal0();
-};
-flixel_util_FlxTypedSignal.toSignal1 = function(signal) {
-	return new flixel_util__$FlxSignal_FlxSignal1();
-};
-flixel_util_FlxTypedSignal.toSignal2 = function(signal) {
-	return new flixel_util__$FlxSignal_FlxSignal2();
-};
-flixel_util_FlxTypedSignal.toSignal3 = function(signal) {
-	return new flixel_util__$FlxSignal_FlxSignal3();
-};
-flixel_util_FlxTypedSignal.toSignal4 = function(signal) {
-	return new flixel_util__$FlxSignal_FlxSignal4();
-};
-var PlayerSettings = function(id,scheme) {
-	this.id = id;
-	this.controls = new Controls("player" + id,scheme);
-};
-$hxClasses["PlayerSettings"] = PlayerSettings;
-PlayerSettings.__name__ = "PlayerSettings";
-PlayerSettings.player1 = null;
-PlayerSettings.player2 = null;
-PlayerSettings.init = function() {
-	if(PlayerSettings.player1 == null) {
-		PlayerSettings.player1 = new PlayerSettings(0,KeyboardScheme.Solo);
-		++PlayerSettings.numPlayers;
-	}
-	var numGamepads = flixel_FlxG.gamepads.get_numActiveGamepads();
-	if(numGamepads > 0) {
-		var gamepad = flixel_FlxG.gamepads._activeGamepads[0];
-		if(gamepad == null) {
-			throw haxe_Exception.thrown("Unexpected null gamepad. id:0");
-		}
-		PlayerSettings.player1.controls.addDefaultGamepad(0);
-	}
-	if(numGamepads > 1) {
-		if(PlayerSettings.player2 == null) {
-			PlayerSettings.player2 = new PlayerSettings(1,KeyboardScheme.None);
-			++PlayerSettings.numPlayers;
-		}
-		var gamepad = flixel_FlxG.gamepads._activeGamepads[1];
-		if(gamepad == null) {
-			throw haxe_Exception.thrown("Unexpected null gamepad. id:0");
-		}
-		PlayerSettings.player2.controls.addDefaultGamepad(1);
-	}
-};
-PlayerSettings.reset = function() {
-	PlayerSettings.player1 = null;
-	PlayerSettings.player2 = null;
-	PlayerSettings.numPlayers = 0;
-};
-PlayerSettings.prototype = {
-	id: null
-	,controls: null
-	,setKeyboardScheme: function(scheme) {
-		this.controls.setKeyboardScheme(scheme);
-	}
-	,__class__: PlayerSettings
-};
 var Prompt = function(promptText,defaultSelected,okCallback,cancelCallback,acceptOnDefault,option1,option2) {
 	if(acceptOnDefault == null) {
 		acceptOnDefault = false;
@@ -46114,24 +32722,40 @@ ResetScoreSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 			var fh = this.icon;
 			fh.set_alpha(fh.alpha + elapsed * 2.5);
 		}
-		if(PlayerSettings.player1.controls._ui_leftP.check() || PlayerSettings.player1.controls._ui_rightP.check()) {
+		var tmp;
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+		} else {
+			tmp = true;
+		}
+		if(tmp) {
 			flixel_FlxG.sound.play(Paths.sound("scrollMenu"),1);
 			this.onYes = !this.onYes;
 			this.updateOptions();
 		}
-		if(PlayerSettings.player1.controls._back.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
 			flixel_FlxG.sound.play(Paths.sound("cancelMenu"),1);
 			this.close();
-		} else if(PlayerSettings.player1.controls._accept.check()) {
-			if(this.onYes) {
-				if(this.week == -1) {
-					Highscore.resetSong(this.song + (ClientPrefs.gameplaySettings.h["gamemode"] == "none" ? "" : ClientPrefs.gameplaySettings.h["gamemode"]),this.difficulty);
-				} else {
-					Highscore.resetWeek(WeekData.weeksList[this.week] + (ClientPrefs.gameplaySettings.h["gamemode"] == "none" ? "" : ClientPrefs.gameplaySettings.h["gamemode"]),this.difficulty);
+		} else {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
+				if(this.onYes) {
+					if(this.week == -1) {
+						Highscore.resetSong(this.song + (ClientPrefs.gameplaySettings.h["gamemode"] == "none" ? "" : ClientPrefs.gameplaySettings.h["gamemode"]),this.difficulty);
+					} else {
+						Highscore.resetWeek(WeekData.weeksList[this.week] + (ClientPrefs.gameplaySettings.h["gamemode"] == "none" ? "" : ClientPrefs.gameplaySettings.h["gamemode"]),this.difficulty);
+					}
 				}
+				flixel_FlxG.sound.play(Paths.sound("cancelMenu"),1);
+				this.close();
 			}
-			flixel_FlxG.sound.play(Paths.sound("cancelMenu"),1);
-			this.close();
 		}
 		MusicBeatSubstate.prototype.update.call(this,elapsed);
 	}
@@ -46198,6 +32822,13 @@ Song.onLoadJson = function(songJson) {
 	}
 	if(songJson.secOpt == null) {
 		songJson.secOpt = false;
+	}
+	if(songJson.mania == null) {
+		songJson.mania = 4;
+	} else if(songJson.mania < 1) {
+		songJson.mania = 0;
+	} else if(songJson.mania > 9) {
+		songJson.mania = 9;
 	}
 	if(songJson.gfVersion == null) {
 		if(songJson.player3 != null) {
@@ -46276,9 +32907,9 @@ Song.parseJSONshit = function(rawJson) {
 			Chance = 50;
 		}
 		if(flixel_FlxG.random.float(0,100) < Chance) {
-			haxe_Log.trace("Great someone broke JSON file again, probably a furry infected it. The file may be corrupted or improperly formatted.(" + Std.string(e) + ")",{ fileName : "source/Song.hx", lineNumber : 212, className : "Song", methodName : "parseJSONshit"});
+			haxe_Log.trace("Great someone broke JSON file again, probably a furry infected it. The file may be corrupted or improperly formatted.(" + Std.string(e) + ")",{ fileName : "source/Song.hx", lineNumber : 220, className : "Song", methodName : "parseJSONshit"});
 		} else {
-			haxe_Log.trace("Error parsing JSON data. The file may be corrupted or improperly formatted.(" + Std.string(e) + ")",{ fileName : "source/Song.hx", lineNumber : 214, className : "Song", methodName : "parseJSONshit"});
+			haxe_Log.trace("Error parsing JSON data. The file may be corrupted or improperly formatted.(" + Std.string(e) + ")",{ fileName : "source/Song.hx", lineNumber : 222, className : "Song", methodName : "parseJSONshit"});
 		}
 	}
 	return null;
@@ -46290,9 +32921,9 @@ Song.missingWarning = function(path) {
 	}
 	if(flixel_FlxG.random.float(0,100) < Chance) {
 		var msg = flixel_FlxG.random.getObject_String(Song.eggs);
-		haxe_Log.trace(msg + "(Json file not found: " + path + ").",{ fileName : "source/Song.hx", lineNumber : 230, className : "Song", methodName : "missingWarning"});
+		haxe_Log.trace(msg + "(Json file not found: " + path + ").",{ fileName : "source/Song.hx", lineNumber : 238, className : "Song", methodName : "missingWarning"});
 	} else {
-		haxe_Log.trace("Json file not found: " + path + ".",{ fileName : "source/Song.hx", lineNumber : 232, className : "Song", methodName : "missingWarning"});
+		haxe_Log.trace("Json file not found: " + path + ".",{ fileName : "source/Song.hx", lineNumber : 240, className : "Song", methodName : "missingWarning"});
 	}
 };
 Song.prototype = {
@@ -46674,8 +33305,12 @@ StoryMenuState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		this.scoreText.set_text("WEEK SCORE:" + this.lerpScore);
 		if(!this.movedBack && !this.selectedWeek && WeekData.weeksList.length > 0) {
-			var upP = PlayerSettings.player1.controls._ui_upP.check();
-			var downP = PlayerSettings.player1.controls._ui_downP.check();
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			var upP = dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state);
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			var downP = dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state);
 			if(upP) {
 				this.changeWeek(-1);
 				flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
@@ -46690,43 +33325,63 @@ StoryMenuState.prototype = $extend(MusicBeatState.prototype,{
 				this.changeDifficulty();
 			}
 			if(WeekData.weeksList.length > 0) {
-				if(PlayerSettings.player1.controls._ui_right.check()) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.P;
+				if(dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state)) {
 					this.rightArrow.animation.play("press");
 				} else {
 					this.rightArrow.animation.play("idle");
 				}
-				if(PlayerSettings.player1.controls._ui_left.check()) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.P;
+				if(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state)) {
 					this.leftArrow.animation.play("press");
 				} else {
 					this.leftArrow.animation.play("idle");
 				}
 			}
-			if(PlayerSettings.player1.controls._ui_rightP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state)) {
 				this.changeDifficulty(1);
-			} else if(PlayerSettings.player1.controls._ui_leftP.check()) {
-				this.changeDifficulty(-1);
-			} else if(upP || downP) {
-				this.changeDifficulty();
+			} else {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JP;
+				if(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state)) {
+					this.changeDifficulty(-1);
+				} else if(upP || downP) {
+					this.changeDifficulty();
+				}
 			}
 			var _this = flixel_FlxG.keys.justPressed;
 			if(_this.keyManager.checkStatusUnsafe(17,_this.status)) {
 				this.persistentUpdate = false;
 				this.openSubState(new GameplayChangersSubstate());
-			} else if(PlayerSettings.player1.controls._reset.check()) {
-				if(WeekData.weeksList.length < 1) {
-					var nextState = Type.createInstance(js_Boot.getClass(flixel_FlxG.game._state),[]);
-					if(flixel_FlxG.game._state.switchTo(nextState)) {
-						flixel_FlxG.game._requestedState = nextState;
+			} else {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JP;
+				if(dge_input_device_KeyboardControls.checkKey("reset",state) || dge_input_device_GamepadControls.checkButton("reset",state)) {
+					if(WeekData.weeksList.length < 1) {
+						var nextState = Type.createInstance(js_Boot.getClass(flixel_FlxG.game._state),[]);
+						if(flixel_FlxG.game._state.switchTo(nextState)) {
+							flixel_FlxG.game._requestedState = nextState;
+						}
+						return;
 					}
-					return;
+					this.persistentUpdate = false;
+					this.openSubState(new ResetScoreSubState("",this.curDifficulty,"",StoryMenuState.curWeek));
+				} else {
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.JP;
+					if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
+						this.selectWeek();
+					}
 				}
-				this.persistentUpdate = false;
-				this.openSubState(new ResetScoreSubState("",this.curDifficulty,"",StoryMenuState.curWeek));
-			} else if(PlayerSettings.player1.controls._accept.check()) {
-				this.selectWeek();
 			}
 		}
-		if(PlayerSettings.player1.controls._back.check() && !this.movedBack && !this.selectedWeek) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if((dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) && !this.movedBack && !this.selectedWeek) {
 			flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
 			this.movedBack = true;
 			MusicBeatState.switchState(new MainMenuState());
@@ -47294,9 +33949,11 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			this.get_colorSwap().set_brightness(0);
 		} else {
 			if(this.noteData > -1) {
-				this.get_colorSwap().set_hue(ClientPrefs.arrowHSV[this.noteData % 4][0] / 360);
-				this.get_colorSwap().set_saturation(ClientPrefs.arrowHSV[this.noteData % 4][1] / 100);
-				this.get_colorSwap().set_brightness(ClientPrefs.arrowHSV[this.noteData % 4][2] / 100);
+				var getColorMania = ClientPrefs.arrowHSV[dge_backend_EKUtil.getCurrentMania() % ClientPrefs.arrowHSV.length];
+				var colroNoteData = getColorMania[this.noteData % getColorMania.length];
+				this.get_colorSwap().set_hue(colroNoteData[0] / 360);
+				this.get_colorSwap().set_saturation(colroNoteData[1] / 100);
+				this.get_colorSwap().set_brightness(colroNoteData[2] / 100);
 			}
 			if(this.animation._curAnim.name == this.animConfirm && !PlayState.isPixelStage) {
 				this.origin.set(this.frameWidth * 0.5,this.frameHeight * 0.5);
@@ -47366,40 +34023,77 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 		if(PlayState.isPixelStage) {
 			var returnAsset = Paths.returnGraphic("pixelUI/" + image,null);
 			this.loadGraphic(returnAsset);
-			this.set_width(this.get_width() / 4);
+			this.set_width(this.get_width() / 9);
 			this.set_height(this.get_height() / 5);
 			var returnAsset = Paths.returnGraphic("pixelUI/" + image,null);
 			this.loadGraphic(returnAsset,true,Math.floor(this.get_width()),Math.floor(this.get_height()));
 			this.set_antialiasing(false);
-			this.setGraphicSize(this.get_width() * PlayState.daPixelZoom | 0);
-			this.animation.add("green",[6]);
-			this.animation.add("red",[7]);
-			this.animation.add("blue",[5]);
-			this.animation.add("purple",[4]);
-			switch(Math.abs(this.noteData) % 4) {
+			this.setGraphicSize(this.get_width() * PlayState.daPixelZoom * ClientPrefs.strumsize * dge_backend_EKUtil.getNoteScale(dge_backend_EKUtil.getCurrentMania()) | 0);
+			this.animation.add("green",[11]);
+			this.animation.add("red",[12]);
+			this.animation.add("blue",[10]);
+			this.animation.add("purple",[9]);
+			this.animation.add("green",[11]);
+			this.animation.add("red",[12]);
+			this.animation.add("blue",[10]);
+			this.animation.add("purple",[9]);
+			var mania = dge_backend_EKUtil.getCurrentMania();
+			var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
+			var animIndex = indexTarget[this.noteData % indexTarget.length];
+			switch(animIndex) {
 			case 0:
 				this.animation.add("static",[0]);
-				this.animation.add("pressed",[4,8],ClientPrefs.fpsStrumAnim / 2,false);
-				this.animation.add("notes",[4]);
-				this.animation.add("confirm",[12,16],ClientPrefs.fpsStrumAnim,false);
+				this.animation.add("pressed",[9,18],ClientPrefs.fpsStrumAnim / 2,false);
+				this.animation.add("notes",[9]);
+				this.animation.add("confirm",[18,27],ClientPrefs.fpsStrumAnim,false);
 				break;
 			case 1:
 				this.animation.add("static",[1]);
-				this.animation.add("pressed",[5,9],ClientPrefs.fpsStrumAnim / 2,false);
-				this.animation.add("notes",[5]);
-				this.animation.add("confirm",[13,17],ClientPrefs.fpsStrumAnim,false);
+				this.animation.add("pressed",[10,19],ClientPrefs.fpsStrumAnim / 2,false);
+				this.animation.add("notes",[10]);
+				this.animation.add("confirm",[19,28],ClientPrefs.fpsStrumAnim,false);
 				break;
 			case 2:
 				this.animation.add("static",[2]);
-				this.animation.add("pressed",[6,10],ClientPrefs.fpsStrumAnim / 2,false);
-				this.animation.add("notes",[6]);
-				this.animation.add("confirm",[14,18],ClientPrefs.fpsStrumAnim / 2,false);
+				this.animation.add("pressed",[11,20],ClientPrefs.fpsStrumAnim / 2,false);
+				this.animation.add("notes",[11]);
+				this.animation.add("confirm",[20,29],ClientPrefs.fpsStrumAnim / 2,false);
 				break;
 			case 3:
 				this.animation.add("static",[3]);
-				this.animation.add("pressed",[7,11],ClientPrefs.fpsStrumAnim / 2,false);
-				this.animation.add("notes",[7]);
-				this.animation.add("confirm",[15,19],ClientPrefs.fpsStrumAnim,false);
+				this.animation.add("pressed",[12,21],ClientPrefs.fpsStrumAnim / 2,false);
+				this.animation.add("notes",[12]);
+				this.animation.add("confirm",[21,30],ClientPrefs.fpsStrumAnim,false);
+				break;
+			case 4:
+				this.animation.add("static",[4]);
+				this.animation.add("pressed",[13,22],ClientPrefs.fpsStrumAnim / 2,false);
+				this.animation.add("notes",[13]);
+				this.animation.add("confirm",[22,31],ClientPrefs.fpsStrumAnim,false);
+				break;
+			case 5:
+				this.animation.add("static",[5]);
+				this.animation.add("pressed",[14,23],ClientPrefs.fpsStrumAnim / 2,false);
+				this.animation.add("notes",[14]);
+				this.animation.add("confirm",[23,32],ClientPrefs.fpsStrumAnim,false);
+				break;
+			case 6:
+				this.animation.add("static",[6]);
+				this.animation.add("pressed",[15,24],ClientPrefs.fpsStrumAnim / 2,false);
+				this.animation.add("notes",[15]);
+				this.animation.add("confirm",[24,33],ClientPrefs.fpsStrumAnim,false);
+				break;
+			case 7:
+				this.animation.add("static",[7]);
+				this.animation.add("pressed",[16,25],ClientPrefs.fpsStrumAnim / 2,false);
+				this.animation.add("notes",[16]);
+				this.animation.add("confirm",[25,34],ClientPrefs.fpsStrumAnim,false);
+				break;
+			case 8:
+				this.animation.add("static",[8]);
+				this.animation.add("pressed",[17,26],ClientPrefs.fpsStrumAnim / 2,false);
+				this.animation.add("notes",[17]);
+				this.animation.add("confirm",[26,35],ClientPrefs.fpsStrumAnim,false);
 				break;
 			}
 		} else {
@@ -47466,10 +34160,18 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			this.animation.addByPrefix("blue","arrowDOWN");
 			this.animation.addByPrefix("purple","arrowLEFT");
 			this.animation.addByPrefix("red","arrowRIGHT");
-			this.setGraphicSize(this.get_width() * ClientPrefs.strumsize | 0);
+			this.animation.addByPrefix("space","arrowSPACE");
+			this.animation.addByPrefix("yellow","arrowUPALT");
+			this.animation.addByPrefix("altpurple","arrowDOWNALT");
+			this.animation.addByPrefix("altred","arrowLEFTALT");
+			this.animation.addByPrefix("altblue","arrowRIGHTALT");
+			this.setGraphicSize(this.get_width() * 0.7 * ClientPrefs.strumsize * dge_backend_EKUtil.getNoteScale(dge_backend_EKUtil.getCurrentMania()) | 0);
 			this.set_antialiasing(ClientPrefs.globalAntialiasing);
 			var addAnimThingy = CoolUtil.addSpecialAnimation;
-			switch(Math.abs(this.noteData) % 4) {
+			var mania = dge_backend_EKUtil.getCurrentMania();
+			var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
+			var animIndex = indexTarget[this.noteData % indexTarget.length];
+			switch(animIndex) {
 			case 0:
 				this.animation.addByPrefix("static","arrowLEFT0");
 				this.animation.addByPrefix("pressed","left press0",ClientPrefs.fpsStrumAnim,false);
@@ -47509,6 +34211,56 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 				this.animation.addByPrefix("pressed_down","right press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
 				this.animation.addByPrefix("confirm_down","right confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
 				this.animation.addByPrefix("notes_down","red_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				break;
+			case 4:
+				this.animation.addByPrefix("static","arrowSPACE0");
+				this.animation.addByPrefix("pressed","space press0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm","space confirm0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes","space0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("static_down","arrowSPACE_DownScroll0");
+				this.animation.addByPrefix("pressed_down","space press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm_down","space confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes_down","space_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				break;
+			case 5:
+				this.animation.addByPrefix("static","arrowLEFTALT0");
+				this.animation.addByPrefix("pressed","leftalt press0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm","leftalt confirm0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes","yellow0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("static_down","arrowLEFTALT_DownScroll0");
+				this.animation.addByPrefix("pressed_down","leftalt press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm_down","leftalt confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes_down","yellow_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				break;
+			case 6:
+				this.animation.addByPrefix("static","arrowDOWNALT0");
+				this.animation.addByPrefix("pressed","downalt press0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm","downalt confirm0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes","purplealt0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("static_down","arrowDOWNALT_DownScroll0");
+				this.animation.addByPrefix("pressed_down","downalt press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm_down","downalt confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes_down","purplealt_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				break;
+			case 7:
+				this.animation.addByPrefix("static","arrowUPALT0");
+				this.animation.addByPrefix("pressed","upalt press0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm","upalt confirm0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes","redalt0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("static_down","arrowUPALT_DownScroll0");
+				this.animation.addByPrefix("pressed_down","upalt press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm_down","upalt confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes_down","redalt_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				break;
+			case 8:
+				this.animation.addByPrefix("static","arrowRIGHTALT0");
+				this.animation.addByPrefix("pressed","rightalt press0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm","rightalt confirm0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes","bluealt0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("static_down","arrowRIGHTALT_DownScroll0");
+				this.animation.addByPrefix("pressed_down","rightalt press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("confirm_down","rightalt confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+				this.animation.addByPrefix("notes_down","bluealt_DownScroll0",ClientPrefs.fpsStrumAnim,false);
 				break;
 			}
 		}
@@ -47631,12 +34383,12 @@ TitleState.prototype = $extend(MusicBeatState.prototype,{
 		flixel_FlxG.sound.volumeDownKeys = TitleState.volumeDownKeys;
 		flixel_FlxG.sound.volumeUpKeys = TitleState.volumeUpKeys;
 		flixel_FlxG.keys.preventDefaultKeys = [9];
-		PlayerSettings.init();
 		this.curWacky = flixel_FlxG.random.getObject_Array_String(this.getIntroTextShit());
 		this.swagShader = new dge_shaders_ColorSwap();
 		MusicBeatState.prototype.create.call(this);
 		flixel_FlxG.save.bind("funkin","ninjamuffin99");
 		ClientPrefs.loadPrefs();
+		dge_input_Controls.init();
 		Highscore.load();
 		this.titleJSON = JSON.parse(Paths.getTextFromFile("images/gfDanceTitle.json"));
 		if(!TitleState.initialized) {
@@ -47897,8 +34649,15 @@ TitleState.prototype = $extend(MusicBeatState.prototype,{
 		if(flixel_FlxG.sound.music != null) {
 			Conductor.songPosition = flixel_FlxG.sound.music._time;
 		}
+		var pressedEnter;
 		var _this = flixel_FlxG.keys.justPressed;
-		var pressedEnter = _this.keyManager.checkStatusUnsafe(13,_this.status) || PlayerSettings.player1.controls._accept.check();
+		if(!_this.keyManager.checkStatusUnsafe(13,_this.status)) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			pressedEnter = dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state);
+		} else {
+			pressedEnter = true;
+		}
 		var gamepad = flixel_FlxG.gamepads.lastActive;
 		if(gamepad != null) {
 			var _this = gamepad.justPressed;
@@ -47991,11 +34750,15 @@ TitleState.prototype = $extend(MusicBeatState.prototype,{
 			this.skipIntro();
 		}
 		if(this.swagShader != null) {
-			if(PlayerSettings.player1.controls._ui_left.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.P;
+			if(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state)) {
 				var fh = this.swagShader;
 				fh.set_hue(fh.hue - elapsed * 0.1);
 			}
-			if(PlayerSettings.player1.controls._ui_right.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.P;
+			if(dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state)) {
 				var fh = this.swagShader;
 				fh.set_hue(fh.hue + elapsed * 0.1);
 			}
@@ -53409,6 +40172,53 @@ dge_backend_CacheTools.clearCache = function() {
 	dge_backend_CacheTools.cachePackerAtlas = new haxe_ds_StringMap();
 	dge_backend_CacheTools.cacheText = new haxe_ds_StringMap();
 };
+var dge_backend_EKUtil = function() { };
+$hxClasses["dge.backend.EKUtil"] = dge_backend_EKUtil;
+dge_backend_EKUtil.__name__ = "dge.backend.EKUtil";
+dge_backend_EKUtil.getNoteScale = function(noteKey,sizeChange) {
+	if(sizeChange == null) {
+		sizeChange = 5;
+	}
+	if(noteKey <= sizeChange) {
+		return 1;
+	}
+	var size = sizeChange / noteKey;
+	if(size < 0.3) {
+		size = 0.3;
+	}
+	return size;
+};
+dge_backend_EKUtil.getCurrentMania = function() {
+	if(PlayState.SONG != null && PlayState.SONG.mania != null) {
+		return Math.min(dge_backend_EKUtil.noteAnimIndex.length,Math.max(1,PlayState.SONG.mania)) | 0;
+	}
+	return 4;
+};
+dge_backend_EKUtil.getAnimArray = function() {
+	return dge_backend_EKUtil.animIndex[dge_backend_EKUtil.getCurrentMania() - 1];
+};
+dge_backend_EKUtil.getKeybind = function() {
+	var copyArray = [];
+	var _g = 0;
+	var _g1 = dge_backend_EKUtil.controlMap[dge_backend_EKUtil.getCurrentMania() - 1];
+	while(_g < _g1.length) {
+		var key = _g1[_g];
+		++_g;
+		copyArray.push(dge_input_device_KeyboardControls.getKeybind(key));
+	}
+	return copyArray;
+};
+dge_backend_EKUtil.getButtonbind = function() {
+	var copyArray = [];
+	var _g = 0;
+	var _g1 = dge_backend_EKUtil.controlMap[dge_backend_EKUtil.getCurrentMania() - 1];
+	while(_g < _g1.length) {
+		var key = _g1[_g];
+		++_g;
+		copyArray.push(dge_input_device_GamepadControls.getButtonbind(key));
+	}
+	return copyArray;
+};
 var dge_backend_PrivateData = function() {
 	this.stepCount = -1;
 	this.beatCount = -1;
@@ -54023,6 +40833,376 @@ dge_frontend_scale_ScreenScaleMode.prototype = $extend(flixel_system_scaleModes_
 	}
 	,__class__: dge_frontend_scale_ScreenScaleMode
 });
+var dge_input_Controls = function() {
+};
+$hxClasses["dge.input.Controls"] = dge_input_Controls;
+dge_input_Controls.__name__ = "dge.input.Controls";
+dge_input_Controls.instance = null;
+dge_input_Controls.init = function() {
+	dge_input_Controls.instance = new dge_input_Controls();
+};
+dge_input_Controls.prototype = {
+	get_UI_LEFT: function() {
+		var state = dge_input_InputState.P;
+		if(!dge_input_device_KeyboardControls.checkKey("ui_left",state)) {
+			return dge_input_device_GamepadControls.checkButton("ui_left",state);
+		} else {
+			return true;
+		}
+	}
+	,get_UI_LEFT_P: function() {
+		var state = dge_input_InputState.JP;
+		if(!dge_input_device_KeyboardControls.checkKey("ui_left",state)) {
+			return dge_input_device_GamepadControls.checkButton("ui_left",state);
+		} else {
+			return true;
+		}
+	}
+	,get_UI_LEFT_R: function() {
+		var state = dge_input_InputState.JR;
+		if(!dge_input_device_KeyboardControls.checkKey("ui_left",state)) {
+			return dge_input_device_GamepadControls.checkButton("ui_left",state);
+		} else {
+			return true;
+		}
+	}
+	,get_UI_DOWN: function() {
+		var state = dge_input_InputState.P;
+		if(!dge_input_device_KeyboardControls.checkKey("ui_down",state)) {
+			return dge_input_device_GamepadControls.checkButton("ui_down",state);
+		} else {
+			return true;
+		}
+	}
+	,get_UI_DOWN_P: function() {
+		var state = dge_input_InputState.JP;
+		if(!dge_input_device_KeyboardControls.checkKey("ui_down",state)) {
+			return dge_input_device_GamepadControls.checkButton("ui_down",state);
+		} else {
+			return true;
+		}
+	}
+	,get_UI_DOWN_R: function() {
+		var state = dge_input_InputState.JR;
+		if(!dge_input_device_KeyboardControls.checkKey("ui_down",state)) {
+			return dge_input_device_GamepadControls.checkButton("ui_down",state);
+		} else {
+			return true;
+		}
+	}
+	,get_UI_UP: function() {
+		var state = dge_input_InputState.P;
+		if(!dge_input_device_KeyboardControls.checkKey("ui_up",state)) {
+			return dge_input_device_GamepadControls.checkButton("ui_up",state);
+		} else {
+			return true;
+		}
+	}
+	,get_UI_UP_P: function() {
+		var state = dge_input_InputState.JP;
+		if(!dge_input_device_KeyboardControls.checkKey("ui_up",state)) {
+			return dge_input_device_GamepadControls.checkButton("ui_up",state);
+		} else {
+			return true;
+		}
+	}
+	,get_UI_UP_R: function() {
+		var state = dge_input_InputState.JR;
+		if(!dge_input_device_KeyboardControls.checkKey("ui_up",state)) {
+			return dge_input_device_GamepadControls.checkButton("ui_up",state);
+		} else {
+			return true;
+		}
+	}
+	,get_UI_RIGHT: function() {
+		var state = dge_input_InputState.P;
+		if(!dge_input_device_KeyboardControls.checkKey("ui_right",state)) {
+			return dge_input_device_GamepadControls.checkButton("ui_right",state);
+		} else {
+			return true;
+		}
+	}
+	,get_UI_RIGHT_P: function() {
+		var state = dge_input_InputState.JP;
+		if(!dge_input_device_KeyboardControls.checkKey("ui_right",state)) {
+			return dge_input_device_GamepadControls.checkButton("ui_right",state);
+		} else {
+			return true;
+		}
+	}
+	,get_UI_RIGHT_R: function() {
+		var state = dge_input_InputState.JR;
+		if(!dge_input_device_KeyboardControls.checkKey("ui_right",state)) {
+			return dge_input_device_GamepadControls.checkButton("ui_right",state);
+		} else {
+			return true;
+		}
+	}
+	,get_BACK: function() {
+		var state = dge_input_InputState.JP;
+		if(!dge_input_device_KeyboardControls.checkKey("back",state)) {
+			return dge_input_device_GamepadControls.checkButton("back",state);
+		} else {
+			return true;
+		}
+	}
+	,get_ACCEPT: function() {
+		var state = dge_input_InputState.JP;
+		if(!dge_input_device_KeyboardControls.checkKey("accept",state)) {
+			return dge_input_device_GamepadControls.checkButton("accept",state);
+		} else {
+			return true;
+		}
+	}
+	,get_RESET: function() {
+		var state = dge_input_InputState.JP;
+		if(!dge_input_device_KeyboardControls.checkKey("reset",state)) {
+			return dge_input_device_GamepadControls.checkButton("reset",state);
+		} else {
+			return true;
+		}
+	}
+	,get_PAUSE: function() {
+		var state = dge_input_InputState.JP;
+		if(!dge_input_device_KeyboardControls.checkKey("pause",state)) {
+			return dge_input_device_GamepadControls.checkButton("pause",state);
+		} else {
+			return true;
+		}
+	}
+	,checkKey: function(control,state) {
+		if(!dge_input_device_KeyboardControls.checkKey(control,state)) {
+			return dge_input_device_GamepadControls.checkButton(control,state);
+		} else {
+			return true;
+		}
+	}
+	,__class__: dge_input_Controls
+	,__properties__: {get_PAUSE:"get_PAUSE",get_RESET:"get_RESET",get_ACCEPT:"get_ACCEPT",get_BACK:"get_BACK",get_UI_RIGHT_R:"get_UI_RIGHT_R",get_UI_RIGHT_P:"get_UI_RIGHT_P",get_UI_RIGHT:"get_UI_RIGHT",get_UI_UP_R:"get_UI_UP_R",get_UI_UP_P:"get_UI_UP_P",get_UI_UP:"get_UI_UP",get_UI_DOWN_R:"get_UI_DOWN_R",get_UI_DOWN_P:"get_UI_DOWN_P",get_UI_DOWN:"get_UI_DOWN",get_UI_LEFT_R:"get_UI_LEFT_R",get_UI_LEFT_P:"get_UI_LEFT_P",get_UI_LEFT:"get_UI_LEFT"}
+};
+var dge_input_InputState = $hxEnums["dge.input.InputState"] = { __ename__:"dge.input.InputState",__constructs__:null
+	,PRESSED: {_hx_name:"PRESSED",_hx_index:0,__enum__:"dge.input.InputState",toString:$estr}
+	,JUST_PRESSED: {_hx_name:"JUST_PRESSED",_hx_index:1,__enum__:"dge.input.InputState",toString:$estr}
+	,JUST_RELEASED: {_hx_name:"JUST_RELEASED",_hx_index:2,__enum__:"dge.input.InputState",toString:$estr}
+	,P: {_hx_name:"P",_hx_index:3,__enum__:"dge.input.InputState",toString:$estr}
+	,JP: {_hx_name:"JP",_hx_index:4,__enum__:"dge.input.InputState",toString:$estr}
+	,JR: {_hx_name:"JR",_hx_index:5,__enum__:"dge.input.InputState",toString:$estr}
+};
+dge_input_InputState.__constructs__ = [dge_input_InputState.PRESSED,dge_input_InputState.JUST_PRESSED,dge_input_InputState.JUST_RELEASED,dge_input_InputState.P,dge_input_InputState.JP,dge_input_InputState.JR];
+var dge_input_device_GamepadControls = function() { };
+$hxClasses["dge.input.device.GamepadControls"] = dge_input_device_GamepadControls;
+dge_input_device_GamepadControls.__name__ = "dge.input.device.GamepadControls";
+dge_input_device_GamepadControls.init = function() {
+	dge_input_device_GamepadControls.loadDefaultButtonbind();
+	var save = new flixel_util_FlxSave();
+	save.bind("gamepad_controls_v2","ninjamuffin99");
+	if(save != null && save.data.customGamepadControls != null) {
+		var loadC = save.data.customGamepadControls;
+		var h = loadC.h;
+		var _g_h = h;
+		var _g_keys = Object.keys(h);
+		var _g_length = _g_keys.length;
+		var _g_current = 0;
+		while(_g_current < _g_length) {
+			var key = _g_keys[_g_current++];
+			var _g1_key = key;
+			var _g1_value = _g_h[key];
+			var control = _g1_key;
+			var button = _g1_value;
+			dge_input_device_GamepadControls.buttonBinds.h[control] = button;
+		}
+	}
+};
+dge_input_device_GamepadControls.loadDefaultButtonbind = function() {
+	dge_input_device_GamepadControls.defaultButtons = haxe_ds_StringMap.createCopy(dge_input_device_GamepadControls.buttonBinds.h);
+};
+dge_input_device_GamepadControls.saveButtonbind = function() {
+	var save = new flixel_util_FlxSave();
+	save.bind("gamepad_controls_v2","ninjamuffin99");
+	if(save != null) {
+		save.data.customGamepadControls = dge_input_device_GamepadControls.buttonBinds;
+		save.flush();
+	}
+};
+dge_input_device_GamepadControls.getButtonbind = function(control) {
+	var buttons = dge_input_device_GamepadControls.buttonBinds.h[control];
+	if(buttons == null) {
+		return [];
+	}
+	var copiedArray = buttons.slice();
+	var i = 0;
+	var len = copiedArray.length;
+	while(i < len) {
+		if(copiedArray[i] == -1) {
+			HxOverrides.remove(copiedArray,-1);
+			--i;
+		}
+		++i;
+		len = copiedArray.length;
+	}
+	return copiedArray;
+};
+dge_input_device_GamepadControls.checkButton = function(control,state) {
+	if(state == null) {
+		state = dge_input_InputState.JP;
+	}
+	var gamepad = flixel_FlxG.gamepads.lastActive;
+	if(gamepad == null) {
+		return false;
+	}
+	var buttons = dge_input_device_GamepadControls.getButtonbind(control);
+	var _g = 0;
+	while(_g < buttons.length) {
+		var button = buttons[_g];
+		++_g;
+		switch(state._hx_index) {
+		case 1:case 4:
+			var Status = 2;
+			var tmp;
+			switch(button) {
+			case -2:
+				tmp = gamepad.anyButton(Status);
+				break;
+			case -1:
+				tmp = !gamepad.anyButton(Status);
+				break;
+			default:
+				var RawID = gamepad.mapping.getRawID(button);
+				var button1 = gamepad.buttons[RawID];
+				tmp = button1 != null && button1.hasState(Status);
+			}
+			if(tmp) {
+				return true;
+			}
+			break;
+		case 2:case 5:
+			var Status1 = -1;
+			var tmp1;
+			switch(button) {
+			case -2:
+				tmp1 = gamepad.anyButton(Status1);
+				break;
+			case -1:
+				tmp1 = !gamepad.anyButton(Status1);
+				break;
+			default:
+				var RawID1 = gamepad.mapping.getRawID(button);
+				var button2 = gamepad.buttons[RawID1];
+				tmp1 = button2 != null && button2.hasState(Status1);
+			}
+			if(tmp1) {
+				return true;
+			}
+			break;
+		case 0:case 3:
+			var Status2 = 1;
+			var tmp2;
+			switch(button) {
+			case -2:
+				tmp2 = gamepad.anyButton(Status2);
+				break;
+			case -1:
+				tmp2 = !gamepad.anyButton(Status2);
+				break;
+			default:
+				var RawID2 = gamepad.mapping.getRawID(button);
+				var button3 = gamepad.buttons[RawID2];
+				tmp2 = button3 != null && button3.hasState(Status2);
+			}
+			if(tmp2) {
+				return true;
+			}
+			break;
+		}
+	}
+	return false;
+};
+var dge_input_device_KeyboardControls = function() { };
+$hxClasses["dge.input.device.KeyboardControls"] = dge_input_device_KeyboardControls;
+dge_input_device_KeyboardControls.__name__ = "dge.input.device.KeyboardControls";
+dge_input_device_KeyboardControls.init = function() {
+	dge_input_device_KeyboardControls.loadDefaultKeybind();
+	var save = new flixel_util_FlxSave();
+	save.bind("controls_v2","ninjamuffin99");
+	if(save != null && save.data.customControls != null) {
+		var loadC = save.data.customControls;
+		var h = loadC.h;
+		var _g_h = h;
+		var _g_keys = Object.keys(h);
+		var _g_length = _g_keys.length;
+		var _g_current = 0;
+		while(_g_current < _g_length) {
+			var key = _g_keys[_g_current++];
+			var _g1_key = key;
+			var _g1_value = _g_h[key];
+			var control = _g1_key;
+			var key1 = _g1_value;
+			dge_input_device_KeyboardControls.keyBinds.h[control] = key1;
+		}
+	}
+};
+dge_input_device_KeyboardControls.loadDefaultKeybind = function() {
+	dge_input_device_KeyboardControls.defaultKeys = haxe_ds_StringMap.createCopy(dge_input_device_KeyboardControls.keyBinds.h);
+};
+dge_input_device_KeyboardControls.saveKeybind = function() {
+	var save = new flixel_util_FlxSave();
+	save.bind("controls_v2","ninjamuffin99");
+	if(save != null) {
+		save.data.customControls = dge_input_device_KeyboardControls.keyBinds;
+		save.flush();
+	}
+};
+dge_input_device_KeyboardControls.getKeybind = function(control) {
+	var copiedArray = dge_input_device_KeyboardControls.keyBinds.h[control].slice();
+	var i = 0;
+	var len = copiedArray.length;
+	while(i < len) {
+		if(copiedArray[i] == -1) {
+			HxOverrides.remove(copiedArray,-1);
+			--i;
+		}
+		++i;
+		len = copiedArray.length;
+	}
+	return copiedArray;
+};
+dge_input_device_KeyboardControls.reloadControls = function() {
+	TitleState.muteKeys = dge_input_device_KeyboardControls.getKeybind("volume_mute");
+	TitleState.volumeDownKeys = dge_input_device_KeyboardControls.getKeybind("volume_down");
+	TitleState.volumeUpKeys = dge_input_device_KeyboardControls.getKeybind("volume_up");
+	flixel_FlxG.sound.muteKeys = TitleState.muteKeys;
+	flixel_FlxG.sound.volumeDownKeys = TitleState.volumeDownKeys;
+	flixel_FlxG.sound.volumeUpKeys = TitleState.volumeUpKeys;
+};
+dge_input_device_KeyboardControls.checkKey = function(control,state) {
+	if(state == null) {
+		state = dge_input_InputState.JP;
+	}
+	var keys = dge_input_device_KeyboardControls.getKeybind(control);
+	var _g = 0;
+	while(_g < keys.length) {
+		var key = keys[_g];
+		++_g;
+		switch(state._hx_index) {
+		case 1:case 4:
+			if(flixel_FlxG.keys.checkStatus(key,2)) {
+				return true;
+			}
+			break;
+		case 2:case 5:
+			if(flixel_FlxG.keys.checkStatus(key,-1)) {
+				return true;
+			}
+			break;
+		case 0:case 3:
+			if(flixel_FlxG.keys.checkStatus(key,1)) {
+				return true;
+			}
+			break;
+		}
+	}
+	return false;
+};
 var dge_obj_Keypress = function(x,y,color) {
 	this.alphaKeyPress = ClientPrefs.keyStrokeAlpha;
 	this.alphaKey = ClientPrefs.keyStrokeAlpha;
@@ -54034,7 +41214,8 @@ var dge_obj_Keypress = function(x,y,color) {
 	this.colorKey = -65536;
 	this.isPress = false;
 	flixel_FlxSprite.call(this,x,y);
-	this.makeGraphic(50,50);
+	var size = 50 * dge_backend_EKUtil.getNoteScale(dge_backend_EKUtil.getCurrentMania() - 1) | 0;
+	this.makeGraphic(size,size);
 	this.set_colorKey(color);
 	this.set_color(color);
 	this.shader = this.get_colorSwap().shader;
@@ -54389,7 +41570,7 @@ dge_obj_game_HoldCover.prototype = $extend(flixel_FlxSprite.prototype,{
 			}
 			this.set_frames(tmp);
 		}
-		var colors = ["purple","blue","green","red"];
+		var colors = dge_backend_EKUtil.colArray;
 		var _g = 0;
 		var _g1 = colors.length;
 		while(_g < _g1) {
@@ -54455,13 +41636,16 @@ dge_obj_game_HoldCover.prototype = $extend(flixel_FlxSprite.prototype,{
 			} else {
 				this.set_alpha(note.holdCoverAlpha);
 			}
-			this.setGraphicSize(this.get_width() * (note.holdCoverScale * (ClientPrefs.strumsize / 0.7)) | 0,this.get_height() * (note.holdCoverScale * (ClientPrefs.strumsize / 0.7)) | 0);
+			this.setGraphicSize(this.get_width() * (note.holdCoverScale * (ClientPrefs.strumsize * dge_backend_EKUtil.getNoteScale(dge_backend_EKUtil.getCurrentMania()))) | 0,this.get_height() * (note.holdCoverScale * (ClientPrefs.strumsize * dge_backend_EKUtil.getNoteScale(dge_backend_EKUtil.getCurrentMania()))) | 0);
 		}
 		if(strum != null) {
 			this.setPosition(x + strum.get_width() / 2 - this.get_width() / 2,y + strum.get_height() / 2 - this.get_height() / 2);
 		}
 		this.loadAnims(texture);
-		this.playAnim("hold" + noteData % 4);
+		var mania = dge_backend_EKUtil.getCurrentMania();
+		var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
+		var animIndex = indexTarget[noteData % indexTarget.length];
+		this.playAnim("hold" + animIndex % 9);
 	}
 	,playAnim: function(anim) {
 		if(this.timer <= 0 && StringTools.startsWith(anim,"hold")) {
@@ -54545,7 +41729,10 @@ dge_obj_game_HoldCover.prototype = $extend(flixel_FlxSprite.prototype,{
 			this.timer -= elapsed * speed;
 			if(this.timer <= 0) {
 				if(this.note != null) {
-					this.playAnim("end" + this.note.noteData % 4);
+					var mania = dge_backend_EKUtil.getCurrentMania();
+					var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
+					var animIndex = indexTarget[this.note.noteData % indexTarget.length];
+					this.playAnim("end" + animIndex % 9);
 				}
 				this.timer = 0;
 			}
@@ -56008,7 +43195,9 @@ dge_states_ResultScreen.prototype = $extend(MusicBeatState.prototype,{
 	toStoryMode: null
 	,ForceFreePlay: null
 	,update: function(elapsed) {
-		if(PlayerSettings.player1.controls._accept.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
 			if(this.toStoryMode) {
 				MusicBeatState.switchState(new StoryMenuState(),true);
 			} else {
@@ -56103,17 +43292,25 @@ dge_states_options_DragonOptionsState.prototype = $extend(MusicBeatState.prototy
 	}
 	,update: function(elapsed) {
 		MusicBeatState.prototype.update.call(this,elapsed);
-		if(PlayerSettings.player1.controls._ui_upP.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state)) {
 			this.changeSelection(-1);
 		}
-		if(PlayerSettings.player1.controls._ui_downP.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state)) {
 			this.changeSelection(1);
 		}
-		if(PlayerSettings.player1.controls._back.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
 			flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
 			MusicBeatState.switchState(new options_MainOptionsState());
 		}
-		if(PlayerSettings.player1.controls._accept.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
 			this.openSelectedSubstate(this.options[dge_states_options_DragonOptionsState.curSelected]);
 		}
 	}
@@ -56405,14 +43602,14 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 	,holdTime: null
 	,holdValue: null
 	,update: function(elapsed) {
-		var leftN = PlayerSettings.player1.controls._note_left.check();
-		var downN = PlayerSettings.player1.controls._note_down.check();
-		var upN = PlayerSettings.player1.controls._note_up.check();
-		var rightN = PlayerSettings.player1.controls._note_right.check();
-		var leftNR = PlayerSettings.player1.controls._note_leftR.check();
-		var downNR = PlayerSettings.player1.controls._note_downR.check();
-		var upNR = PlayerSettings.player1.controls._note_upR.check();
-		var rightNR = PlayerSettings.player1.controls._note_rightR.check();
+		var leftN = dge_input_device_KeyboardControls.checkKey("note_left",dge_input_InputState.P) || dge_input_device_GamepadControls.checkButton("note_left",dge_input_InputState.P);
+		var downN = dge_input_device_KeyboardControls.checkKey("note_down",dge_input_InputState.P) || dge_input_device_GamepadControls.checkButton("note_down",dge_input_InputState.P);
+		var upN = dge_input_device_KeyboardControls.checkKey("note_up",dge_input_InputState.P) || dge_input_device_GamepadControls.checkButton("note_up",dge_input_InputState.P);
+		var rightN = dge_input_device_KeyboardControls.checkKey("note_right",dge_input_InputState.P) || dge_input_device_GamepadControls.checkButton("note_right",dge_input_InputState.P);
+		var leftNR = dge_input_device_KeyboardControls.checkKey("note_left",dge_input_InputState.JR) || dge_input_device_GamepadControls.checkButton("note_left",dge_input_InputState.JR);
+		var downNR = dge_input_device_KeyboardControls.checkKey("note_down",dge_input_InputState.JR) || dge_input_device_GamepadControls.checkButton("note_down",dge_input_InputState.JR);
+		var upNR = dge_input_device_KeyboardControls.checkKey("note_up",dge_input_InputState.JR) || dge_input_device_GamepadControls.checkButton("note_up",dge_input_InputState.JR);
+		var rightNR = dge_input_device_KeyboardControls.checkKey("note_right",dge_input_InputState.JR) || dge_input_device_GamepadControls.checkButton("note_right",dge_input_InputState.JR);
 		if(this.spriteNote != null && this.spriteNote.length > 3) {
 			if(this.spriteNote[0] != null) {
 				if(leftN) {
@@ -56455,13 +43652,19 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 				this.spriteNote[3].centerOffsets();
 			}
 		}
-		if(PlayerSettings.player1.controls._ui_upP.check() && !this.keyBroker) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if((dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state)) && !this.keyBroker) {
 			this.changeSelection(-1);
 		}
-		if(PlayerSettings.player1.controls._ui_downP.check() && !this.keyBroker) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if((dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state)) && !this.keyBroker) {
 			this.changeSelection(1);
 		}
-		if(PlayerSettings.player1.controls._back.check() && !this.keyBroker) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if((dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) && !this.keyBroker) {
 			this.close();
 			flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
 		}
@@ -56480,23 +43683,88 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 					}
 				}
 				if(usesCheckbox) {
-					if(PlayerSettings.player1.controls._accept.check() && !this.keyBroker) {
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.JP;
+					if((dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) && !this.keyBroker) {
 						flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 						this.curOption.setValue(this.curOption.getValue() == true ? false : true);
 						this.curOption.change();
 						this.reloadCheckboxes();
 					}
-				} else if((PlayerSettings.player1.controls._ui_left.check() || PlayerSettings.player1.controls._ui_right.check()) && !this.keyBroker && !noNav) {
-					var pressed = PlayerSettings.player1.controls._ui_leftP.check() || PlayerSettings.player1.controls._ui_rightP.check();
-					if(this.holdTime > 0.5 || pressed) {
-						if(pressed) {
-							var add = null;
-							if(this.curOption.get_type() != "string") {
-								add = PlayerSettings.player1.controls._ui_left.check() ? -this.curOption.changeValue : this.curOption.changeValue;
-							}
-							switch(this.curOption.get_type()) {
-							case "float":case "int":case "percent":
-								this.holdValue = this.curOption.getValue() + add;
+				} else {
+					var tmp;
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.P;
+					if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+						var _this = dge_input_Controls.instance;
+						var state = dge_input_InputState.P;
+						tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+					} else {
+						tmp = true;
+					}
+					if(tmp && !this.keyBroker && !noNav) {
+						var pressed;
+						var _this = dge_input_Controls.instance;
+						var state = dge_input_InputState.JP;
+						if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+							var _this = dge_input_Controls.instance;
+							var state = dge_input_InputState.JP;
+							pressed = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+						} else {
+							pressed = true;
+						}
+						if(this.holdTime > 0.5 || pressed) {
+							if(pressed) {
+								var add = null;
+								if(this.curOption.get_type() != "string") {
+									var _this = dge_input_Controls.instance;
+									var state = dge_input_InputState.P;
+									add = dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state) ? -this.curOption.changeValue : this.curOption.changeValue;
+								}
+								switch(this.curOption.get_type()) {
+								case "float":case "int":case "percent":
+									this.holdValue = this.curOption.getValue() + add;
+									if(this.holdValue < this.curOption.minValue) {
+										this.holdValue = this.curOption.minValue;
+									} else if(this.holdValue > this.curOption.maxValue) {
+										this.holdValue = this.curOption.maxValue;
+									}
+									switch(this.curOption.get_type()) {
+									case "int":
+										this.holdValue = Math.round(this.holdValue);
+										this.curOption.setValue(this.holdValue);
+										break;
+									case "float":case "percent":
+										this.holdValue = flixel_math_FlxMath.roundDecimal(this.holdValue,this.curOption.decimals);
+										this.curOption.setValue(this.holdValue);
+										break;
+									}
+									break;
+								case "string":
+									var num = this.curOption.curOption;
+									var _this = dge_input_Controls.instance;
+									var state = dge_input_InputState.JP;
+									if(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state)) {
+										--num;
+									} else {
+										++num;
+									}
+									if(num < 0) {
+										num = this.curOption.options.length - 1;
+									} else if(num >= this.curOption.options.length) {
+										num = 0;
+									}
+									this.curOption.curOption = num;
+									this.curOption.setValue(this.curOption.options[num]);
+									break;
+								}
+								this.updateTextFrom(this.curOption);
+								this.curOption.change();
+								flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
+							} else if(this.curOption.get_type() != "string") {
+								var _this = dge_input_Controls.instance;
+								var state = dge_input_InputState.P;
+								this.holdValue += this.curOption.scrollSpeed * elapsed * (dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state) ? -1 : 1);
 								if(this.holdValue < this.curOption.minValue) {
 									this.holdValue = this.curOption.minValue;
 								} else if(this.holdValue > this.curOption.maxValue) {
@@ -56504,62 +43772,44 @@ options_BaseOptionsMenu.prototype = $extend(MusicBeatSubstate.prototype,{
 								}
 								switch(this.curOption.get_type()) {
 								case "int":
-									this.holdValue = Math.round(this.holdValue);
-									this.curOption.setValue(this.holdValue);
+									this.curOption.setValue(Math.round(this.holdValue));
 									break;
 								case "float":case "percent":
-									this.holdValue = flixel_math_FlxMath.roundDecimal(this.holdValue,this.curOption.decimals);
-									this.curOption.setValue(this.holdValue);
+									this.curOption.setValue(flixel_math_FlxMath.roundDecimal(this.holdValue,this.curOption.decimals));
 									break;
 								}
-								break;
-							case "string":
-								var num = this.curOption.curOption;
-								if(PlayerSettings.player1.controls._ui_leftP.check()) {
-									--num;
-								} else {
-									++num;
-								}
-								if(num < 0) {
-									num = this.curOption.options.length - 1;
-								} else if(num >= this.curOption.options.length) {
-									num = 0;
-								}
-								this.curOption.curOption = num;
-								this.curOption.setValue(this.curOption.options[num]);
-								break;
+								this.updateTextFrom(this.curOption);
+								this.curOption.change();
 							}
-							this.updateTextFrom(this.curOption);
-							this.curOption.change();
-							flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
-						} else if(this.curOption.get_type() != "string") {
-							this.holdValue += this.curOption.scrollSpeed * elapsed * (PlayerSettings.player1.controls._ui_left.check() ? -1 : 1);
-							if(this.holdValue < this.curOption.minValue) {
-								this.holdValue = this.curOption.minValue;
-							} else if(this.holdValue > this.curOption.maxValue) {
-								this.holdValue = this.curOption.maxValue;
+						}
+						if(this.curOption.get_type() != "string") {
+							this.holdTime += elapsed;
+						}
+					} else {
+						var tmp;
+						var _this = dge_input_Controls.instance;
+						var state = dge_input_InputState.JR;
+						if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+							var _this = dge_input_Controls.instance;
+							var state = dge_input_InputState.JR;
+							tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+						} else {
+							tmp = true;
+						}
+						if(tmp && !this.keyBroker) {
+							this.clearHold();
+						} else {
+							var _this = dge_input_Controls.instance;
+							var state = dge_input_InputState.JP;
+							if((dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) && canUseTyping && !this.keyBroker) {
+								this.openSubState(new dge_states_options_TypedValueSubState(this,this.curOption));
 							}
-							switch(this.curOption.get_type()) {
-							case "int":
-								this.curOption.setValue(Math.round(this.holdValue));
-								break;
-							case "float":case "percent":
-								this.curOption.setValue(flixel_math_FlxMath.roundDecimal(this.holdValue,this.curOption.decimals));
-								break;
-							}
-							this.updateTextFrom(this.curOption);
-							this.curOption.change();
 						}
 					}
-					if(this.curOption.get_type() != "string") {
-						this.holdTime += elapsed;
-					}
-				} else if((PlayerSettings.player1.controls._ui_leftR.check() || PlayerSettings.player1.controls._ui_rightR.check()) && !this.keyBroker) {
-					this.clearHold();
-				} else if(PlayerSettings.player1.controls._accept.check() && canUseTyping && !this.keyBroker) {
-					this.openSubState(new dge_states_options_TypedValueSubState(this,this.curOption));
 				}
-				if(PlayerSettings.player1.controls._reset.check() && !this.keyBroker) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JP;
+				if((dge_input_device_KeyboardControls.checkKey("reset",state) || dge_input_device_GamepadControls.checkButton("reset",state)) && !this.keyBroker) {
 					var _g = 0;
 					var _g1 = this.optionsArray.length;
 					while(_g < _g1) {
@@ -56761,6 +44011,420 @@ dge_states_options_EditorSubState.prototype = $extend(options_BaseOptionsMenu.pr
 		ClientPrefs.saveSettings();
 	}
 	,__class__: dge_states_options_EditorSubState
+});
+var dge_states_options_GamepadControlsSubState = function() {
+	this.isRebind = false;
+	this.bindingTime = 0;
+	this.leaving = false;
+	this.nextAccept = 5;
+	this.rebindingKey = false;
+	this.grpInputsAlt = [];
+	this.grpInputs = [];
+	this.optionShit = [["NOTES"],["4 KEY"],["Left","note_left"],["Down","note_down"],["Up","note_up"],["Right","note_right"],[""],["1 KEY"],["Center","note_1K_space"],[""],["2 KEY"],["Left","note_2K_left"],["Right","note_2K_right"],[""],["3 KEY"],["Left","note_3K_left"],["Center","note_3K_space"],["Right","note_3K_right"],[""],["5 KEY"],["Left","note_5K_left"],["Down","note_5K_down"],["Center","note_5K_space"],["Up","note_5K_up"],["Right","note_5K_right"],[""],["6 KEY"],["Left","note_6K_left"],["Down","note_6K_down"],["Right","note_6K_right"],["Left 2","note_6K_left2"],["Up","note_6K_up"],["Right 2","note_6K_right2"],[""],["7 KEY"],["Left","note_7K_left"],["Down","note_7K_down"],["Right","note_7K_right"],["Center","note_7K_space"],["Left 2","note_7K_left2"],["Up","note_7K_up"],["Right 2","note_7K_right2"],[""],["8 KEY"],["Left","note_8K_left"],["Down","note_8K_down"],["Up","note_8K_up"],["Right","note_8K_right"],["Left 2","note_8K_left2"],["Down 2","note_8K_down2"],["Up 2","note_8K_up2"],["Right 2","note_8K_right2"],[""],["9 KEY"],["Left","note_9K_left"],["Down","note_9K_down"],["Up","note_9K_up"],["Right","note_9K_right"],["Center","note_9K_space"],["Left 2","note_9K_left2"],["Down 2","note_9K_down2"],["Up 2","note_9K_up2"],["Right 2","note_9K_right2"],[""],["UI"],["Left","ui_left"],["Down","ui_down"],["Up","ui_up"],["Right","ui_right"],[""],["Reset","reset"],["Accept","accept"],["Back","back"],["Pause","pause"],[""],["DEBUG"],["Key 1","debug_1"],["Key 2","debug_2"]];
+	this.bindLength = 0;
+	MusicBeatSubstate.call(this);
+	var bg = new flixel_FlxSprite();
+	var returnAsset = Paths.returnGraphic("menuDesat",null);
+	var bg1 = bg.loadGraphic(returnAsset);
+	bg1.set_color(-1412611);
+	CoolUtil.fitBackground(bg1);
+	bg1.set_antialiasing(true);
+	this.add(bg1);
+	this.grpOptions = new flixel_group_FlxTypedGroup();
+	this.add(this.grpOptions);
+	this.optionShit.push([""]);
+	this.optionShit.push([dge_states_options_GamepadControlsSubState.defaultKey]);
+	var _g = 0;
+	var _g1 = this.optionShit.length;
+	while(_g < _g1) {
+		var i = _g++;
+		var isCentered = false;
+		var isDefaultKey = this.optionShit[i][0] == dge_states_options_GamepadControlsSubState.defaultKey;
+		if(this.unselectableCheck(i,true)) {
+			isCentered = true;
+		}
+		var optionText = new Alphabet(125 + (flixel_FlxG.width - 1280) / 2,300,this.optionShit[i][0],!isCentered || isDefaultKey);
+		optionText.isMenuItem = true;
+		if(isCentered) {
+			var axes = flixel_util_FlxAxes.X;
+			if(axes == null) {
+				axes = flixel_util_FlxAxes.XY;
+			}
+			var tmp;
+			switch(axes._hx_index) {
+			case 0:case 2:
+				tmp = true;
+				break;
+			default:
+				tmp = false;
+			}
+			if(tmp) {
+				optionText.set_x((flixel_FlxG.width - optionText.get_width()) / 2);
+			}
+			var tmp1;
+			switch(axes._hx_index) {
+			case 1:case 2:
+				tmp1 = true;
+				break;
+			default:
+				tmp1 = false;
+			}
+			if(tmp1) {
+				optionText.set_y((flixel_FlxG.height - optionText.get_height()) / 2);
+			}
+			optionText.set_y(optionText.y - 55);
+			var fh = optionText.startPosition;
+			fh.set_y(fh.y - 55);
+		}
+		optionText.changeX = false;
+		optionText.distancePerItem.set_y(60);
+		optionText.targetY = i - dge_states_options_GamepadControlsSubState.curSelected;
+		optionText.snapToPosition();
+		this.grpOptions.add(optionText);
+		if(!isCentered) {
+			this.addBindTexts(optionText,i);
+			this.bindLength++;
+			if(dge_states_options_GamepadControlsSubState.curSelected < 0) {
+				dge_states_options_GamepadControlsSubState.curSelected = i;
+			}
+		}
+	}
+	this.changeSelection();
+};
+$hxClasses["dge.states.options.GamepadControlsSubState"] = dge_states_options_GamepadControlsSubState;
+dge_states_options_GamepadControlsSubState.__name__ = "dge.states.options.GamepadControlsSubState";
+dge_states_options_GamepadControlsSubState.shortenButtonName = function(name) {
+	if(name == null || name == "" || name == "NONE") {
+		return "---";
+	}
+	var formatted = name.toUpperCase();
+	formatted = StringTools.replace(formatted,"LEFT_STICK_DIGITAL_","LS_");
+	formatted = StringTools.replace(formatted,"RIGHT_STICK_DIGITAL_","RS_");
+	formatted = StringTools.replace(formatted,"LEFT_SHOULDER","LB");
+	formatted = StringTools.replace(formatted,"RIGHT_SHOULDER","RB");
+	formatted = StringTools.replace(formatted,"LEFT_TRIGGER","LT");
+	formatted = StringTools.replace(formatted,"RIGHT_TRIGGER","RT");
+	formatted = StringTools.replace(formatted,"LEFT_STICK_CLICK","LS_CLK");
+	formatted = StringTools.replace(formatted,"RIGHT_STICK_CLICK","RS_CLK");
+	formatted = StringTools.replace(formatted,"DPAD_","DP-");
+	return formatted;
+};
+dge_states_options_GamepadControlsSubState.__super__ = MusicBeatSubstate;
+dge_states_options_GamepadControlsSubState.prototype = $extend(MusicBeatSubstate.prototype,{
+	bindLength: null
+	,optionShit: null
+	,grpOptions: null
+	,grpInputs: null
+	,grpInputsAlt: null
+	,rebindingKey: null
+	,nextAccept: null
+	,leaving: null
+	,bindingTime: null
+	,isRebind: null
+	,update: function(elapsed) {
+		if(!this.rebindingKey) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state)) {
+				this.changeSelection(-1);
+			}
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state)) {
+				this.changeSelection(1);
+			}
+			var tmp;
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JP;
+				tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+			} else {
+				tmp = true;
+			}
+			if(tmp) {
+				this.changeAlt();
+			}
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
+				dge_input_device_GamepadControls.saveButtonbind();
+				this.close();
+				flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
+			}
+			var gamepad = flixel_FlxG.gamepads.lastActive;
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if((dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) && this.nextAccept <= 0) {
+				if(this.optionShit[dge_states_options_GamepadControlsSubState.curSelected][0] == dge_states_options_GamepadControlsSubState.defaultKey) {
+					dge_input_device_GamepadControls.buttonBinds = haxe_ds_StringMap.createCopy(dge_input_device_GamepadControls.defaultButtons.h);
+					this.reloadKeys();
+					this.changeSelection();
+					flixel_FlxG.sound.play(Paths.sound("confirmMenu"));
+				} else if(!this.unselectableCheck(dge_states_options_GamepadControlsSubState.curSelected) && gamepad != null) {
+					this.isRebind = true;
+					this.bindingTime = 0;
+					this.rebindingKey = true;
+					if(dge_states_options_GamepadControlsSubState.curAlt) {
+						this.grpInputsAlt[this.getInputTextNum()].set_alpha(0);
+					} else {
+						this.grpInputs[this.getInputTextNum()].set_alpha(0);
+					}
+					flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
+				}
+			}
+		} else {
+			if(this.isRebind) {
+				MusicBeatSubstate.prototype.update.call(this,elapsed);
+				this.isRebind = false;
+				return;
+			}
+			var gamepad = flixel_FlxG.gamepads.lastActive;
+			if(gamepad != null) {
+				var buttonPressed = gamepad.mapping.getID(gamepad.firstJustPressedRawID());
+				if(buttonPressed >= -1 && gamepad.justPressed.get_ANY()) {
+					var buttonsArrayNew = dge_input_device_GamepadControls.buttonBinds.h[this.optionShit[dge_states_options_GamepadControlsSubState.curSelected][1]];
+					if(buttonsArrayNew == null) {
+						buttonsArrayNew = [-1,-1];
+					}
+					buttonsArrayNew[dge_states_options_GamepadControlsSubState.curAlt ? 1 : 0] = buttonPressed;
+					var opposite = dge_states_options_GamepadControlsSubState.curAlt ? 0 : 1;
+					if(buttonsArrayNew[opposite] == buttonsArrayNew[1 - opposite]) {
+						buttonsArrayNew[opposite] = -1;
+					}
+					dge_input_device_GamepadControls.buttonBinds.h[this.optionShit[dge_states_options_GamepadControlsSubState.curSelected][1]] = buttonsArrayNew;
+					dge_input_device_GamepadControls.saveButtonbind();
+					this.reloadKeys();
+					flixel_FlxG.sound.play(Paths.sound("confirmMenu"));
+					this.rebindingKey = false;
+				}
+			}
+			this.bindingTime += elapsed;
+			if(this.bindingTime > 5) {
+				if(dge_states_options_GamepadControlsSubState.curAlt) {
+					this.grpInputsAlt[dge_states_options_GamepadControlsSubState.curSelected].set_alpha(1);
+				} else {
+					this.grpInputs[dge_states_options_GamepadControlsSubState.curSelected].set_alpha(1);
+				}
+				flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
+				this.rebindingKey = false;
+				this.bindingTime = 0;
+			}
+		}
+		if(this.nextAccept > 0) {
+			this.nextAccept -= 1;
+		}
+		MusicBeatSubstate.prototype.update.call(this,elapsed);
+	}
+	,getInputTextNum: function() {
+		var num = 0;
+		var _g = 0;
+		var _g1 = dge_states_options_GamepadControlsSubState.curSelected;
+		while(_g < _g1) {
+			var i = _g++;
+			if(this.optionShit[i].length > 1) {
+				++num;
+			}
+		}
+		return num;
+	}
+	,changeSelection: function(change) {
+		if(change == null) {
+			change = 0;
+		}
+		while(true) {
+			dge_states_options_GamepadControlsSubState.curSelected += change;
+			if(dge_states_options_GamepadControlsSubState.curSelected < 0) {
+				dge_states_options_GamepadControlsSubState.curSelected = this.optionShit.length - 1;
+			}
+			if(dge_states_options_GamepadControlsSubState.curSelected >= this.optionShit.length) {
+				dge_states_options_GamepadControlsSubState.curSelected = 0;
+			}
+			if(!this.unselectableCheck(dge_states_options_GamepadControlsSubState.curSelected)) {
+				break;
+			}
+		}
+		var bullShit = 0;
+		var _g = 0;
+		var _g1 = this.grpInputs.length;
+		while(_g < _g1) {
+			var i = _g++;
+			this.grpInputs[i].set_alpha(0.6);
+		}
+		var _g = 0;
+		var _g1 = this.grpInputsAlt.length;
+		while(_g < _g1) {
+			var i = _g++;
+			this.grpInputsAlt[i].set_alpha(0.6);
+		}
+		var _g = 0;
+		var _g1 = this.grpOptions.members;
+		while(_g < _g1.length) {
+			var item = _g1[_g];
+			++_g;
+			item.targetY = bullShit - dge_states_options_GamepadControlsSubState.curSelected;
+			if(!this.unselectableCheck(bullShit++)) {
+				item.set_alpha(0.6);
+				if(item.targetY == 0) {
+					item.set_alpha(1);
+					if(dge_states_options_GamepadControlsSubState.curAlt) {
+						var _g2 = 0;
+						var _g3 = this.grpInputsAlt.length;
+						while(_g2 < _g3) {
+							var i = _g2++;
+							if(this.grpInputsAlt[i].sprTracker == item) {
+								this.grpInputsAlt[i].set_alpha(1);
+								break;
+							}
+						}
+					} else {
+						var _g4 = 0;
+						var _g5 = this.grpInputs.length;
+						while(_g4 < _g5) {
+							var i1 = _g4++;
+							if(this.grpInputs[i1].sprTracker == item) {
+								this.grpInputs[i1].set_alpha(1);
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+		flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
+	}
+	,changeAlt: function() {
+		dge_states_options_GamepadControlsSubState.curAlt = !dge_states_options_GamepadControlsSubState.curAlt;
+		var _g = 0;
+		var _g1 = this.grpInputs.length;
+		while(_g < _g1) {
+			var i = _g++;
+			if(this.grpInputs[i].sprTracker == this.grpOptions.members[dge_states_options_GamepadControlsSubState.curSelected]) {
+				this.grpInputs[i].set_alpha(0.6);
+				if(!dge_states_options_GamepadControlsSubState.curAlt) {
+					this.grpInputs[i].set_alpha(1);
+				}
+				break;
+			}
+		}
+		var _g = 0;
+		var _g1 = this.grpInputsAlt.length;
+		while(_g < _g1) {
+			var i = _g++;
+			if(this.grpInputsAlt[i].sprTracker == this.grpOptions.members[dge_states_options_GamepadControlsSubState.curSelected]) {
+				this.grpInputsAlt[i].set_alpha(0.6);
+				if(dge_states_options_GamepadControlsSubState.curAlt) {
+					this.grpInputsAlt[i].set_alpha(1);
+				}
+				break;
+			}
+		}
+		flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
+	}
+	,unselectableCheck: function(num,checkDefaultKey) {
+		if(checkDefaultKey == null) {
+			checkDefaultKey = false;
+		}
+		if(this.optionShit[num][0] == dge_states_options_GamepadControlsSubState.defaultKey) {
+			return checkDefaultKey;
+		}
+		if(this.optionShit[num].length < 2) {
+			return this.optionShit[num][0] != dge_states_options_GamepadControlsSubState.defaultKey;
+		} else {
+			return false;
+		}
+	}
+	,addBindTexts: function(optionText,num) {
+		var buttons = dge_input_device_GamepadControls.buttonBinds.h[this.optionShit[num][1]];
+		if(buttons == null) {
+			buttons = [-1,-1];
+		}
+		var text1 = new AttachedText(this.getButtonName(buttons[0]),400,-55);
+		text1.setPosition(optionText.x + 400,optionText.y - 55);
+		text1.sprTracker = optionText;
+		this.grpInputs.push(text1);
+		this.add(text1);
+		var text2 = new AttachedText(this.getButtonName(buttons[1]),800,-55);
+		text2.setPosition(optionText.x + 800,optionText.y - 55);
+		text2.sprTracker = optionText;
+		this.grpInputsAlt.push(text2);
+		this.add(text2);
+	}
+	,getButtonName: function(button) {
+		if(button == -1) {
+			return "NONE";
+		}
+		return dge_states_options_GamepadControlsSubState.shortenButtonName(flixel_input_gamepad_FlxGamepadInputID.toStringMap.h[button]);
+	}
+	,reloadKeys: function() {
+		while(this.grpInputs.length > 0) {
+			var item = this.grpInputs[0];
+			item.kill();
+			HxOverrides.remove(this.grpInputs,item);
+			item.destroy();
+		}
+		while(this.grpInputsAlt.length > 0) {
+			var item = this.grpInputsAlt[0];
+			item.kill();
+			HxOverrides.remove(this.grpInputsAlt,item);
+			item.destroy();
+		}
+		var _g = 0;
+		var _g1 = this.grpOptions.length;
+		while(_g < _g1) {
+			var i = _g++;
+			if(!this.unselectableCheck(i,true)) {
+				this.addBindTexts(this.grpOptions.members[i],i);
+			}
+		}
+		var bullShit = 0;
+		var _g = 0;
+		var _g1 = this.grpInputs.length;
+		while(_g < _g1) {
+			var i = _g++;
+			this.grpInputs[i].set_alpha(0.6);
+		}
+		var _g = 0;
+		var _g1 = this.grpInputsAlt.length;
+		while(_g < _g1) {
+			var i = _g++;
+			this.grpInputsAlt[i].set_alpha(0.6);
+		}
+		var _g = 0;
+		var _g1 = this.grpOptions.members;
+		while(_g < _g1.length) {
+			var item = _g1[_g];
+			++_g;
+			item.targetY = bullShit - dge_states_options_GamepadControlsSubState.curSelected;
+			if(!this.unselectableCheck(bullShit++)) {
+				item.set_alpha(0.6);
+				if(item.targetY == 0) {
+					item.set_alpha(1);
+					if(dge_states_options_GamepadControlsSubState.curAlt) {
+						var _g2 = 0;
+						var _g3 = this.grpInputsAlt.length;
+						while(_g2 < _g3) {
+							var i = _g2++;
+							if(this.grpInputsAlt[i].sprTracker == item) {
+								this.grpInputsAlt[i].set_alpha(1);
+							}
+						}
+					} else {
+						var _g4 = 0;
+						var _g5 = this.grpInputs.length;
+						while(_g4 < _g5) {
+							var i1 = _g4++;
+							if(this.grpInputs[i1].sprTracker == item) {
+								this.grpInputs[i1].set_alpha(1);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	,__class__: dge_states_options_GamepadControlsSubState
 });
 var dge_states_options_GameplaySubState = function() {
 	this.title = "DGE Gameplay Settings";
@@ -57017,7 +44681,9 @@ dge_states_options_TypedValueSubState.prototype = $extend(MusicBeatSubstate.prot
 					lime_app_Application.current.__window.alert("Text cannot be empty.","Warning");
 				}
 			}
-			if(PlayerSettings.player1.controls._reset.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("reset",state) || dge_input_device_GamepadControls.checkButton("reset",state)) {
 				if(this.textTyping != null) {
 					if(this.optionObject != null) {
 						if(this.optionObject.get_type() == "percent") {
@@ -57069,7 +44735,7 @@ var dge_states_options_VisualUISubState = function() {
 	option.scrollSpeed = 1.6;
 	option.changeValue = 0.1;
 	option.onChange = function() {
-		Note.swagWidth = 160 * ClientPrefs.strumsize;
+		Note.swagWidth = 112. * ClientPrefs.strumsize;
 	};
 	this.addOption(option);
 	var option = new options_Option("Dark Mode","Dark Mode.","darkmode","bool",false);
@@ -58642,7 +46308,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			this._song = PlayState.SONG;
 		} else {
 			CoolUtil.difficulties = CoolUtil.defaultDifficulties.slice();
-			this._song = { song : "Test", notes : [], events : [], bpm : 150.0, needsVoices : true, secOpt : false, arrowSkin : "", splashSkin : "noteSplashes", arrowSkinOpt : "", splashSkinOpt : "noteSplashes", arrowSkinSec : "", splashSkinSec : "noteSplashes", holdCoverSkin : "holdCover", holdCoverSkinOpt : "holdCover", holdCoverSkinSec : "holdCover", player1 : "bf", player2 : "dad", gfVersion : "gf", speed : 1, stage : "stage", validScore : false};
+			this._song = { song : "Test", notes : [], events : [], bpm : 150.0, needsVoices : true, secOpt : false, arrowSkin : "", splashSkin : "noteSplashes", arrowSkinOpt : "", splashSkinOpt : "noteSplashes", arrowSkinSec : "", splashSkinSec : "noteSplashes", holdCoverSkin : "holdCover", holdCoverSkinOpt : "holdCover", holdCoverSkinSec : "holdCover", player1 : "bf", player2 : "dad", gfVersion : "gf", speed : 1, stage : "stage", validScore : false, mania : 4};
 			this.addSection();
 			PlayState.SONG = this._song;
 		}
@@ -58706,7 +46372,8 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.bpmTxt.set_y(flixel_FlxG.height - (this.bpmTxt.get_height() + 10));
 		this.bpmTxt.scrollFactor.set();
 		this.add(this.bpmTxt);
-		this.strumLine = new flixel_FlxSprite(0,50).makeGraphic(editors_ChartingState.GRID_SIZE * 13 | 0,4);
+		var mc = dge_backend_EKUtil.getCurrentMania();
+		this.strumLine = new flixel_FlxSprite(0,50).makeGraphic(editors_ChartingState.GRID_SIZE * (mc * 3 + 1) | 0,4);
 		this.add(this.strumLine);
 		this.quant = new AttachedSprite("chart_quant","chart_quant");
 		this.quant.animation.addByPrefix("q","chart_quant",0,false);
@@ -58716,10 +46383,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.quant.yAdd = 8;
 		this.add(this.quant);
 		this.strumLineNotes = new flixel_group_FlxTypedGroup();
+		var mc = dge_backend_EKUtil.getCurrentMania();
 		var _g = 0;
-		while(_g < 12) {
+		var _g1 = mc * 3;
+		while(_g < _g1) {
 			var i = _g++;
-			var note = new StrumNote(editors_ChartingState.GRID_SIZE * (i + 1),this.strumLine.y,i % 4,i < 4 ? 1 : 0,i > 7);
+			var note = new StrumNote(editors_ChartingState.GRID_SIZE * (i + 1),this.strumLine.y,i % mc,i < mc ? 1 : 0,i >= mc * 2);
 			note.setGraphicSize(editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE);
 			note.updateHitbox();
 			note.playAnim("static",true);
@@ -58778,18 +46447,20 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.eventIcon.offset.set(0,0);
 		this.arrowIcon.offset.set(0,0);
 		this.arrowIconGF.offset.set(0,0);
-		this.leftIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 2);
-		this.rightIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 6);
-		this.gfIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 10);
+		var mc = dge_backend_EKUtil.getCurrentMania();
+		var count = mc / 4;
+		this.leftIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * (2 * count));
+		this.rightIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * (6 * count));
+		this.gfIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * (10 * count));
 		this.leftIcon.set_y(this.eventIcon.y);
 		this.rightIcon.set_y(this.eventIcon.y);
 		this.gfIcon.set_y(this.eventIcon.y);
 		this.arrowIcon.set_y(this.eventIcon.y);
-		this.arrowIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 2);
+		this.arrowIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * (2 * count));
 		var fh = this.arrowIcon;
 		fh.set_x(fh.x + editors_ChartingState.GRID_SIZE);
 		this.arrowIconGF.set_y(this.eventIcon.y);
-		this.arrowIconGF.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 10);
+		this.arrowIconGF.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * (10 * count));
 		var fh = this.arrowIconGF;
 		fh.set_x(fh.x + editors_ChartingState.GRID_SIZE);
 		this.arrowIconGF.set_visible(false);
@@ -58982,6 +46653,10 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		stepperSpeed.set_value(this._song.speed);
 		stepperSpeed.name = "song_speed";
 		this.blockPressWhileTypingOnStepper.push(stepperSpeed);
+		var stepperMania = new flixel_addons_ui_FlxUINumericStepper(stepperSpeed.x + 75,stepperSpeed.y,1,4,1,9);
+		stepperMania.set_value(this._song.mania);
+		stepperMania.name = "song_mania";
+		this.blockPressWhileTypingOnStepper.push(stepperMania);
 		var file = "characters/";
 		if(file == null) {
 			file = "";
@@ -59114,6 +46789,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		tab_group_song.add(loadEventJson);
 		tab_group_song.add(stepperBPM);
 		tab_group_song.add(stepperSpeed);
+		tab_group_song.add(stepperMania);
 		tab_group_song.add(reloadNotesButton);
 		tab_group_song.add(this.noteSkinInputText);
 		tab_group_song.add(this.noteSplashesInputText);
@@ -59127,6 +46803,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		tab_group_song.add(new flixel_text_FlxText(stepperBPM.x,stepperBPM.y - 15,0,"Song BPM:"));
 		tab_group_song.add(new flixel_text_FlxText(stepperBPM.x + 100,stepperBPM.y - 15,0,"Song Offset:"));
 		tab_group_song.add(new flixel_text_FlxText(stepperSpeed.x,stepperSpeed.y - 15,0,"Song Speed:"));
+		tab_group_song.add(new flixel_text_FlxText(stepperMania.x,stepperMania.y - 15,0,"Mania:"));
 		tab_group_song.add(new flixel_text_FlxText(player2DropDown.x,player2DropDown.y - 15,0,"Opponent:"));
 		tab_group_song.add(new flixel_text_FlxText(gfVersionDropDown.x,gfVersionDropDown.y - 15,0,"Girlfriend:"));
 		tab_group_song.add(new flixel_text_FlxText(player1DropDown.x,player1DropDown.y - 15,0,"Boyfriend:"));
@@ -59280,30 +46957,21 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			_gthis.updateGrid();
 		});
 		var mirrorButton = new flixel_ui_FlxButton(duetButton.x + 100,duetButton.y,"Mirror Notes",function() {
-			var duetNotes = [];
 			var _g = 0;
 			var _g1 = _gthis._song.notes[editors_ChartingState.curSec].sectionNotes;
 			while(_g < _g1.length) {
 				var note = _g1[_g];
 				++_g;
-				var boob = note[1] % 4;
+				var mc = dge_backend_EKUtil.getCurrentMania();
+				var boob = note[1] % mc;
 				boob = 3 - boob;
-				if(note[1] > 3) {
-					boob += 4;
+				if(note[1] >= mc) {
+					boob += mc;
 				}
-				if(note[1] > 7) {
-					boob += 4;
+				if(note[1] >= mc * 2) {
+					boob += mc;
 				}
 				note[1] = boob;
-				var copiedNote_0 = note[0];
-				var copiedNote_1 = boob;
-				var copiedNote_2 = note[2];
-				var copiedNote_3 = note[3];
-			}
-			var _g = 0;
-			while(_g < duetNotes.length) {
-				var i = duetNotes[_g];
-				++_g;
 			}
 			_gthis.updateGrid();
 		});
@@ -59744,6 +47412,29 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 				this.tempBpm = nums.value;
 				Conductor.mapBPMChanges(this._song);
 				Conductor.changeBPM(nums.value);
+			} else if(wname == "song_mania") {
+				this._song.mania = nums.value | 0;
+				var mc = dge_backend_EKUtil.getCurrentMania();
+				var _g = 0;
+				var _g1 = this._song.notes;
+				while(_g < _g1.length) {
+					var section = _g1[_g];
+					++_g;
+					var _g2 = 0;
+					var _g3 = section.sectionNotes;
+					while(_g2 < _g3.length) {
+						var notes = _g3[_g2];
+						++_g2;
+						notes[1] %= mc * 3;
+					}
+				}
+				this.reloadGridLayer();
+				this.updateHeads();
+				this.reloadStrums();
+				if(this.strumLine != null) {
+					this.strumLine.setGraphicSize(editors_ChartingState.GRID_SIZE * (mc * 3 + 1) | 0,4);
+					this.strumLine.updateHitbox();
+				}
 			} else if(wname == "note_susLength") {
 				if(this.curSelectedNote != null && this.curSelectedNote[2] != null) {
 					this.curSelectedNote[2] = nums.value;
@@ -59837,18 +47528,13 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		Conductor.songPosition = flixel_FlxG.sound.music._time;
 		this._song.song = this.UI_songTitle.text;
 		this.strumLineUpdateY();
-		this.strumLineNotes.members[0].set_y(this.strumLine.y);
-		this.strumLineNotes.members[1].set_y(this.strumLine.y);
-		this.strumLineNotes.members[2].set_y(this.strumLine.y);
-		this.strumLineNotes.members[3].set_y(this.strumLine.y);
-		this.strumLineNotes.members[4].set_y(this.strumLine.y);
-		this.strumLineNotes.members[5].set_y(this.strumLine.y);
-		this.strumLineNotes.members[6].set_y(this.strumLine.y);
-		this.strumLineNotes.members[7].set_y(this.strumLine.y);
-		this.strumLineNotes.members[8].set_y(this.strumLine.y);
-		this.strumLineNotes.members[9].set_y(this.strumLine.y);
-		this.strumLineNotes.members[10].set_y(this.strumLine.y);
-		this.strumLineNotes.members[11].set_y(this.strumLine.y);
+		var mc = dge_backend_EKUtil.getCurrentMania();
+		var _g = 0;
+		var _g1 = mc * 3;
+		while(_g < _g1) {
+			var i = _g++;
+			this.strumLineNotes.members[i].set_y(this.strumLine.y);
+		}
 		flixel_FlxG.mouse.set_visible(true);
 		this.camPos.set_y(this.strumLine.y);
 		if(!this.disableAutoScrolling.checked) {
@@ -60091,12 +47777,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 					var increase = 1 / snap;
 					if(flixel_FlxG.mouse.wheel > 0) {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 50, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap - increase;
 						flixel_FlxG.sound.music.set_time(Conductor.beatToSeconds(fuck));
 					} else {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 50, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap + increase;
 						flixel_FlxG.sound.music.set_time(Conductor.beatToSeconds(fuck));
 					}
@@ -60159,12 +47845,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 					var _this = flixel_FlxG.keys.pressed;
 					if(_this.keyManager.checkStatusUnsafe(38,_this.status)) {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 50, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap - increase;
 						flixel_FlxG.sound.music.set_time(Conductor.beatToSeconds(fuck));
 					} else {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 50, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap + increase;
 						flixel_FlxG.sound.music.set_time(Conductor.beatToSeconds(fuck));
 					}
@@ -60241,12 +47927,12 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 					var _this = flixel_FlxG.keys.pressed;
 					if(_this.keyManager.checkStatusUnsafe(38,_this.status)) {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 50, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap - increase;
 						feces = Conductor.beatToSeconds(fuck);
 					} else {
 						var m = Math.round(beat * snap);
-						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 48, className : "CoolUtil", methodName : "quantize"});
+						haxe_Log.trace(snap,{ fileName : "source/CoolUtil.hx", lineNumber : 50, className : "CoolUtil", methodName : "quantize"});
 						var fuck = m / snap + increase;
 						feces = Conductor.beatToSeconds(fuck);
 					}
@@ -60338,8 +48024,10 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		Conductor.songPosition = flixel_FlxG.sound.music._time;
 		this.strumLineUpdateY();
 		this.camPos.set_y(this.strumLine.y);
+		var mc = dge_backend_EKUtil.getCurrentMania();
 		var _g = 0;
-		while(_g < 12) {
+		var _g1 = mc * 3;
+		while(_g < _g1) {
 			var i = _g++;
 			this.strumLineNotes.members[i].set_y(this.strumLine.y);
 			this.strumLineNotes.members[i].set_alpha(flixel_FlxG.sound.music._channel != null ? 1 : 0.35);
@@ -60440,10 +48128,11 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 						var noteDataToCheck = actualNoteData;
 						if(!note.ignoreNote && !note.canFreeze) {
 							if(!note.noAnimation) {
+								var getAnim = dge_backend_EKUtil.getAnimArray();
 								if(!note.mustPress) {
-									_gthis.optChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
+									_gthis.optChar.animation.play(getAnim[note.noteData],true);
 								} else {
-									_gthis.plyChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
+									_gthis.plyChar.animation.play(getAnim[note.noteData],true);
 								}
 							}
 							if(note.playStrumAnim && !note.fakeNoHit) {
@@ -60531,10 +48220,11 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 						var noteDataToCheck = actualNoteData;
 						if(!note.ignoreNote && !note.canFreeze) {
 							if(!note.noAnimation) {
+								var getAnim = dge_backend_EKUtil.getAnimArray();
 								if(!note.mustPress) {
-									_gthis.optChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
+									_gthis.optChar.animation.play(getAnim[note.noteData],true);
 								} else {
-									_gthis.plyChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
+									_gthis.plyChar.animation.play(getAnim[note.noteData],true);
 								}
 							}
 							if(note.playStrumAnim && !note.fakeNoHit) {
@@ -60623,10 +48313,11 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 					var noteDataToCheck = actualNoteData;
 					if(!note.ignoreNote && !note.canFreeze) {
 						if(!note.noAnimation) {
+							var getAnim = dge_backend_EKUtil.getAnimArray();
 							if(!note.mustPress) {
-								_gthis.optChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
+								_gthis.optChar.animation.play(getAnim[note.noteData],true);
 							} else {
-								_gthis.plyChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
+								_gthis.plyChar.animation.play(getAnim[note.noteData],true);
 							}
 						}
 						if(note.playStrumAnim && !note.fakeNoHit) {
@@ -60714,10 +48405,11 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 					var noteDataToCheck = actualNoteData;
 					if(!note.ignoreNote && !note.canFreeze) {
 						if(!note.noAnimation) {
+							var getAnim = dge_backend_EKUtil.getAnimArray();
 							if(!note.mustPress) {
-								_gthis.optChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
+								_gthis.optChar.animation.play(getAnim[note.noteData],true);
 							} else {
-								_gthis.plyChar.animation.play("sing" + _gthis.animAssets[note.noteData].toUpperCase(),true);
+								_gthis.plyChar.animation.play(getAnim[note.noteData],true);
 							}
 						}
 						if(note.playStrumAnim && !note.fakeNoHit) {
@@ -60772,8 +48464,8 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 	,lastSecBeatsNext: null
 	,reloadGridLayer: function() {
 		this.gridLayer.clear();
-		this.gridBG = flixel_addons_display_FlxGridOverlay.create(editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE * 13,editors_ChartingState.GRID_SIZE * this.getSectionBeats() * 4 * this.zoomList[this.curZoom] | 0,true,ClientPrefs.darkmode ? -16777216 : -1,ClientPrefs.darkmode ? -14671840 : -3355444);
-		this.prevGridBG = flixel_addons_display_FlxGridOverlay.create(editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE * 13,editors_ChartingState.GRID_SIZE * this.getSectionBeats(editors_ChartingState.curSec - 1) * 4 * this.zoomList[this.curZoom] | 0,true,ClientPrefs.darkmode ? -16777216 : -1,ClientPrefs.darkmode ? -14671840 : -3355444);
+		this.gridBG = flixel_addons_display_FlxGridOverlay.create(editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE * (dge_backend_EKUtil.getCurrentMania() * 3 + 1),editors_ChartingState.GRID_SIZE * this.getSectionBeats() * 4 * this.zoomList[this.curZoom] | 0,true,ClientPrefs.darkmode ? -16777216 : -1,ClientPrefs.darkmode ? -14671840 : -3355444);
+		this.prevGridBG = flixel_addons_display_FlxGridOverlay.create(editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE * (dge_backend_EKUtil.getCurrentMania() * 3 + 1),editors_ChartingState.GRID_SIZE * this.getSectionBeats(editors_ChartingState.curSec - 1) * 4 * this.zoomList[this.curZoom] | 0,true,ClientPrefs.darkmode ? -16777216 : -1,ClientPrefs.darkmode ? -14671840 : -3355444);
 		this.prevGridBG.set_y(-this.prevGridBG.get_height());
 		this.prevGridBG.set_alpha(0.4);
 		if(flixel_FlxG.save.data.chart_waveformInst || flixel_FlxG.save.data.chart_waveformVoices) {
@@ -60782,7 +48474,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		var leHeight = this.gridBG.get_height() | 0;
 		var foundNextSec = false;
 		if(this.sectionStartTime(1) <= flixel_FlxG.sound.music._length) {
-			this.nextGridBG = flixel_addons_display_FlxGridOverlay.create(editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE * 13,editors_ChartingState.GRID_SIZE * this.getSectionBeats(editors_ChartingState.curSec + 1) * 4 * this.zoomList[this.curZoom] | 0,true,ClientPrefs.darkmode ? -16777216 : -1579290,ClientPrefs.darkmode ? -14671840 : -2501163);
+			this.nextGridBG = flixel_addons_display_FlxGridOverlay.create(editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE * (dge_backend_EKUtil.getCurrentMania() * 3 + 1),editors_ChartingState.GRID_SIZE * this.getSectionBeats(editors_ChartingState.curSec + 1) * 4 * this.zoomList[this.curZoom] | 0,true,ClientPrefs.darkmode ? -16777216 : -1579290,ClientPrefs.darkmode ? -14671840 : -2501163);
 			leHeight = this.gridBG.get_height() + this.nextGridBG.get_height() | 0;
 			foundNextSec = true;
 		} else {
@@ -60793,7 +48485,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		this.gridLayer.add(this.nextGridBG);
 		this.gridLayer.add(this.gridBG);
 		if(foundNextSec) {
-			var gridBlack = new flixel_FlxSprite(0,this.gridBG.get_height()).makeGraphic(editors_ChartingState.GRID_SIZE * 13 | 0,this.nextGridBG.get_height() | 0,-16777216);
+			var gridBlack = new flixel_FlxSprite(0,this.gridBG.get_height()).makeGraphic(editors_ChartingState.GRID_SIZE * (dge_backend_EKUtil.getCurrentMania() * 3 + 1) | 0,this.nextGridBG.get_height() | 0,-16777216);
 			gridBlack.set_alpha(0.4);
 			this.gridLayer.add(gridBlack);
 		}
@@ -60997,14 +48689,19 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		if(healthIconP3 == null || healthIconP3.length < 1) {
 			healthIconP3 = "gf";
 		}
+		var mc = dge_backend_EKUtil.getCurrentMania();
+		var count = mc / 4;
 		this.leftIcon.changeIcon(healthIconP1);
 		this.rightIcon.changeIcon(healthIconP2);
 		this.gfIcon.changeIcon(healthIconP3);
 		this.arrowIconGF.set_visible(this._song.notes[editors_ChartingState.curSec].gfSection);
+		this.leftIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * (2 * count));
+		this.rightIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * (6 * count));
+		this.gfIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * (10 * count));
 		if(this._song.notes[editors_ChartingState.curSec].mustHitSection) {
-			this.arrowIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 2);
+			this.arrowIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * (2 * count));
 		} else {
-			this.arrowIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * 6);
+			this.arrowIcon.set_x(this.eventIcon.x + editors_ChartingState.GRID_SIZE * (6 * count));
 		}
 		var fh = this.arrowIcon;
 		fh.set_x(fh.x + editors_ChartingState.GRID_SIZE);
@@ -61253,26 +48950,27 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		} else if(isNextSection) {
 			++curSecDec;
 		}
-		if(daNoteInfo > -1 && daNoteInfo < 12) {
+		var mc = dge_backend_EKUtil.getCurrentMania();
+		if(daNoteInfo > -1 && daNoteInfo < mc * 3) {
 			if(!this._song.notes[curSecDec].mustHitSection) {
 				if(!this._song.notes[curSecDec].gfSection) {
-					if(daNoteInfo > 3 && daNoteInfo < 8) {
-						daNoteInfo -= 4;
-					} else if(daNoteInfo > -1 && daNoteInfo < 4) {
-						daNoteInfo += 4;
+					if(daNoteInfo >= mc && daNoteInfo < mc * 2) {
+						daNoteInfo -= mc;
+					} else if(daNoteInfo > -1 && daNoteInfo < mc) {
+						daNoteInfo += mc;
 					}
-				} else if(daNoteInfo > -1 && daNoteInfo < 4) {
-					daNoteInfo += 8;
-				} else if(daNoteInfo > 7 && daNoteInfo < 12) {
-					daNoteInfo -= 4;
-				} else if(daNoteInfo > 3 && daNoteInfo < 8) {
-					daNoteInfo -= 4;
+				} else if(daNoteInfo > -1 && daNoteInfo < mc) {
+					daNoteInfo += mc * 2;
+				} else if(daNoteInfo >= mc * 2 && daNoteInfo < mc * 3) {
+					daNoteInfo -= mc;
+				} else if(daNoteInfo > 3 && daNoteInfo < mc * 2) {
+					daNoteInfo -= mc;
 				}
 			} else if(this._song.notes[curSecDec].gfSection) {
-				if(daNoteInfo > -1 && daNoteInfo < 4) {
-					daNoteInfo += 8;
-				} else if(daNoteInfo > 7 && daNoteInfo < 12) {
-					daNoteInfo -= 8;
+				if(daNoteInfo > -1 && daNoteInfo < mc) {
+					daNoteInfo += mc * 2;
+				} else if(daNoteInfo >= mc * 2 && daNoteInfo < mc * 3) {
+					daNoteInfo -= mc * 2;
 				}
 			}
 		}
@@ -61282,9 +48980,9 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			rawNoteType = "";
 		}
 		var noteType = rawNoteType;
-		var gfType = daNoteInfo > 7 && daNoteInfo < 12;
-		var playerType = daNoteInfo > -1 && daNoteInfo < 4;
-		if(daNoteInfo > 7 && daNoteInfo < 12) {
+		var gfType = daNoteInfo >= mc * 2 && daNoteInfo < mc * 3;
+		var playerType = daNoteInfo > -1 && daNoteInfo < mc;
+		if(daNoteInfo >= mc * 2 && daNoteInfo < mc * 3) {
 			playerType = mustHitSec;
 		}
 		if(noteType != null) {
@@ -61297,7 +48995,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 				gfType = true;
 			}
 		}
-		var note = new Note(daStrumTime,daNoteInfo % 4,null,null,true,playerType,gfType,noteType);
+		var note = new Note(daStrumTime,daNoteInfo % mc,null,null,true,playerType,gfType,noteType);
 		if(daSus != null) {
 			note.sustainLength = daSus;
 		} else {
@@ -61438,7 +49136,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			}
 		}
 		var noteDataToCheck = actualNoteData;
-		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3656, className : "editors.ChartingState", methodName : "deleteNote"});
+		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3688, className : "editors.ChartingState", methodName : "deleteNote"});
 		if(note.noteData > -1) {
 			var _g = 0;
 			var _g1 = this._song.notes[editors_ChartingState.curSec].sectionNotes;
@@ -61535,7 +49233,7 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 				}
 			}
 		}
-		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3761, className : "editors.ChartingState", methodName : "addNote"});
+		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3793, className : "editors.ChartingState", methodName : "addNote"});
 		if(type != null) {
 			daType = type;
 		}
@@ -61826,6 +49524,25 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			}
 			_gthis.updateGrid();
 		},null,this.ignoreWarnings));
+	}
+	,reloadStrums: function() {
+		while(this.strumLineNotes.length > 0) {
+			var item = this.strumLineNotes.members[0];
+			this.strumLineNotes.remove(item,true);
+			item.destroy();
+		}
+		var mc = dge_backend_EKUtil.getCurrentMania();
+		var _g = 0;
+		var _g1 = mc * 3;
+		while(_g < _g1) {
+			var i = _g++;
+			var note = new StrumNote(editors_ChartingState.GRID_SIZE * (i + 1),this.strumLine.y,i % mc,i < mc ? 1 : 0,i >= mc * 2);
+			note.setGraphicSize(editors_ChartingState.GRID_SIZE,editors_ChartingState.GRID_SIZE);
+			note.updateHitbox();
+			note.playAnim("static",true);
+			this.strumLineNotes.add(note);
+			note.scrollFactor.set(1,1);
+		}
 	}
 	,__class__: editors_ChartingState
 });
@@ -63435,6 +51152,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 	,timerToStart: null
 	,noteTypeMap: null
 	,keysArray: null
+	,bindArray: null
 	,create: function() {
 		dge_backend_CacheTools.clearCache();
 		Paths.clearStoredMemory();
@@ -63447,7 +51165,8 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 		CoolUtil.fitBackground(bg1);
 		this.add(bg1);
 		this.gamemode = Object.prototype.hasOwnProperty.call(ClientPrefs.gameplaySettings.h,"gamemode") ? ClientPrefs.gameplaySettings.h["gamemode"] : "none";
-		this.keysArray = [ClientPrefs.copyKey(ClientPrefs.keyBinds.h["note_left"]),ClientPrefs.copyKey(ClientPrefs.keyBinds.h["note_down"]),ClientPrefs.copyKey(ClientPrefs.keyBinds.h["note_up"]),ClientPrefs.copyKey(ClientPrefs.keyBinds.h["note_right"])];
+		this.keysArray = dge_backend_EKUtil.getKeybind();
+		this.bindArray = dge_backend_EKUtil.getButtonbind();
 		this.strumLine = new flixel_FlxSprite(ClientPrefs.middleScroll ? PlayState.STRUM_X_MIDDLESCROLL : PlayState.STRUM_X,50).makeGraphic(flixel_FlxG.width,10);
 		if(ClientPrefs.downScroll) {
 			this.strumLine.set_y(flixel_FlxG.height - 150);
@@ -63578,6 +51297,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 		var noteData = songData.notes;
 		var playerCounter = 0;
 		var daBeats = 0;
+		var maniaCount = dge_backend_EKUtil.getCurrentMania();
 		var _g = 0;
 		while(_g < noteData.length) {
 			var section = noteData[_g];
@@ -63590,9 +51310,9 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 				if(songNotes[1] > -1) {
 					var daStrumTime = songNotes[0];
 					if(daStrumTime >= this.startPos) {
-						var daNoteData = songNotes[1] % 4 | 0;
+						var daNoteData = songNotes[1] % maniaCount | 0;
 						var gottaHitNote = section.mustHitSection;
-						if(songNotes[1] > 3 && songNotes[1] < 8) {
+						if(songNotes[1] >= maniaCount && songNotes[1] < maniaCount * 2) {
 							gottaHitNote = !section.mustHitSection;
 						}
 						var oldNote;
@@ -63926,7 +51646,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 	,customKeyPress: function(key,checkKey) {
 		if(key > -1 && checkKey || ClientPrefs.controllerMode) {
 			if(this.generatedMusic) {
-				var spr = this.playerStrums.members[key];
+				var spr = this.playerStrums.members[key % this.playerStrums.length];
 				if(spr != null) {
 					spr.playAnim("pressed");
 					spr.resetAnim = 0;
@@ -63998,7 +51718,7 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,customKeyRelease: function(key) {
 		if(key > -1) {
-			var spr = this.playerStrums.members[key];
+			var spr = this.playerStrums.members[key % this.playerStrums.length];
 			if(spr != null) {
 				spr.playAnim("static");
 				spr.resetAnim = 0;
@@ -64023,43 +51743,146 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 		}
 		return -1;
 	}
+	,parseKeys: function(suffix) {
+		if(suffix == null) {
+			suffix = "";
+		}
+		var ret = [];
+		if(!ClientPrefs.controllerMode) {
+			var _g = 0;
+			var _g1 = this.keysArray.length;
+			while(_g < _g1) {
+				var i = _g++;
+				var _g2 = 0;
+				var _g3 = this.keysArray[i].length;
+				while(_g2 < _g3) {
+					var j = _g2++;
+					if(!ret[i]) {
+						ret[i] = flixel_FlxG.keys.checkStatus(this.keysArray[i][j],suffix != "_P" ? suffix == "_R" ? -1 : 1 : 2);
+					}
+				}
+			}
+		} else {
+			var gamepad = flixel_FlxG.gamepads.lastActive;
+			if(gamepad != null) {
+				var _g = 0;
+				var _g1 = this.bindArray.length;
+				while(_g < _g1) {
+					var i = _g++;
+					var _g2 = 0;
+					var _g3 = this.bindArray[i].length;
+					while(_g2 < _g3) {
+						var j = _g2++;
+						if(!ret[i]) {
+							var ID = this.bindArray[i][j];
+							var Status = suffix != "_P" ? suffix == "_R" ? -1 : 1 : 2;
+							var tmp;
+							switch(ID) {
+							case -2:
+								tmp = gamepad.anyButton(Status);
+								break;
+							case -1:
+								tmp = !gamepad.anyButton(Status);
+								break;
+							default:
+								var RawID = gamepad.mapping.getRawID(ID);
+								var button = gamepad.buttons[RawID];
+								tmp = button != null && button.hasState(Status);
+							}
+							ret[i] = tmp;
+						}
+					}
+				}
+			}
+		}
+		return ret;
+	}
 	,keyShit: function() {
 		var _gthis = this;
-		var up = PlayerSettings.player1.controls._note_up.check();
-		var right = PlayerSettings.player1.controls._note_right.check();
-		var down = PlayerSettings.player1.controls._note_down.check();
-		var left = PlayerSettings.player1.controls._note_left.check();
-		var controlHoldArray = [left,down,up,right];
-		if(ClientPrefs.controllerMode) {
-			var controlArray = [PlayerSettings.player1.controls._note_leftP.check(),PlayerSettings.player1.controls._note_downP.check(),PlayerSettings.player1.controls._note_upP.check(),PlayerSettings.player1.controls._note_rightP.check()];
+		var parseHoldArray = this.parseKeys();
+		var gamepad = flixel_FlxG.gamepads.lastActive;
+		if(ClientPrefs.controllerMode && gamepad != null) {
+			var controlArray = [];
+			var _g = 0;
+			var _g1 = this.bindArray.length;
+			while(_g < _g1) {
+				var i = _g++;
+				var _g2 = 0;
+				var _g3 = this.bindArray[i].length;
+				while(_g2 < _g3) {
+					var j = _g2++;
+					if(!controlArray[i]) {
+						var ID = this.bindArray[i][j];
+						var Status = 2;
+						var tmp;
+						switch(ID) {
+						case -2:
+							tmp = gamepad.anyButton(Status);
+							break;
+						case -1:
+							tmp = !gamepad.anyButton(Status);
+							break;
+						default:
+							var RawID = gamepad.mapping.getRawID(ID);
+							var button = gamepad.buttons[RawID];
+							tmp = button != null && button.hasState(Status);
+						}
+						controlArray[i] = tmp;
+					}
+				}
+			}
 			if(controlArray.indexOf(true) != -1) {
 				var _g = 0;
 				var _g1 = controlArray.length;
 				while(_g < _g1) {
 					var i = _g++;
-					if(controlArray[i]) {
-						this.onKeyPress(new openfl_events_KeyboardEvent("keyDown",true,true,-1,this.keysArray[i][0]));
-					}
+					this.customKeyPress(i,controlArray[i]);
 				}
 			}
 		}
 		if(this.generatedMusic) {
 			this.notes.forEachAlive(function(daNote) {
-				if(daNote.isSustainNote && controlHoldArray[daNote.noteData] && daNote.canBeHit && daNote.mustPress && !daNote.tooLate && !daNote.wasGoodHit) {
+				if(daNote.isSustainNote && parseHoldArray[daNote.noteData] && daNote.canBeHit && daNote.mustPress && !daNote.tooLate && !daNote.wasGoodHit) {
 					_gthis.goodNoteHit(daNote);
 				}
 			});
 		}
-		if(ClientPrefs.controllerMode) {
-			var controlArray = [PlayerSettings.player1.controls._note_leftR.check(),PlayerSettings.player1.controls._note_downR.check(),PlayerSettings.player1.controls._note_upR.check(),PlayerSettings.player1.controls._note_rightR.check()];
+		if(ClientPrefs.controllerMode && gamepad != null) {
+			var controlArray = [];
+			var _g = 0;
+			var _g1 = this.bindArray.length;
+			while(_g < _g1) {
+				var i = _g++;
+				var _g2 = 0;
+				var _g3 = this.bindArray[i].length;
+				while(_g2 < _g3) {
+					var j = _g2++;
+					if(!controlArray[i]) {
+						var ID = this.bindArray[i][j];
+						var Status = -1;
+						var tmp;
+						switch(ID) {
+						case -2:
+							tmp = gamepad.anyButton(Status);
+							break;
+						case -1:
+							tmp = !gamepad.anyButton(Status);
+							break;
+						default:
+							var RawID = gamepad.mapping.getRawID(ID);
+							var button = gamepad.buttons[RawID];
+							tmp = button != null && button.hasState(Status);
+						}
+						controlArray[i] = tmp;
+					}
+				}
+			}
 			if(controlArray.indexOf(true) != -1) {
 				var _g = 0;
 				var _g1 = controlArray.length;
 				while(_g < _g1) {
 					var i = _g++;
-					if(controlArray[i]) {
-						this.onKeyRelease(new openfl_events_KeyboardEvent("keyUp",true,true,-1,this.keysArray[i][0]));
-					}
+					this.customKeyRelease(i);
 				}
 			}
 		}
@@ -64288,17 +52111,21 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 		if(t == null) {
 			t = true;
 		}
+		var maniaCount = dge_backend_EKUtil.getCurrentMania();
+		var maniaScale = dge_backend_EKUtil.getNoteScale(maniaCount);
+		var swagWidth = Note.swagWidth * maniaScale;
 		if(player == 0) {
 			var _g = 0;
-			while(_g < 4) {
+			var _g1 = maniaCount;
+			while(_g < _g1) {
 				var i = _g++;
-				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * 0.5 : flixel_FlxG.width * 0.25) - Note.swagWidth * 2 + Note.swagWidth * i,this.strumLine.y,i,0);
+				var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * 0.5 : flixel_FlxG.width * 0.25) - swagWidth * (maniaCount / 2) + swagWidth * i,this.strumLine.y,i,0);
 				babyArrow.downScroll = ClientPrefs.downScroll;
 				if(PlayState.SONG.secOpt) {
 					babyArrow.set_y(babyArrow.y - Note.swagWidth / 2);
 				}
 				if(ClientPrefs.middleScroll) {
-					if(i > 1) {
+					if(i >= maniaCount / 2) {
 						babyArrow.set_x(babyArrow.x + flixel_FlxG.width / 4);
 					} else {
 						babyArrow.set_x(babyArrow.x - flixel_FlxG.width / 4);
@@ -64310,13 +52137,14 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 			}
 			if(PlayState.SONG.secOpt) {
 				var _g = 0;
-				while(_g < 4) {
+				var _g1 = maniaCount;
+				while(_g < _g1) {
 					var i = _g++;
-					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * 0.5 : flixel_FlxG.width * 0.25) - Note.swagWidth * 2 + Note.swagWidth * i,this.strumLine.y,i,0,true);
+					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * 0.5 : flixel_FlxG.width * 0.25) - swagWidth * (maniaCount / 2) + swagWidth * i,this.strumLine.y,i,0,true);
 					babyArrow.downScroll = ClientPrefs.downScroll;
 					babyArrow.set_y(babyArrow.y + Note.swagWidth / 2);
 					if(ClientPrefs.middleScroll) {
-						if(i > 1) {
+						if(i >= maniaCount / 2) {
 							babyArrow.set_x(babyArrow.x + flixel_FlxG.width / 4);
 						} else {
 							babyArrow.set_x(babyArrow.x - flixel_FlxG.width / 4);
@@ -64328,26 +52156,16 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 				}
 			}
 		} else if(player == 1) {
-			var babyArrow = new StrumNote((ClientPrefs.middleScroll ? flixel_FlxG.width * 0.5 : flixel_FlxG.width * 0.75) - Note.swagWidth * 2 + Note.swagWidth * 0,this.strumLine.y,0,1);
-			babyArrow.downScroll = ClientPrefs.downScroll;
-			this.playerStrums.add(babyArrow);
-			this.strumLineNotes.add(babyArrow);
-			babyArrow.postAddedToGroup();
-			var babyArrow = new StrumNote((ClientPrefs.middleScroll ? flixel_FlxG.width * 0.5 : flixel_FlxG.width * 0.75) - Note.swagWidth * 2 + Note.swagWidth,this.strumLine.y,1,1);
-			babyArrow.downScroll = ClientPrefs.downScroll;
-			this.playerStrums.add(babyArrow);
-			this.strumLineNotes.add(babyArrow);
-			babyArrow.postAddedToGroup();
-			var babyArrow = new StrumNote((ClientPrefs.middleScroll ? flixel_FlxG.width * 0.5 : flixel_FlxG.width * 0.75) - Note.swagWidth * 2 + Note.swagWidth * 2,this.strumLine.y,2,1);
-			babyArrow.downScroll = ClientPrefs.downScroll;
-			this.playerStrums.add(babyArrow);
-			this.strumLineNotes.add(babyArrow);
-			babyArrow.postAddedToGroup();
-			var babyArrow = new StrumNote((ClientPrefs.middleScroll ? flixel_FlxG.width * 0.5 : flixel_FlxG.width * 0.75) - Note.swagWidth * 2 + Note.swagWidth * 3,this.strumLine.y,3,1);
-			babyArrow.downScroll = ClientPrefs.downScroll;
-			this.playerStrums.add(babyArrow);
-			this.strumLineNotes.add(babyArrow);
-			babyArrow.postAddedToGroup();
+			var _g = 0;
+			var _g1 = maniaCount;
+			while(_g < _g1) {
+				var i = _g++;
+				var babyArrow = new StrumNote((ClientPrefs.middleScroll ? flixel_FlxG.width * 0.5 : flixel_FlxG.width * 0.75) - swagWidth * (maniaCount / 2) + swagWidth * i,this.strumLine.y,i,1);
+				babyArrow.downScroll = ClientPrefs.downScroll;
+				this.playerStrums.add(babyArrow);
+				this.strumLineNotes.add(babyArrow);
+				babyArrow.postAddedToGroup();
+			}
 		}
 	}
 	,StrumPlayAnim: function(isDad,id,time,note) {
@@ -64373,9 +52191,9 @@ editors_EditorPlayState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,spawnNoteSplash: function(x,y,data,note) {
 		var skin = "";
-		var hue = ClientPrefs.arrowHSV[data % 4][0] / 360;
-		var sat = ClientPrefs.arrowHSV[data % 4][1] / 100;
-		var brt = ClientPrefs.arrowHSV[data % 4][2] / 100;
+		var hue = ClientPrefs.arrowHSV[dge_backend_EKUtil.getCurrentMania()][data % 4][0] / 360;
+		var sat = ClientPrefs.arrowHSV[dge_backend_EKUtil.getCurrentMania()][data % 4][1] / 100;
+		var brt = ClientPrefs.arrowHSV[dge_backend_EKUtil.getCurrentMania()][data % 4][2] / 100;
 		if(note != null) {
 			skin = note.noteSplashTexture;
 			hue = note.noteSplashHue;
@@ -64445,16 +52263,24 @@ editors_MasterEditorMenu.prototype = $extend(MusicBeatState.prototype,{
 		MusicBeatState.prototype.create.call(this);
 	}
 	,update: function(elapsed) {
-		if(PlayerSettings.player1.controls._ui_upP.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state)) {
 			this.changeSelection(-1);
 		}
-		if(PlayerSettings.player1.controls._ui_downP.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state)) {
 			this.changeSelection(1);
 		}
-		if(PlayerSettings.player1.controls._back.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
 			MusicBeatState.switchState(new MainMenuState());
 		}
-		if(PlayerSettings.player1.controls._accept.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
 			switch(this.options[this.curSelected]) {
 			case "Character Editor":
 				MusicBeatState.switchState(LoadingState.getNextState(new editors_CharacterEditorState(Character.DEFAULT_CHARACTER,false),false),false);
@@ -64971,21 +52797,21 @@ editors_WeekEditorState.onLoadComplete = function(_) {
 	editors_WeekEditorState._file.removeEventListener("select",editors_WeekEditorState.onLoadComplete);
 	editors_WeekEditorState._file.removeEventListener("cancel",editors_WeekEditorState.onLoadCancel);
 	editors_WeekEditorState._file.removeEventListener("ioError",editors_WeekEditorState.onLoadError);
-	haxe_Log.trace("File couldn't be loaded! You aren't on Desktop, are you?",{ fileName : "source/editors/WeekEditorState.hx", lineNumber : 538, className : "editors.WeekEditorState", methodName : "onLoadComplete"});
+	haxe_Log.trace("File couldn't be loaded! You aren't on Desktop, are you?",{ fileName : "source/editors/WeekEditorState.hx", lineNumber : 539, className : "editors.WeekEditorState", methodName : "onLoadComplete"});
 };
 editors_WeekEditorState.onLoadCancel = function(_) {
 	editors_WeekEditorState._file.removeEventListener("select",editors_WeekEditorState.onLoadComplete);
 	editors_WeekEditorState._file.removeEventListener("cancel",editors_WeekEditorState.onLoadCancel);
 	editors_WeekEditorState._file.removeEventListener("ioError",editors_WeekEditorState.onLoadError);
 	editors_WeekEditorState._file = null;
-	haxe_Log.trace("Cancelled file loading.",{ fileName : "source/editors/WeekEditorState.hx", lineNumber : 551, className : "editors.WeekEditorState", methodName : "onLoadCancel"});
+	haxe_Log.trace("Cancelled file loading.",{ fileName : "source/editors/WeekEditorState.hx", lineNumber : 552, className : "editors.WeekEditorState", methodName : "onLoadCancel"});
 };
 editors_WeekEditorState.onLoadError = function(_) {
 	editors_WeekEditorState._file.removeEventListener("select",editors_WeekEditorState.onLoadComplete);
 	editors_WeekEditorState._file.removeEventListener("cancel",editors_WeekEditorState.onLoadCancel);
 	editors_WeekEditorState._file.removeEventListener("ioError",editors_WeekEditorState.onLoadError);
 	editors_WeekEditorState._file = null;
-	haxe_Log.trace("Problem loading file",{ fileName : "source/editors/WeekEditorState.hx", lineNumber : 563, className : "editors.WeekEditorState", methodName : "onLoadError"});
+	haxe_Log.trace("Problem loading file",{ fileName : "source/editors/WeekEditorState.hx", lineNumber : 564, className : "editors.WeekEditorState", methodName : "onLoadError"});
 };
 editors_WeekEditorState.saveWeek = function(weekFile) {
 	var data = JSON.stringify(weekFile,null,ClientPrefs.minEditorJson ? null : "\t");
@@ -65840,7 +53666,7 @@ editors_WeekEditorFreeplayState.prototype = $extend(MusicBeatState.prototype,{
 				item.set_alpha(1);
 			}
 		}
-		haxe_Log.trace(this.weekFile.songs[this.curSelected],{ fileName : "source/editors/WeekEditorState.hx", lineNumber : 838, className : "editors.WeekEditorFreeplayState", methodName : "changeSelection"});
+		haxe_Log.trace(this.weekFile.songs[this.curSelected],{ fileName : "source/editors/WeekEditorState.hx", lineNumber : 839, className : "editors.WeekEditorFreeplayState", methodName : "changeSelection"});
 		this.iconInputText.set_text(this.weekFile.songs[this.curSelected][1]);
 		this.borderInputText.set_text(this.weekFile.songs[this.curSelected][3]);
 		this.bgColorStepperR.set_value(Math.round(this.weekFile.songs[this.curSelected][2][0]));
@@ -65876,10 +53702,14 @@ editors_WeekEditorFreeplayState.prototype = $extend(MusicBeatState.prototype,{
 				var file = Paths.returnSound("music","freakyMenu",null);
 				tmp.playMusic(file);
 			}
-			if(PlayerSettings.player1.controls._ui_upP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state)) {
 				this.changeSelection(-1);
 			}
-			if(PlayerSettings.player1.controls._ui_downP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state)) {
 				this.changeSelection(1);
 			}
 		}
@@ -69027,20 +56857,7 @@ var flixel_system_frontEnds_InputFrontEnd = function() {
 $hxClasses["flixel.system.frontEnds.InputFrontEnd"] = flixel_system_frontEnds_InputFrontEnd;
 flixel_system_frontEnds_InputFrontEnd.__name__ = "flixel.system.frontEnds.InputFrontEnd";
 flixel_system_frontEnds_InputFrontEnd.prototype = {
-	add_flixel_input_actions_FlxActionManager: function(Input) {
-		var _g = 0;
-		var _g1 = this.list;
-		while(_g < _g1.length) {
-			var input = _g1[_g];
-			++_g;
-			if(flixel_util_FlxStringUtil.getClassName(Input,true) == flixel_util_FlxStringUtil.getClassName(input,true)) {
-				return Input;
-			}
-		}
-		this.list.push(Input);
-		return Input;
-	}
-	,add_flixel_input_gamepad_FlxGamepadManager: function(Input) {
+	add_flixel_input_gamepad_FlxGamepadManager: function(Input) {
 		var _g = 0;
 		var _g1 = this.list;
 		while(_g < _g1.length) {
@@ -99326,1835 +87143,6 @@ flixel_input_FlxSwipe.prototype = {
 	,__class__: flixel_input_FlxSwipe
 	,__properties__: {get_duration:"get_duration",get_angle:"get_angle",get_distance:"get_distance"}
 };
-var flixel_input_actions_FlxAction = function(InputType,Name) {
-	this.steamOriginsChanged = false;
-	this._checked = false;
-	this._timestamp = 0;
-	this._y = null;
-	this._x = null;
-	this.triggered = false;
-	this.steamHandle = -1;
-	this.type = InputType;
-	this.name = Name;
-	this.inputs = [];
-};
-$hxClasses["flixel.input.actions.FlxAction"] = flixel_input_actions_FlxAction;
-flixel_input_actions_FlxAction.__name__ = "flixel.input.actions.FlxAction";
-flixel_input_actions_FlxAction.__interfaces__ = [flixel_util_IFlxDestroyable];
-flixel_input_actions_FlxAction.prototype = {
-	type: null
-	,name: null
-	,steamHandle: null
-	,triggered: null
-	,inputs: null
-	,_x: null
-	,_y: null
-	,_timestamp: null
-	,_checked: null
-	,steamOriginsChanged: null
-	,getFirstSteamOrigin: function() {
-		return 0;
-	}
-	,getSteamOrigins: function(origins) {
-		return origins;
-	}
-	,removeAll: function(Destroy) {
-		if(Destroy == null) {
-			Destroy = true;
-		}
-		var len = this.inputs.length;
-		var _g = 0;
-		var _g1 = len;
-		while(_g < _g1) {
-			var i = _g++;
-			var j = len - i - 1;
-			var input = this.inputs[j];
-			this.remove(input,Destroy);
-			this.inputs.splice(j,1);
-		}
-	}
-	,remove: function(Input,Destroy) {
-		if(Destroy == null) {
-			Destroy = false;
-		}
-		if(Input == null) {
-			return;
-		}
-		HxOverrides.remove(this.inputs,Input);
-		if(Destroy) {
-			Input.destroy();
-		}
-	}
-	,toString: function() {
-		return "FlxAction(" + Std.string(this.type) + ") name:" + this.name;
-	}
-	,check: function() {
-		this._x = null;
-		this._y = null;
-		if(this._timestamp == flixel_FlxG.game.ticks) {
-			this.triggered = this._checked;
-			return this._checked;
-		}
-		this._timestamp = flixel_FlxG.game.ticks;
-		this._checked = false;
-		var len = this.inputs != null ? this.inputs.length : 0;
-		var _g = 0;
-		var _g1 = len;
-		while(_g < _g1) {
-			var i = _g++;
-			var j = len - i - 1;
-			var input = this.inputs[j];
-			if(input.destroyed) {
-				this.inputs.splice(j,1);
-				continue;
-			}
-			input.update();
-			if(input.check(this)) {
-				this._checked = true;
-			}
-		}
-		this.triggered = this._checked;
-		return this._checked;
-	}
-	,update: function() {
-		this.check();
-	}
-	,destroy: function() {
-		flixel_util_FlxDestroyUtil.destroyArray(this.inputs);
-		this.inputs = null;
-	}
-	,match: function(other) {
-		if(this.name == other.name) {
-			return this.steamHandle == other.steamHandle;
-		} else {
-			return false;
-		}
-	}
-	,addGenericInput: function(input) {
-		if(this.inputs == null) {
-			this.inputs = [];
-		}
-		if(!this.checkExists(input)) {
-			this.inputs.push(input);
-		}
-		return this;
-	}
-	,checkExists: function(input) {
-		if(this.inputs == null) {
-			return false;
-		}
-		return this.inputs.indexOf(input) != -1;
-	}
-	,__class__: flixel_input_actions_FlxAction
-};
-var flixel_input_actions_FlxActionDigital = function(Name,Callback) {
-	if(Name == null) {
-		Name = "";
-	}
-	flixel_input_actions_FlxAction.call(this,flixel_input_actions_FlxInputType.DIGITAL,Name);
-	this.callback = Callback;
-};
-$hxClasses["flixel.input.actions.FlxActionDigital"] = flixel_input_actions_FlxActionDigital;
-flixel_input_actions_FlxActionDigital.__name__ = "flixel.input.actions.FlxActionDigital";
-flixel_input_actions_FlxActionDigital.__super__ = flixel_input_actions_FlxAction;
-flixel_input_actions_FlxActionDigital.prototype = $extend(flixel_input_actions_FlxAction.prototype,{
-	callback: null
-	,add: function(input) {
-		this.addGenericInput(input);
-		return this;
-	}
-	,addInput: function(Input,Trigger) {
-		return this.add(new flixel_input_actions_FlxActionInputDigitalIFlxInput(Input,Trigger));
-	}
-	,addGamepad: function(InputID,Trigger,GamepadID) {
-		if(GamepadID == null) {
-			GamepadID = -2;
-		}
-		return this.add(new flixel_input_actions_FlxActionInputDigitalGamepad(InputID,Trigger,GamepadID));
-	}
-	,addKey: function(Key,Trigger) {
-		return this.add(new flixel_input_actions_FlxActionInputDigitalKeyboard(Key,Trigger));
-	}
-	,addMouse: function(ButtonID,Trigger) {
-		return this.add(new flixel_input_actions_FlxActionInputDigitalMouse(ButtonID,Trigger));
-	}
-	,addMouseWheel: function(Positive,Trigger) {
-		return this.add(new flixel_input_actions_FlxActionInputDigitalMouseWheel(Positive,Trigger));
-	}
-	,destroy: function() {
-		this.callback = null;
-		flixel_input_actions_FlxAction.prototype.destroy.call(this);
-	}
-	,check: function() {
-		var val = flixel_input_actions_FlxAction.prototype.check.call(this);
-		if(val && this.callback != null) {
-			this.callback(this);
-		}
-		return val;
-	}
-	,__class__: flixel_input_actions_FlxActionDigital
-});
-var flixel_input_actions_FlxActionAnalog = function(Name,Callback) {
-	if(Name == null) {
-		Name = "";
-	}
-	flixel_input_actions_FlxAction.call(this,flixel_input_actions_FlxInputType.ANALOG,Name);
-	this.callback = Callback;
-};
-$hxClasses["flixel.input.actions.FlxActionAnalog"] = flixel_input_actions_FlxActionAnalog;
-flixel_input_actions_FlxActionAnalog.__name__ = "flixel.input.actions.FlxActionAnalog";
-flixel_input_actions_FlxActionAnalog.__super__ = flixel_input_actions_FlxAction;
-flixel_input_actions_FlxActionAnalog.prototype = $extend(flixel_input_actions_FlxAction.prototype,{
-	callback: null
-	,add: function(input) {
-		this.addGenericInput(input);
-		return this;
-	}
-	,addMouseClickAndDragMotion: function(ButtonID,Trigger,Axis,PixelsPerUnit,DeadZone,InvertY,InvertX) {
-		if(InvertX == null) {
-			InvertX = false;
-		}
-		if(InvertY == null) {
-			InvertY = false;
-		}
-		if(DeadZone == null) {
-			DeadZone = 0.1;
-		}
-		if(PixelsPerUnit == null) {
-			PixelsPerUnit = 10;
-		}
-		if(Axis == null) {
-			Axis = 3;
-		}
-		return this.add(new flixel_input_actions_FlxActionInputAnalogClickAndDragMouseMotion(ButtonID,Trigger,Axis,PixelsPerUnit,DeadZone,InvertY,InvertX));
-	}
-	,addMouseMotion: function(Trigger,Axis,PixelsPerUnit,DeadZone,InvertY,InvertX) {
-		if(InvertX == null) {
-			InvertX = false;
-		}
-		if(InvertY == null) {
-			InvertY = false;
-		}
-		if(DeadZone == null) {
-			DeadZone = 0.1;
-		}
-		if(PixelsPerUnit == null) {
-			PixelsPerUnit = 10;
-		}
-		if(Axis == null) {
-			Axis = 3;
-		}
-		return this.add(new flixel_input_actions_FlxActionInputAnalogMouseMotion(Trigger,Axis,PixelsPerUnit,DeadZone,InvertY,InvertX));
-	}
-	,addMousePosition: function(Trigger,Axis) {
-		if(Axis == null) {
-			Axis = 3;
-		}
-		return this.add(new flixel_input_actions_FlxActionInputAnalogMousePosition(Trigger,Axis));
-	}
-	,addGamepad: function(InputID,Trigger,Axis,GamepadID) {
-		if(GamepadID == null) {
-			GamepadID = -2;
-		}
-		if(Axis == null) {
-			Axis = 3;
-		}
-		return this.add(new flixel_input_actions_FlxActionInputAnalogGamepad(InputID,Trigger,Axis,GamepadID));
-	}
-	,update: function() {
-		this._x = null;
-		this._y = null;
-		flixel_input_actions_FlxAction.prototype.update.call(this);
-	}
-	,destroy: function() {
-		this.callback = null;
-		flixel_input_actions_FlxAction.prototype.destroy.call(this);
-	}
-	,toString: function() {
-		return "FlxAction(" + Std.string(this.type) + ") name:" + this.name + " x/y:" + this._x + "," + this._y;
-	}
-	,check: function() {
-		var val = flixel_input_actions_FlxAction.prototype.check.call(this);
-		if(val && this.callback != null) {
-			this.callback(this);
-		}
-		return val;
-	}
-	,get_x: function() {
-		if(this._x != null) {
-			return this._x;
-		} else {
-			return 0;
-		}
-	}
-	,get_y: function() {
-		if(this._y != null) {
-			return this._y;
-		} else {
-			return 0;
-		}
-	}
-	,__class__: flixel_input_actions_FlxActionAnalog
-	,__properties__: {get_y:"get_y",get_x:"get_x"}
-});
-var flixel_input_actions_FlxActionInput = function(InputType,Device1,InputID,Trigger,DeviceID) {
-	if(DeviceID == null) {
-		DeviceID = -2;
-	}
-	this.destroyed = false;
-	this.type = InputType;
-	this.device = Device1;
-	this.inputID = InputID;
-	this.trigger = Trigger;
-	this.deviceID = DeviceID;
-};
-$hxClasses["flixel.input.actions.FlxActionInput"] = flixel_input_actions_FlxActionInput;
-flixel_input_actions_FlxActionInput.__name__ = "flixel.input.actions.FlxActionInput";
-flixel_input_actions_FlxActionInput.__interfaces__ = [flixel_util_IFlxDestroyable];
-flixel_input_actions_FlxActionInput.prototype = {
-	type: null
-	,device: null
-	,deviceID: null
-	,destroyed: null
-	,inputID: null
-	,trigger: null
-	,update: function() {
-	}
-	,destroy: function() {
-		this.destroyed = true;
-	}
-	,check: function(action) {
-		return false;
-	}
-	,compareState: function(condition,state) {
-		switch(condition) {
-		case -1:
-			return state == -1;
-		case 0:
-			if(state != 0) {
-				return state == -1;
-			} else {
-				return true;
-			}
-			break;
-		case 1:
-			if(state != 1) {
-				return state == 2;
-			} else {
-				return true;
-			}
-			break;
-		case 2:
-			return state == 2;
-		default:
-			return false;
-		}
-	}
-	,__class__: flixel_input_actions_FlxActionInput
-};
-var flixel_input_actions_FlxInputType = $hxEnums["flixel.input.actions.FlxInputType"] = { __ename__:"flixel.input.actions.FlxInputType",__constructs__:null
-	,DIGITAL: {_hx_name:"DIGITAL",_hx_index:0,__enum__:"flixel.input.actions.FlxInputType",toString:$estr}
-	,ANALOG: {_hx_name:"ANALOG",_hx_index:1,__enum__:"flixel.input.actions.FlxInputType",toString:$estr}
-};
-flixel_input_actions_FlxInputType.__constructs__ = [flixel_input_actions_FlxInputType.DIGITAL,flixel_input_actions_FlxInputType.ANALOG];
-var flixel_input_actions_FlxInputDevice = $hxEnums["flixel.input.actions.FlxInputDevice"] = { __ename__:"flixel.input.actions.FlxInputDevice",__constructs__:null
-	,UNKNOWN: {_hx_name:"UNKNOWN",_hx_index:0,__enum__:"flixel.input.actions.FlxInputDevice",toString:$estr}
-	,MOUSE: {_hx_name:"MOUSE",_hx_index:1,__enum__:"flixel.input.actions.FlxInputDevice",toString:$estr}
-	,MOUSE_WHEEL: {_hx_name:"MOUSE_WHEEL",_hx_index:2,__enum__:"flixel.input.actions.FlxInputDevice",toString:$estr}
-	,KEYBOARD: {_hx_name:"KEYBOARD",_hx_index:3,__enum__:"flixel.input.actions.FlxInputDevice",toString:$estr}
-	,GAMEPAD: {_hx_name:"GAMEPAD",_hx_index:4,__enum__:"flixel.input.actions.FlxInputDevice",toString:$estr}
-	,STEAM_CONTROLLER: {_hx_name:"STEAM_CONTROLLER",_hx_index:5,__enum__:"flixel.input.actions.FlxInputDevice",toString:$estr}
-	,IFLXINPUT_OBJECT: {_hx_name:"IFLXINPUT_OBJECT",_hx_index:6,__enum__:"flixel.input.actions.FlxInputDevice",toString:$estr}
-	,OTHER: {_hx_name:"OTHER",_hx_index:7,__enum__:"flixel.input.actions.FlxInputDevice",toString:$estr}
-	,ANDROID: {_hx_name:"ANDROID",_hx_index:8,__enum__:"flixel.input.actions.FlxInputDevice",toString:$estr}
-	,ALL: {_hx_name:"ALL",_hx_index:9,__enum__:"flixel.input.actions.FlxInputDevice",toString:$estr}
-	,NONE: {_hx_name:"NONE",_hx_index:10,__enum__:"flixel.input.actions.FlxInputDevice",toString:$estr}
-};
-flixel_input_actions_FlxInputDevice.__constructs__ = [flixel_input_actions_FlxInputDevice.UNKNOWN,flixel_input_actions_FlxInputDevice.MOUSE,flixel_input_actions_FlxInputDevice.MOUSE_WHEEL,flixel_input_actions_FlxInputDevice.KEYBOARD,flixel_input_actions_FlxInputDevice.GAMEPAD,flixel_input_actions_FlxInputDevice.STEAM_CONTROLLER,flixel_input_actions_FlxInputDevice.IFLXINPUT_OBJECT,flixel_input_actions_FlxInputDevice.OTHER,flixel_input_actions_FlxInputDevice.ANDROID,flixel_input_actions_FlxInputDevice.ALL,flixel_input_actions_FlxInputDevice.NONE];
-var flixel_input_actions_FlxInputDeviceID = function() { };
-$hxClasses["flixel.input.actions.FlxInputDeviceID"] = flixel_input_actions_FlxInputDeviceID;
-flixel_input_actions_FlxInputDeviceID.__name__ = "flixel.input.actions.FlxInputDeviceID";
-var flixel_input_actions_FlxInputDeviceObject = function(Device1,ID,Model) {
-	if(Model == null) {
-		Model = "";
-	}
-	this.device = Device1;
-	this.id = ID;
-	this.model = Model;
-};
-$hxClasses["flixel.input.actions.FlxInputDeviceObject"] = flixel_input_actions_FlxInputDeviceObject;
-flixel_input_actions_FlxInputDeviceObject.__name__ = "flixel.input.actions.FlxInputDeviceObject";
-flixel_input_actions_FlxInputDeviceObject.prototype = {
-	device: null
-	,id: null
-	,model: null
-	,toString: function() {
-		return "{device:" + Std.string(this.device) + ",id:" + this.id + ",model:" + this.model + "}";
-	}
-	,__class__: flixel_input_actions_FlxInputDeviceObject
-};
-var flixel_input_actions_FlxActionInputAnalog = function(Device1,InputID,Trigger,Axis,DeviceID) {
-	if(DeviceID == null) {
-		DeviceID = -2;
-	}
-	if(Axis == null) {
-		Axis = 3;
-	}
-	this.y = 0;
-	this.x = 0;
-	flixel_input_actions_FlxActionInput.call(this,flixel_input_actions_FlxInputType.ANALOG,Device1,InputID,Trigger,DeviceID);
-	this.axis = Axis;
-	this.xMoved = new flixel_input_FlxInput(0);
-	this.yMoved = new flixel_input_FlxInput(1);
-};
-$hxClasses["flixel.input.actions.FlxActionInputAnalog"] = flixel_input_actions_FlxActionInputAnalog;
-flixel_input_actions_FlxActionInputAnalog.__name__ = "flixel.input.actions.FlxActionInputAnalog";
-flixel_input_actions_FlxActionInputAnalog.__super__ = flixel_input_actions_FlxActionInput;
-flixel_input_actions_FlxActionInputAnalog.prototype = $extend(flixel_input_actions_FlxActionInput.prototype,{
-	axis: null
-	,x: null
-	,y: null
-	,xMoved: null
-	,yMoved: null
-	,check: function(Action1) {
-		var returnVal;
-		switch(this.axis) {
-		case 0:
-			var state = this.xMoved.current;
-			switch(this.trigger) {
-			case -1:
-				returnVal = state == -1;
-				break;
-			case 0:
-				returnVal = state == 0 || state == -1;
-				break;
-			case 1:
-				returnVal = state == 1 || state == 2;
-				break;
-			case 2:
-				returnVal = state == 2;
-				break;
-			default:
-				returnVal = false;
-			}
-			break;
-		case 1:
-			var state = this.yMoved.current;
-			switch(this.trigger) {
-			case -1:
-				returnVal = state == -1;
-				break;
-			case 0:
-				returnVal = state == 0 || state == -1;
-				break;
-			case 1:
-				returnVal = state == 1 || state == 2;
-				break;
-			case 2:
-				returnVal = state == 2;
-				break;
-			default:
-				returnVal = false;
-			}
-			break;
-		case 2:
-			var state = this.xMoved.current;
-			var returnVal1;
-			switch(this.trigger) {
-			case -1:
-				returnVal1 = state == -1;
-				break;
-			case 0:
-				returnVal1 = state == 0 || state == -1;
-				break;
-			case 1:
-				returnVal1 = state == 1 || state == 2;
-				break;
-			case 2:
-				returnVal1 = state == 2;
-				break;
-			default:
-				returnVal1 = false;
-			}
-			if(returnVal1) {
-				var state = this.yMoved.current;
-				switch(this.trigger) {
-				case -1:
-					returnVal = state == -1;
-					break;
-				case 0:
-					returnVal = state == 0 || state == -1;
-					break;
-				case 1:
-					returnVal = state == 1 || state == 2;
-					break;
-				case 2:
-					returnVal = state == 2;
-					break;
-				default:
-					returnVal = false;
-				}
-			} else {
-				returnVal = false;
-			}
-			break;
-		case 3:
-			switch(this.trigger) {
-			case -1:
-				returnVal = this.checkAxis(true,-1) && this.checkAxis(false,0) || this.checkAxis(true,0) && this.checkAxis(false,-1);
-				break;
-			case 0:
-				returnVal = this.checkAxis(true,0) || this.checkAxis(false,0);
-				break;
-			case 1:
-				returnVal = this.checkAxis(true,1) || this.checkAxis(false,1);
-				break;
-			case 2:
-				returnVal = this.checkAxis(true,2) && this.checkAxis(false,2) || this.checkAxis(true,2) && this.checkAxis(false,0) || this.checkAxis(true,0) && this.checkAxis(false,2);
-				break;
-			}
-			break;
-		}
-		if(returnVal) {
-			if(Action1._x == null) {
-				Action1._x = this.x;
-			}
-			if(Action1._y == null) {
-				Action1._y = this.y;
-			}
-		}
-		return returnVal;
-	}
-	,checkAxis: function(isX,state) {
-		var input = isX ? this.xMoved : this.yMoved;
-		var state1 = input.current;
-		switch(state) {
-		case -1:
-			return state1 == -1;
-		case 0:
-			if(state1 != 0) {
-				return state1 == -1;
-			} else {
-				return true;
-			}
-			break;
-		case 1:
-			if(state1 != 1) {
-				return state1 == 2;
-			} else {
-				return true;
-			}
-			break;
-		case 2:
-			return state1 == 2;
-		default:
-			return false;
-		}
-	}
-	,updateValues: function(X,Y) {
-		if(X != 0) {
-			this.xMoved.press();
-		} else {
-			this.xMoved.release();
-		}
-		if(Y != 0) {
-			this.yMoved.press();
-		} else {
-			this.yMoved.release();
-		}
-		this.x = X;
-		this.y = Y;
-	}
-	,__class__: flixel_input_actions_FlxActionInputAnalog
-});
-var flixel_input_actions_FlxActionInputAnalogMouseMotion = function(Trigger,Axis,PixelsPerUnit,DeadZone,InvertY,InvertX) {
-	if(InvertX == null) {
-		InvertX = false;
-	}
-	if(InvertY == null) {
-		InvertY = false;
-	}
-	if(DeadZone == null) {
-		DeadZone = 0.1;
-	}
-	if(PixelsPerUnit == null) {
-		PixelsPerUnit = 10;
-	}
-	if(Axis == null) {
-		Axis = 3;
-	}
-	this.lastY = 0;
-	this.lastX = 0;
-	this.pixelsPerUnit = PixelsPerUnit;
-	if(this.pixelsPerUnit < 1) {
-		this.pixelsPerUnit = 1;
-	}
-	this.deadZone = DeadZone;
-	this.invertX = InvertX;
-	this.invertY = InvertY;
-	flixel_input_actions_FlxActionInputAnalog.call(this,flixel_input_actions_FlxInputDevice.MOUSE,-1,Trigger,Axis);
-};
-$hxClasses["flixel.input.actions.FlxActionInputAnalogMouseMotion"] = flixel_input_actions_FlxActionInputAnalogMouseMotion;
-flixel_input_actions_FlxActionInputAnalogMouseMotion.__name__ = "flixel.input.actions.FlxActionInputAnalogMouseMotion";
-flixel_input_actions_FlxActionInputAnalogMouseMotion.__super__ = flixel_input_actions_FlxActionInputAnalog;
-flixel_input_actions_FlxActionInputAnalogMouseMotion.prototype = $extend(flixel_input_actions_FlxActionInputAnalog.prototype,{
-	lastX: null
-	,lastY: null
-	,pixelsPerUnit: null
-	,deadZone: null
-	,invertX: null
-	,invertY: null
-	,update: function() {
-		this.updateXYPosition(flixel_FlxG.mouse.x,flixel_FlxG.mouse.y);
-	}
-	,updateXYPosition: function(X,Y) {
-		var xDiff = X - this.lastX;
-		var yDiff = Y - this.lastY;
-		this.lastX = X;
-		this.lastY = Y;
-		if(this.invertX) {
-			xDiff *= -1;
-		}
-		if(this.invertY) {
-			yDiff *= -1;
-		}
-		xDiff /= this.pixelsPerUnit;
-		yDiff /= this.pixelsPerUnit;
-		if(Math.abs(xDiff) < this.deadZone) {
-			xDiff = 0;
-		}
-		if(Math.abs(yDiff) < this.deadZone) {
-			yDiff = 0;
-		}
-		this.updateValues(xDiff,yDiff);
-	}
-	,__class__: flixel_input_actions_FlxActionInputAnalogMouseMotion
-});
-var flixel_input_actions_FlxActionInputAnalogClickAndDragMouseMotion = function(ButtonID,Trigger,Axis,PixelsPerUnit,DeadZone,InvertY,InvertX) {
-	if(InvertX == null) {
-		InvertX = false;
-	}
-	if(InvertY == null) {
-		InvertY = false;
-	}
-	if(DeadZone == null) {
-		DeadZone = 0.1;
-	}
-	if(PixelsPerUnit == null) {
-		PixelsPerUnit = 10;
-	}
-	if(Axis == null) {
-		Axis = 3;
-	}
-	flixel_input_actions_FlxActionInputAnalogMouseMotion.call(this,Trigger,Axis,PixelsPerUnit,DeadZone,InvertY,InvertX);
-	this.button = ButtonID;
-};
-$hxClasses["flixel.input.actions.FlxActionInputAnalogClickAndDragMouseMotion"] = flixel_input_actions_FlxActionInputAnalogClickAndDragMouseMotion;
-flixel_input_actions_FlxActionInputAnalogClickAndDragMouseMotion.__name__ = "flixel.input.actions.FlxActionInputAnalogClickAndDragMouseMotion";
-flixel_input_actions_FlxActionInputAnalogClickAndDragMouseMotion.__super__ = flixel_input_actions_FlxActionInputAnalogMouseMotion;
-flixel_input_actions_FlxActionInputAnalogClickAndDragMouseMotion.prototype = $extend(flixel_input_actions_FlxActionInputAnalogMouseMotion.prototype,{
-	button: null
-	,updateValues: function(X,Y) {
-		var pass = false;
-		switch(this.button) {
-		case -3:
-			var _this = flixel_FlxG.mouse._rightButton;
-			pass = _this.current == 1 || _this.current == 2;
-			break;
-		case -2:
-			var _this = flixel_FlxG.mouse._middleButton;
-			pass = _this.current == 1 || _this.current == 2;
-			break;
-		case -1:
-			var _this = flixel_FlxG.mouse._leftButton;
-			pass = _this.current == 1 || _this.current == 2;
-			break;
-		}
-		if(!pass) {
-			X = 0;
-			Y = 0;
-		}
-		flixel_input_actions_FlxActionInputAnalogMouseMotion.prototype.updateValues.call(this,X,Y);
-	}
-	,__class__: flixel_input_actions_FlxActionInputAnalogClickAndDragMouseMotion
-});
-var flixel_input_actions_FlxActionInputAnalogMousePosition = function(Trigger,Axis) {
-	if(Axis == null) {
-		Axis = 3;
-	}
-	flixel_input_actions_FlxActionInputAnalog.call(this,flixel_input_actions_FlxInputDevice.MOUSE,-1,Trigger,Axis);
-};
-$hxClasses["flixel.input.actions.FlxActionInputAnalogMousePosition"] = flixel_input_actions_FlxActionInputAnalogMousePosition;
-flixel_input_actions_FlxActionInputAnalogMousePosition.__name__ = "flixel.input.actions.FlxActionInputAnalogMousePosition";
-flixel_input_actions_FlxActionInputAnalogMousePosition.__super__ = flixel_input_actions_FlxActionInputAnalog;
-flixel_input_actions_FlxActionInputAnalogMousePosition.prototype = $extend(flixel_input_actions_FlxActionInputAnalog.prototype,{
-	update: function() {
-		this.updateValues(flixel_FlxG.mouse.x,flixel_FlxG.mouse.y);
-	}
-	,updateValues: function(X,Y) {
-		if(X != this.x) {
-			this.xMoved.press();
-		} else {
-			this.xMoved.release();
-		}
-		if(Y != this.y) {
-			this.yMoved.press();
-		} else {
-			this.yMoved.release();
-		}
-		this.x = X;
-		this.y = Y;
-	}
-	,__class__: flixel_input_actions_FlxActionInputAnalogMousePosition
-});
-var flixel_input_actions_FlxActionInputAnalogGamepad = function(InputID,Trigger,Axis,GamepadID) {
-	if(GamepadID == null) {
-		GamepadID = -2;
-	}
-	if(Axis == null) {
-		Axis = 3;
-	}
-	flixel_input_actions_FlxActionInputAnalog.call(this,flixel_input_actions_FlxInputDevice.GAMEPAD,InputID,Trigger,Axis,GamepadID);
-};
-$hxClasses["flixel.input.actions.FlxActionInputAnalogGamepad"] = flixel_input_actions_FlxActionInputAnalogGamepad;
-flixel_input_actions_FlxActionInputAnalogGamepad.__name__ = "flixel.input.actions.FlxActionInputAnalogGamepad";
-flixel_input_actions_FlxActionInputAnalogGamepad.__super__ = flixel_input_actions_FlxActionInputAnalog;
-flixel_input_actions_FlxActionInputAnalogGamepad.prototype = $extend(flixel_input_actions_FlxActionInputAnalog.prototype,{
-	update: function() {
-		if(this.deviceID == -1) {
-			return;
-		}
-		var gamepad = null;
-		if(this.deviceID == -2) {
-			gamepad = flixel_FlxG.gamepads.getFirstActiveGamepad();
-		} else if(this.deviceID >= 0) {
-			gamepad = flixel_FlxG.gamepads._activeGamepads[this.deviceID];
-		}
-		if(gamepad != null) {
-			switch(this.inputID) {
-			case 17:
-				this.updateValues(gamepad.analog.value.gamepad.getAxis(17),0);
-				break;
-			case 18:
-				this.updateValues(gamepad.analog.value.gamepad.getAxis(18),0);
-				break;
-			case 19:
-				var _this = gamepad.analog.value.gamepad;
-				var tmp = _this.getAnalogXAxisValue(_this.mapping.getAnalogStick(19));
-				var _this = gamepad.analog.value.gamepad;
-				this.updateValues(tmp,_this.getYAxisRaw(_this.mapping.getAnalogStick(19)));
-				break;
-			case 20:
-				var _this = gamepad.analog.value.gamepad;
-				var tmp = _this.getAnalogXAxisValue(_this.mapping.getAnalogStick(20));
-				var _this = gamepad.analog.value.gamepad;
-				this.updateValues(tmp,_this.getYAxisRaw(_this.mapping.getAnalogStick(20)));
-				break;
-			case 21:
-				var tmp;
-				var _this = gamepad.pressed;
-				var id = 13;
-				var _this1 = _this.gamepad;
-				var Status = _this.status;
-				var tmp1;
-				switch(id) {
-				case -2:
-					tmp1 = _this1.anyButton(Status);
-					break;
-				case -1:
-					tmp1 = !_this1.anyButton(Status);
-					break;
-				default:
-					var RawID = _this1.mapping.getRawID(id);
-					var button = _this1.buttons[RawID];
-					tmp1 = button != null && button.hasState(Status);
-				}
-				if(tmp1) {
-					tmp = -1.0;
-				} else {
-					var _this = gamepad.pressed;
-					var id = 14;
-					var _this1 = _this.gamepad;
-					var Status = _this.status;
-					var tmp1;
-					switch(id) {
-					case -2:
-						tmp1 = _this1.anyButton(Status);
-						break;
-					case -1:
-						tmp1 = !_this1.anyButton(Status);
-						break;
-					default:
-						var RawID = _this1.mapping.getRawID(id);
-						var button = _this1.buttons[RawID];
-						tmp1 = button != null && button.hasState(Status);
-					}
-					tmp = tmp1 ? 1.0 : 0.0;
-				}
-				var tmp1;
-				var _this = gamepad.pressed;
-				var id = 11;
-				var _this1 = _this.gamepad;
-				var Status = _this.status;
-				var tmp2;
-				switch(id) {
-				case -2:
-					tmp2 = _this1.anyButton(Status);
-					break;
-				case -1:
-					tmp2 = !_this1.anyButton(Status);
-					break;
-				default:
-					var RawID = _this1.mapping.getRawID(id);
-					var button = _this1.buttons[RawID];
-					tmp2 = button != null && button.hasState(Status);
-				}
-				if(tmp2) {
-					tmp1 = -1.0;
-				} else {
-					var _this = gamepad.pressed;
-					var id = 12;
-					var _this1 = _this.gamepad;
-					var Status = _this.status;
-					var tmp2;
-					switch(id) {
-					case -2:
-						tmp2 = _this1.anyButton(Status);
-						break;
-					case -1:
-						tmp2 = !_this1.anyButton(Status);
-						break;
-					default:
-						var RawID = _this1.mapping.getRawID(id);
-						var button = _this1.buttons[RawID];
-						tmp2 = button != null && button.hasState(Status);
-					}
-					tmp1 = tmp2 ? 1.0 : 0.0;
-				}
-				this.updateValues(tmp,tmp1);
-				break;
-			case 28:
-				this.updateValues(gamepad.analog.value.gamepad.getAxis(28),0);
-				break;
-			case 29:
-				this.updateValues(gamepad.analog.value.gamepad.getAxis(29),0);
-				break;
-			}
-		} else {
-			this.updateValues(0,0);
-		}
-	}
-	,__class__: flixel_input_actions_FlxActionInputAnalogGamepad
-});
-var flixel_input_actions_FlxActionInputAnalogSteam = function(ActionHandle,Trigger,Axis,DeviceID) {
-	if(DeviceID == null) {
-		DeviceID = -1;
-	}
-	if(Axis == null) {
-		Axis = 3;
-	}
-	flixel_input_actions_FlxActionInputAnalog.call(this,flixel_input_actions_FlxInputDevice.STEAM_CONTROLLER,ActionHandle,Trigger,Axis,DeviceID);
-};
-$hxClasses["flixel.input.actions.FlxActionInputAnalogSteam"] = flixel_input_actions_FlxActionInputAnalogSteam;
-flixel_input_actions_FlxActionInputAnalogSteam.__name__ = "flixel.input.actions.FlxActionInputAnalogSteam";
-flixel_input_actions_FlxActionInputAnalogSteam.__super__ = flixel_input_actions_FlxActionInputAnalog;
-flixel_input_actions_FlxActionInputAnalogSteam.prototype = $extend(flixel_input_actions_FlxActionInputAnalog.prototype,{
-	update: function() {
-	}
-	,__class__: flixel_input_actions_FlxActionInputAnalogSteam
-});
-var flixel_input_actions_FlxActionInputDigital = function(Device1,InputID,Trigger,DeviceID) {
-	if(DeviceID == null) {
-		DeviceID = -2;
-	}
-	flixel_input_actions_FlxActionInput.call(this,flixel_input_actions_FlxInputType.DIGITAL,Device1,InputID,Trigger,DeviceID);
-	this.inputID = InputID;
-};
-$hxClasses["flixel.input.actions.FlxActionInputDigital"] = flixel_input_actions_FlxActionInputDigital;
-flixel_input_actions_FlxActionInputDigital.__name__ = "flixel.input.actions.FlxActionInputDigital";
-flixel_input_actions_FlxActionInputDigital.__super__ = flixel_input_actions_FlxActionInput;
-flixel_input_actions_FlxActionInputDigital.prototype = $extend(flixel_input_actions_FlxActionInput.prototype,{
-	__class__: flixel_input_actions_FlxActionInputDigital
-});
-var flixel_input_actions_FlxActionInputDigitalMouseWheel = function(Positive,Trigger) {
-	this.sign = 0;
-	flixel_input_actions_FlxActionInputDigital.call(this,flixel_input_actions_FlxInputDevice.MOUSE_WHEEL,0,Trigger);
-	this.input = new flixel_input_FlxInput(0);
-	this.sign = Positive ? 1 : -1;
-};
-$hxClasses["flixel.input.actions.FlxActionInputDigitalMouseWheel"] = flixel_input_actions_FlxActionInputDigitalMouseWheel;
-flixel_input_actions_FlxActionInputDigitalMouseWheel.__name__ = "flixel.input.actions.FlxActionInputDigitalMouseWheel";
-flixel_input_actions_FlxActionInputDigitalMouseWheel.__super__ = flixel_input_actions_FlxActionInputDigital;
-flixel_input_actions_FlxActionInputDigitalMouseWheel.prototype = $extend(flixel_input_actions_FlxActionInputDigital.prototype,{
-	input: null
-	,sign: null
-	,check: function(Action1) {
-		switch(this.trigger) {
-		case -1:
-			return this.input.current == -1;
-		case 0:
-			var _this = this.input;
-			if(!(_this.current == 0 || _this.current == -1)) {
-				return this.input.current == -1;
-			} else {
-				return true;
-			}
-			break;
-		case 1:
-			var _this = this.input;
-			if(!(_this.current == 1 || _this.current == 2)) {
-				return this.input.current == 2;
-			} else {
-				return true;
-			}
-			break;
-		case 2:
-			return this.input.current == 2;
-		default:
-			return false;
-		}
-	}
-	,update: function() {
-		flixel_input_actions_FlxActionInputDigital.prototype.update.call(this);
-		if(flixel_FlxG.mouse.wheel * this.sign > 0) {
-			this.input.press();
-		} else {
-			this.input.release();
-		}
-	}
-	,__class__: flixel_input_actions_FlxActionInputDigitalMouseWheel
-});
-var flixel_input_actions_FlxActionInputDigitalGamepad = function(InputID,Trigger,GamepadID) {
-	if(GamepadID == null) {
-		GamepadID = -2;
-	}
-	flixel_input_actions_FlxActionInputDigital.call(this,flixel_input_actions_FlxInputDevice.GAMEPAD,InputID,Trigger,GamepadID);
-	this.input = new flixel_input_FlxInput(InputID);
-};
-$hxClasses["flixel.input.actions.FlxActionInputDigitalGamepad"] = flixel_input_actions_FlxActionInputDigitalGamepad;
-flixel_input_actions_FlxActionInputDigitalGamepad.__name__ = "flixel.input.actions.FlxActionInputDigitalGamepad";
-flixel_input_actions_FlxActionInputDigitalGamepad.__super__ = flixel_input_actions_FlxActionInputDigital;
-flixel_input_actions_FlxActionInputDigitalGamepad.prototype = $extend(flixel_input_actions_FlxActionInputDigital.prototype,{
-	input: null
-	,toString: function() {
-		return "FlxActionInputDigitalGamepad{inputID:" + this.inputID + ",trigger:" + this.trigger + ",deviceID:" + this.deviceID + ",device:" + Std.string(this.device) + ",type:" + Std.string(this.type) + "}";
-	}
-	,update: function() {
-		flixel_input_actions_FlxActionInputDigital.prototype.update.call(this);
-		if(this.deviceID == -1) {
-			if(flixel_FlxG.gamepads.anyHasState(this.inputID,1) || flixel_FlxG.gamepads.anyHasState(this.inputID,2)) {
-				this.input.press();
-			} else {
-				this.input.release();
-			}
-		} else {
-			var gamepad = null;
-			if(this.deviceID == -2) {
-				gamepad = flixel_FlxG.gamepads.getFirstActiveGamepad();
-			} else if(this.deviceID >= 0) {
-				gamepad = flixel_FlxG.gamepads._activeGamepads[this.deviceID];
-			}
-			if(gamepad != null) {
-				if(this.inputID == -2 && this.trigger == 0) {
-					if(gamepad.released.get_ANY()) {
-						this.input.release();
-					} else {
-						this.input.press();
-					}
-				} else {
-					var tmp;
-					var ID = this.inputID;
-					var Status = 1;
-					var tmp1;
-					switch(ID) {
-					case -2:
-						tmp1 = gamepad.anyButton(Status);
-						break;
-					case -1:
-						tmp1 = !gamepad.anyButton(Status);
-						break;
-					default:
-						var RawID = gamepad.mapping.getRawID(ID);
-						var button = gamepad.buttons[RawID];
-						tmp1 = button != null && button.hasState(Status);
-					}
-					if(!tmp1) {
-						var ID = this.inputID;
-						var Status = 2;
-						switch(ID) {
-						case -2:
-							tmp = gamepad.anyButton(Status);
-							break;
-						case -1:
-							tmp = !gamepad.anyButton(Status);
-							break;
-						default:
-							var RawID = gamepad.mapping.getRawID(ID);
-							var button = gamepad.buttons[RawID];
-							tmp = button != null && button.hasState(Status);
-						}
-					} else {
-						tmp = true;
-					}
-					if(tmp) {
-						this.input.press();
-					} else {
-						this.input.release();
-					}
-				}
-			} else if(this.deviceID == -2) {
-				this.input.release();
-			}
-		}
-	}
-	,check: function(Action1) {
-		switch(this.trigger) {
-		case -1:
-			return this.input.current == -1;
-		case 0:
-			var _this = this.input;
-			if(!(_this.current == 0 || _this.current == -1)) {
-				return this.input.current == -1;
-			} else {
-				return true;
-			}
-			break;
-		case 1:
-			var _this = this.input;
-			if(!(_this.current == 1 || _this.current == 2)) {
-				return this.input.current == 2;
-			} else {
-				return true;
-			}
-			break;
-		case 2:
-			return this.input.current == 2;
-		default:
-			return false;
-		}
-	}
-	,__class__: flixel_input_actions_FlxActionInputDigitalGamepad
-});
-var flixel_input_actions_FlxActionInputDigitalKeyboard = function(Key,Trigger) {
-	flixel_input_actions_FlxActionInputDigital.call(this,flixel_input_actions_FlxInputDevice.KEYBOARD,Key,Trigger);
-};
-$hxClasses["flixel.input.actions.FlxActionInputDigitalKeyboard"] = flixel_input_actions_FlxActionInputDigitalKeyboard;
-flixel_input_actions_FlxActionInputDigitalKeyboard.__name__ = "flixel.input.actions.FlxActionInputDigitalKeyboard";
-flixel_input_actions_FlxActionInputDigitalKeyboard.__super__ = flixel_input_actions_FlxActionInputDigital;
-flixel_input_actions_FlxActionInputDigitalKeyboard.prototype = $extend(flixel_input_actions_FlxActionInputDigital.prototype,{
-	check: function(Action1) {
-		switch(this.trigger) {
-		case -1:
-			return flixel_FlxG.keys.checkStatus(this.inputID,-1);
-		case 0:
-			if(!flixel_FlxG.keys.checkStatus(this.inputID,0)) {
-				return flixel_FlxG.keys.checkStatus(this.inputID,-1);
-			} else {
-				return true;
-			}
-			break;
-		case 1:
-			if(!flixel_FlxG.keys.checkStatus(this.inputID,1)) {
-				return flixel_FlxG.keys.checkStatus(this.inputID,2);
-			} else {
-				return true;
-			}
-			break;
-		case 2:
-			return flixel_FlxG.keys.checkStatus(this.inputID,2);
-		default:
-			return false;
-		}
-	}
-	,__class__: flixel_input_actions_FlxActionInputDigitalKeyboard
-});
-var flixel_input_actions_FlxActionInputDigitalMouse = function(ButtonID,Trigger) {
-	flixel_input_actions_FlxActionInputDigital.call(this,flixel_input_actions_FlxInputDevice.MOUSE,ButtonID,Trigger);
-};
-$hxClasses["flixel.input.actions.FlxActionInputDigitalMouse"] = flixel_input_actions_FlxActionInputDigitalMouse;
-flixel_input_actions_FlxActionInputDigitalMouse.__name__ = "flixel.input.actions.FlxActionInputDigitalMouse";
-flixel_input_actions_FlxActionInputDigitalMouse.__super__ = flixel_input_actions_FlxActionInputDigital;
-flixel_input_actions_FlxActionInputDigitalMouse.prototype = $extend(flixel_input_actions_FlxActionInputDigital.prototype,{
-	check: function(Action1) {
-		switch(this.inputID) {
-		case -3:
-			switch(this.trigger) {
-			case -1:
-				return flixel_FlxG.mouse._rightButton.current == -1;
-			case 0:
-				var _this = flixel_FlxG.mouse._rightButton;
-				if(_this.current == 1 || _this.current == 2) {
-					return flixel_FlxG.mouse._rightButton.current == -1;
-				} else {
-					return true;
-				}
-				break;
-			case 1:
-				var _this = flixel_FlxG.mouse._rightButton;
-				if(!(_this.current == 1 || _this.current == 2)) {
-					return flixel_FlxG.mouse._rightButton.current == 2;
-				} else {
-					return true;
-				}
-				break;
-			case 2:
-				return flixel_FlxG.mouse._rightButton.current == 2;
-			}
-			break;
-		case -2:
-			switch(this.trigger) {
-			case -1:
-				return flixel_FlxG.mouse._middleButton.current == -1;
-			case 0:
-				var _this = flixel_FlxG.mouse._middleButton;
-				if(_this.current == 1 || _this.current == 2) {
-					return flixel_FlxG.mouse._middleButton.current == -1;
-				} else {
-					return true;
-				}
-				break;
-			case 1:
-				var _this = flixel_FlxG.mouse._middleButton;
-				if(!(_this.current == 1 || _this.current == 2)) {
-					return flixel_FlxG.mouse._middleButton.current == 2;
-				} else {
-					return true;
-				}
-				break;
-			case 2:
-				return flixel_FlxG.mouse._middleButton.current == 2;
-			}
-			break;
-		case -1:
-			switch(this.trigger) {
-			case -1:
-				return flixel_FlxG.mouse._leftButton.current == -1;
-			case 0:
-				var _this = flixel_FlxG.mouse._leftButton;
-				if(_this.current == 1 || _this.current == 2) {
-					return flixel_FlxG.mouse._leftButton.current == -1;
-				} else {
-					return true;
-				}
-				break;
-			case 1:
-				var _this = flixel_FlxG.mouse._leftButton;
-				if(!(_this.current == 1 || _this.current == 2)) {
-					return flixel_FlxG.mouse._leftButton.current == 2;
-				} else {
-					return true;
-				}
-				break;
-			case 2:
-				return flixel_FlxG.mouse._leftButton.current == 2;
-			}
-			break;
-		default:
-			return false;
-		}
-	}
-	,__class__: flixel_input_actions_FlxActionInputDigitalMouse
-});
-var flixel_input_actions_FlxActionInputDigitalSteam = function(ActionHandle,Trigger,DeviceHandle) {
-	if(DeviceHandle == null) {
-		DeviceHandle = -2;
-	}
-	flixel_input_actions_FlxActionInputDigital.call(this,flixel_input_actions_FlxInputDevice.STEAM_CONTROLLER,ActionHandle,Trigger,DeviceHandle);
-};
-$hxClasses["flixel.input.actions.FlxActionInputDigitalSteam"] = flixel_input_actions_FlxActionInputDigitalSteam;
-flixel_input_actions_FlxActionInputDigitalSteam.__name__ = "flixel.input.actions.FlxActionInputDigitalSteam";
-flixel_input_actions_FlxActionInputDigitalSteam.__super__ = flixel_input_actions_FlxActionInputDigital;
-flixel_input_actions_FlxActionInputDigitalSteam.prototype = $extend(flixel_input_actions_FlxActionInputDigital.prototype,{
-	steamInput: null
-	,check: function(Action1) {
-		switch(this.trigger) {
-		case -1:
-			return this.steamInput.current == -1;
-		case 0:
-			var _this = this.steamInput;
-			if(_this.current == 0 || _this.current == -1) {
-				return this.steamInput.current == -1;
-			} else {
-				return true;
-			}
-			break;
-		case 1:
-			var _this = this.steamInput;
-			if(!(_this.current == 1 || _this.current == 2)) {
-				return this.steamInput.current == 2;
-			} else {
-				return true;
-			}
-			break;
-		case 2:
-			return this.steamInput.current == 2;
-		}
-	}
-	,update: function() {
-		var controllerHandle = this.deviceID;
-		if(controllerHandle == -2) {
-			controllerHandle = flixel_input_actions_FlxSteamController.getFirstActiveHandle();
-		}
-		var data = flixel_input_actions_FlxSteamController.getDigitalActionData(controllerHandle,this.inputID);
-		if(data.bActive && data.bState) {
-			this.steamInput.press();
-		} else {
-			this.steamInput.release();
-		}
-	}
-	,getSteamControllerData: function(controllerHandle) {
-		if(controllerHandle == -2) {
-			controllerHandle = flixel_input_actions_FlxSteamController.getFirstActiveHandle();
-		}
-		var data = flixel_input_actions_FlxSteamController.getDigitalActionData(controllerHandle,this.inputID);
-		if(data.bActive) {
-			return data.bState;
-		} else {
-			return false;
-		}
-	}
-	,__class__: flixel_input_actions_FlxActionInputDigitalSteam
-});
-var flixel_input_actions_FlxActionInputDigitalIFlxInput = function(Input,Trigger) {
-	flixel_input_actions_FlxActionInputDigital.call(this,flixel_input_actions_FlxInputDevice.IFLXINPUT_OBJECT,0,Trigger);
-	this.input = Input;
-};
-$hxClasses["flixel.input.actions.FlxActionInputDigitalIFlxInput"] = flixel_input_actions_FlxActionInputDigitalIFlxInput;
-flixel_input_actions_FlxActionInputDigitalIFlxInput.__name__ = "flixel.input.actions.FlxActionInputDigitalIFlxInput";
-flixel_input_actions_FlxActionInputDigitalIFlxInput.__super__ = flixel_input_actions_FlxActionInputDigital;
-flixel_input_actions_FlxActionInputDigitalIFlxInput.prototype = $extend(flixel_input_actions_FlxActionInputDigital.prototype,{
-	input: null
-	,check: function(action) {
-		switch(this.trigger) {
-		case -1:
-			return this.input.get_justReleased();
-		case 0:
-			if(this.input.get_pressed()) {
-				return this.input.get_justReleased();
-			} else {
-				return true;
-			}
-			break;
-		case 1:
-			if(!this.input.get_pressed()) {
-				return this.input.get_justPressed();
-			} else {
-				return true;
-			}
-			break;
-		case 2:
-			return this.input.get_justPressed();
-		default:
-			return false;
-		}
-	}
-	,destroy: function() {
-		flixel_input_actions_FlxActionInputDigital.prototype.destroy.call(this);
-		this.input = null;
-	}
-	,__class__: flixel_input_actions_FlxActionInputDigitalIFlxInput
-});
-var flixel_input_actions_FlxActionManager = function() {
-	this.resetOnStateSwitch = flixel_input_actions_ResetPolicy.DEFAULT_SET_ONLY;
-	this.defaultSet = null;
-	this.sets = [];
-	this.register = new flixel_input_actions__$FlxActionManager_ActionSetRegister();
-	this.deviceConnected = new flixel_util__$FlxSignal_FlxSignal3();
-	this.deviceDisconnected = new flixel_util__$FlxSignal_FlxSignal3();
-	this.inputsChanged = new flixel_util__$FlxSignal_FlxSignal1();
-	flixel_FlxG.gamepads.deviceConnected.add($bind(this,this.onDeviceConnected));
-	flixel_FlxG.gamepads.deviceDisconnected.add($bind(this,this.onDeviceDisconnected));
-	flixel_input_actions_FlxSteamController.onControllerConnect = $bind(this,this.updateSteamControllers);
-	flixel_input_actions_FlxSteamController.onOriginUpdate = $bind(this,this.updateSteamOrigins);
-	flixel_FlxG.signals.preStateSwitch.add($bind(this,this.onStateSwitched));
-};
-$hxClasses["flixel.input.actions.FlxActionManager"] = flixel_input_actions_FlxActionManager;
-flixel_input_actions_FlxActionManager.__name__ = "flixel.input.actions.FlxActionManager";
-flixel_input_actions_FlxActionManager.__interfaces__ = [flixel_util_IFlxDestroyable,flixel_input_IFlxInputManager];
-flixel_input_actions_FlxActionManager.prototype = {
-	sets: null
-	,register: null
-	,defaultSet: null
-	,deviceDisconnected: null
-	,deviceConnected: null
-	,inputsChanged: null
-	,resetOnStateSwitch: null
-	,activateSet: function(ActionSet,Device1,DeviceID) {
-		this.register.activate(ActionSet,Device1,DeviceID);
-		this.onChange();
-	}
-	,addActions: function(Actions,ActionSet) {
-		if(ActionSet == null) {
-			ActionSet = 0;
-		}
-		var success = true;
-		var _g = 0;
-		while(_g < Actions.length) {
-			var Action1 = Actions[_g];
-			++_g;
-			var result = this.addAction(Action1);
-			if(!result) {
-				success = false;
-			}
-		}
-		return success;
-	}
-	,addAction: function(Action1,ActionSet) {
-		if(ActionSet == null) {
-			ActionSet = 0;
-		}
-		var success = false;
-		if(this.sets == null) {
-			this.sets = [];
-		}
-		if(this.sets.length == 0) {
-			this.defaultSet = new flixel_input_actions_FlxActionSet("default");
-			var defaultSetIndex = this.addSet(this.defaultSet);
-			this.activateSet(defaultSetIndex,flixel_input_actions_FlxInputDevice.ALL,-1);
-		}
-		if(ActionSet >= 0 && ActionSet < this.sets.length) {
-			success = this.sets[ActionSet].add(Action1);
-		}
-		this.onChange();
-		return success;
-	}
-	,addSet: function(set) {
-		if(this.sets.indexOf(set) != -1) {
-			return -1;
-		}
-		this.sets.push(set);
-		this.onChange();
-		return this.sets.length - 1;
-	}
-	,deactivateSet: function(ActionSet,DeviceID) {
-		if(DeviceID == null) {
-			DeviceID = -1;
-		}
-		this.register.activate(ActionSet,flixel_input_actions_FlxInputDevice.NONE,DeviceID);
-		this.onChange();
-	}
-	,destroy: function() {
-		this.sets = flixel_util_FlxDestroyUtil.destroyArray(this.sets);
-		this.register = flixel_util_FlxDestroyUtil.destroy(this.register);
-	}
-	,getSetIndex: function(Name) {
-		var _g = 0;
-		var _g1 = this.sets.length;
-		while(_g < _g1) {
-			var i = _g++;
-			if(this.sets[i].name == Name) {
-				return i;
-			}
-		}
-		return -1;
-	}
-	,getSetName: function(Index) {
-		if(Index >= 0 && Index < this.sets.length) {
-			return this.sets[Index].name;
-		}
-		return "";
-	}
-	,getSet: function(Index) {
-		if(Index >= 0 && Index < this.sets.length) {
-			return this.sets[Index];
-		}
-		return null;
-	}
-	,getSetActivatedForDevice: function(device,deviceID) {
-		if(deviceID == null) {
-			deviceID = -1;
-		}
-		var id = -1;
-		var index = -1;
-		switch(device._hx_index) {
-		case 1:
-			index = this.register.mouseSet;
-			break;
-		case 3:
-			index = this.register.keyboardSet;
-			break;
-		case 4:
-			switch(deviceID) {
-			case -3:
-				index = -1;
-				break;
-			case -2:
-				id = flixel_FlxG.gamepads.getFirstActiveGamepadID();
-				break;
-			case -1:
-				index = this.register.gamepadAllSet;
-				break;
-			default:
-				if(this.register.gamepadAllSet != -1) {
-					index = this.register.gamepadAllSet;
-				} else {
-					id = deviceID;
-				}
-			}
-			if(id >= 0 && id < this.register.gamepadSets.length) {
-				index = this.register.gamepadSets[id];
-			}
-			break;
-		case 5:
-			switch(deviceID) {
-			case -3:
-				index = -1;
-				break;
-			case -1:
-				index = this.register.steamControllerAllSet;
-				break;
-			default:
-				if(this.register.steamControllerAllSet != -1) {
-					index = this.register.steamControllerAllSet;
-				} else {
-					id = deviceID;
-				}
-			}
-			if(id >= 0 && id < this.register.steamControllerSets.length) {
-				index = this.register.steamControllerSets[id];
-			}
-			break;
-		case 9:
-			if(deviceID == -1) {
-				index = this.register.gamepadAllSet;
-			}
-			break;
-		default:
-			index = -1;
-		}
-		if(index >= 0 && index < this.sets.length) {
-			return this.sets[index];
-		}
-		return null;
-	}
-	,initFromJson: function(data,CallbackDigital,CallbackAnalog) {
-		if(data == null) {
-			return 0;
-		}
-		var i = 0;
-		var actionSets = data.actionSets;
-		if(actionSets == null) {
-			return 0;
-		}
-		var _g = 0;
-		while(_g < actionSets.length) {
-			var set = actionSets[_g];
-			++_g;
-			if(this.addSet(flixel_input_actions_FlxActionSet.fromJson(set,CallbackDigital,CallbackAnalog)) != -1) {
-				++i;
-			}
-		}
-		this.onChange();
-		return i;
-	}
-	,exportToJson: function() {
-		var space = "\t";
-		return JSON.stringify({ "actionSets" : this.sets},function(key,value) {
-			if(((value) instanceof flixel_input_actions_FlxAction)) {
-				var fa = value;
-				return fa.name;
-			}
-			if(((value) instanceof flixel_input_actions_FlxActionSet)) {
-				var fas = value;
-				return { "name" : fas.name, "digitalActions" : fas.digitalActions, "analogActions" : fas.analogActions};
-			}
-			return value;
-		},space);
-	}
-	,removeSet: function(Set,Destroy) {
-		if(Destroy == null) {
-			Destroy = true;
-		}
-		var success = HxOverrides.remove(this.sets,Set);
-		if(success) {
-			if(Destroy) {
-				flixel_util_FlxDestroyUtil.destroy(Set);
-			}
-			this.onChange();
-		}
-		return success;
-	}
-	,removeAction: function(Action1,ActionSet) {
-		var success = false;
-		if(ActionSet >= 0 && ActionSet < this.sets.length) {
-			success = this.sets[ActionSet].remove(Action1);
-		}
-		this.onChange();
-		return success;
-	}
-	,reset: function() {
-	}
-	,get_numSets: function() {
-		return this.sets.length;
-	}
-	,onChange: function() {
-		this.register.markActiveSets(this.sets);
-	}
-	,onDeviceConnected: function(gamepad) {
-		this.deviceConnected.dispatch(flixel_input_actions_FlxInputDevice.GAMEPAD,gamepad.id,Std.string(gamepad.model).toLowerCase());
-	}
-	,onDeviceDisconnected: function(gamepad) {
-		if(gamepad != null) {
-			var actionSet = this.getSetActivatedForDevice(flixel_input_actions_FlxInputDevice.GAMEPAD,gamepad.id);
-			if(actionSet != null && actionSet.active) {
-				var id = gamepad.id;
-				var model = gamepad.model != null ? Std.string(gamepad.model).toLowerCase() : "";
-				this.deviceDisconnected.dispatch(flixel_input_actions_FlxInputDevice.GAMEPAD,id,model);
-			}
-		}
-	}
-	,onFocus: function() {
-	}
-	,onFocusLost: function() {
-	}
-	,onStateSwitched: function() {
-		switch(this.resetOnStateSwitch._hx_index) {
-		case 1:
-			while(this.sets.length > 0) this.removeSet(this.getSet(0),true);
-			this.defaultSet = null;
-			break;
-		case 2:
-			if(this.defaultSet != null) {
-				this.removeSet(this.defaultSet,true);
-			}
-			this.defaultSet = null;
-			break;
-		default:
-		}
-	}
-	,onSteamConnected: function(handle) {
-		var allSetIndex = this.register.steamControllerAllSet;
-		if(allSetIndex != -1) {
-			this.activateSet(allSetIndex,flixel_input_actions_FlxInputDevice.STEAM_CONTROLLER,-1);
-		} else {
-			var actionSet = this.getSetActivatedForDevice(flixel_input_actions_FlxInputDevice.STEAM_CONTROLLER,handle);
-			if(actionSet != null && actionSet.active) {
-				this.activateSet(this.getSetIndex(actionSet.name),flixel_input_actions_FlxInputDevice.STEAM_CONTROLLER,handle);
-			}
-		}
-		this.deviceConnected.dispatch(flixel_input_actions_FlxInputDevice.STEAM_CONTROLLER,handle,"");
-	}
-	,onSteamDisconnected: function(handle) {
-		if(handle >= 0) {
-			var actionSet = this.getSetActivatedForDevice(flixel_input_actions_FlxInputDevice.STEAM_CONTROLLER,handle);
-			if(actionSet != null && actionSet.active) {
-				this.deviceDisconnected.dispatch(flixel_input_actions_FlxInputDevice.STEAM_CONTROLLER,handle,"");
-			}
-		}
-	}
-	,updateSteamControllers: function() {
-	}
-	,updateSteamOrigins: function() {
-	}
-	,update: function() {
-		this.register.update(this.sets);
-	}
-	,__class__: flixel_input_actions_FlxActionManager
-	,__properties__: {get_numSets:"get_numSets"}
-};
-var flixel_input_actions__$FlxActionManager_ActionSetRegister = function() {
-	this.steamControllerAllSet = -1;
-	this.gamepadAllSet = -1;
-	this.keyboardSet = -1;
-	this.mouseSet = -1;
-	flixel_input_actions_FlxSteamController.init();
-	this.gamepadSets = [];
-	this.steamControllerSets = [];
-};
-$hxClasses["flixel.input.actions._FlxActionManager.ActionSetRegister"] = flixel_input_actions__$FlxActionManager_ActionSetRegister;
-flixel_input_actions__$FlxActionManager_ActionSetRegister.__name__ = "flixel.input.actions._FlxActionManager.ActionSetRegister";
-flixel_input_actions__$FlxActionManager_ActionSetRegister.__interfaces__ = [flixel_util_IFlxDestroyable];
-flixel_input_actions__$FlxActionManager_ActionSetRegister.prototype = {
-	mouseSet: null
-	,keyboardSet: null
-	,gamepadAllSet: null
-	,steamControllerAllSet: null
-	,gamepadSets: null
-	,steamControllerSets: null
-	,destroy: function() {
-		this.gamepadSets = null;
-		this.steamControllerSets = null;
-	}
-	,activate: function(ActionSet,Device1,DeviceID) {
-		if(DeviceID == null) {
-			DeviceID = -2;
-		}
-		this.setActivate(ActionSet,Device1,DeviceID);
-	}
-	,markActiveSets: function(sets) {
-		var _g = 0;
-		var _g1 = sets.length;
-		while(_g < _g1) {
-			var i = _g++;
-			sets[i].active = false;
-		}
-		this.syncDevice(flixel_input_actions_FlxInputDevice.MOUSE,sets);
-		this.syncDevice(flixel_input_actions_FlxInputDevice.KEYBOARD,sets);
-		this.syncDevice(flixel_input_actions_FlxInputDevice.GAMEPAD,sets);
-		this.syncDevice(flixel_input_actions_FlxInputDevice.STEAM_CONTROLLER,sets);
-	}
-	,update: function(sets) {
-		var _g = 0;
-		var _g1 = sets.length;
-		while(_g < _g1) {
-			var i = _g++;
-			sets[i].update();
-		}
-	}
-	,updateSteam: function(sets) {
-	}
-	,setActivate: function(ActionSet,Device1,DeviceID,DoActivate) {
-		if(DoActivate == null) {
-			DoActivate = true;
-		}
-		if(DeviceID == null) {
-			DeviceID = -2;
-		}
-		switch(Device1._hx_index) {
-		case 1:
-			this.mouseSet = DoActivate ? ActionSet : -1;
-			break;
-		case 3:
-			this.keyboardSet = DoActivate ? ActionSet : -1;
-			break;
-		case 4:
-			switch(DeviceID) {
-			case -3:
-				this.clearSetFromArray(ActionSet,this.gamepadSets);
-				break;
-			case -2:
-				this.gamepadSets[flixel_FlxG.gamepads.getFirstActiveGamepadID()] = DoActivate ? ActionSet : -1;
-				break;
-			case -1:
-				this.clearSetFromArray(-1,this.gamepadSets);
-				this.gamepadAllSet = DoActivate ? ActionSet : -1;
-				break;
-			default:
-				this.gamepadSets[DeviceID] = DoActivate ? ActionSet : -1;
-			}
-			break;
-		case 5:
-			switch(DeviceID) {
-			case -3:
-				this.clearSetFromArray(ActionSet,this.steamControllerSets);
-				break;
-			case -2:
-				this.steamControllerSets[flixel_input_actions_FlxSteamController.getFirstActiveHandle()] = DoActivate ? ActionSet : -1;
-				break;
-			case -1:
-				this.steamControllerAllSet = DoActivate ? ActionSet : -1;
-				this.clearSetFromArray(-1,this.steamControllerSets);
-				break;
-			default:
-				this.steamControllerSets[DeviceID] = DoActivate ? ActionSet : -1;
-			}
-			break;
-		case 9:
-			this.setActivate(ActionSet,flixel_input_actions_FlxInputDevice.MOUSE,DeviceID,DoActivate);
-			this.setActivate(ActionSet,flixel_input_actions_FlxInputDevice.KEYBOARD,DeviceID,DoActivate);
-			this.setActivate(ActionSet,flixel_input_actions_FlxInputDevice.GAMEPAD,DeviceID,DoActivate);
-			break;
-		case 10:
-			this.setActivate(ActionSet,flixel_input_actions_FlxInputDevice.ALL,DeviceID,false);
-			break;
-		default:
-		}
-	}
-	,updateSteamOrigins: function(sets) {
-		return [];
-	}
-	,updateDigitalActionOrigins: function(action,deviceID,setHandle) {
-	}
-	,updateAnalogActionOrigins: function(action,deviceID,setHandle) {
-	}
-	,cheapChecksum: function(arr) {
-		var sum1 = 0;
-		var sum2 = 0;
-		if(arr != null) {
-			var _g = 0;
-			while(_g < arr.length) {
-				var n = arr[_g];
-				++_g;
-				sum1 = (sum1 + n) % 255;
-				sum2 = (sum2 + sum1) % 255;
-			}
-		}
-		return sum2 << 8 | sum1;
-	}
-	,updateSteamInputs: function(sets) {
-	}
-	,changeSteamControllerActionSet: function(controllerHandle,newSet,sets) {
-		var lastSet = flixel_input_actions_FlxSteamController.getCurrentActionSet(controllerHandle);
-		if(lastSet == newSet) {
-			return;
-		}
-		if(sets == null) {
-			return;
-		}
-		if(lastSet != -1) {
-			if(lastSet < sets.length) {
-				sets[lastSet].attachSteamController(controllerHandle,false);
-			}
-		}
-		sets[newSet].attachSteamController(controllerHandle);
-	}
-	,syncDevice: function(device,sets) {
-		switch(device._hx_index) {
-		case 1:
-			if(this.mouseSet >= 0 && this.mouseSet < sets.length) {
-				sets[this.mouseSet].active = true;
-			}
-			break;
-		case 3:
-			if(this.keyboardSet >= 0 && this.keyboardSet < sets.length) {
-				sets[this.keyboardSet].active = true;
-			}
-			break;
-		case 4:
-			if(this.gamepadAllSet >= 0 && this.gamepadAllSet < sets.length) {
-				sets[this.gamepadAllSet].active = true;
-			} else {
-				var _g = 0;
-				var _g1 = this.gamepadSets.length;
-				while(_g < _g1) {
-					var i = _g++;
-					var gset = this.gamepadSets[i];
-					if(gset >= 0 && gset < sets.length) {
-						sets[gset].active = true;
-					}
-				}
-			}
-			break;
-		case 5:
-			this.updateSteamInputs(sets);
-			if(this.steamControllerAllSet >= 0 && this.steamControllerAllSet < sets.length) {
-				sets[this.steamControllerAllSet].active = true;
-			} else {
-				var _g = 0;
-				var _g1 = this.steamControllerSets.length;
-				while(_g < _g1) {
-					var i = _g++;
-					var sset = this.steamControllerSets[i];
-					if(sset >= 0 && sset < sets.length) {
-						sets[sset].active = true;
-					}
-				}
-			}
-			break;
-		default:
-		}
-	}
-	,clearSetFromArray: function(ActionSet,array) {
-		if(ActionSet == null) {
-			ActionSet = -1;
-		}
-		var _g = 0;
-		var _g1 = array.length;
-		while(_g < _g1) {
-			var i = _g++;
-			if(ActionSet == -1 || array[i] == ActionSet) {
-				array[i] = -1;
-			}
-		}
-	}
-	,__class__: flixel_input_actions__$FlxActionManager_ActionSetRegister
-};
-var flixel_input_actions_ResetPolicy = $hxEnums["flixel.input.actions.ResetPolicy"] = { __ename__:"flixel.input.actions.ResetPolicy",__constructs__:null
-	,NONE: {_hx_name:"NONE",_hx_index:0,__enum__:"flixel.input.actions.ResetPolicy",toString:$estr}
-	,ALL_SETS: {_hx_name:"ALL_SETS",_hx_index:1,__enum__:"flixel.input.actions.ResetPolicy",toString:$estr}
-	,DEFAULT_SET_ONLY: {_hx_name:"DEFAULT_SET_ONLY",_hx_index:2,__enum__:"flixel.input.actions.ResetPolicy",toString:$estr}
-};
-flixel_input_actions_ResetPolicy.__constructs__ = [flixel_input_actions_ResetPolicy.NONE,flixel_input_actions_ResetPolicy.ALL_SETS,flixel_input_actions_ResetPolicy.DEFAULT_SET_ONLY];
-var flixel_input_actions_FlxSteamController = function() { };
-$hxClasses["flixel.input.actions.FlxSteamController"] = flixel_input_actions_FlxSteamController;
-flixel_input_actions_FlxSteamController.__name__ = "flixel.input.actions.FlxSteamController";
-flixel_input_actions_FlxSteamController.__properties__ = {get_MAX_ORIGINS:"get_MAX_ORIGINS",get_MAX_CONTROLLERS:"get_MAX_CONTROLLERS"};
-flixel_input_actions_FlxSteamController.controllers = null;
-flixel_input_actions_FlxSteamController.get_MAX_CONTROLLERS = function() {
-	return 0;
-};
-flixel_input_actions_FlxSteamController.get_MAX_ORIGINS = function() {
-	return 0;
-};
-flixel_input_actions_FlxSteamController.clear = function() {
-};
-flixel_input_actions_FlxSteamController.init = function() {
-	flixel_input_actions_FlxSteamController.controllers = [];
-};
-flixel_input_actions_FlxSteamController.getActionSetHandle = function(name) {
-	return -1;
-};
-flixel_input_actions_FlxSteamController.getCurrentActionSet = function(SteamControllerHandle) {
-	return -1;
-};
-flixel_input_actions_FlxSteamController.activateActionSet = function(SteamControllerHandle,ActionSetHandle) {
-};
-flixel_input_actions_FlxSteamController.getFirstActiveHandle = function() {
-	return -1;
-};
-flixel_input_actions_FlxSteamController.getConnectedControllers = function() {
-	return [];
-};
-flixel_input_actions_FlxSteamController.getAnalogActionData = function(controller,action,data) {
-	return null;
-};
-flixel_input_actions_FlxSteamController.getDigitalActionData = function(controller,action) {
-	return new flixel_input_actions__$FlxSteamController_DigitalActionData(false,false);
-};
-flixel_input_actions_FlxSteamController.getAnalogActionHandle = function(name) {
-	return -1;
-};
-flixel_input_actions_FlxSteamController.getDigitalActionHandle = function(name) {
-	return -1;
-};
-var flixel_input_actions__$FlxSteamController_DigitalActionData = function(bActive,bState) {
-	this.bActive = bActive;
-	this.bState = bState;
-};
-$hxClasses["flixel.input.actions._FlxSteamController.DigitalActionData"] = flixel_input_actions__$FlxSteamController_DigitalActionData;
-flixel_input_actions__$FlxSteamController_DigitalActionData.__name__ = "flixel.input.actions._FlxSteamController.DigitalActionData";
-flixel_input_actions__$FlxSteamController_DigitalActionData.prototype = {
-	bActive: null
-	,bState: null
-	,__class__: flixel_input_actions__$FlxSteamController_DigitalActionData
-};
-var flixel_input_actions__$FlxSteamController_FlxSteamControllerMetadata = function() {
-	this.connected = new flixel_input_FlxInput(0);
-	this.active = false;
-	this.actionSet = -1;
-	this.handle = -1;
-};
-$hxClasses["flixel.input.actions._FlxSteamController.FlxSteamControllerMetadata"] = flixel_input_actions__$FlxSteamController_FlxSteamControllerMetadata;
-flixel_input_actions__$FlxSteamController_FlxSteamControllerMetadata.__name__ = "flixel.input.actions._FlxSteamController.FlxSteamControllerMetadata";
-flixel_input_actions__$FlxSteamController_FlxSteamControllerMetadata.prototype = {
-	handle: null
-	,actionSet: null
-	,active: null
-	,connected: null
-	,__class__: flixel_input_actions__$FlxSteamController_FlxSteamControllerMetadata
-};
-var flixel_input_actions__$FlxSteamController_FlxSteamUpdater = function() {
-	this.originTime = 0.0;
-	this.controllerTime = 0.0;
-};
-$hxClasses["flixel.input.actions._FlxSteamController.FlxSteamUpdater"] = flixel_input_actions__$FlxSteamController_FlxSteamUpdater;
-flixel_input_actions__$FlxSteamController_FlxSteamUpdater.__name__ = "flixel.input.actions._FlxSteamController.FlxSteamUpdater";
-flixel_input_actions__$FlxSteamController_FlxSteamUpdater.__interfaces__ = [flixel_input_IFlxInputManager];
-flixel_input_actions__$FlxSteamController_FlxSteamUpdater.prototype = {
-	controllerTime: null
-	,originTime: null
-	,destroy: function() {
-	}
-	,reset: function() {
-	}
-	,update: function() {
-	}
-	,onFocus: function() {
-	}
-	,onFocusLost: function() {
-	}
-	,__class__: flixel_input_actions__$FlxSteamController_FlxSteamUpdater
-};
 var flixel_input_gamepad_FlxGamepad = function(ID,Manager,Model,Attachment) {
 	this.buttons = [];
 	this._deadZone = 0.15;
@@ -102352,31 +88340,31 @@ flixel_input_gamepad_FlxGamepadManager.prototype = {
 	,onDeviceRemoved: function(Event1) {
 		this.removeGamepad(Event1.device);
 	}
-	,findGamepadIndex: function(Device1) {
-		if(Device1 == null) {
+	,findGamepadIndex: function(Device) {
+		if(Device == null) {
 			return -1;
 		}
 		var _g = 0;
 		var _g1 = openfl_ui_GameInput.numDevices;
 		while(_g < _g1) {
 			var i = _g++;
-			if(openfl_ui_GameInput.getDeviceAt(i) == Device1) {
+			if(openfl_ui_GameInput.getDeviceAt(i) == Device) {
 				return i;
 			}
 		}
 		return -1;
 	}
-	,addGamepad: function(Device1) {
-		if(Device1 == null) {
+	,addGamepad: function(Device) {
+		if(Device == null) {
 			return;
 		}
-		Device1.enabled = true;
-		var id = this.findGamepadIndex(Device1);
+		Device.enabled = true;
+		var id = this.findGamepadIndex(Device);
 		if(id < 0) {
 			return;
 		}
-		var gamepad = this.createByID(id,this.getModelFromDeviceName(Device1.name));
-		gamepad._device = Device1;
+		var gamepad = this.createByID(id,this.getModelFromDeviceName(Device.name));
+		gamepad._device = Device;
 		this.deviceConnected.dispatch(gamepad);
 	}
 	,getModelFromDeviceName: function(name) {
@@ -102410,8 +88398,8 @@ flixel_input_gamepad_FlxGamepadManager.prototype = {
 			return flixel_input_gamepad_FlxGamepadModel.UNKNOWN;
 		}
 	}
-	,removeGamepad: function(Device1) {
-		if(Device1 == null) {
+	,removeGamepad: function(Device) {
+		if(Device == null) {
 			return;
 		}
 		var _g = 0;
@@ -102419,7 +88407,7 @@ flixel_input_gamepad_FlxGamepadManager.prototype = {
 		while(_g < _g1) {
 			var i = _g++;
 			var gamepad = this._gamepads[i];
-			if(gamepad != null && gamepad._device == Device1) {
+			if(gamepad != null && gamepad._device == Device) {
 				this.removeByID(i);
 			}
 		}
@@ -117691,24 +103679,6 @@ flixel_util_FlxArrayUtil.flatten2DArray_Int = function(array) {
 	}
 	return result;
 };
-flixel_util_FlxArrayUtil.setLength_cacheValue_T = function(array,newLength) {
-	if(newLength < 0) {
-		return array;
-	}
-	var oldLength = array.length;
-	var diff = newLength - oldLength;
-	if(diff >= 0) {
-		return array;
-	}
-	diff = -diff;
-	var _g = 0;
-	var _g1 = diff;
-	while(_g < _g1) {
-		var i = _g++;
-		array.pop();
-	}
-	return array;
-};
 flixel_util_FlxArrayUtil.fastSplice_flixel_tweens_FlxTween = function(array,element) {
 	var index = array.indexOf(element);
 	if(index != -1) {
@@ -117730,6 +103700,24 @@ flixel_util_FlxArrayUtil.fastSplice_flixel_util_FlxTimer = function(array,elemen
 flixel_util_FlxArrayUtil.swapAndPop_fastSplice_T = function(array,index) {
 	array[index] = array[array.length - 1];
 	array.pop();
+	return array;
+};
+flixel_util_FlxArrayUtil.setLength_cacheValue_T = function(array,newLength) {
+	if(newLength < 0) {
+		return array;
+	}
+	var oldLength = array.length;
+	var diff = newLength - oldLength;
+	if(diff >= 0) {
+		return array;
+	}
+	diff = -diff;
+	var _g = 0;
+	var _g1 = diff;
+	while(_g < _g1) {
+		var i = _g++;
+		array.pop();
+	}
 	return array;
 };
 flixel_util_FlxArrayUtil.setLength_flixel_group_FlxTypedGroup_T = function(array,newLength) {
@@ -121388,6 +107376,41 @@ var flixel_util_FlxSaveStatus = $hxEnums["flixel.util.FlxSaveStatus"] = { __enam
 	,ERROR: {_hx_name:"ERROR",_hx_index:2,__enum__:"flixel.util.FlxSaveStatus",toString:$estr}
 };
 flixel_util_FlxSaveStatus.__constructs__ = [flixel_util_FlxSaveStatus.SUCCESS,flixel_util_FlxSaveStatus.PENDING,flixel_util_FlxSaveStatus.ERROR];
+var flixel_util_FlxTypedSignal = {};
+flixel_util_FlxTypedSignal.__properties__ = {get_dispatch:"get_dispatch"};
+flixel_util_FlxTypedSignal.add = function(this1,listener) {
+	this1.add(listener);
+};
+flixel_util_FlxTypedSignal.addOnce = function(this1,listener) {
+	this1.addOnce(listener);
+};
+flixel_util_FlxTypedSignal.remove = function(this1,listener) {
+	this1.remove(listener);
+};
+flixel_util_FlxTypedSignal.has = function(this1,listener) {
+	return this1.has(listener);
+};
+flixel_util_FlxTypedSignal.removeAll = function(this1) {
+	this1.removeAll();
+};
+flixel_util_FlxTypedSignal.get_dispatch = function(this1) {
+	return this1.dispatch;
+};
+flixel_util_FlxTypedSignal.toSignal0 = function(signal) {
+	return new flixel_util__$FlxSignal_FlxSignal0();
+};
+flixel_util_FlxTypedSignal.toSignal1 = function(signal) {
+	return new flixel_util__$FlxSignal_FlxSignal1();
+};
+flixel_util_FlxTypedSignal.toSignal2 = function(signal) {
+	return new flixel_util__$FlxSignal_FlxSignal2();
+};
+flixel_util_FlxTypedSignal.toSignal3 = function(signal) {
+	return new flixel_util__$FlxSignal_FlxSignal3();
+};
+flixel_util_FlxTypedSignal.toSignal4 = function(signal) {
+	return new flixel_util__$FlxSignal_FlxSignal4();
+};
 var flixel_util__$FlxSignal_FlxSignalHandler = function(listener,dispatchOnce) {
 	this.dispatchOnce = false;
 	this.listener = listener;
@@ -144090,7 +130113,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 624682;
+	this.version = 61349;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -193528,7 +179551,7 @@ var options_ControlsSubState = function() {
 	this.rebindingKey = false;
 	this.grpInputsAlt = [];
 	this.grpInputs = [];
-	this.optionShit = [["NOTES"],["Left","note_left"],["Down","note_down"],["Up","note_up"],["Right","note_right"],[""],["UI"],["Left","ui_left"],["Down","ui_down"],["Up","ui_up"],["Right","ui_right"],[""],["Reset","reset"],["Accept","accept"],["Back","back"],["Pause","pause"],[""],["VOLUME"],["Mute","volume_mute"],["Up","volume_up"],["Down","volume_down"],[""],["DEBUG"],["Key 1","debug_1"],["Key 2","debug_2"]];
+	this.optionShit = [["NOTES"],["4 KEY"],["Left","note_left"],["Down","note_down"],["Up","note_up"],["Right","note_right"],[""],["1 KEY"],["Center","note_1K_space"],[""],["2 KEY"],["Left","note_2K_left"],["Right","note_2K_right"],[""],["3 KEY"],["Left","note_3K_left"],["Center","note_3K_space"],["Right","note_3K_right"],[""],["5 KEY"],["Left","note_5K_left"],["Down","note_5K_down"],["Center","note_5K_space"],["Up","note_5K_up"],["Right","note_5K_right"],[""],["6 KEY"],["Left","note_6K_left"],["Down","note_6K_down"],["Right","note_6K_right"],["Left 2","note_6K_left2"],["Up","note_6K_up"],["Right 2","note_6K_right2"],[""],["7 KEY"],["Left","note_7K_left"],["Down","note_7K_down"],["Right","note_7K_right"],["Center","note_7K_space"],["Left 2","note_7K_left2"],["Up","note_7K_up"],["Right 2","note_7K_right2"],[""],["8 KEY"],["Left","note_8K_left"],["Down","note_8K_down"],["Up","note_8K_up"],["Right","note_8K_right"],["Left 2","note_8K_left2"],["Down 2","note_8K_down2"],["Up 2","note_8K_up2"],["Right 2","note_8K_right2"],[""],["9 KEY"],["Left","note_9K_left"],["Down","note_9K_down"],["Up","note_9K_up"],["Right","note_9K_right"],["Center","note_9K_space"],["Left 2","note_9K_left2"],["Down 2","note_9K_down2"],["Up 2","note_9K_up2"],["Right 2","note_9K_right2"],[""],["UI"],["Left","ui_left"],["Down","ui_down"],["Up","ui_up"],["Right","ui_right"],[""],["Reset","reset"],["Accept","accept"],["Back","back"],["Pause","pause"],[""],["VOLUME"],["Mute","volume_mute"],["Up","volume_up"],["Down","volume_down"],[""],["DEBUG"],["Key 1","debug_1"],["Key 2","debug_2"]];
 	this.bindLength = 0;
 	MusicBeatSubstate.call(this);
 	var bg = new flixel_FlxSprite();
@@ -193551,7 +179574,7 @@ var options_ControlsSubState = function() {
 		if(this.unselectableCheck(i,true)) {
 			isCentered = true;
 		}
-		var optionText = new Alphabet(200 + (flixel_FlxG.width - 1280) / 2,300,this.optionShit[i][0],!isCentered || isDefaultKey);
+		var optionText = new Alphabet(125 + (flixel_FlxG.width - 1280) / 2,300,this.optionShit[i][0],!isCentered || isDefaultKey);
 		optionText.isMenuItem = true;
 		if(isCentered) {
 			var axes = flixel_util_FlxAxes.X;
@@ -193614,23 +179637,42 @@ options_ControlsSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 	,bindingTime: null
 	,update: function(elapsed) {
 		if(!this.rebindingKey) {
-			if(PlayerSettings.player1.controls._ui_upP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state)) {
 				this.changeSelection(-1);
 			}
-			if(PlayerSettings.player1.controls._ui_downP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state)) {
 				this.changeSelection(1);
 			}
-			if(PlayerSettings.player1.controls._ui_leftP.check() || PlayerSettings.player1.controls._ui_rightP.check()) {
+			var tmp;
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JP;
+				tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+			} else {
+				tmp = true;
+			}
+			if(tmp) {
 				this.changeAlt();
 			}
-			if(PlayerSettings.player1.controls._back.check()) {
-				ClientPrefs.reloadControls();
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
+				dge_input_device_KeyboardControls.reloadControls();
+				dge_input_device_KeyboardControls.saveKeybind();
 				this.close();
 				flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
 			}
-			if(PlayerSettings.player1.controls._accept.check() && this.nextAccept <= 0) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if((dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) && this.nextAccept <= 0) {
 				if(this.optionShit[options_ControlsSubState.curSelected][0] == options_ControlsSubState.defaultKey) {
-					ClientPrefs.keyBinds = haxe_ds_StringMap.createCopy(ClientPrefs.defaultKeys.h);
+					dge_input_device_KeyboardControls.keyBinds = haxe_ds_StringMap.createCopy(dge_input_device_KeyboardControls.defaultKeys.h);
 					this.reloadKeys();
 					this.changeSelection();
 					flixel_FlxG.sound.play(Paths.sound("confirmMenu"));
@@ -193648,13 +179690,13 @@ options_ControlsSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 		} else {
 			var keyPressed = flixel_FlxG.keys.firstJustPressed();
 			if(keyPressed > -1) {
-				var keysArray = ClientPrefs.keyBinds.h[this.optionShit[options_ControlsSubState.curSelected][1]];
-				keysArray[options_ControlsSubState.curAlt ? 1 : 0] = keyPressed;
+				var keysArrayNew = dge_input_device_KeyboardControls.keyBinds.h[this.optionShit[options_ControlsSubState.curSelected][1]];
+				keysArrayNew[options_ControlsSubState.curAlt ? 1 : 0] = keyPressed;
 				var opposite = options_ControlsSubState.curAlt ? 0 : 1;
-				if(keysArray[opposite] == keysArray[1 - opposite]) {
-					keysArray[opposite] = -1;
+				if(keysArrayNew[opposite] == keysArrayNew[1 - opposite]) {
+					keysArrayNew[opposite] = -1;
 				}
-				ClientPrefs.keyBinds.h[this.optionShit[options_ControlsSubState.curSelected][1]] = keysArray;
+				dge_input_device_KeyboardControls.keyBinds.h[this.optionShit[options_ControlsSubState.curSelected][1]] = keysArrayNew;
 				this.reloadKeys();
 				flixel_FlxG.sound.play(Paths.sound("confirmMenu"));
 				this.rebindingKey = false;
@@ -193795,14 +179837,14 @@ options_ControlsSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 		}
 	}
 	,addBindTexts: function(optionText,num) {
-		var keys = ClientPrefs.keyBinds.h[this.optionShit[num][1]];
+		var keys = dge_input_device_KeyboardControls.keyBinds.h[this.optionShit[num][1]];
 		var text1 = new AttachedText(InputFormatter.getKeyName(keys[0]),400,-55);
 		text1.setPosition(optionText.x + 400,optionText.y - 55);
 		text1.sprTracker = optionText;
 		this.grpInputs.push(text1);
 		this.add(text1);
-		var text2 = new AttachedText(InputFormatter.getKeyName(keys[1]),650,-55);
-		text2.setPosition(optionText.x + 650,optionText.y - 55);
+		var text2 = new AttachedText(InputFormatter.getKeyName(keys[1]),800,-55);
+		text2.setPosition(optionText.x + 800,optionText.y - 55);
 		text2.sprTracker = optionText;
 		this.grpInputsAlt.push(text2);
 		this.add(text2);
@@ -193820,7 +179862,6 @@ options_ControlsSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 			HxOverrides.remove(this.grpInputsAlt,item);
 			item.destroy();
 		}
-		haxe_Log.trace("Reloaded keys: " + (ClientPrefs.keyBinds == null ? "null" : haxe_ds_StringMap.stringify(ClientPrefs.keyBinds.h)),{ fileName : "source/options/ControlsSubState.hx", lineNumber : 307, className : "options.ControlsSubState", methodName : "reloadKeys"});
 		var _g = 0;
 		var _g1 = this.grpOptions.length;
 		while(_g < _g1) {
@@ -194058,17 +180099,25 @@ options_MainOptionsState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,update: function(elapsed) {
 		MusicBeatState.prototype.update.call(this,elapsed);
-		if(PlayerSettings.player1.controls._ui_upP.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state)) {
 			this.changeSelection(-1);
 		}
-		if(PlayerSettings.player1.controls._ui_downP.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state)) {
 			this.changeSelection(1);
 		}
-		if(PlayerSettings.player1.controls._back.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
 			flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
 			MusicBeatState.switchState(new MainMenuState());
 		}
-		if(PlayerSettings.player1.controls._accept.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
 			this.openSelectedSubstate(this.options[options_MainOptionsState.curSelected]);
 		}
 	}
@@ -194478,7 +180527,9 @@ options_NoteOffsetState.prototype = $extend(MusicBeatState.prototype,{
 					this.repositionCombo();
 				}
 			}
-			if(PlayerSettings.player1.controls._reset.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("reset",state) || dge_input_device_GamepadControls.checkButton("reset",state)) {
 				var _g = 0;
 				var _g1 = ClientPrefs.comboOffset.length;
 				while(_g < _g1) {
@@ -194488,21 +180539,49 @@ options_NoteOffsetState.prototype = $extend(MusicBeatState.prototype,{
 				this.repositionCombo();
 			}
 		} else {
-			if(PlayerSettings.player1.controls._ui_leftP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state)) {
 				this.barPercent = Math.max(this.delayMin,Math.min(ClientPrefs.noteOffset - 1,this.delayMax));
 				this.updateNoteDelay();
-			} else if(PlayerSettings.player1.controls._ui_rightP.check()) {
-				this.barPercent = Math.max(this.delayMin,Math.min(ClientPrefs.noteOffset + 1,this.delayMax));
-				this.updateNoteDelay();
+			} else {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JP;
+				if(dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state)) {
+					this.barPercent = Math.max(this.delayMin,Math.min(ClientPrefs.noteOffset + 1,this.delayMax));
+					this.updateNoteDelay();
+				}
 			}
 			var mult = 1;
-			if(PlayerSettings.player1.controls._ui_left.check() || PlayerSettings.player1.controls._ui_right.check()) {
+			var tmp;
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.P;
+			if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.P;
+				tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+			} else {
+				tmp = true;
+			}
+			if(tmp) {
 				this.holdTime += elapsed;
-				if(PlayerSettings.player1.controls._ui_left.check()) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.P;
+				if(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state)) {
 					mult = -1;
 				}
 			}
-			if(PlayerSettings.player1.controls._ui_leftR.check() || PlayerSettings.player1.controls._ui_rightR.check()) {
+			var tmp;
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JR;
+			if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JR;
+				tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+			} else {
+				tmp = true;
+			}
+			if(tmp) {
 				this.holdTime = 0;
 			}
 			if(this.holdTime > 0.5) {
@@ -194510,17 +180589,23 @@ options_NoteOffsetState.prototype = $extend(MusicBeatState.prototype,{
 				this.barPercent = Math.max(this.delayMin,Math.min(this.barPercent,this.delayMax));
 				this.updateNoteDelay();
 			}
-			if(PlayerSettings.player1.controls._reset.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("reset",state) || dge_input_device_GamepadControls.checkButton("reset",state)) {
 				this.holdTime = 0;
 				this.barPercent = 0;
 				this.updateNoteDelay();
 			}
 		}
-		if(PlayerSettings.player1.controls._accept.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
 			this.onComboMenu = !this.onComboMenu;
 			this.updateMode();
 		}
-		if(PlayerSettings.player1.controls._back.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
 			if(this.zoomTween != null) {
 				this.zoomTween.cancel();
 			}
@@ -194700,12 +180785,15 @@ options_NoteOffsetState.prototype = $extend(MusicBeatState.prototype,{
 });
 var options_NotesSubState = function() {
 	this.changingNote = false;
+	this.currentMania = 4;
 	this.posX = 230 + (flixel_FlxG.width - 1280) / 2;
 	this.nextAccept = 5;
 	this.holdTime = 0;
 	this.curValue = 0;
 	this.shaderArray = [];
 	MusicBeatSubstate.call(this);
+	var indexTarget = dge_backend_EKUtil.noteAnimIndex[this.currentMania - 1];
+	var scale = dge_backend_EKUtil.getNoteScale(this.currentMania,4);
 	var bg = new flixel_FlxSprite();
 	var returnAsset = Paths.returnGraphic("menuDesat",null);
 	var bg1 = bg.loadGraphic(returnAsset);
@@ -194713,23 +180801,25 @@ var options_NotesSubState = function() {
 	CoolUtil.fitBackground(bg1);
 	bg1.set_antialiasing(ClientPrefs.globalAntialiasing);
 	this.add(bg1);
-	this.blackBG = new flixel_FlxSprite(this.posX - 25).makeGraphic(870,200,-16777216);
+	this.blackBG = new flixel_FlxSprite(this.posX - 25).makeGraphic(870,200 * scale | 0,-16777216);
 	this.blackBG.set_alpha(0.4);
 	this.add(this.blackBG);
 	this.grpNotes = new flixel_group_FlxTypedGroup();
 	this.add(this.grpNotes);
 	this.grpNumbers = new flixel_group_FlxTypedGroup();
 	this.add(this.grpNumbers);
+	var animations = ["purple0","blue0","green0","red0","space0","yellow0","purplealt0","redalt0","bluealt0"];
 	var _g = 0;
-	var _g1 = ClientPrefs.arrowHSV.length;
+	var _g1 = this.currentMania;
 	while(_g < _g1) {
 		var i = _g++;
-		var yPos = 165 * i + 35;
-		var optionText = new Alphabet(this.posX + 250,yPos + 60,Std.string(ClientPrefs.arrowHSV[i][0]),true);
+		var animIndex = indexTarget[i % indexTarget.length];
+		var yPos = 165 * scale * i + 35;
+		var optionText = new Alphabet(this.posX + 250,yPos + 50 * scale,Std.string(ClientPrefs.arrowHSV[this.currentMania][i][0]),true);
 		this.grpNumbers.add(optionText);
-		var optionText1 = new Alphabet(this.posX + 225 + 250,yPos + 60,Std.string(ClientPrefs.arrowHSV[i][1]),true);
+		var optionText1 = new Alphabet(this.posX + 225 + 250,yPos + 50 * scale,Std.string(ClientPrefs.arrowHSV[this.currentMania][i][1]),true);
 		this.grpNumbers.add(optionText1);
-		var optionText2 = new Alphabet(this.posX + 450 + 250,yPos + 60,Std.string(ClientPrefs.arrowHSV[i][2]),true);
+		var optionText2 = new Alphabet(this.posX + 450 + 250,yPos + 50 * scale,Std.string(ClientPrefs.arrowHSV[this.currentMania][i][2]),true);
 		this.grpNumbers.add(optionText2);
 		var note = new flixel_FlxSprite(this.posX,yPos);
 		var key = ClientPrefs.dflnoteskin;
@@ -194750,22 +180840,32 @@ var options_NotesSubState = function() {
 			tmp = this3.h[key3];
 		}
 		note.set_frames(tmp);
-		var animations = ["purple0","blue0","green0","red0"];
-		note.animation.addByPrefix("idle",animations[i]);
+		note.animation.addByPrefix("idle",animations[animIndex]);
 		note.animation.play("idle");
 		note.set_antialiasing(ClientPrefs.globalAntialiasing);
+		note.scale.set(scale,scale);
+		note.updateHitbox();
 		this.grpNotes.add(note);
 		var newShader = new dge_shaders_ColorSwap();
 		note.shader = newShader.shader;
-		newShader.set_hue(ClientPrefs.arrowHSV[i][0] / 360);
-		newShader.set_saturation(ClientPrefs.arrowHSV[i][1] / 100);
-		newShader.set_brightness(ClientPrefs.arrowHSV[i][2] / 100);
+		newShader.set_hue(ClientPrefs.arrowHSV[this.currentMania - 1][i][0] / 360);
+		newShader.set_saturation(ClientPrefs.arrowHSV[this.currentMania - 1][i][1] / 100);
+		newShader.set_brightness(ClientPrefs.arrowHSV[this.currentMania - 1][i][2] / 100);
 		this.shaderArray.push(newShader);
 	}
 	this.hsbText = new Alphabet(this.posX + 560,0,"Hue    Saturation  Brightness",false);
 	this.hsbText.set_scaleX(0.6);
 	this.hsbText.set_scaleY(0.6);
 	this.add(this.hsbText);
+	var textBG = new flixel_FlxSprite(0,flixel_FlxG.height - 26).makeGraphic(flixel_FlxG.width,26,-16777216);
+	textBG.set_alpha(0.6);
+	this.add(textBG);
+	var leText = "Press X to change Key Count.";
+	var size = 18;
+	var text = new flixel_text_FlxText(textBG.x,textBG.y + 4,flixel_FlxG.width,leText,size);
+	text.setFormat("assets/fonts/" + "vcr.ttf",size,-1,"right");
+	text.scrollFactor.set();
+	this.add(text);
 	this.changeSelection();
 };
 $hxClasses["options.NotesSubState"] = options_NotesSubState;
@@ -194781,24 +180881,57 @@ options_NotesSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 	,blackBG: null
 	,hsbText: null
 	,posX: null
+	,currentMania: null
 	,changingNote: null
 	,update: function(elapsed) {
 		if(this.changingNote) {
 			if(this.holdTime < 0.5) {
-				if(PlayerSettings.player1.controls._ui_leftP.check()) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JP;
+				if(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state)) {
 					this.updateValue(-1);
 					flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
-				} else if(PlayerSettings.player1.controls._ui_rightP.check()) {
-					this.updateValue(1);
-					flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
-				} else if(PlayerSettings.player1.controls._reset.check()) {
-					this.resetValue(options_NotesSubState.curSelected,options_NotesSubState.typeSelected);
-					flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
+				} else {
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.JP;
+					if(dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state)) {
+						this.updateValue(1);
+						flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
+					} else {
+						var _this = dge_input_Controls.instance;
+						var state = dge_input_InputState.JP;
+						if(dge_input_device_KeyboardControls.checkKey("reset",state) || dge_input_device_GamepadControls.checkButton("reset",state)) {
+							this.resetValue(options_NotesSubState.curSelected,options_NotesSubState.typeSelected);
+							flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
+						}
+					}
 				}
-				if(PlayerSettings.player1.controls._ui_leftR.check() || PlayerSettings.player1.controls._ui_rightR.check()) {
+				var tmp;
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JR;
+				if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.JR;
+					tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+				} else {
+					tmp = true;
+				}
+				if(tmp) {
 					this.holdTime = 0;
-				} else if(PlayerSettings.player1.controls._ui_left.check() || PlayerSettings.player1.controls._ui_right.check()) {
-					this.holdTime += elapsed;
+				} else {
+					var tmp;
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.P;
+					if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+						var _this = dge_input_Controls.instance;
+						var state = dge_input_InputState.P;
+						tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+					} else {
+						tmp = true;
+					}
+					if(tmp) {
+						this.holdTime += elapsed;
+					}
 				}
 			} else {
 				var add = 90;
@@ -194807,40 +180940,102 @@ options_NotesSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 					add = 50;
 					break;
 				}
-				if(PlayerSettings.player1.controls._ui_left.check()) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.P;
+				if(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state)) {
 					this.updateValue(elapsed * -add);
-				} else if(PlayerSettings.player1.controls._ui_right.check()) {
-					this.updateValue(elapsed * add);
+				} else {
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.P;
+					if(dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state)) {
+						this.updateValue(elapsed * add);
+					}
 				}
-				if(PlayerSettings.player1.controls._ui_leftR.check() || PlayerSettings.player1.controls._ui_rightR.check()) {
+				var tmp;
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JR;
+				if(!(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state))) {
+					var _this = dge_input_Controls.instance;
+					var state = dge_input_InputState.JR;
+					tmp = dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state);
+				} else {
+					tmp = true;
+				}
+				if(tmp) {
 					flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 					this.holdTime = 0;
 				}
 			}
 		} else {
-			if(PlayerSettings.player1.controls._ui_upP.check()) {
+			var gamepad = flixel_FlxG.gamepads.lastActive;
+			var tmp;
+			var _this = flixel_FlxG.keys.justPressed;
+			if(!_this.keyManager.checkStatusUnsafe(88,_this.status)) {
+				if(gamepad != null) {
+					var _this = gamepad.justPressed;
+					var id = 2;
+					var _this1 = _this.gamepad;
+					var Status = _this.status;
+					switch(id) {
+					case -2:
+						tmp = _this1.anyButton(Status);
+						break;
+					case -1:
+						tmp = !_this1.anyButton(Status);
+						break;
+					default:
+						var RawID = _this1.mapping.getRawID(id);
+						var button = _this1.buttons[RawID];
+						tmp = button != null && button.hasState(Status);
+					}
+				} else {
+					tmp = false;
+				}
+			} else {
+				tmp = true;
+			}
+			if(tmp) {
+				this.currentMania += 1;
+				if(this.currentMania >= 10) {
+					this.currentMania = 1;
+				}
+				this.reloadUI();
+			}
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state)) {
 				this.changeSelection(-1);
 				flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 			}
-			if(PlayerSettings.player1.controls._ui_downP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state)) {
 				this.changeSelection(1);
 				flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 			}
-			if(PlayerSettings.player1.controls._ui_leftP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_left",state) || dge_input_device_GamepadControls.checkButton("ui_left",state)) {
 				this.changeType(-1);
 				flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 			}
-			if(PlayerSettings.player1.controls._ui_rightP.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("ui_right",state) || dge_input_device_GamepadControls.checkButton("ui_right",state)) {
 				this.changeType(1);
 				flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 			}
-			if(PlayerSettings.player1.controls._reset.check()) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if(dge_input_device_KeyboardControls.checkKey("reset",state) || dge_input_device_GamepadControls.checkButton("reset",state)) {
 				this.resetValue(options_NotesSubState.curSelected,0);
 				this.resetValue(options_NotesSubState.curSelected,1);
 				this.resetValue(options_NotesSubState.curSelected,2);
 				flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 			}
-			if(PlayerSettings.player1.controls._accept.check() && this.nextAccept <= 0) {
+			var _this = dge_input_Controls.instance;
+			var state = dge_input_InputState.JP;
+			if((dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) && this.nextAccept <= 0) {
 				flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
 				this.changingNote = true;
 				this.holdTime = 0;
@@ -194868,7 +181063,21 @@ options_NotesSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 				return;
 			}
 		}
-		if(PlayerSettings.player1.controls._back.check() || this.changingNote && PlayerSettings.player1.controls._accept.check()) {
+		var tmp;
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(!(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state))) {
+			if(this.changingNote) {
+				var _this = dge_input_Controls.instance;
+				var state = dge_input_InputState.JP;
+				tmp = dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state);
+			} else {
+				tmp = false;
+			}
+		} else {
+			tmp = true;
+		}
+		if(tmp) {
 			if(!this.changingNote) {
 				this.close();
 			} else {
@@ -194888,12 +181097,12 @@ options_NotesSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 		}
 		options_NotesSubState.curSelected += change;
 		if(options_NotesSubState.curSelected < 0) {
-			options_NotesSubState.curSelected = ClientPrefs.arrowHSV.length - 1;
+			options_NotesSubState.curSelected = this.currentMania - 1;
 		}
-		if(options_NotesSubState.curSelected >= ClientPrefs.arrowHSV.length) {
+		if(options_NotesSubState.curSelected >= this.currentMania) {
 			options_NotesSubState.curSelected = 0;
 		}
-		this.curValue = ClientPrefs.arrowHSV[options_NotesSubState.curSelected][options_NotesSubState.typeSelected];
+		this.curValue = ClientPrefs.arrowHSV[this.currentMania - 1][options_NotesSubState.curSelected][options_NotesSubState.typeSelected];
 		this.updateValue();
 		var _g = 0;
 		var _g1 = this.grpNumbers.length;
@@ -194911,12 +181120,13 @@ options_NotesSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 			var i = _g++;
 			var item = this.grpNotes.members[i];
 			item.set_alpha(0.6);
-			item.scale.set(0.75,0.75);
+			var scale = dge_backend_EKUtil.getNoteScale(this.currentMania,4);
+			item.scale.set(0.75 * scale,0.75 * scale);
 			if(options_NotesSubState.curSelected == i) {
 				item.set_alpha(1);
-				item.scale.set(1,1);
-				this.hsbText.set_y(item.y - 70);
-				this.blackBG.set_y(item.y - 20);
+				item.scale.set(scale,scale);
+				this.hsbText.set_y(item.y - 85);
+				this.blackBG.set_y(item.y - 25 * scale);
 			}
 		}
 		flixel_FlxG.sound.play(Paths.sound("scrollMenu"));
@@ -194932,7 +181142,7 @@ options_NotesSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 		if(options_NotesSubState.typeSelected > 2) {
 			options_NotesSubState.typeSelected = 0;
 		}
-		this.curValue = ClientPrefs.arrowHSV[options_NotesSubState.curSelected][options_NotesSubState.typeSelected];
+		this.curValue = ClientPrefs.arrowHSV[this.currentMania - 1][options_NotesSubState.curSelected][options_NotesSubState.typeSelected];
 		this.updateValue();
 		var _g = 0;
 		var _g1 = this.grpNumbers.length;
@@ -194947,7 +181157,7 @@ options_NotesSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 	}
 	,resetValue: function(selected,type) {
 		this.curValue = 0;
-		ClientPrefs.arrowHSV[selected][type] = 0;
+		ClientPrefs.arrowHSV[this.currentMania - 1][selected][type] = 0;
 		switch(type) {
 		case 0:
 			this.shaderArray[selected].set_hue(0);
@@ -194989,7 +181199,7 @@ options_NotesSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 			this.curValue = max;
 		}
 		roundedValue = Math.round(this.curValue);
-		ClientPrefs.arrowHSV[options_NotesSubState.curSelected][options_NotesSubState.typeSelected] = roundedValue;
+		ClientPrefs.arrowHSV[this.currentMania - 1][options_NotesSubState.curSelected][options_NotesSubState.typeSelected] = roundedValue;
 		switch(options_NotesSubState.typeSelected) {
 		case 0:
 			this.shaderArray[options_NotesSubState.curSelected].set_hue(roundedValue / 360);
@@ -195016,6 +181226,74 @@ options_NotesSubState.prototype = $extend(MusicBeatSubstate.prototype,{
 				fh1.set_x(fh1.x + 10);
 			}
 		}
+	}
+	,reloadUI: function() {
+		if(this.blackBG != null) {
+			this.remove(this.blackBG);
+			this.blackBG.destroy();
+		}
+		while(this.grpNumbers.members.length > 0) {
+			var item = this.grpNumbers.members[0];
+			this.grpNumbers.remove(item,true);
+			item.destroy();
+		}
+		while(this.grpNotes.members.length > 0) {
+			var item = this.grpNotes.members[0];
+			this.grpNotes.remove(item,true);
+			item.destroy();
+		}
+		this.shaderArray = [];
+		var indexTarget = dge_backend_EKUtil.noteAnimIndex[this.currentMania - 1];
+		var scale = dge_backend_EKUtil.getNoteScale(this.currentMania,4);
+		this.blackBG = new flixel_FlxSprite(this.posX - 25).makeGraphic(870,200 * scale | 0,-16777216);
+		this.blackBG.set_alpha(0.4);
+		this.add(this.blackBG);
+		var animations = ["purple0","blue0","green0","red0","space0","yellow0","purplealt0","redalt0","bluealt0"];
+		var _g = 0;
+		var _g1 = this.currentMania;
+		while(_g < _g1) {
+			var i = _g++;
+			var animIndex = indexTarget[i % indexTarget.length];
+			var yPos = 165 * scale * i + 35;
+			var optionText = new Alphabet(this.posX + 250,yPos + 50 * scale,Std.string(ClientPrefs.arrowHSV[this.currentMania - 1][i][0]),true);
+			this.grpNumbers.add(optionText);
+			var optionText1 = new Alphabet(this.posX + 225 + 250,yPos + 50 * scale,Std.string(ClientPrefs.arrowHSV[this.currentMania - 1][i][1]),true);
+			this.grpNumbers.add(optionText1);
+			var optionText2 = new Alphabet(this.posX + 450 + 250,yPos + 50 * scale,Std.string(ClientPrefs.arrowHSV[this.currentMania - 1][i][2]),true);
+			this.grpNumbers.add(optionText2);
+			var note = new flixel_FlxSprite(this.posX,yPos);
+			var key = ClientPrefs.dflnoteskin;
+			var library = null;
+			var tmp;
+			var this1 = dge_backend_CacheTools.cacheAtlas;
+			var key1 = Paths.currentModDirectory + key + Paths.darkModeReturn();
+			if(!Object.prototype.hasOwnProperty.call(this1.h,key1)) {
+				var returnAsset = Paths.returnGraphic(key,library);
+				var atlas = flixel_graphics_frames_FlxAtlasFrames.fromSparrow(returnAsset,Paths.getPath("images/" + key + ".xml","TEXT",library));
+				var this2 = dge_backend_CacheTools.cacheAtlas;
+				var key2 = Paths.currentModDirectory + key + Paths.darkModeReturn();
+				this2.h[key2] = atlas;
+				tmp = atlas;
+			} else {
+				var this3 = dge_backend_CacheTools.cacheAtlas;
+				var key3 = Paths.currentModDirectory + key + Paths.darkModeReturn();
+				tmp = this3.h[key3];
+			}
+			note.set_frames(tmp);
+			note.animation.addByPrefix("idle",animations[animIndex]);
+			note.animation.play("idle");
+			note.set_antialiasing(ClientPrefs.globalAntialiasing);
+			note.scale.set(scale,scale);
+			note.updateHitbox();
+			this.grpNotes.add(note);
+			var newShader = new dge_shaders_ColorSwap();
+			note.shader = newShader.shader;
+			newShader.set_hue(ClientPrefs.arrowHSV[this.currentMania - 1][i][0] / 360);
+			newShader.set_saturation(ClientPrefs.arrowHSV[this.currentMania - 1][i][1] / 100);
+			newShader.set_brightness(ClientPrefs.arrowHSV[this.currentMania - 1][i][2] / 100);
+			this.shaderArray.push(newShader);
+		}
+		this.changeSelection();
 	}
 	,__class__: options_NotesSubState
 });
@@ -195174,7 +181452,7 @@ options_Option.prototype = {
 	,__properties__: {get_type:"get_type",set_text:"set_text",get_text:"get_text"}
 };
 var options_PsychOptionsState = function(TransIn,TransOut) {
-	this.options = ["Note Colors","Controls","Adjust Delay and Combo","Graphics","Visuals and UI","Gameplay"];
+	this.options = ["Note Colors","Controls","Controls(Gamepad)","Adjust Delay and Combo","Graphics","Visuals and UI","Gameplay"];
 	MusicBeatState.call(this,TransIn,TransOut);
 };
 $hxClasses["options.PsychOptionsState"] = options_PsychOptionsState;
@@ -195191,6 +181469,9 @@ options_PsychOptionsState.prototype = $extend(MusicBeatState.prototype,{
 			break;
 		case "Controls":
 			this.openSubState(new options_ControlsSubState());
+			break;
+		case "Controls(Gamepad)":
+			this.openSubState(new dge_states_options_GamepadControlsSubState());
 			break;
 		case "Gameplay":
 			this.openSubState(new options_GameplaySettingsSubState());
@@ -195263,17 +181544,25 @@ options_PsychOptionsState.prototype = $extend(MusicBeatState.prototype,{
 	}
 	,update: function(elapsed) {
 		MusicBeatState.prototype.update.call(this,elapsed);
-		if(PlayerSettings.player1.controls._ui_upP.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("ui_up",state) || dge_input_device_GamepadControls.checkButton("ui_up",state)) {
 			this.changeSelection(-1);
 		}
-		if(PlayerSettings.player1.controls._ui_downP.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("ui_down",state) || dge_input_device_GamepadControls.checkButton("ui_down",state)) {
 			this.changeSelection(1);
 		}
-		if(PlayerSettings.player1.controls._back.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("back",state) || dge_input_device_GamepadControls.checkButton("back",state)) {
 			flixel_FlxG.sound.play(Paths.sound("cancelMenu"));
 			MusicBeatState.switchState(LoadingState.getNextState(new options_MainOptionsState(),false),false);
 		}
-		if(PlayerSettings.player1.controls._accept.check()) {
+		var _this = dge_input_Controls.instance;
+		var state = dge_input_InputState.JP;
+		if(dge_input_device_KeyboardControls.checkKey("accept",state) || dge_input_device_GamepadControls.checkButton("accept",state)) {
 			this.openSelectedSubstate(this.options[options_PsychOptionsState.curSelected]);
 		}
 	}
@@ -196054,6 +182343,7 @@ openfl_display_DisplayObject.__tempStack = new lime_utils_ObjectPool(function() 
 	stack.set_length(0);
 });
 Character.DEFAULT_CHARACTER = "bf";
+ClientPrefs.hitboxHintAlpha = 0.75;
 ClientPrefs.fpsBGAlpha = 0.5;
 ClientPrefs.fillScreen = false;
 ClientPrefs.gpuCaching = false;
@@ -196087,7 +182377,7 @@ ClientPrefs.dragonW = false;
 ClientPrefs.darkmode = false;
 ClientPrefs.dflnoteskin = "NOTE_assets";
 ClientPrefs.longNoteAlpha = 0.6;
-ClientPrefs.strumsize = 0.7;
+ClientPrefs.strumsize = 1;
 ClientPrefs.clsstrum = false;
 ClientPrefs.fpsStrumAnim = 24;
 ClientPrefs.noteSplashAlpha = 0.6;
@@ -196116,7 +182406,7 @@ ClientPrefs.violence = true;
 ClientPrefs.camZooms = true;
 ClientPrefs.hideHud = false;
 ClientPrefs.noteOffset = 0;
-ClientPrefs.arrowHSV = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]];
+ClientPrefs.arrowHSV = [[[0,0,0]],[[0,0,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0],[0,0,0]]];
 ClientPrefs.ghostTapping = true;
 ClientPrefs.timeBarType = "Time Left";
 ClientPrefs.scoreZoom = true;
@@ -196139,7 +182429,6 @@ ClientPrefs.gameplaySettings = (function($this) {
 	_g.h["practice"] = false;
 	_g.h["botplay"] = false;
 	_g.h["opponentplay"] = false;
-	_g.h["notekey"] = 4;
 	_g.h["multNote"] = 1;
 	_g.h["gamemode"] = "none";
 	_g.h["modcharttype"] = "none";
@@ -196148,7 +182437,6 @@ ClientPrefs.gameplaySettings = (function($this) {
 	_g.h["disableLuaStage"] = false;
 	_g.h["disableLuaEvent"] = false;
 	_g.h["opponent"] = false;
-	_g.h["randomNote"] = false;
 	_g.h["healthDrainMult"] = 1.0;
 	$r = _g;
 	return $r;
@@ -196159,30 +182447,6 @@ ClientPrefs.sickWindow = 45;
 ClientPrefs.goodWindow = 90;
 ClientPrefs.badWindow = 135;
 ClientPrefs.safeFrames = 10;
-ClientPrefs.keyBinds = (function($this) {
-	var $r;
-	var _g = new haxe_ds_StringMap();
-	_g.h["note_left"] = [65,37];
-	_g.h["note_down"] = [83,40];
-	_g.h["note_up"] = [87,38];
-	_g.h["note_right"] = [68,39];
-	_g.h["ui_left"] = [65,37];
-	_g.h["ui_down"] = [83,40];
-	_g.h["ui_up"] = [87,38];
-	_g.h["ui_right"] = [68,39];
-	_g.h["accept"] = [32,13];
-	_g.h["back"] = [8,27];
-	_g.h["pause"] = [13,27];
-	_g.h["reset"] = [82,-1];
-	_g.h["volume_mute"] = [48,-1];
-	_g.h["volume_up"] = [107,187];
-	_g.h["volume_down"] = [109,189];
-	_g.h["debug_1"] = [55,-1];
-	_g.h["debug_2"] = [56,-1];
-	$r = _g;
-	return $r;
-}(this));
-ClientPrefs.defaultKeys = null;
 Conductor.bpm = 100;
 Conductor.crochet = 60 / Conductor.bpm * 1000;
 Conductor.stepCrochet = Conductor.crochet / 4;
@@ -196231,7 +182495,7 @@ MainMenuState.curSelected = 0;
 openfl_text_Font.__fontByName = new haxe_ds_StringMap();
 openfl_text_Font.__registeredFonts = [];
 MenuCharacter.DEFAULT_CHARACTER = "bf";
-Note.swagWidth = 160 * ClientPrefs.strumsize;
+Note.swagWidth = 112. * ClientPrefs.strumsize;
 OutdatedState.leftState = false;
 Paths.SOUND_EXT = "mp3";
 Paths.VIDEO_EXT = "mp4";
@@ -196263,10 +182527,6 @@ PlayState.deathCounter = 0;
 PlayState.daPixelZoom = 6;
 PlayState.lastScore = [];
 PlayState.startOnTime = 0;
-PlayerSettings.numPlayers = 0;
-PlayerSettings.numAvatars = 0;
-PlayerSettings.onAvatarAdd = new flixel_util__$FlxSignal_FlxSignal1();
-PlayerSettings.onAvatarRemove = new flixel_util__$FlxSignal_FlxSignal1();
 Section.COPYCAT = 0;
 Song.eggs = ["Json file went vacation.","Json file is missing, probably hiding from you.","Json file not found. Did it run away?","Json file is playing hide and seek.","Json file got stolen by dragon.","Json file is lost in the void.","Json file got burned by a fire spell.","Json file forgot the map.","Json file is on a secret mission.","Json file got abducted by aliens.","Json file is missing, maybe check under the couch.","Json file got stolen by a sneaky protogen.","Json file got blow up by a creeper."];
 StageData.forceNextDirectory = null;
@@ -196324,14 +182584,150 @@ dge_backend_CacheTools.cacheImage = new haxe_ds_StringMap();
 dge_backend_CacheTools.cacheAtlas = new haxe_ds_StringMap();
 dge_backend_CacheTools.cachePackerAtlas = new haxe_ds_StringMap();
 dge_backend_CacheTools.cacheText = new haxe_ds_StringMap();
+dge_backend_EKUtil.colArray = ["purple","blue","green","red","space","yellow","purplealt","redalt","bluealt"];
+dge_backend_EKUtil.pixelInt = [0,1,2,3,4,5,6,7,8];
+dge_backend_EKUtil.noteAnimIndex = [[4],[0,3],[0,4,3],[0,1,2,3],[0,1,4,2,3],[0,1,3,5,2,8],[0,1,3,4,5,2,8],[0,1,2,3,5,6,7,8],[0,1,2,3,4,5,6,7,8]];
+dge_backend_EKUtil.animIndex = [["singUP"],["singLEFT","singRIGHT"],["singLEFT","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singUP","singRIGHT"],["singLEFT","singDOWN","singRIGHT","singLEFT","singUP","singRIGHT"],["singLEFT","singDOWN","singRIGHT","singUP","singLEFT","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singRIGHT","singLEFT","singDOWN","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singRIGHT","singUP","singLEFT","singDOWN","singUP","singRIGHT"]];
+dge_backend_EKUtil.controlMap = [["note_1K_space"],["note_2K_left","note_2K_right"],["note_3K_left","note_3K_space","note_3K_right"],["note_left","note_down","note_up","note_right"],["note_5K_left","note_5K_down","note_5K_space","note_5K_up","note_5K_right"],["note_6K_left","note_6K_down","note_6K_right","note_6K_left2","note_6K_up","note_6K_right2"],["note_7K_left","note_7K_down","note_7K_right","note_7K_space","note_7K_left2","note_7K_up","note_7K_right2"],["note_8K_left","note_8K_down","note_8K_up","note_8K_right","note_8K_left2","note_8K_down2","note_8K_up2","note_8K_right2"],["note_9K_left","note_9K_down","note_9K_up","note_9K_right","note_9K_space","note_9K_left2","note_9K_down2","note_9K_up2","note_9K_right2"]];
+dge_backend_EKUtil.keyPressColor = [[-3355444],[-65281,-65536],[-65281,-3355444,-65536],[-65281,-16711681,-16711936,-65536],[-65281,-16711681,-3355444,-16711936,-65536],[-65281,-16711681,-65536,-256,-16711936,-16776961],[-65281,-16711681,-65536,-3355444,-256,-16711936,-16776961],[-65281,-16711681,-16711936,-65536,-256,-8388353,-65536,-16776961],[-65281,-16711681,-16711936,-65536,-3355444,-256,-8388353,-65536,-16776961]];
 dge_frontend_scale_ScreenScaleMode.allowWideScreen = false;
 dge_frontend_scale_ScreenScaleMode.screenWidth = 960;
 dge_frontend_scale_ScreenScaleMode.screenHeight = 960;
 dge_frontend_scale_ScreenScaleMode.resolutionListener = [];
+dge_input_device_GamepadControls.defaultButtons = new haxe_ds_StringMap();
+dge_input_device_GamepadControls.buttonBinds = (function($this) {
+	var $r;
+	var _g = new haxe_ds_StringMap();
+	_g.h["note_left"] = [13,2];
+	_g.h["note_down"] = [12,0];
+	_g.h["note_up"] = [11,3];
+	_g.h["note_right"] = [14,1];
+	_g.h["note_1K_space"] = [5,-1];
+	_g.h["note_2K_left"] = [13,2];
+	_g.h["note_2K_right"] = [14,1];
+	_g.h["note_3K_left"] = [13,2];
+	_g.h["note_3K_space"] = [5,-1];
+	_g.h["note_3K_right"] = [14,1];
+	_g.h["note_5K_left"] = [13,2];
+	_g.h["note_5K_down"] = [12,0];
+	_g.h["note_5K_space"] = [5,-1];
+	_g.h["note_5K_up"] = [11,3];
+	_g.h["note_5K_right"] = [14,1];
+	_g.h["note_6K_left"] = [13,-1];
+	_g.h["note_6K_down"] = [12,-1];
+	_g.h["note_6K_right"] = [14,-1];
+	_g.h["note_6K_left2"] = [2,-1];
+	_g.h["note_6K_up"] = [0,-1];
+	_g.h["note_6K_right2"] = [1,-1];
+	_g.h["note_7K_left"] = [13,-1];
+	_g.h["note_7K_down"] = [12,-1];
+	_g.h["note_7K_right"] = [14,-1];
+	_g.h["note_7K_space"] = [5,-1];
+	_g.h["note_7K_left2"] = [2,-1];
+	_g.h["note_7K_up"] = [0,-1];
+	_g.h["note_7K_right2"] = [1,-1];
+	_g.h["note_8K_left"] = [13,-1];
+	_g.h["note_8K_down"] = [12,-1];
+	_g.h["note_8K_up"] = [11,-1];
+	_g.h["note_8K_right"] = [14,-1];
+	_g.h["note_8K_left2"] = [2,-1];
+	_g.h["note_8K_down2"] = [0,-1];
+	_g.h["note_8K_up2"] = [3,-1];
+	_g.h["note_8K_right2"] = [1,-1];
+	_g.h["note_9K_left"] = [13,-1];
+	_g.h["note_9K_down"] = [12,-1];
+	_g.h["note_9K_up"] = [11,-1];
+	_g.h["note_9K_right"] = [14,-1];
+	_g.h["note_9K_space"] = [5,-1];
+	_g.h["note_9K_left2"] = [2,-1];
+	_g.h["note_9K_down2"] = [0,-1];
+	_g.h["note_9K_up2"] = [3,-1];
+	_g.h["note_9K_right2"] = [1,-1];
+	_g.h["ui_left"] = [13,37];
+	_g.h["ui_down"] = [12,36];
+	_g.h["ui_up"] = [11,34];
+	_g.h["ui_right"] = [14,35];
+	_g.h["accept"] = [0,7];
+	_g.h["back"] = [1,6];
+	_g.h["pause"] = [7,-1];
+	_g.h["reset"] = [9,-1];
+	_g.h["debug_1"] = [17,-1];
+	_g.h["debug_2"] = [18,-1];
+	$r = _g;
+	return $r;
+}(this));
+dge_input_device_KeyboardControls.defaultKeys = new haxe_ds_StringMap();
+dge_input_device_KeyboardControls.keyBinds = (function($this) {
+	var $r;
+	var _g = new haxe_ds_StringMap();
+	_g.h["note_left"] = [65,37];
+	_g.h["note_down"] = [83,40];
+	_g.h["note_up"] = [87,38];
+	_g.h["note_right"] = [68,39];
+	_g.h["note_1K_space"] = [32,-1];
+	_g.h["note_2K_left"] = [65,37];
+	_g.h["note_2K_right"] = [68,39];
+	_g.h["note_3K_left"] = [65,37];
+	_g.h["note_3K_space"] = [32,-1];
+	_g.h["note_3K_right"] = [68,37];
+	_g.h["note_5K_left"] = [65,37];
+	_g.h["note_5K_down"] = [83,40];
+	_g.h["note_5K_space"] = [32,-1];
+	_g.h["note_5K_up"] = [87,38];
+	_g.h["note_5K_right"] = [68,39];
+	_g.h["note_6K_left"] = [83,-1];
+	_g.h["note_6K_down"] = [68,-1];
+	_g.h["note_6K_right"] = [70,-1];
+	_g.h["note_6K_left2"] = [74,-1];
+	_g.h["note_6K_up"] = [75,-1];
+	_g.h["note_6K_right2"] = [76,-1];
+	_g.h["note_7K_left"] = [83,-1];
+	_g.h["note_7K_down"] = [68,-1];
+	_g.h["note_7K_right"] = [70,-1];
+	_g.h["note_7K_space"] = [32,-1];
+	_g.h["note_7K_left2"] = [74,-1];
+	_g.h["note_7K_up"] = [75,-1];
+	_g.h["note_7K_right2"] = [76,-1];
+	_g.h["note_8K_left"] = [65,-1];
+	_g.h["note_8K_down"] = [83,-1];
+	_g.h["note_8K_up"] = [68,-1];
+	_g.h["note_8K_right"] = [70,-1];
+	_g.h["note_8K_left2"] = [72,-1];
+	_g.h["note_8K_down2"] = [74,-1];
+	_g.h["note_8K_up2"] = [75,-1];
+	_g.h["note_8K_right2"] = [76,-1];
+	_g.h["note_9K_left"] = [65,-1];
+	_g.h["note_9K_down"] = [83,-1];
+	_g.h["note_9K_up"] = [68,-1];
+	_g.h["note_9K_right"] = [70,-1];
+	_g.h["note_9K_space"] = [32,-1];
+	_g.h["note_9K_left2"] = [72,-1];
+	_g.h["note_9K_down2"] = [74,-1];
+	_g.h["note_9K_up2"] = [75,-1];
+	_g.h["note_9K_right2"] = [76,-1];
+	_g.h["ui_left"] = [65,37];
+	_g.h["ui_down"] = [83,40];
+	_g.h["ui_up"] = [87,38];
+	_g.h["ui_right"] = [68,39];
+	_g.h["accept"] = [32,13];
+	_g.h["back"] = [8,27];
+	_g.h["pause"] = [13,27];
+	_g.h["reset"] = [82,-1];
+	_g.h["volume_mute"] = [48,-1];
+	_g.h["volume_up"] = [107,187];
+	_g.h["volume_down"] = [109,189];
+	_g.h["debug_1"] = [55,-1];
+	_g.h["debug_2"] = [56,-1];
+	$r = _g;
+	return $r;
+}(this));
 flixel_ui_FlxButton.NORMAL = 0;
 flixel_ui_FlxButton.HIGHLIGHT = 1;
 flixel_ui_FlxButton.PRESSED = 2;
 dge_states_options_DragonOptionsState.curSelected = 0;
+dge_states_options_GamepadControlsSubState.curSelected = 2;
+dge_states_options_GamepadControlsSubState.curAlt = false;
+dge_states_options_GamepadControlsSubState.defaultKey = "Reset to Default Buttons";
 editors_ChartingState.noteTypeList = ["","Alt Animation","Hey!","Hurt Note","GF Sing","No Animation","GF Sing Force Opponent","Auto Press","GF Sing Auto Press","Flip Scroll","Fake No Hit","Snap Note","Snap Note X","Snap Note Y","Multi Press","Down Scroll","Up Scroll","Freeze Note","Second Opponent","Shifter"];
 editors_ChartingState.goToPlayState = false;
 editors_ChartingState.curSec = 0;
@@ -196694,15 +183090,6 @@ flixel_graphics_tile_FlxDrawTrianglesItem.rect = (function($this) {
 	$r = rect;
 	return $r;
 }(this));
-flixel_input_actions_FlxInputDeviceID.ALL = -1;
-flixel_input_actions_FlxInputDeviceID.FIRST_ACTIVE = -2;
-flixel_input_actions_FlxInputDeviceID.NONE = -3;
-flixel_input_actions_FlxActionInputAnalog.A_X = true;
-flixel_input_actions_FlxActionInputAnalog.A_Y = false;
-flixel_input_actions_FlxSteamController.CONTROLLER_CONNECT_POLL_TIME = 0.25;
-flixel_input_actions_FlxSteamController.ORIGIN_DATA_POLL_TIME = 1.0;
-flixel_input_actions_FlxSteamController.onControllerConnect = null;
-flixel_input_actions_FlxSteamController.onOriginUpdate = null;
 flixel_input_gamepad_FlxGamepadInputID.fromStringMap = (function($this) {
 	var $r;
 	var _g = new haxe_ds_StringMap();
@@ -199896,7 +186283,7 @@ openfl_utils__$internal_TouchData.__pool = new lime_utils_ObjectPool(function() 
 },function(data) {
 	data.reset();
 });
-options_ControlsSubState.curSelected = 1;
+options_ControlsSubState.curSelected = 2;
 options_ControlsSubState.curAlt = false;
 options_ControlsSubState.defaultKey = "Reset to Default Keys";
 options_MainOptionsState.curSelected = 0;
