@@ -6582,12 +6582,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "409";
+	app.meta.h["build"] = "410";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.14.0";
+	app.meta.h["version"] = "26.14.1";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -22217,13 +22217,14 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 	}
 	,loadPixelNoteAnims: function() {
+		var keyCount = dge_backend_EKUtil.colArray.length;
 		var _g = 0;
-		var _g1 = dge_backend_EKUtil.colArray.length;
+		var _g1 = keyCount;
 		while(_g < _g1) {
 			var i = _g++;
-			this.animation.add(dge_backend_EKUtil.colArray[i % dge_backend_EKUtil.colArray.length] + "Scroll",[dge_backend_EKUtil.pixelInt[i % dge_backend_EKUtil.pixelInt.length] + 9]);
-			this.animation.add(dge_backend_EKUtil.colArray[i % dge_backend_EKUtil.colArray.length] + "holdend",[dge_backend_EKUtil.pixelInt[i % dge_backend_EKUtil.pixelInt.length] + 9]);
-			this.animation.add(dge_backend_EKUtil.colArray[i % dge_backend_EKUtil.colArray.length] + "hold",[dge_backend_EKUtil.pixelInt[i % dge_backend_EKUtil.pixelInt.length]]);
+			this.animation.add(dge_backend_EKUtil.colArray[i] + "Scroll",[i + keyCount]);
+			this.animation.add(dge_backend_EKUtil.colArray[i] + "holdend",[i + keyCount]);
+			this.animation.add(dge_backend_EKUtil.colArray[i] + "hold",[i]);
 		}
 	}
 	,update: function(elapsed) {
@@ -22606,7 +22607,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g1 ) {
 					haxe_NativeStackTrace.lastError = _g1;
 					var e = haxe_Exception.caught(_g1).unwrap();
-					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1021, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1022, className : "Note", methodName : "setConfig"});
 				}
 			} else {
 				try {
@@ -22621,7 +22622,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g4 ) {
 					haxe_NativeStackTrace.lastError = _g4;
 					var e1 = haxe_Exception.caught(_g4).unwrap();
-					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1032, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1033, className : "Note", methodName : "setConfig"});
 					dge_backend_CacheTools.jsonParse.h[name] = { };
 				}
 			}
@@ -22907,7 +22908,7 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 		this.setGraphicSize(this.get_width() * (scale * (ClientPrefs.strumsize * dge_backend_EKUtil.getNoteScale(mania))) | 0,this.get_height() * (scale * (ClientPrefs.strumsize * dge_backend_EKUtil.getNoteScale(mania))) | 0);
 		this.setPosition(x + noteWidth / 2 - this.get_width() / 2 + noteSplashOffsetX,y + noteHeight / 2 - this.get_height() / 2 + noteSplashOffsetY);
 		var animNum = flixel_FlxG.random.int(1,2);
-		this.animation.play("note" + animIndex % 9 + "-" + animNum,true);
+		this.animation.play("note" + animIndex + "-" + animNum,true);
 		if(this.animation._curAnim != null) {
 			this.animation._curAnim.set_frameRate(ClientPrefs.fpsStrumAnim + flixel_FlxG.random.int(-2,2));
 		}
@@ -30311,7 +30312,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						var mania = dge_backend_EKUtil.getCurrentMania();
 						var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
 						var animIndex = indexTarget[note.noteData % indexTarget.length];
-						holdCover.playAnim("hold" + animIndex % 9);
+						holdCover.playAnim("hold" + animIndex);
 					}
 				}
 			}
@@ -34020,6 +34021,10 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			skin = ClientPrefs.dflnoteskin;
 		}
 		image = skin;
+		var mania = dge_backend_EKUtil.getCurrentMania();
+		var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
+		var animIndex = indexTarget[this.noteData % indexTarget.length];
+		var spriteCount = dge_backend_EKUtil.colArray.length;
 		if(PlayState.isPixelStage) {
 			var returnAsset = Paths.returnGraphic("pixelUI/" + image,null);
 			this.loadGraphic(returnAsset);
@@ -34029,73 +34034,16 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			this.loadGraphic(returnAsset,true,Math.floor(this.get_width()),Math.floor(this.get_height()));
 			this.set_antialiasing(false);
 			this.setGraphicSize(this.get_width() * PlayState.daPixelZoom * ClientPrefs.strumsize * dge_backend_EKUtil.getNoteScale(dge_backend_EKUtil.getCurrentMania()) | 0);
-			this.animation.add("green",[11]);
-			this.animation.add("red",[12]);
-			this.animation.add("blue",[10]);
-			this.animation.add("purple",[9]);
-			this.animation.add("green",[11]);
-			this.animation.add("red",[12]);
-			this.animation.add("blue",[10]);
-			this.animation.add("purple",[9]);
-			var mania = dge_backend_EKUtil.getCurrentMania();
-			var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
-			var animIndex = indexTarget[this.noteData % indexTarget.length];
-			switch(animIndex) {
-			case 0:
-				this.animation.add("static",[0]);
-				this.animation.add("pressed",[9,18],ClientPrefs.fpsStrumAnim / 2,false);
-				this.animation.add("notes",[9]);
-				this.animation.add("confirm",[18,27],ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 1:
-				this.animation.add("static",[1]);
-				this.animation.add("pressed",[10,19],ClientPrefs.fpsStrumAnim / 2,false);
-				this.animation.add("notes",[10]);
-				this.animation.add("confirm",[19,28],ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 2:
-				this.animation.add("static",[2]);
-				this.animation.add("pressed",[11,20],ClientPrefs.fpsStrumAnim / 2,false);
-				this.animation.add("notes",[11]);
-				this.animation.add("confirm",[20,29],ClientPrefs.fpsStrumAnim / 2,false);
-				break;
-			case 3:
-				this.animation.add("static",[3]);
-				this.animation.add("pressed",[12,21],ClientPrefs.fpsStrumAnim / 2,false);
-				this.animation.add("notes",[12]);
-				this.animation.add("confirm",[21,30],ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 4:
-				this.animation.add("static",[4]);
-				this.animation.add("pressed",[13,22],ClientPrefs.fpsStrumAnim / 2,false);
-				this.animation.add("notes",[13]);
-				this.animation.add("confirm",[22,31],ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 5:
-				this.animation.add("static",[5]);
-				this.animation.add("pressed",[14,23],ClientPrefs.fpsStrumAnim / 2,false);
-				this.animation.add("notes",[14]);
-				this.animation.add("confirm",[23,32],ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 6:
-				this.animation.add("static",[6]);
-				this.animation.add("pressed",[15,24],ClientPrefs.fpsStrumAnim / 2,false);
-				this.animation.add("notes",[15]);
-				this.animation.add("confirm",[24,33],ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 7:
-				this.animation.add("static",[7]);
-				this.animation.add("pressed",[16,25],ClientPrefs.fpsStrumAnim / 2,false);
-				this.animation.add("notes",[16]);
-				this.animation.add("confirm",[25,34],ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 8:
-				this.animation.add("static",[8]);
-				this.animation.add("pressed",[17,26],ClientPrefs.fpsStrumAnim / 2,false);
-				this.animation.add("notes",[17]);
-				this.animation.add("confirm",[26,35],ClientPrefs.fpsStrumAnim,false);
-				break;
+			var _g = 0;
+			var _g1 = spriteCount;
+			while(_g < _g1) {
+				var i = _g++;
+				this.animation.add(dge_backend_EKUtil.colArray[i],[i + spriteCount]);
 			}
+			this.animation.add("static",[animIndex]);
+			this.animation.add("pressed",[animIndex + spriteCount,animIndex + spriteCount * 2],ClientPrefs.fpsStrumAnim / 2,false);
+			this.animation.add("notes",[animIndex,spriteCount]);
+			this.animation.add("confirm",[animIndex + spriteCount * 2,animIndex + spriteCount * 3],ClientPrefs.fpsStrumAnim,false);
 		} else {
 			try {
 				var library = null;
@@ -34156,113 +34104,29 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 					this.set_frames(tmp);
 				}
 			}
-			this.animation.addByPrefix("green","arrowUP");
-			this.animation.addByPrefix("blue","arrowDOWN");
-			this.animation.addByPrefix("purple","arrowLEFT");
-			this.animation.addByPrefix("red","arrowRIGHT");
-			this.animation.addByPrefix("space","arrowSPACE");
-			this.animation.addByPrefix("yellow","arrowUPALT");
-			this.animation.addByPrefix("altpurple","arrowDOWNALT");
-			this.animation.addByPrefix("altred","arrowLEFTALT");
-			this.animation.addByPrefix("altblue","arrowRIGHTALT");
+			var direct = dge_backend_EKUtil.direction;
+			var _g = 0;
+			var _g1 = spriteCount;
+			while(_g < _g1) {
+				var i = _g++;
+				this.animation.addByPrefix(dge_backend_EKUtil.colArray[i],"arrow" + direct[i % direct.length].toUpperCase());
+			}
 			this.setGraphicSize(this.get_width() * 0.7 * ClientPrefs.strumsize * dge_backend_EKUtil.getNoteScale(dge_backend_EKUtil.getCurrentMania()) | 0);
 			this.set_antialiasing(ClientPrefs.globalAntialiasing);
-			var addAnimThingy = CoolUtil.addSpecialAnimation;
 			var mania = dge_backend_EKUtil.getCurrentMania();
 			var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
 			var animIndex = indexTarget[this.noteData % indexTarget.length];
-			switch(animIndex) {
-			case 0:
-				this.animation.addByPrefix("static","arrowLEFT0");
-				this.animation.addByPrefix("pressed","left press0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm","left confirm0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes","purple0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("static_down","arrowLEFT_DownScroll0");
-				this.animation.addByPrefix("pressed_down","left press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm_down","left confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes_down","purple_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 1:
-				this.animation.addByPrefix("static","arrowDOWN0");
-				this.animation.addByPrefix("pressed","down press0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm","down confirm0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes","blue0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("static_down","arrowDOWN_DownScroll0");
-				this.animation.addByPrefix("pressed_down","down press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm_down","down confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes_down","blue_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 2:
-				this.animation.addByPrefix("static","arrowUP0");
-				this.animation.addByPrefix("pressed","up press0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm","up confirm0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes","green0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("static_down","arrowUP_DownScroll0");
-				this.animation.addByPrefix("pressed_down","up press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm_down","up confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes_down","green_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 3:
-				this.animation.addByPrefix("static","arrowRIGHT0");
-				this.animation.addByPrefix("pressed","right press0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm","right confirm0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes","red0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("static_down","arrowRIGHT_DownScroll0");
-				this.animation.addByPrefix("pressed_down","right press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm_down","right confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes_down","red_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 4:
-				this.animation.addByPrefix("static","arrowSPACE0");
-				this.animation.addByPrefix("pressed","space press0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm","space confirm0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes","space0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("static_down","arrowSPACE_DownScroll0");
-				this.animation.addByPrefix("pressed_down","space press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm_down","space confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes_down","space_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 5:
-				this.animation.addByPrefix("static","arrowLEFTALT0");
-				this.animation.addByPrefix("pressed","leftalt press0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm","leftalt confirm0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes","yellow0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("static_down","arrowLEFTALT_DownScroll0");
-				this.animation.addByPrefix("pressed_down","leftalt press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm_down","leftalt confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes_down","yellow_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 6:
-				this.animation.addByPrefix("static","arrowDOWNALT0");
-				this.animation.addByPrefix("pressed","downalt press0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm","downalt confirm0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes","purplealt0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("static_down","arrowDOWNALT_DownScroll0");
-				this.animation.addByPrefix("pressed_down","downalt press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm_down","downalt confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes_down","purplealt_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 7:
-				this.animation.addByPrefix("static","arrowUPALT0");
-				this.animation.addByPrefix("pressed","upalt press0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm","upalt confirm0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes","redalt0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("static_down","arrowUPALT_DownScroll0");
-				this.animation.addByPrefix("pressed_down","upalt press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm_down","upalt confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes_down","redalt_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				break;
-			case 8:
-				this.animation.addByPrefix("static","arrowRIGHTALT0");
-				this.animation.addByPrefix("pressed","rightalt press0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm","rightalt confirm0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes","bluealt0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("static_down","arrowRIGHTALT_DownScroll0");
-				this.animation.addByPrefix("pressed_down","rightalt press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("confirm_down","rightalt confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("notes_down","bluealt_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-				break;
-			}
+			var directName = direct[animIndex % direct.length].toLowerCase();
+			var xmlName = "arrow" + directName.toUpperCase();
+			var colorName = dge_backend_EKUtil.colArray[animIndex & dge_backend_EKUtil.colArray.length];
+			this.animation.addByPrefix("static",xmlName + "0");
+			this.animation.addByPrefix("pressed",directName + " press0",ClientPrefs.fpsStrumAnim,false);
+			this.animation.addByPrefix("confirm",directName + " confirm0",ClientPrefs.fpsStrumAnim,false);
+			this.animation.addByPrefix("notes",colorName + "0",ClientPrefs.fpsStrumAnim,false);
+			this.animation.addByPrefix("static_down",xmlName + "_DownScroll0");
+			this.animation.addByPrefix("pressed_down",directName + " press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+			this.animation.addByPrefix("confirm_down",directName + " confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+			this.animation.addByPrefix("notes_down",colorName + "_DownScroll0",ClientPrefs.fpsStrumAnim,false);
 		}
 		this.updateHitbox();
 	}
@@ -40195,12 +40059,12 @@ dge_backend_EKUtil.getCurrentMania = function() {
 	return 4;
 };
 dge_backend_EKUtil.getAnimArray = function() {
-	return dge_backend_EKUtil.animIndex[dge_backend_EKUtil.getCurrentMania() - 1];
+	return dge_backend_EKUtil.animIndex[dge_backend_EKUtil.getCurrentMania() - 1 % dge_backend_EKUtil.animIndex.length];
 };
 dge_backend_EKUtil.getKeybind = function() {
 	var copyArray = [];
 	var _g = 0;
-	var _g1 = dge_backend_EKUtil.controlMap[dge_backend_EKUtil.getCurrentMania() - 1];
+	var _g1 = dge_backend_EKUtil.controlMap[dge_backend_EKUtil.getCurrentMania() - 1 % dge_backend_EKUtil.controlMap.length];
 	while(_g < _g1.length) {
 		var key = _g1[_g];
 		++_g;
@@ -41732,7 +41596,7 @@ dge_obj_game_HoldCover.prototype = $extend(flixel_FlxSprite.prototype,{
 					var mania = dge_backend_EKUtil.getCurrentMania();
 					var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
 					var animIndex = indexTarget[this.note.noteData % indexTarget.length];
-					this.playAnim("end" + animIndex % 9);
+					this.playAnim("end" + animIndex);
 				}
 				this.timer = 0;
 			}
@@ -130113,7 +129977,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 61349;
+	this.version = 224283;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -182585,11 +182449,11 @@ dge_backend_CacheTools.cacheAtlas = new haxe_ds_StringMap();
 dge_backend_CacheTools.cachePackerAtlas = new haxe_ds_StringMap();
 dge_backend_CacheTools.cacheText = new haxe_ds_StringMap();
 dge_backend_EKUtil.colArray = ["purple","blue","green","red","space","yellow","purplealt","redalt","bluealt"];
-dge_backend_EKUtil.pixelInt = [0,1,2,3,4,5,6,7,8];
-dge_backend_EKUtil.noteAnimIndex = [[4],[0,3],[0,4,3],[0,1,2,3],[0,1,4,2,3],[0,1,3,5,2,8],[0,1,3,4,5,2,8],[0,1,2,3,5,6,7,8],[0,1,2,3,4,5,6,7,8]];
-dge_backend_EKUtil.animIndex = [["singUP"],["singLEFT","singRIGHT"],["singLEFT","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singUP","singRIGHT"],["singLEFT","singDOWN","singRIGHT","singLEFT","singUP","singRIGHT"],["singLEFT","singDOWN","singRIGHT","singUP","singLEFT","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singRIGHT","singLEFT","singDOWN","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singRIGHT","singUP","singLEFT","singDOWN","singUP","singRIGHT"]];
+dge_backend_EKUtil.direction = ["left","down","up","right","space","leftalt","downalt","upalt","rightalt"];
+dge_backend_EKUtil.noteAnimIndex = [[4],[0,3],[0,4,3],[0,1,2,3],[0,1,4,2,3],[0,2,3,5,1,8],[0,2,3,4,5,1,8],[0,1,2,3,5,6,7,8],[0,1,2,3,4,5,6,7,8]];
+dge_backend_EKUtil.animIndex = [["singUP"],["singLEFT","singRIGHT"],["singLEFT","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singUP","singRIGHT"],["singLEFT","singUP","singRIGHT","singLEFT","singDOWN","singRIGHT"],["singLEFT","singUP","singRIGHT","singUP","singLEFT","singDOWN","singRIGHT"],["singLEFT","singDOWN","singUP","singRIGHT","singLEFT","singDOWN","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singRIGHT","singUP","singLEFT","singDOWN","singUP","singRIGHT"]];
 dge_backend_EKUtil.controlMap = [["note_1K_space"],["note_2K_left","note_2K_right"],["note_3K_left","note_3K_space","note_3K_right"],["note_left","note_down","note_up","note_right"],["note_5K_left","note_5K_down","note_5K_space","note_5K_up","note_5K_right"],["note_6K_left","note_6K_down","note_6K_right","note_6K_left2","note_6K_up","note_6K_right2"],["note_7K_left","note_7K_down","note_7K_right","note_7K_space","note_7K_left2","note_7K_up","note_7K_right2"],["note_8K_left","note_8K_down","note_8K_up","note_8K_right","note_8K_left2","note_8K_down2","note_8K_up2","note_8K_right2"],["note_9K_left","note_9K_down","note_9K_up","note_9K_right","note_9K_space","note_9K_left2","note_9K_down2","note_9K_up2","note_9K_right2"]];
-dge_backend_EKUtil.keyPressColor = [[-3355444],[-65281,-65536],[-65281,-3355444,-65536],[-65281,-16711681,-16711936,-65536],[-65281,-16711681,-3355444,-16711936,-65536],[-65281,-16711681,-65536,-256,-16711936,-16776961],[-65281,-16711681,-65536,-3355444,-256,-16711936,-16776961],[-65281,-16711681,-16711936,-65536,-256,-8388353,-65536,-16776961],[-65281,-16711681,-16711936,-65536,-3355444,-256,-8388353,-65536,-16776961]];
+dge_backend_EKUtil.keyPressColor = [[-3355444],[-65281,-65536],[-65281,-3355444,-65536],[-65281,-16711681,-16711936,-65536],[-65281,-16711681,-3355444,-16711936,-65536],[-65281,-16711936,-65536,-256,-16711681,-16776961],[-65281,-16711936,-65536,-3355444,-256,-16711681,-16776961],[-65281,-16711681,-16711936,-65536,-256,-8388353,-65536,-16776961],[-65281,-16711681,-16711936,-65536,-3355444,-256,-8388353,-65536,-16776961]];
 dge_frontend_scale_ScreenScaleMode.allowWideScreen = false;
 dge_frontend_scale_ScreenScaleMode.screenWidth = 960;
 dge_frontend_scale_ScreenScaleMode.screenHeight = 960;
