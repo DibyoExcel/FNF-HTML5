@@ -6582,12 +6582,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "410";
+	app.meta.h["build"] = "412";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.14.1";
+	app.meta.h["version"] = "26.14.2";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -10835,25 +10835,11 @@ CoolUtil.addSpecialAnimation = function(sprite,anim,xmlName,defaultXmlName,loop,
 	if(loop == null) {
 		loop = true;
 	}
-	var hasAnim = false;
-	if(sprite != null && anim.length > 0 && xmlName.length > 0 && defaultXmlName.length > 0) {
-		var hasFound = false;
-		if(sprite.frames.frames != null) {
-			var _g = 0;
-			var _g1 = sprite.frames.frames;
-			while(_g < _g1.length) {
-				var frame = _g1[_g];
-				++_g;
-				if(frame.name != null && StringTools.startsWith(frame.name,xmlName)) {
-					hasFound = true;
-					hasAnim = true;
-					break;
-				}
-			}
-		}
-		if(hasFound) {
-			sprite.animation.addByPrefix(anim,xmlName,framerate,loop);
-		} else {
+	var hasAnim = true;
+	if(sprite != null && sprite.animation != null && anim.length > 0 && xmlName.length > 0 && defaultXmlName.length > 0) {
+		sprite.animation.addByPrefix(anim,xmlName,framerate,loop);
+		if(sprite.animation._animations.h[anim] == null) {
+			hasAnim = false;
 			sprite.animation.addByPrefix(anim,defaultXmlName,framerate,loop);
 		}
 	}
@@ -22105,11 +22091,12 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		arraySkin[arraySkin.length - 1] = prefix + arraySkin[arraySkin.length - 1] + suffix;
 		var lastScaleY = this.scale.y;
 		var blahblah = arraySkin.join("/");
+		var keyCount = dge_backend_EKUtil.colArray.length;
 		if(PlayState.isPixelStage) {
 			if(this.isSustainNote) {
 				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah + "ENDS",null);
 				this.loadGraphic(returnAsset);
-				this.set_width(this.get_width() / 9);
+				this.set_width(this.get_width() / keyCount);
 				this.set_height(this.get_height() / 2);
 				this.originalHeightForCalcs = this.get_height();
 				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah + "ENDS",null);
@@ -22117,7 +22104,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			} else {
 				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah,null);
 				this.loadGraphic(returnAsset);
-				this.set_width(this.get_width() / 9);
+				this.set_width(this.get_width() / keyCount);
 				this.set_height(this.get_height() / 5);
 				var returnAsset = Paths.returnGraphic("pixelUI/" + blahblah,null);
 				this.loadGraphic(returnAsset,true,Math.floor(this.get_width()),Math.floor(this.get_height()));
@@ -22202,18 +22189,20 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		}
 	}
 	,loadNoteAnims: function() {
+		var specialAnim = CoolUtil.addSpecialAnimation;
 		var _g = 0;
 		var _g1 = dge_backend_EKUtil.colArray.length;
 		while(_g < _g1) {
 			var i = _g++;
-			this.animation.addByPrefix(dge_backend_EKUtil.colArray[i] + "Scroll",dge_backend_EKUtil.colArray[i] + "0");
-			this.animation.addByPrefix("purpleholdend","pruple end hold0");
-			this.animation.addByPrefix(dge_backend_EKUtil.colArray[i] + "holdend",dge_backend_EKUtil.colArray[i] + " hold end0");
-			this.animation.addByPrefix(dge_backend_EKUtil.colArray[i] + "hold",dge_backend_EKUtil.colArray[i] + " hold piece0");
-			this.animation.addByPrefix(dge_backend_EKUtil.colArray[i] + "Scroll_down",dge_backend_EKUtil.colArray[i] + "_DownScroll0");
-			this.animation.addByPrefix("purpleholdend_down","pruple end hold_DownScroll0");
-			this.animation.addByPrefix(dge_backend_EKUtil.colArray[i] + "holdend_down",dge_backend_EKUtil.colArray[i] + " hold end_DownScroll0");
-			this.animation.addByPrefix(dge_backend_EKUtil.colArray[i] + "hold_down",dge_backend_EKUtil.colArray[i] + " hold piece_DownScroll0");
+			var colorDef = dge_backend_EKUtil.defaultCol.toLowerCase();
+			specialAnim(this,dge_backend_EKUtil.colArray[i] + "Scroll",dge_backend_EKUtil.colArray[i] + "0",colorDef + "0");
+			specialAnim(this,"purpleholdend","pruple end hold0",colorDef + " hold end0");
+			specialAnim(this,dge_backend_EKUtil.colArray[i] + "holdend",dge_backend_EKUtil.colArray[i] + " hold end0",colorDef + " hold end0");
+			specialAnim(this,dge_backend_EKUtil.colArray[i] + "hold",dge_backend_EKUtil.colArray[i] + " hold piece0",colorDef + " hold piece0");
+			specialAnim(this,dge_backend_EKUtil.colArray[i] + "Scroll_down",dge_backend_EKUtil.colArray[i] + "_DownScroll0",colorDef + "_DownScroll0");
+			specialAnim(this,"purpleholdend_down","pruple end hold_DownScroll0",colorDef + " hold end_DownScroll0");
+			specialAnim(this,dge_backend_EKUtil.colArray[i] + "holdend_down",dge_backend_EKUtil.colArray[i] + " hold end_DownScroll0",colorDef + " hold end_DownScroll0");
+			specialAnim(this,dge_backend_EKUtil.colArray[i] + "hold_down",dge_backend_EKUtil.colArray[i] + " hold piece_DownScroll0",colorDef + " hold piece_DownScroll0");
 		}
 	}
 	,loadPixelNoteAnims: function() {
@@ -22607,7 +22596,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g1 ) {
 					haxe_NativeStackTrace.lastError = _g1;
 					var e = haxe_Exception.caught(_g1).unwrap();
-					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1022, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1025, className : "Note", methodName : "setConfig"});
 				}
 			} else {
 				try {
@@ -22622,7 +22611,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g4 ) {
 					haxe_NativeStackTrace.lastError = _g4;
 					var e1 = haxe_Exception.caught(_g4).unwrap();
-					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1033, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1036, className : "Note", methodName : "setConfig"});
 					dge_backend_CacheTools.jsonParse.h[name] = { };
 				}
 			}
@@ -22964,11 +22953,17 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 			var color = _g++;
 			if(this.note != null && this.note.getActualDownscroll()) {
 				CoolUtil.addSpecialAnimation(this,"note" + color + "-" + 1,"note splash " + col[color] + " " + 1 + "_DownScroll","note splash " + col[color] + " " + 1,false,ClientPrefs.fpsStrumAnim);
+				if(this.animation != null && this.animation._animations.h["note" + color + "-" + 1] == null) {
+					this.animation.addByPrefix("note" + color + "-" + 1,"note splash " + dge_backend_EKUtil.defaultCol.toLowerCase() + "0",ClientPrefs.fpsStrumAnim,false);
+				}
 			} else {
 				this.animation.addByPrefix("note" + color + "-" + 1,"note splash " + col[color] + " " + 1,ClientPrefs.fpsStrumAnim,false);
 			}
 			if(this.note != null && this.note.getActualDownscroll()) {
 				CoolUtil.addSpecialAnimation(this,"note" + color + "-" + 2,"note splash " + col[color] + " " + 2 + "_DownScroll","note splash " + col[color] + " " + 2,false,ClientPrefs.fpsStrumAnim);
+				if(this.animation != null && this.animation._animations.h["note" + color + "-" + 2] == null) {
+					this.animation.addByPrefix("note" + color + "-" + 2,"note splash " + dge_backend_EKUtil.defaultCol.toLowerCase() + "0",ClientPrefs.fpsStrumAnim,false);
+				}
 			} else {
 				this.animation.addByPrefix("note" + color + "-" + 2,"note splash " + col[color] + " " + 2,ClientPrefs.fpsStrumAnim,false);
 			}
@@ -34119,14 +34114,18 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 			var directName = direct[animIndex % direct.length].toLowerCase();
 			var xmlName = "arrow" + directName.toUpperCase();
 			var colorName = dge_backend_EKUtil.colArray[animIndex & dge_backend_EKUtil.colArray.length];
-			this.animation.addByPrefix("static",xmlName + "0");
-			this.animation.addByPrefix("pressed",directName + " press0",ClientPrefs.fpsStrumAnim,false);
-			this.animation.addByPrefix("confirm",directName + " confirm0",ClientPrefs.fpsStrumAnim,false);
-			this.animation.addByPrefix("notes",colorName + "0",ClientPrefs.fpsStrumAnim,false);
-			this.animation.addByPrefix("static_down",xmlName + "_DownScroll0");
-			this.animation.addByPrefix("pressed_down",directName + " press_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-			this.animation.addByPrefix("confirm_down",directName + " confirm_DownScroll0",ClientPrefs.fpsStrumAnim,false);
-			this.animation.addByPrefix("notes_down",colorName + "_DownScroll0",ClientPrefs.fpsStrumAnim,false);
+			var addAnim = CoolUtil.addSpecialAnimation;
+			var defaultColor = dge_backend_EKUtil.defaultCol.toLowerCase();
+			var defaultDirection = dge_backend_EKUtil.defaultDirection.toLowerCase();
+			var staticXMLDef = "arrow" + defaultDirection;
+			addAnim(this,"static",xmlName + "0",staticXMLDef + "0");
+			addAnim(this,"pressed",directName + " press0",defaultDirection + " press0",false,ClientPrefs.fpsStrumAnim);
+			addAnim(this,"confirm",directName + " confirm0",defaultDirection + " confirm0",false,ClientPrefs.fpsStrumAnim);
+			addAnim(this,"notes",colorName + "0",defaultColor + "0",true,ClientPrefs.fpsStrumAnim);
+			addAnim(this,"static_down",xmlName + "_DownScroll0",staticXMLDef + "_DownScroll0");
+			addAnim(this,"pressed_down",directName + " press_DownScroll0",defaultDirection + " press_DownScroll0",false,ClientPrefs.fpsStrumAnim);
+			addAnim(this,"confirm_down",directName + " confirm_DownScroll0",defaultDirection + " confirm_DownScroll0",false,ClientPrefs.fpsStrumAnim);
+			addAnim(this,"notes_down",colorName + "_DownScroll0",defaultColor + "_DownScroll0",true,ClientPrefs.fpsStrumAnim);
 		}
 		this.updateHitbox();
 	}
@@ -40039,6 +40038,7 @@ dge_backend_CacheTools.clearCache = function() {
 var dge_backend_EKUtil = function() { };
 $hxClasses["dge.backend.EKUtil"] = dge_backend_EKUtil;
 dge_backend_EKUtil.__name__ = "dge.backend.EKUtil";
+dge_backend_EKUtil.__properties__ = {set_colArray:"set_colArray"};
 dge_backend_EKUtil.getNoteScale = function(noteKey,sizeChange) {
 	if(sizeChange == null) {
 		sizeChange = 5;
@@ -40082,6 +40082,15 @@ dge_backend_EKUtil.getButtonbind = function() {
 		copyArray.push(dge_input_device_GamepadControls.getButtonbind(key));
 	}
 	return copyArray;
+};
+dge_backend_EKUtil.set_colArray = function(value) {
+	if(dge_backend_EKUtil.colArray != value) {
+		if(value == null || value.length < 1) {
+			value = ["purple","blue","green","red","space","yellow","purplealt","redalt","bluealt"];
+		}
+		dge_backend_EKUtil.colArray = value;
+	}
+	return value;
 };
 var dge_backend_PrivateData = function() {
 	this.stepCount = -1;
@@ -41440,13 +41449,17 @@ dge_obj_game_HoldCover.prototype = $extend(flixel_FlxSprite.prototype,{
 		while(_g < _g1) {
 			var i = _g++;
 			var nameColor = colors[i];
+			var specialAnim = CoolUtil.addSpecialAnimation;
+			var defaultColor = dge_backend_EKUtil.defaultCol.toLowerCase();
 			if(this.note != null && this.note.getActualDownscroll()) {
-				var specialAnim = CoolUtil.addSpecialAnimation;
 				specialAnim(this,"hold" + i,"hold cover " + nameColor + "_DownScroll0","hold cover " + nameColor + "0",false,ClientPrefs.fpsStrumAnim);
 				specialAnim(this,"end" + i,"hold cover " + nameColor + " end_DownScroll0","hold cover " + nameColor + " end0",false,ClientPrefs.fpsStrumAnim);
+				if(this.animation != null && this.animation._animations.h["hold"] == null) {
+					this.animation.addByPrefix("hold","hold cover " + defaultColor + "0",ClientPrefs.fpsStrumAnim);
+				}
 			} else {
-				this.animation.addByPrefix("hold" + i,"hold cover " + nameColor + "0",ClientPrefs.fpsStrumAnim,false);
-				this.animation.addByPrefix("end" + i,"hold cover " + nameColor + " end0",ClientPrefs.fpsStrumAnim,false);
+				specialAnim(this,"hold" + i,"hold cover " + nameColor + "0","hold cover " + defaultColor + "0",false,ClientPrefs.fpsStrumAnim);
+				specialAnim(this,"end" + i,"hold cover " + nameColor + " end0","hold cover " + defaultColor + " end0",false,ClientPrefs.fpsStrumAnim);
 			}
 		}
 	}
@@ -43884,7 +43897,7 @@ var dge_states_options_GamepadControlsSubState = function() {
 	this.rebindingKey = false;
 	this.grpInputsAlt = [];
 	this.grpInputs = [];
-	this.optionShit = [["NOTES"],["4 KEY"],["Left","note_left"],["Down","note_down"],["Up","note_up"],["Right","note_right"],[""],["1 KEY"],["Center","note_1K_space"],[""],["2 KEY"],["Left","note_2K_left"],["Right","note_2K_right"],[""],["3 KEY"],["Left","note_3K_left"],["Center","note_3K_space"],["Right","note_3K_right"],[""],["5 KEY"],["Left","note_5K_left"],["Down","note_5K_down"],["Center","note_5K_space"],["Up","note_5K_up"],["Right","note_5K_right"],[""],["6 KEY"],["Left","note_6K_left"],["Down","note_6K_down"],["Right","note_6K_right"],["Left 2","note_6K_left2"],["Up","note_6K_up"],["Right 2","note_6K_right2"],[""],["7 KEY"],["Left","note_7K_left"],["Down","note_7K_down"],["Right","note_7K_right"],["Center","note_7K_space"],["Left 2","note_7K_left2"],["Up","note_7K_up"],["Right 2","note_7K_right2"],[""],["8 KEY"],["Left","note_8K_left"],["Down","note_8K_down"],["Up","note_8K_up"],["Right","note_8K_right"],["Left 2","note_8K_left2"],["Down 2","note_8K_down2"],["Up 2","note_8K_up2"],["Right 2","note_8K_right2"],[""],["9 KEY"],["Left","note_9K_left"],["Down","note_9K_down"],["Up","note_9K_up"],["Right","note_9K_right"],["Center","note_9K_space"],["Left 2","note_9K_left2"],["Down 2","note_9K_down2"],["Up 2","note_9K_up2"],["Right 2","note_9K_right2"],[""],["UI"],["Left","ui_left"],["Down","ui_down"],["Up","ui_up"],["Right","ui_right"],[""],["Reset","reset"],["Accept","accept"],["Back","back"],["Pause","pause"],[""],["DEBUG"],["Key 1","debug_1"],["Key 2","debug_2"]];
+	this.optionShit = [["NOTES"],["4 KEY"],["Left","note_left"],["Down","note_down"],["Up","note_up"],["Right","note_right"],[""],["1 KEY"],["Center","note_1K_space"],[""],["2 KEY"],["Left","note_2K_left"],["Right","note_2K_right"],[""],["3 KEY"],["Left","note_3K_left"],["Center","note_3K_space"],["Right","note_3K_right"],[""],["5 KEY"],["Left","note_5K_left"],["Down","note_5K_down"],["Center","note_5K_space"],["Up","note_5K_up"],["Right","note_5K_right"],[""],["6 KEY"],["Left","note_6K_left"],["Up","note_6K_up"],["Right","note_6K_right"],["Left 2","note_6K_left2"],["Down","note_6K_down"],["Right 2","note_6K_right2"],[""],["7 KEY"],["Left","note_7K_left"],["Up","note_7K_down"],["Right","note_7K_right"],["Center","note_7K_space"],["Left 2","note_7K_left2"],["Down","note_7K_Down"],["Right 2","note_7K_right2"],[""],["8 KEY"],["Left","note_8K_left"],["Down","note_8K_down"],["Up","note_8K_up"],["Right","note_8K_right"],["Left 2","note_8K_left2"],["Down 2","note_8K_down2"],["Up 2","note_8K_up2"],["Right 2","note_8K_right2"],[""],["9 KEY"],["Left","note_9K_left"],["Down","note_9K_down"],["Up","note_9K_up"],["Right","note_9K_right"],["Center","note_9K_space"],["Left 2","note_9K_left2"],["Down 2","note_9K_down2"],["Up 2","note_9K_up2"],["Right 2","note_9K_right2"],[""],["UI"],["Left","ui_left"],["Down","ui_down"],["Up","ui_up"],["Right","ui_right"],[""],["Reset","reset"],["Accept","accept"],["Back","back"],["Pause","pause"],[""],["DEBUG"],["Key 1","debug_1"],["Key 2","debug_2"]];
 	this.bindLength = 0;
 	MusicBeatSubstate.call(this);
 	var bg = new flixel_FlxSprite();
@@ -129977,7 +129990,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 224283;
+	this.version = 678990;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
@@ -179415,7 +179428,7 @@ var options_ControlsSubState = function() {
 	this.rebindingKey = false;
 	this.grpInputsAlt = [];
 	this.grpInputs = [];
-	this.optionShit = [["NOTES"],["4 KEY"],["Left","note_left"],["Down","note_down"],["Up","note_up"],["Right","note_right"],[""],["1 KEY"],["Center","note_1K_space"],[""],["2 KEY"],["Left","note_2K_left"],["Right","note_2K_right"],[""],["3 KEY"],["Left","note_3K_left"],["Center","note_3K_space"],["Right","note_3K_right"],[""],["5 KEY"],["Left","note_5K_left"],["Down","note_5K_down"],["Center","note_5K_space"],["Up","note_5K_up"],["Right","note_5K_right"],[""],["6 KEY"],["Left","note_6K_left"],["Down","note_6K_down"],["Right","note_6K_right"],["Left 2","note_6K_left2"],["Up","note_6K_up"],["Right 2","note_6K_right2"],[""],["7 KEY"],["Left","note_7K_left"],["Down","note_7K_down"],["Right","note_7K_right"],["Center","note_7K_space"],["Left 2","note_7K_left2"],["Up","note_7K_up"],["Right 2","note_7K_right2"],[""],["8 KEY"],["Left","note_8K_left"],["Down","note_8K_down"],["Up","note_8K_up"],["Right","note_8K_right"],["Left 2","note_8K_left2"],["Down 2","note_8K_down2"],["Up 2","note_8K_up2"],["Right 2","note_8K_right2"],[""],["9 KEY"],["Left","note_9K_left"],["Down","note_9K_down"],["Up","note_9K_up"],["Right","note_9K_right"],["Center","note_9K_space"],["Left 2","note_9K_left2"],["Down 2","note_9K_down2"],["Up 2","note_9K_up2"],["Right 2","note_9K_right2"],[""],["UI"],["Left","ui_left"],["Down","ui_down"],["Up","ui_up"],["Right","ui_right"],[""],["Reset","reset"],["Accept","accept"],["Back","back"],["Pause","pause"],[""],["VOLUME"],["Mute","volume_mute"],["Up","volume_up"],["Down","volume_down"],[""],["DEBUG"],["Key 1","debug_1"],["Key 2","debug_2"]];
+	this.optionShit = [["NOTES"],["4 KEY"],["Left","note_left"],["Down","note_down"],["Up","note_up"],["Right","note_right"],[""],["1 KEY"],["Center","note_1K_space"],[""],["2 KEY"],["Left","note_2K_left"],["Right","note_2K_right"],[""],["3 KEY"],["Left","note_3K_left"],["Center","note_3K_space"],["Right","note_3K_right"],[""],["5 KEY"],["Left","note_5K_left"],["Down","note_5K_down"],["Center","note_5K_space"],["Up","note_5K_up"],["Right","note_5K_right"],[""],["6 KEY"],["Left","note_6K_left"],["Up","note_6K_up"],["Right","note_6K_right"],["Left 2","note_6K_left2"],["Down","note_6K_down"],["Right 2","note_6K_right2"],[""],["7 KEY"],["Left","note_7K_left"],["Up","note_7K_up"],["Right","note_7K_right"],["Center","note_7K_space"],["Left 2","note_7K_left2"],["Down","note_7K_down"],["Right 2","note_7K_right2"],[""],["8 KEY"],["Left","note_8K_left"],["Down","note_8K_down"],["Up","note_8K_up"],["Right","note_8K_right"],["Left 2","note_8K_left2"],["Down 2","note_8K_down2"],["Up 2","note_8K_up2"],["Right 2","note_8K_right2"],[""],["9 KEY"],["Left","note_9K_left"],["Down","note_9K_down"],["Up","note_9K_up"],["Right","note_9K_right"],["Center","note_9K_space"],["Left 2","note_9K_left2"],["Down 2","note_9K_down2"],["Up 2","note_9K_up2"],["Right 2","note_9K_right2"],[""],["UI"],["Left","ui_left"],["Down","ui_down"],["Up","ui_up"],["Right","ui_right"],[""],["Reset","reset"],["Accept","accept"],["Back","back"],["Pause","pause"],[""],["VOLUME"],["Mute","volume_mute"],["Up","volume_up"],["Down","volume_down"],[""],["DEBUG"],["Key 1","debug_1"],["Key 2","debug_2"]];
 	this.bindLength = 0;
 	MusicBeatSubstate.call(this);
 	var bg = new flixel_FlxSprite();
@@ -182450,9 +182463,11 @@ dge_backend_CacheTools.cachePackerAtlas = new haxe_ds_StringMap();
 dge_backend_CacheTools.cacheText = new haxe_ds_StringMap();
 dge_backend_EKUtil.colArray = ["purple","blue","green","red","space","yellow","purplealt","redalt","bluealt"];
 dge_backend_EKUtil.direction = ["left","down","up","right","space","leftalt","downalt","upalt","rightalt"];
+dge_backend_EKUtil.defaultCol = "green";
+dge_backend_EKUtil.defaultDirection = "up";
 dge_backend_EKUtil.noteAnimIndex = [[4],[0,3],[0,4,3],[0,1,2,3],[0,1,4,2,3],[0,2,3,5,1,8],[0,2,3,4,5,1,8],[0,1,2,3,5,6,7,8],[0,1,2,3,4,5,6,7,8]];
 dge_backend_EKUtil.animIndex = [["singUP"],["singLEFT","singRIGHT"],["singLEFT","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singUP","singRIGHT"],["singLEFT","singUP","singRIGHT","singLEFT","singDOWN","singRIGHT"],["singLEFT","singUP","singRIGHT","singUP","singLEFT","singDOWN","singRIGHT"],["singLEFT","singDOWN","singUP","singRIGHT","singLEFT","singDOWN","singUP","singRIGHT"],["singLEFT","singDOWN","singUP","singRIGHT","singUP","singLEFT","singDOWN","singUP","singRIGHT"]];
-dge_backend_EKUtil.controlMap = [["note_1K_space"],["note_2K_left","note_2K_right"],["note_3K_left","note_3K_space","note_3K_right"],["note_left","note_down","note_up","note_right"],["note_5K_left","note_5K_down","note_5K_space","note_5K_up","note_5K_right"],["note_6K_left","note_6K_down","note_6K_right","note_6K_left2","note_6K_up","note_6K_right2"],["note_7K_left","note_7K_down","note_7K_right","note_7K_space","note_7K_left2","note_7K_up","note_7K_right2"],["note_8K_left","note_8K_down","note_8K_up","note_8K_right","note_8K_left2","note_8K_down2","note_8K_up2","note_8K_right2"],["note_9K_left","note_9K_down","note_9K_up","note_9K_right","note_9K_space","note_9K_left2","note_9K_down2","note_9K_up2","note_9K_right2"]];
+dge_backend_EKUtil.controlMap = [["note_1K_space"],["note_2K_left","note_2K_right"],["note_3K_left","note_3K_space","note_3K_right"],["note_left","note_down","note_up","note_right"],["note_5K_left","note_5K_down","note_5K_space","note_5K_up","note_5K_right"],["note_6K_left","note_6K_up","note_6K_right","note_6K_left2","note_6K_down","note_6K_right2"],["note_7K_left","note_7K_up","note_7K_right","note_7K_space","note_7K_left2","note_7K_down","note_7K_right2"],["note_8K_left","note_8K_down","note_8K_up","note_8K_right","note_8K_left2","note_8K_down2","note_8K_up2","note_8K_right2"],["note_9K_left","note_9K_down","note_9K_up","note_9K_right","note_9K_space","note_9K_left2","note_9K_down2","note_9K_up2","note_9K_right2"]];
 dge_backend_EKUtil.keyPressColor = [[-3355444],[-65281,-65536],[-65281,-3355444,-65536],[-65281,-16711681,-16711936,-65536],[-65281,-16711681,-3355444,-16711936,-65536],[-65281,-16711936,-65536,-256,-16711681,-16776961],[-65281,-16711936,-65536,-3355444,-256,-16711681,-16776961],[-65281,-16711681,-16711936,-65536,-256,-8388353,-65536,-16776961],[-65281,-16711681,-16711936,-65536,-3355444,-256,-8388353,-65536,-16776961]];
 dge_frontend_scale_ScreenScaleMode.allowWideScreen = false;
 dge_frontend_scale_ScreenScaleMode.screenWidth = 960;
@@ -182478,17 +182493,17 @@ dge_input_device_GamepadControls.buttonBinds = (function($this) {
 	_g.h["note_5K_up"] = [11,3];
 	_g.h["note_5K_right"] = [14,1];
 	_g.h["note_6K_left"] = [13,-1];
-	_g.h["note_6K_down"] = [12,-1];
+	_g.h["note_6K_up"] = [12,-1];
 	_g.h["note_6K_right"] = [14,-1];
 	_g.h["note_6K_left2"] = [2,-1];
-	_g.h["note_6K_up"] = [0,-1];
+	_g.h["note_6K_down"] = [0,-1];
 	_g.h["note_6K_right2"] = [1,-1];
 	_g.h["note_7K_left"] = [13,-1];
-	_g.h["note_7K_down"] = [12,-1];
+	_g.h["note_7K_up"] = [12,-1];
 	_g.h["note_7K_right"] = [14,-1];
 	_g.h["note_7K_space"] = [5,-1];
 	_g.h["note_7K_left2"] = [2,-1];
-	_g.h["note_7K_up"] = [0,-1];
+	_g.h["note_7K_down"] = [0,-1];
 	_g.h["note_7K_right2"] = [1,-1];
 	_g.h["note_8K_left"] = [13,-1];
 	_g.h["note_8K_down"] = [12,-1];
@@ -182540,17 +182555,17 @@ dge_input_device_KeyboardControls.keyBinds = (function($this) {
 	_g.h["note_5K_up"] = [87,38];
 	_g.h["note_5K_right"] = [68,39];
 	_g.h["note_6K_left"] = [83,-1];
-	_g.h["note_6K_down"] = [68,-1];
+	_g.h["note_6K_up"] = [68,-1];
 	_g.h["note_6K_right"] = [70,-1];
 	_g.h["note_6K_left2"] = [74,-1];
-	_g.h["note_6K_up"] = [75,-1];
+	_g.h["note_6K_down"] = [75,-1];
 	_g.h["note_6K_right2"] = [76,-1];
 	_g.h["note_7K_left"] = [83,-1];
-	_g.h["note_7K_down"] = [68,-1];
+	_g.h["note_7K_up"] = [68,-1];
 	_g.h["note_7K_right"] = [70,-1];
 	_g.h["note_7K_space"] = [32,-1];
 	_g.h["note_7K_left2"] = [74,-1];
-	_g.h["note_7K_up"] = [75,-1];
+	_g.h["note_7K_down"] = [75,-1];
 	_g.h["note_7K_right2"] = [76,-1];
 	_g.h["note_8K_left"] = [65,-1];
 	_g.h["note_8K_down"] = [83,-1];
