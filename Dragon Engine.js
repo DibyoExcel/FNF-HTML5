@@ -6582,12 +6582,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "412";
+	app.meta.h["build"] = "413";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.14.2";
+	app.meta.h["version"] = "26.14.3";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -46760,7 +46760,8 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			while(_g < _g1) {
 				var i = _g++;
 				var note = _gthis._song.notes[editors_ChartingState.curSec].sectionNotes[i];
-				note[1] = (note[1] + 4) % 12;
+				var keyCount = dge_backend_EKUtil.getCurrentMania();
+				note[1] = (note[1] + keyCount) % (keyCount * 3);
 				_gthis._song.notes[editors_ChartingState.curSec].sectionNotes[i] = note;
 			}
 			_gthis.updateGrid();
@@ -47946,26 +47947,27 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 				note.set_alpha(1);
 				if(_gthis.curSelectedNote != null) {
 					var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
-					if(actualNoteData > -1 && actualNoteData < 12) {
+					var keyCount = dge_backend_EKUtil.getCurrentMania();
+					if(actualNoteData > -1 && actualNoteData < keyCount * 3) {
 						if(!_gthis._song.notes[editors_ChartingState.curSec].mustHitSection) {
 							if(!_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
-								if(actualNoteData > 3 && actualNoteData < 8) {
-									actualNoteData -= 4;
-								} else if(actualNoteData > -1 && actualNoteData < 4) {
-									actualNoteData += 4;
+								if(actualNoteData >= keyCount && actualNoteData < keyCount * 2) {
+									actualNoteData -= keyCount;
+								} else if(actualNoteData > -1 && actualNoteData < keyCount) {
+									actualNoteData += keyCount;
 								}
-							} else if(actualNoteData > -1 && actualNoteData < 4) {
-								actualNoteData += 4;
-							} else if(actualNoteData > 7 && actualNoteData < 12) {
-								actualNoteData -= 8;
-							} else if(actualNoteData > 3 && actualNoteData < 8) {
-								actualNoteData += 4;
+							} else if(actualNoteData > -1 && actualNoteData < keyCount) {
+								actualNoteData += keyCount;
+							} else if(actualNoteData >= keyCount * 2 && actualNoteData < keyCount * 3) {
+								actualNoteData -= keyCount * 2;
+							} else if(actualNoteData >= keyCount && actualNoteData < keyCount * 2) {
+								actualNoteData += keyCount;
 							}
 						} else if(_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
-							if(actualNoteData > -1 && actualNoteData < 4) {
-								actualNoteData += 8;
-							} else if(actualNoteData > 7 && actualNoteData < 12) {
-								actualNoteData -= 8;
+							if(actualNoteData > -1 && actualNoteData < keyCount) {
+								actualNoteData += keyCount * 2;
+							} else if(actualNoteData >= keyCount * 2 && actualNoteData < keyCount * 3) {
+								actualNoteData -= keyCount * 2;
 							}
 						}
 					}
@@ -48038,26 +48040,27 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 				note.set_alpha(1);
 				if(_gthis.curSelectedNote != null) {
 					var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
-					if(actualNoteData > -1 && actualNoteData < 12) {
+					var keyCount = dge_backend_EKUtil.getCurrentMania();
+					if(actualNoteData > -1 && actualNoteData < keyCount * 3) {
 						if(!_gthis._song.notes[editors_ChartingState.curSec].mustHitSection) {
 							if(!_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
-								if(actualNoteData > 3 && actualNoteData < 8) {
-									actualNoteData -= 4;
-								} else if(actualNoteData > -1 && actualNoteData < 4) {
-									actualNoteData += 4;
+								if(actualNoteData >= keyCount && actualNoteData < keyCount * 2) {
+									actualNoteData -= keyCount;
+								} else if(actualNoteData > -1 && actualNoteData < keyCount) {
+									actualNoteData += keyCount;
 								}
-							} else if(actualNoteData > -1 && actualNoteData < 4) {
-								actualNoteData += 4;
-							} else if(actualNoteData > 7 && actualNoteData < 12) {
-								actualNoteData -= 8;
-							} else if(actualNoteData > 3 && actualNoteData < 8) {
-								actualNoteData += 4;
+							} else if(actualNoteData > -1 && actualNoteData < keyCount) {
+								actualNoteData += keyCount;
+							} else if(actualNoteData >= keyCount * 2 && actualNoteData < keyCount * 3) {
+								actualNoteData -= keyCount * 2;
+							} else if(actualNoteData >= keyCount && actualNoteData < keyCount * 2) {
+								actualNoteData += keyCount;
 							}
 						} else if(_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
-							if(actualNoteData > -1 && actualNoteData < 4) {
-								actualNoteData += 8;
-							} else if(actualNoteData > 7 && actualNoteData < 12) {
-								actualNoteData -= 8;
+							if(actualNoteData > -1 && actualNoteData < keyCount) {
+								actualNoteData += keyCount * 2;
+							} else if(actualNoteData >= keyCount * 2 && actualNoteData < keyCount * 3) {
+								actualNoteData -= keyCount * 2;
 							}
 						}
 					}
@@ -48131,26 +48134,27 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			note.set_alpha(1);
 			if(_gthis.curSelectedNote != null) {
 				var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
-				if(actualNoteData > -1 && actualNoteData < 12) {
+				var keyCount = dge_backend_EKUtil.getCurrentMania();
+				if(actualNoteData > -1 && actualNoteData < keyCount * 3) {
 					if(!_gthis._song.notes[editors_ChartingState.curSec].mustHitSection) {
 						if(!_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
-							if(actualNoteData > 3 && actualNoteData < 8) {
-								actualNoteData -= 4;
-							} else if(actualNoteData > -1 && actualNoteData < 4) {
-								actualNoteData += 4;
+							if(actualNoteData >= keyCount && actualNoteData < keyCount * 2) {
+								actualNoteData -= keyCount;
+							} else if(actualNoteData > -1 && actualNoteData < keyCount) {
+								actualNoteData += keyCount;
 							}
-						} else if(actualNoteData > -1 && actualNoteData < 4) {
-							actualNoteData += 4;
-						} else if(actualNoteData > 7 && actualNoteData < 12) {
-							actualNoteData -= 8;
-						} else if(actualNoteData > 3 && actualNoteData < 8) {
-							actualNoteData += 4;
+						} else if(actualNoteData > -1 && actualNoteData < keyCount) {
+							actualNoteData += keyCount;
+						} else if(actualNoteData >= keyCount * 2 && actualNoteData < keyCount * 3) {
+							actualNoteData -= keyCount * 2;
+						} else if(actualNoteData >= keyCount && actualNoteData < keyCount * 2) {
+							actualNoteData += keyCount;
 						}
 					} else if(_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
-						if(actualNoteData > -1 && actualNoteData < 4) {
-							actualNoteData += 8;
-						} else if(actualNoteData > 7 && actualNoteData < 12) {
-							actualNoteData -= 8;
+						if(actualNoteData > -1 && actualNoteData < keyCount) {
+							actualNoteData += keyCount * 2;
+						} else if(actualNoteData >= keyCount * 2 && actualNoteData < keyCount * 3) {
+							actualNoteData -= keyCount * 2;
 						}
 					}
 				}
@@ -48223,26 +48227,27 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			note.set_alpha(1);
 			if(_gthis.curSelectedNote != null) {
 				var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
-				if(actualNoteData > -1 && actualNoteData < 12) {
+				var keyCount = dge_backend_EKUtil.getCurrentMania();
+				if(actualNoteData > -1 && actualNoteData < keyCount * 3) {
 					if(!_gthis._song.notes[editors_ChartingState.curSec].mustHitSection) {
 						if(!_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
-							if(actualNoteData > 3 && actualNoteData < 8) {
-								actualNoteData -= 4;
-							} else if(actualNoteData > -1 && actualNoteData < 4) {
-								actualNoteData += 4;
+							if(actualNoteData >= keyCount && actualNoteData < keyCount * 2) {
+								actualNoteData -= keyCount;
+							} else if(actualNoteData > -1 && actualNoteData < keyCount) {
+								actualNoteData += keyCount;
 							}
-						} else if(actualNoteData > -1 && actualNoteData < 4) {
-							actualNoteData += 4;
-						} else if(actualNoteData > 7 && actualNoteData < 12) {
-							actualNoteData -= 8;
-						} else if(actualNoteData > 3 && actualNoteData < 8) {
-							actualNoteData += 4;
+						} else if(actualNoteData > -1 && actualNoteData < keyCount) {
+							actualNoteData += keyCount;
+						} else if(actualNoteData >= keyCount * 2 && actualNoteData < keyCount * 3) {
+							actualNoteData -= keyCount * 2;
+						} else if(actualNoteData >= keyCount && actualNoteData < keyCount * 2) {
+							actualNoteData += keyCount;
 						}
 					} else if(_gthis._song.notes[editors_ChartingState.curSec].gfSection) {
-						if(actualNoteData > -1 && actualNoteData < 4) {
-							actualNoteData += 8;
-						} else if(actualNoteData > 7 && actualNoteData < 12) {
-							actualNoteData -= 8;
+						if(actualNoteData > -1 && actualNoteData < keyCount) {
+							actualNoteData += keyCount * 2;
+						} else if(actualNoteData >= keyCount * 2 && actualNoteData < keyCount * 3) {
+							actualNoteData -= keyCount * 2;
 						}
 					}
 				}
@@ -48932,26 +48937,27 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			return;
 		}
 		var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
-		if(actualNoteData > -1 && actualNoteData < 12) {
+		var keyCount = dge_backend_EKUtil.getCurrentMania();
+		if(actualNoteData > -1 && actualNoteData < keyCount * 3) {
 			if(!this._song.notes[editors_ChartingState.curSec].mustHitSection) {
 				if(!this._song.notes[editors_ChartingState.curSec].gfSection) {
-					if(actualNoteData > 3 && actualNoteData < 8) {
-						actualNoteData -= 4;
-					} else if(actualNoteData > -1 && actualNoteData < 4) {
-						actualNoteData += 4;
+					if(actualNoteData >= keyCount && actualNoteData < keyCount * 2) {
+						actualNoteData -= keyCount;
+					} else if(actualNoteData > -1 && actualNoteData < keyCount) {
+						actualNoteData += keyCount;
 					}
-				} else if(actualNoteData > -1 && actualNoteData < 4) {
-					actualNoteData += 4;
-				} else if(actualNoteData > 7 && actualNoteData < 12) {
-					actualNoteData -= 8;
-				} else if(actualNoteData > 3 && actualNoteData < 8) {
-					actualNoteData += 4;
+				} else if(actualNoteData > -1 && actualNoteData < keyCount) {
+					actualNoteData += keyCount;
+				} else if(actualNoteData > 7 && actualNoteData < keyCount * 3) {
+					actualNoteData -= keyCount * 2;
+				} else if(actualNoteData >= keyCount && actualNoteData < keyCount * 2) {
+					actualNoteData += keyCount;
 				}
 			} else if(this._song.notes[editors_ChartingState.curSec].gfSection) {
-				if(actualNoteData > -1 && actualNoteData < 4) {
-					actualNoteData += 8;
-				} else if(actualNoteData > 7 && actualNoteData < 12) {
-					actualNoteData -= 8;
+				if(actualNoteData > -1 && actualNoteData < keyCount) {
+					actualNoteData += keyCount * 2;
+				} else if(actualNoteData >= keyCount * 2 && actualNoteData < keyCount * 3) {
+					actualNoteData -= keyCount * 2;
 				}
 			}
 		}
@@ -48988,32 +48994,33 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		if(note.isSustainNote) {
 			return;
 		}
+		var keyCount = dge_backend_EKUtil.getCurrentMania();
 		var actualNoteData = Math.floor(note.x / editors_ChartingState.GRID_SIZE) - 1;
-		if(actualNoteData > -1 && actualNoteData < 12) {
+		if(actualNoteData > -1 && actualNoteData < keyCount * 3) {
 			if(!this._song.notes[editors_ChartingState.curSec].mustHitSection) {
 				if(!this._song.notes[editors_ChartingState.curSec].gfSection) {
-					if(actualNoteData > 3 && actualNoteData < 8) {
-						actualNoteData -= 4;
-					} else if(actualNoteData > -1 && actualNoteData < 4) {
-						actualNoteData += 4;
+					if(actualNoteData >= keyCount && actualNoteData < keyCount * 2) {
+						actualNoteData -= keyCount;
+					} else if(actualNoteData > -1 && actualNoteData < keyCount) {
+						actualNoteData += keyCount;
 					}
-				} else if(actualNoteData > -1 && actualNoteData < 4) {
-					actualNoteData += 4;
-				} else if(actualNoteData > 7 && actualNoteData < 12) {
-					actualNoteData -= 8;
-				} else if(actualNoteData > 3 && actualNoteData < 8) {
-					actualNoteData += 4;
+				} else if(actualNoteData > -1 && actualNoteData < keyCount) {
+					actualNoteData += keyCount;
+				} else if(actualNoteData >= keyCount * 2 && actualNoteData < keyCount * 3) {
+					actualNoteData -= keyCount * 2;
+				} else if(actualNoteData >= keyCount && actualNoteData < keyCount * 2) {
+					actualNoteData += keyCount;
 				}
 			} else if(this._song.notes[editors_ChartingState.curSec].gfSection) {
-				if(actualNoteData > -1 && actualNoteData < 4) {
-					actualNoteData += 8;
-				} else if(actualNoteData > 7 && actualNoteData < 12) {
-					actualNoteData -= 8;
+				if(actualNoteData > -1 && actualNoteData < keyCount) {
+					actualNoteData += keyCount * 2;
+				} else if(actualNoteData >= keyCount * 2 && actualNoteData < keyCount * 3) {
+					actualNoteData -= keyCount * 2;
 				}
 			}
 		}
 		var noteDataToCheck = actualNoteData;
-		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3688, className : "editors.ChartingState", methodName : "deleteNote"});
+		haxe_Log.trace(noteDataToCheck,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3695, className : "editors.ChartingState", methodName : "deleteNote"});
 		if(note.noteData > -1) {
 			var _g = 0;
 			var _g1 = this._song.notes[editors_ChartingState.curSec].sectionNotes;
@@ -49087,30 +49094,31 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 		if(data != null) {
 			noteData = data;
 		}
-		if(noteData > -1 && noteData < 12) {
+		var keyCount = dge_backend_EKUtil.getCurrentMania();
+		if(noteData > -1 && noteData < keyCount * 3) {
 			if(!this._song.notes[editors_ChartingState.curSec].mustHitSection) {
 				if(!this._song.notes[editors_ChartingState.curSec].gfSection) {
-					if(noteData > 3 && noteData < 8) {
-						noteData -= 4;
-					} else if(noteData > -1 && noteData < 4) {
-						noteData += 4;
+					if(noteData >= keyCount && noteData < keyCount * 2) {
+						noteData -= keyCount;
+					} else if(noteData > -1 && noteData < keyCount) {
+						noteData += keyCount;
 					}
-				} else if(noteData > -1 && noteData < 4) {
-					noteData += 4;
-				} else if(noteData > 7 && noteData < 12) {
-					noteData -= 8;
-				} else if(noteData > 3 && noteData < 8) {
-					noteData += 4;
+				} else if(noteData > -1 && noteData < keyCount) {
+					noteData += keyCount;
+				} else if(noteData >= keyCount * 2 && noteData < keyCount * 3) {
+					noteData -= keyCount * 2;
+				} else if(noteData >= keyCount && noteData < keyCount * 2) {
+					noteData += keyCount;
 				}
 			} else if(this._song.notes[editors_ChartingState.curSec].gfSection) {
-				if(noteData > -1 && noteData < 4) {
-					noteData += 8;
-				} else if(noteData > 7 && noteData < 12) {
-					noteData -= 8;
+				if(noteData > -1 && noteData < keyCount) {
+					noteData += keyCount * 2;
+				} else if(noteData >= keyCount * 2 && noteData < keyCount * 3) {
+					noteData -= keyCount * 2;
 				}
 			}
 		}
-		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3793, className : "editors.ChartingState", methodName : "addNote"});
+		haxe_Log.trace(noteData,{ fileName : "source/editors/ChartingState.hx", lineNumber : 3801, className : "editors.ChartingState", methodName : "addNote"});
 		if(type != null) {
 			daType = type;
 		}
@@ -49135,7 +49143,8 @@ editors_ChartingState.prototype = $extend(MusicBeatState.prototype,{
 			tmp = false;
 		}
 		if(tmp && noteData > -1) {
-			this._song.notes[editors_ChartingState.curSec].sectionNotes.push([noteStrum,(noteData + 4) % 12,noteSus,this.noteTypeIntMap.h[daType]]);
+			var keyCount = dge_backend_EKUtil.getCurrentMania();
+			this._song.notes[editors_ChartingState.curSec].sectionNotes.push([noteStrum,(noteData + keyCount) % keyCount * 3,noteSus,this.noteTypeIntMap.h[daType]]);
 		}
 		this.strumTimeInputText.set_text("" + Std.string(this.curSelectedNote[0]));
 		this.updateGrid();
@@ -129990,7 +129999,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 678990;
+	this.version = 29555;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
