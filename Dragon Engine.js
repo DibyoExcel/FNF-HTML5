@@ -6582,12 +6582,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "413";
+	app.meta.h["build"] = "414";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.14.3";
+	app.meta.h["version"] = "26.14.4";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -9733,7 +9733,7 @@ Character.prototype = $extend(flixel_FlxSprite.prototype,{
 			} else {
 				this.holdTimer = 0;
 			}
-			if(this.animation._curAnim.finished && this.animation._animations.h[this.animation._curAnim.name + "-loop"] != null) {
+			if(this.animation._curAnim.finished && this.animation.exists(this.animation._curAnim.name + "-loop")) {
 				this.playAnim(this.animation._curAnim.name + "-loop");
 			}
 		}
@@ -9749,7 +9749,7 @@ Character.prototype = $extend(flixel_FlxSprite.prototype,{
 				} else {
 					this.playAnim("danceLeft" + this.idleSuffix);
 				}
-			} else if(this.animation._animations.h["idle" + this.idleSuffix] != null) {
+			} else if(this.animation.exists("idle" + this.idleSuffix)) {
 				this.playAnim("idle" + this.idleSuffix);
 			}
 		}
@@ -9825,7 +9825,7 @@ Character.prototype = $extend(flixel_FlxSprite.prototype,{
 	,settingCharacterUp: null
 	,recalculateDanceIdle: function() {
 		var lastDanceIdle = this.danceIdle;
-		this.danceIdle = this.animation._animations.h["danceLeft" + this.idleSuffix] != null && this.animation._animations.h["danceRight" + this.idleSuffix] != null;
+		this.danceIdle = this.animation.exists("danceLeft" + this.idleSuffix) && this.animation.exists("danceRight" + this.idleSuffix);
 		if(this.settingCharacterUp) {
 			this.danceEveryNumBeats = this.danceIdle ? 1 : 2;
 		} else if(lastDanceIdle != this.danceIdle) {
@@ -10785,13 +10785,13 @@ CoolUtil.makeCheckerboardGraphic = function(width,height,size,color1,color2) {
 		color1 = 0;
 	}
 	if(size == null) {
-		size = 32;
+		size = 50;
 	}
 	if(height == null) {
-		height = 64;
+		height = 100;
 	}
 	if(width == null) {
-		width = 64;
+		width = 100;
 	}
 	var bitmapData = new openfl_display_BitmapData(width,height,false);
 	var _g = 0;
@@ -10838,7 +10838,7 @@ CoolUtil.addSpecialAnimation = function(sprite,anim,xmlName,defaultXmlName,loop,
 	var hasAnim = true;
 	if(sprite != null && sprite.animation != null && anim.length > 0 && xmlName.length > 0 && defaultXmlName.length > 0) {
 		sprite.animation.addByPrefix(anim,xmlName,framerate,loop);
-		if(sprite.animation._animations.h[anim] == null) {
+		if(!sprite.animation.exists(anim)) {
 			hasAnim = false;
 			sprite.animation.addByPrefix(anim,defaultXmlName,framerate,loop);
 		}
@@ -14400,7 +14400,7 @@ FunkinLua.prototype = {
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4710, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4870, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -21322,7 +21322,7 @@ MenuCharacter.prototype = $extend(flixel_FlxSprite.prototype,{
 			var confirmAnim = charFile.confirm_anim;
 			if(confirmAnim != null && confirmAnim.length > 0 && confirmAnim != charFile.idle_anim) {
 				this.animation.addByPrefix("confirm",confirmAnim,24,false);
-				if(this.animation._animations.h["confirm"] != null) {
+				if(this.animation.exists("confirm")) {
 					this.hasConfirmAnimation = true;
 				}
 			}
@@ -21375,7 +21375,7 @@ MenuCharacter.prototype = $extend(flixel_FlxSprite.prototype,{
 			var confirmAnim = charFile.confirm_anim;
 			if(confirmAnim != null && confirmAnim.length > 0 && confirmAnim != charFile.idle_anim) {
 				this.animation.addByPrefix("confirm",confirmAnim,24,false);
-				if(this.animation._animations.h["confirm"] != null) {
+				if(this.animation.exists("confirm")) {
 					this.hasConfirmAnimation = true;
 				}
 			}
@@ -22625,14 +22625,14 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			return "";
 		}
 		if(this.getActualDownscroll() && !StringTools.endsWith(anim,"_down")) {
-			if(this.animation != null && this.animation._animations.h[anim + "_down"] != null) {
+			if(this.animation != null && this.animation.exists(anim + "_down")) {
 				return anim + "_down";
 			}
 		} else if(!this.getActualDownscroll() && StringTools.endsWith(anim,"_down")) {
 			anim = anim.substring(0,anim.length - 5);
 			return anim;
 		}
-		if(StringTools.endsWith(anim,"_down") && this.animation._animations.h[anim + "_down"] == null) {
+		if(StringTools.endsWith(anim,"_down") && !this.animation.exists(anim + "_down")) {
 			anim = anim.substring(0,anim.length - 5);
 		}
 		return anim;
@@ -22953,7 +22953,7 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 			var color = _g++;
 			if(this.note != null && this.note.getActualDownscroll()) {
 				CoolUtil.addSpecialAnimation(this,"note" + color + "-" + 1,"note splash " + col[color] + " " + 1 + "_DownScroll","note splash " + col[color] + " " + 1,false,ClientPrefs.fpsStrumAnim);
-				if(this.animation != null && this.animation._animations.h["note" + color + "-" + 1] == null) {
+				if(this.animation != null && !this.animation.exists("note" + color + "-" + 1)) {
 					this.animation.addByPrefix("note" + color + "-" + 1,"note splash " + dge_backend_EKUtil.defaultCol.toLowerCase() + "0",ClientPrefs.fpsStrumAnim,false);
 				}
 			} else {
@@ -22961,7 +22961,7 @@ NoteSplash.prototype = $extend(flixel_FlxSprite.prototype,{
 			}
 			if(this.note != null && this.note.getActualDownscroll()) {
 				CoolUtil.addSpecialAnimation(this,"note" + color + "-" + 2,"note splash " + col[color] + " " + 2 + "_DownScroll","note splash " + col[color] + " " + 2,false,ClientPrefs.fpsStrumAnim);
-				if(this.animation != null && this.animation._animations.h["note" + color + "-" + 2] == null) {
+				if(this.animation != null && !this.animation.exists("note" + color + "-" + 2)) {
 					this.animation.addByPrefix("note" + color + "-" + 2,"note splash " + dge_backend_EKUtil.defaultCol.toLowerCase() + "0",ClientPrefs.fpsStrumAnim,false);
 				}
 			} else {
@@ -27017,7 +27017,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var _g1 = maniaCount;
 				while(_g < _g1) {
 					var i = _g++;
-					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) / (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,0);
+					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,0);
 					if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 						babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 					}
@@ -27049,7 +27049,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var _g1 = maniaCount;
 				while(_g < _g1) {
 					var i = _g++;
-					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) / (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,1);
+					var babyArrow = new StrumNote((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointPlayer) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i,this.strumLine.y,i,1);
 					if(this.modcharttype == "random flip scroll" || this.modcharttype == "random direction scroll ") {
 						babyArrow.set_y(flixel_FlxG.height / 2 - babyArrow.get_height() / 2);
 					}
@@ -30331,17 +30331,17 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					if(note.noteType == "Hurt Note") {
 						if(!note.isDad) {
 							if(this.gamemode == "bothside" && !note.mustPress || this.gamemode == "opponent") {
-								if(this.dad.animation._animations.h["hurt"] != null) {
+								if(this.dad.animation.exists("hurt")) {
 									this.dad.playAnim("hurt",true,false,0,note.isSustainNote);
 									this.dad.specialAnim = true;
-								} else if(this.boyfriend.animation._animations.h["hurt"] != null) {
+								} else if(this.boyfriend.animation.exists("hurt")) {
 									this.boyfriend.playAnim("hurt",true,false,0,note.isSustainNote);
 									this.boyfriend.specialAnim = true;
 								}
-							} else if(this.boyfriend.animation._animations.h["hurt"] != null) {
+							} else if(this.boyfriend.animation.exists("hurt")) {
 								this.boyfriend.playAnim("hurt",true,false,0,note.isSustainNote);
 								this.boyfriend.specialAnim = true;
-							} else if(this.dad.animation._animations.h["hurt"] != null) {
+							} else if(this.dad.animation.exists("hurt")) {
 								this.dad.playAnim("hurt",true,false,0,note.isSustainNote);
 								this.dad.specialAnim = true;
 							}
@@ -32035,7 +32035,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				var _g1 = this.opponentStrums.length;
 				while(_g < _g1) {
 					var i = _g++;
-					this.opponentStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * maniaCount + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i);
+					this.opponentStrums.members[i].set_x((ClientPrefs.middleScroll || this.gamemode == "bothside" ? flixel_FlxG.width * this.strumPointMiddle : flixel_FlxG.width * this.strumPointOpponent) - Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * (maniaCount / 2) + Note.swagWidth * maniaScale * (Math.min(flixel_FlxG.width,960) / 960) * i);
 					if(this.strumLine != null) {
 						this.opponentStrums.members[i].set_y(this.strumLine.y);
 					}
@@ -33933,7 +33933,7 @@ StrumNote.prototype = $extend(flixel_FlxSprite.prototype,{
 		if(note != null ? note.getActualDownscroll() : ClientPrefs.downScroll) {
 			anim += "_down";
 		}
-		if(StringTools.endsWith(anim,"_down") && this.animation._animations.h[anim] == null) {
+		if(StringTools.endsWith(anim,"_down") && !this.animation.exists(anim)) {
 			anim = anim.substring(0,anim.length - 5);
 		}
 		this.animation.play(anim,force);
@@ -41454,7 +41454,7 @@ dge_obj_game_HoldCover.prototype = $extend(flixel_FlxSprite.prototype,{
 			if(this.note != null && this.note.getActualDownscroll()) {
 				specialAnim(this,"hold" + i,"hold cover " + nameColor + "_DownScroll0","hold cover " + nameColor + "0",false,ClientPrefs.fpsStrumAnim);
 				specialAnim(this,"end" + i,"hold cover " + nameColor + " end_DownScroll0","hold cover " + nameColor + " end0",false,ClientPrefs.fpsStrumAnim);
-				if(this.animation != null && this.animation._animations.h["hold"] == null) {
+				if(this.animation != null && !this.animation.exists("hold")) {
 					this.animation.addByPrefix("hold","hold cover " + defaultColor + "0",ClientPrefs.fpsStrumAnim);
 				}
 			} else {
@@ -45352,7 +45352,7 @@ editors_CharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 				++_g;
 				if(_gthis.animationInputText.text == anim.anim) {
 					lastOffsets = anim.offsets;
-					if(_gthis.char.animation._animations.h[_gthis.animationInputText.text] != null) {
+					if(_gthis.char.animation.exists(_gthis.animationInputText.text)) {
 						_gthis.char.animation.remove(_gthis.animationInputText.text);
 					}
 					HxOverrides.remove(_gthis.char.animationsArray,anim);
@@ -45403,7 +45403,7 @@ editors_CharacterEditorState.prototype = $extend(MusicBeatState.prototype,{
 					if(_gthis.char.animation._curAnim != null && anim.anim == _gthis.char.animation._curAnim.name) {
 						resetAnim = true;
 					}
-					if(_gthis.char.animation._animations.h[anim.anim] != null) {
+					if(_gthis.char.animation.exists(anim.anim)) {
 						_gthis.char.animation.remove(anim.anim);
 					}
 					if(Object.prototype.hasOwnProperty.call(_gthis.char.animOffsets.h,anim.anim)) {
@@ -80080,6 +80080,47 @@ flixel_animation_FlxAnimationController.prototype = {
 			if(frame.name != null && StringTools.startsWith(frame.name,Prefix)) {
 				AnimFrames.push(frame);
 			}
+		}
+	}
+	,getAnimationList: function() {
+		var animList = [];
+		var h = this._animations.h;
+		var anims_h = h;
+		var anims_keys = Object.keys(h);
+		var anims_length = anims_keys.length;
+		var anims_current = 0;
+		while(anims_current < anims_length) {
+			var anims = anims_h[anims_keys[anims_current++]];
+			animList.push(anims);
+		}
+		return animList;
+	}
+	,getNameList: function() {
+		var namesList = [];
+		var h = this._animations.h;
+		var names_h = h;
+		var names_keys = Object.keys(h);
+		var names_length = names_keys.length;
+		var names_current = 0;
+		while(names_current < names_length) {
+			var names = names_keys[names_current++];
+			namesList.push(names);
+		}
+		return namesList;
+	}
+	,exists: function(name) {
+		return Object.prototype.hasOwnProperty.call(this._animations.h,name);
+	}
+	,rename: function(oldName,newName) {
+		var anim = this._animations.h[oldName];
+		if(anim == null) {
+			return;
+		}
+		this._animations.h[newName] = anim;
+		anim.name = newName;
+		var _this = this._animations;
+		if(Object.prototype.hasOwnProperty.call(_this.h,oldName)) {
+			delete(_this.h[oldName]);
 		}
 	}
 	,set_frameIndex: function(Frame) {
@@ -129999,7 +130040,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 29555;
+	this.version = 614552;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
