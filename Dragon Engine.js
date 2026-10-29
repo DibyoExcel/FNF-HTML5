@@ -6612,12 +6612,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "415";
+	app.meta.h["build"] = "416";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.14.5";
+	app.meta.h["version"] = "26.14.6";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -13657,6 +13657,7 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 				this.addSong(song1,i,song2,color,borderTexture);
 			}
 		}
+		WeekData.loadTheFirstEnabledMod();
 		var returnAsset = Paths.returnGraphic(dge_const_GlobalVar.menuBackground,null);
 		var gfx = returnAsset;
 		if(gfx == null) {
@@ -13667,7 +13668,6 @@ FreeplayState.prototype = $extend(MusicBeatState.prototype,{
 		this.bg.set_antialiasing(ClientPrefs.globalAntialiasing);
 		CoolUtil.fitBackground(this.bg);
 		this.add(this.bg);
-		WeekData.loadTheFirstEnabledMod();
 		this.grpSongs = new flixel_group_FlxTypedGroup();
 		this.add(this.grpSongs);
 		if(this.songs.length > 0) {
@@ -14478,7 +14478,7 @@ FunkinLua.prototype = {
 	}
 	,initHaxeModule: function() {
 		if(FunkinLua.hscript == null) {
-			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4789, className : "FunkinLua", methodName : "initHaxeModule"});
+			haxe_Log.trace("initializing haxe interp for: " + this.scriptName,{ fileName : "source/FunkinLua.hx", lineNumber : 4796, className : "FunkinLua", methodName : "initHaxeModule"});
 			FunkinLua.hscript = new HScript();
 		}
 	}
@@ -130640,7 +130640,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 1632;
+	this.version = 936796;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
