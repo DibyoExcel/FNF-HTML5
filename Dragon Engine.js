@@ -6612,12 +6612,12 @@ ApplicationMain.main = function() {
 ApplicationMain.create = function(config) {
 	var app = new openfl_display_Application();
 	ManifestResources.init(config);
-	app.meta.h["build"] = "417";
+	app.meta.h["build"] = "418";
 	app.meta.h["company"] = "DubEnderDragon";
 	app.meta.h["file"] = "Dragon Engine";
 	app.meta.h["name"] = "Friday Night Funkin': Dragon Engine";
 	app.meta.h["packageName"] = "id.dubenderdragon.dge";
-	app.meta.h["version"] = "26.14.7";
+	app.meta.h["version"] = "26.14.8";
 	var attributes = { allowHighDPI : true, alwaysOnTop : false, borderless : false, element : null, frameRate : 60, height : 720, hidden : false, maximized : false, minimized : false, parameters : { }, resizable : true, title : "Friday Night Funkin': Dragon Engine", width : 1280, x : null, y : null};
 	attributes.context = { antialiasing : 0, background : -16777216, colorDepth : 32, depth : true, hardware : true, stencil : true, type : null, vsync : false};
 	if(app.__window == null) {
@@ -21633,7 +21633,8 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 	this.snapAngle = 0;
 	this.snapY = 0;
 	this.snapX = 0;
-	this.copyScale = true;
+	this.copyScaleY = true;
+	this.copyScaleX = true;
 	this.copyCam = true;
 	this.copyScrollFactor = true;
 	this.copyDirection = true;
@@ -21743,6 +21744,7 @@ var Note = function(strumTime,noteData,prevNote,sustainNote,inEditor,mustPress,g
 		this.set_alpha(ClientPrefs.longNoteAlpha);
 		this.hitsoundDisabled = true;
 		this.copyAngle = false;
+		this.copyScaleY = false;
 		this.copyFlipY = true;
 		var mania = dge_backend_EKUtil.getCurrentMania();
 		var indexTarget = dge_backend_EKUtil.noteAnimIndex[mania - 1];
@@ -21861,7 +21863,8 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 	,copyDirection: null
 	,copyScrollFactor: null
 	,copyCam: null
-	,copyScale: null
+	,copyScaleX: null
+	,copyScaleY: null
 	,snapX: null
 	,snapY: null
 	,snapAngle: null
@@ -22007,7 +22010,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 			case "Hurt Note":
 				this.ignoreNote = this.mustPress;
 				this.set_texture("HURTNOTE_assets");
-				this.noteSplashData.texture = "HURTnoteSplash";
+				this.noteSplashData.texture = "HURTnoteSplashes";
 				this.get_colorSwap().set_hue(0);
 				this.get_colorSwap().set_saturation(0);
 				this.get_colorSwap().set_brightness(0);
@@ -22829,7 +22832,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g1 ) {
 					haxe_NativeStackTrace.lastError = _g1;
 					var e = haxe_Exception.caught(_g1).unwrap();
-					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1456, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e,{ fileName : "source/Note.hx", lineNumber : 1458, className : "Note", methodName : "setConfig"});
 				}
 			} else {
 				try {
@@ -22844,7 +22847,7 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 				} catch( _g4 ) {
 					haxe_NativeStackTrace.lastError = _g4;
 					var e1 = haxe_Exception.caught(_g4).unwrap();
-					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1467, className : "Note", methodName : "setConfig"});
+					haxe_Log.trace(e1,{ fileName : "source/Note.hx", lineNumber : 1469, className : "Note", methodName : "setConfig"});
 					dge_backend_CacheTools.jsonParse.h[name] = { };
 				}
 			}
@@ -22960,12 +22963,12 @@ Note.prototype = $extend(flixel_FlxSprite.prototype,{
 		return value;
 	}
 	,draw: function() {
-		var offsetYMod = this.y;
+		var origY = this.y;
 		if(this.animation != null && this.animation._curAnim != null && StringTools.endsWith(this.animation._curAnim.name,"_down")) {
 			this.set_y(this.y + this.downScrollOffset);
 		}
 		flixel_FlxSprite.prototype.draw.call(this);
-		this.set_y(offsetYMod);
+		this.set_y(origY);
 	}
 	,__class__: Note
 	,__properties__: $extend(flixel_FlxSprite.prototype.__properties__,{set_holdCoverData:"set_holdCoverData",set_noteSplashData:"set_noteSplashData",set_numTexture:"set_numTexture",set_comboTexture:"set_comboTexture",set_holdCoverBAndWThreshold:"set_holdCoverBAndWThreshold",get_holdCoverBAndWThreshold:"get_holdCoverBAndWThreshold",set_holdCoverBAndWMult:"set_holdCoverBAndWMult",get_holdCoverBAndWMult:"get_holdCoverBAndWMult",set_holdCoverGrayscaleMult:"set_holdCoverGrayscaleMult",get_holdCoverGrayscaleMult:"get_holdCoverGrayscaleMult",set_holdCoverB:"set_holdCoverB",get_holdCoverB:"get_holdCoverB",set_holdCoverG:"set_holdCoverG",get_holdCoverG:"get_holdCoverG",set_holdCoverR:"set_holdCoverR",get_holdCoverR:"get_holdCoverR",set_holdCoverPosterizeRange:"set_holdCoverPosterizeRange",get_holdCoverPosterizeRange:"get_holdCoverPosterizeRange",set_holdCoverPixelSize:"set_holdCoverPixelSize",get_holdCoverPixelSize:"get_holdCoverPixelSize",set_holdCoverRGBSwapB:"set_holdCoverRGBSwapB",get_holdCoverRGBSwapB:"get_holdCoverRGBSwapB",set_holdCoverRGBSwapG:"set_holdCoverRGBSwapG",get_holdCoverRGBSwapG:"get_holdCoverRGBSwapG",set_holdCoverRGBSwapR:"set_holdCoverRGBSwapR",get_holdCoverRGBSwapR:"get_holdCoverRGBSwapR",set_holdCoverInvertB:"set_holdCoverInvertB",get_holdCoverInvertB:"get_holdCoverInvertB",set_holdCoverInvertG:"set_holdCoverInvertG",get_holdCoverInvertG:"get_holdCoverInvertG",set_holdCoverInvertR:"set_holdCoverInvertR",get_holdCoverInvertR:"get_holdCoverInvertR",set_holdCoverSingleB:"set_holdCoverSingleB",get_holdCoverSingleB:"get_holdCoverSingleB",set_holdCoverSingleG:"set_holdCoverSingleG",get_holdCoverSingleG:"get_holdCoverSingleG",set_holdCoverSingleR:"set_holdCoverSingleR",get_holdCoverSingleR:"get_holdCoverSingleR",set_holdCoverSat:"set_holdCoverSat",get_holdCoverSat:"get_holdCoverSat",set_holdCoverBrt:"set_holdCoverBrt",get_holdCoverBrt:"get_holdCoverBrt",set_holdCoverHue:"set_holdCoverHue",get_holdCoverHue:"get_holdCoverHue",set_holdCoverShaderType:"set_holdCoverShaderType",get_holdCoverShaderType:"get_holdCoverShaderType",set_holdCoverOffsetY:"set_holdCoverOffsetY",get_holdCoverOffsetY:"get_holdCoverOffsetY",set_holdCoverOffsetX:"set_holdCoverOffsetX",get_holdCoverOffsetX:"get_holdCoverOffsetX",set_holdCoverScale:"set_holdCoverScale",get_holdCoverScale:"get_holdCoverScale",set_holdCoverScrollFactor:"set_holdCoverScrollFactor",get_holdCoverScrollFactor:"get_holdCoverScrollFactor",set_holdCoverCam:"set_holdCoverCam",get_holdCoverCam:"get_holdCoverCam",set_holdCoverCopyAlpha:"set_holdCoverCopyAlpha",set_holdCoverAlpha:"set_holdCoverAlpha",get_holdCoverAlpha:"get_holdCoverAlpha",set_holdCoverTexture:"set_holdCoverTexture",get_holdCoverTexture:"get_holdCoverTexture",set_holdCoverDisabled:"set_holdCoverDisabled",get_holdCoverDisabled:"get_holdCoverDisabled",set_holdCover:"set_holdCover",set_noteSplashCopyAlpha:"set_noteSplashCopyAlpha",get_noteSplashCopyAlpha:"get_noteSplashCopyAlpha",set_noteSplashOffsetOriginY:"set_noteSplashOffsetOriginY",get_noteSplashOffsetOriginY:"get_noteSplashOffsetOriginY",set_noteSplashOffsetOriginX:"set_noteSplashOffsetOriginX",get_noteSplashOffsetOriginX:"get_noteSplashOffsetOriginX",set_noteSplashOffsetY:"set_noteSplashOffsetY",get_noteSplashOffsetY:"get_noteSplashOffsetY",set_noteSplashOffsetX:"set_noteSplashOffsetX",get_noteSplashOffsetX:"get_noteSplashOffsetX",set_downScroll:"set_downScroll",set_flipScroll:"set_flipScroll",set_hitsound:"set_hitsound",set_alignSustainNote:"set_alignSustainNote",get_isCustomField:"get_isCustomField",set_noteSplashScrollFactor:"set_noteSplashScrollFactor",get_noteSplashScrollFactor:"get_noteSplashScrollFactor",set_noteSplashScale:"set_noteSplashScale",get_noteSplashScale:"get_noteSplashScale",set_noteSplashCam:"set_noteSplashCam",get_noteSplashCam:"get_noteSplashCam",set_texture:"set_texture",set_multSpeed:"set_multSpeed",set_noteSplashBAndWThreshold:"set_noteSplashBAndWThreshold",get_noteSplashBAndWThreshold:"get_noteSplashBAndWThreshold",set_noteSplashBAndWMult:"set_noteSplashBAndWMult",get_noteSplashBAndWMult:"get_noteSplashBAndWMult",set_noteSplashGrayscaleMult:"set_noteSplashGrayscaleMult",get_noteSplashGrayscaleMult:"get_noteSplashGrayscaleMult",set_noteSplashB:"set_noteSplashB",get_noteSplashB:"get_noteSplashB",set_noteSplashG:"set_noteSplashG",get_noteSplashG:"get_noteSplashG",set_noteSplashR:"set_noteSplashR",get_noteSplashR:"get_noteSplashR",set_noteSplashPosterizeRange:"set_noteSplashPosterizeRange",get_noteSplashPosterizeRange:"get_noteSplashPosterizeRange",set_noteSplashPixelSize:"set_noteSplashPixelSize",get_noteSplashPixelSize:"get_noteSplashPixelSize",set_noteSplashRGBSwapB:"set_noteSplashRGBSwapB",get_noteSplashRGBSwapB:"get_noteSplashRGBSwapB",set_noteSplashRGBSwapG:"set_noteSplashRGBSwapG",get_noteSplashRGBSwapG:"get_noteSplashRGBSwapG",set_noteSplashRGBSwapR:"set_noteSplashRGBSwapR",get_noteSplashRGBSwapR:"get_noteSplashRGBSwapR",set_noteSplashInvertB:"set_noteSplashInvertB",get_noteSplashInvertB:"get_noteSplashInvertB",set_noteSplashInvertG:"set_noteSplashInvertG",get_noteSplashInvertG:"get_noteSplashInvertG",set_noteSplashInvertR:"set_noteSplashInvertR",get_noteSplashInvertR:"get_noteSplashInvertR",set_noteSplashSingleB:"set_noteSplashSingleB",get_noteSplashSingleB:"get_noteSplashSingleB",set_noteSplashSingleG:"set_noteSplashSingleG",get_noteSplashSingleG:"get_noteSplashSingleG",set_noteSplashSingleR:"set_noteSplashSingleR",get_noteSplashSingleR:"get_noteSplashSingleR",set_noteSplashBrt:"set_noteSplashBrt",get_noteSplashBrt:"get_noteSplashBrt",set_noteSplashSat:"set_noteSplashSat",get_noteSplashSat:"get_noteSplashSat",set_noteSplashHue:"set_noteSplashHue",get_noteSplashHue:"get_noteSplashHue",set_noteSplashAlpha:"set_noteSplashAlpha",get_noteSplashAlpha:"get_noteSplashAlpha",set_noteSplashAngle:"set_noteSplashAngle",get_noteSplashAngle:"get_noteSplashAngle",set_noteSplashShaderType:"set_noteSplashShaderType",get_noteSplashShaderType:"get_noteSplashShaderType",set_noteSplashTexture:"set_noteSplashTexture",get_noteSplashTexture:"get_noteSplashTexture",set_noteSplashDisabled:"set_noteSplashDisabled",get_noteSplashDisabled:"get_noteSplashDisabled",set_gfNote:"set_gfNote",set_noteType:"set_noteType",set_noteData:"set_noteData",set_mustPress:"set_mustPress"})
@@ -28518,37 +28521,79 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 							daNote.scrollFactor.set_x(actualStrum.scrollFactor.x);
 							daNote.scrollFactor.set_y(actualStrum.scrollFactor.y);
 						}
-						if(daNote.copyScale) {
+						if(daNote.copyScaleX) {
 							daNote.scaleMult.set_x(totalScaleX);
+						}
+						if(daNote.copyScaleY) {
 							daNote.scaleMult.set_y(totalScaleY);
 						}
 						if(daNote.copyCam) {
 							daNote.set_cameras(actualStrum.get_cameras());
 						}
+						var needClip = false;
 						if(!daNote.fakeNoHit) {
 							var center = strumY + actualStrum.get_height() * actualStrum.sustainReducePoint;
 							if(actualStrum.sustainReduce && daNote.isSustainNote && (_gthis.gamemodeManager(daNote) || !daNote.ignoreNote && !daNote.canFreeze) && (!_gthis.gamemodeManager(daNote) || (daNote.wasGoodHit || daNote.prevNote.wasGoodHit && (!daNote.canBeHit || _gthis.cpuControlled)))) {
-								if(strumScroll) {
-									if(daNote.y - daNote.offset.y * daNote.scale.y + daNote.get_height() >= center) {
-										var swagRect = new flixel_math_FlxRect(0,0,daNote.frameWidth,daNote.frameHeight);
-										swagRect.height = (center - daNote.y) / daNote.scale.y;
-										swagRect.y = daNote.frameHeight - swagRect.height;
-										daNote.set_clipRect(swagRect);
-									} else if(daNote.clipRect != null) {
-										daNote.set_clipRect(null);
-									}
-								} else if(daNote.y + daNote.offset.y * daNote.scale.y <= center) {
-									var swagRect = new flixel_math_FlxRect(0,0,daNote.get_width() / daNote.scale.x,daNote.get_height() / daNote.scale.y);
-									swagRect.y = (center - daNote.y) / daNote.scale.y;
-									swagRect.height -= swagRect.y;
-									daNote.set_clipRect(swagRect);
-								} else if(daNote.clipRect != null) {
-									daNote.set_clipRect(null);
+								var scaleY = daNote.scale.y * daNote.scaleMult.x;
+								var offsetY = daNote.offset.y * daNote.scaleMult.y;
+								if(daNote.flipY) {
+									offsetY = -offsetY;
 								}
-							} else if(daNote.clipRect != null) {
-								daNote.set_clipRect(null);
+								var noteY = daNote.y;
+								var noteWR = daNote.frameWidth;
+								var noteHR = daNote.frameHeight;
+								var diff = (center - noteY) / scaleY;
+								var yPos = daNote.flipY ? noteHR - diff : diff;
+								var hPos = !daNote.flipY ? noteHR - diff : diff;
+								var _this = flixel_math_FlxRect._pool.get();
+								var X = 0;
+								var Y = 0;
+								var Width = 0;
+								var Height = 0;
+								if(Height == null) {
+									Height = 0;
+								}
+								if(Width == null) {
+									Width = 0;
+								}
+								if(Y == null) {
+									Y = 0;
+								}
+								if(X == null) {
+									X = 0;
+								}
+								_this.x = X;
+								_this.y = Y;
+								_this.width = Width;
+								_this.height = Height;
+								var rect = _this;
+								rect._inPool = false;
+								var swagRect = rect;
+								swagRect.x = 0;
+								swagRect.y = yPos;
+								swagRect.width = noteWR;
+								swagRect.height = hPos;
+								if(strumScroll) {
+									var edgeNote = noteY + offsetY * scaleY + noteHR;
+									if(edgeNote >= center) {
+										daNote.set_clipRect(swagRect);
+										needClip = true;
+									}
+								} else {
+									var edgeNote = noteY + offsetY * scaleY;
+									if(edgeNote <= center) {
+										daNote.set_clipRect(swagRect);
+										needClip = true;
+									}
+								}
+								if(!swagRect._inPool) {
+									swagRect._inPool = true;
+									swagRect._weak = false;
+									flixel_math_FlxRect._pool.putUnsafe(swagRect);
+								}
 							}
-						} else if(daNote.clipRect != null) {
+						}
+						if(!needClip && daNote.clipRect != null) {
 							daNote.set_clipRect(null);
 						}
 					} else {
@@ -29764,12 +29809,12 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					PlayState.changedDifficulty = false;
 				} else {
 					var difficulty = CoolUtil.getDifficultyFilePath();
-					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5101, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace("LOADING NEXT SONG",{ fileName : "source/PlayState.hx", lineNumber : 5095, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.storyPlaylist[0];
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
 					var path1 = invalidChars.split(StringTools.replace(path," ","-")).join("-");
-					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5102, className : "PlayState", methodName : "endSong"});
+					haxe_Log.trace(hideChars.split(path1).join("").toLowerCase() + difficulty,{ fileName : "source/PlayState.hx", lineNumber : 5096, className : "PlayState", methodName : "endSong"});
 					var path = PlayState.SONG.song;
 					var invalidChars = new EReg("[~&\\\\;:<>#]","");
 					var hideChars = new EReg("[.,'\"%?!]","");
@@ -29805,7 +29850,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 						if(Chance == null) {
 							Chance = 50;
 						}
-						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5135, className : "PlayState", methodName : "endSong"});
+						haxe_Log.trace("SOMETHING WENT WRONG LOADING NEXT SONG IN STORY MODE. RETURNING TO STORY MENU." + (flixel_FlxG.random.float(0,100) < Chance ? " ALSO YOU GET A RANDOM EASTER EGG BECAUSE WHY NOT, LOL" : ""),{ fileName : "source/PlayState.hx", lineNumber : 5129, className : "PlayState", methodName : "endSong"});
 						if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 							CustomFadeTransition.nextCamera = null;
 						}
@@ -29816,7 +29861,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 					}
 				}
 			} else {
-				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5146, className : "PlayState", methodName : "endSong"});
+				haxe_Log.trace("WENT BACK TO FREEPLAY??",{ fileName : "source/PlayState.hx", lineNumber : 5140, className : "PlayState", methodName : "endSong"});
 				PlayState.cancelMusicFadeTween();
 				if(flixel_addons_transition_FlxTransitionableState.skipNextTransIn) {
 					CustomFadeTransition.nextCamera = null;
@@ -29839,7 +29884,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 		this.achievementObj = new AchievementObject(achieve,this.camOther);
 		this.achievementObj.onFinish = $bind(this,this.achievementEnd);
 		this.add(this.achievementObj);
-		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5170, className : "PlayState", methodName : "startAchievement"});
+		haxe_Log.trace("Giving achievement " + achieve,{ fileName : "source/PlayState.hx", lineNumber : 5164, className : "PlayState", methodName : "startAchievement"});
 	}
 	,achievementEnd: function() {
 		this.achievementObj = null;
@@ -31893,7 +31938,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				this.customCameraZoomMap.h[name] = zoom;
 			}
 		} else {
-			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7308, className : "PlayState", methodName : "addCamera"});
+			haxe_Log.trace("error. unable to create camera(" + name + "). Does tag of \"" + name + "\" exists?if yes use other name or remove it",{ fileName : "source/PlayState.hx", lineNumber : 7302, className : "PlayState", methodName : "addCamera"});
 		}
 	}
 	,remCamera: function(name) {
@@ -31919,7 +31964,7 @@ PlayState.prototype = $extend(MusicBeatState.prototype,{
 				delete(_this.h[name]);
 			}
 		} else {
-			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7321, className : "PlayState", methodName : "remCamera"});
+			haxe_Log.trace("error. unable to remove camera(" + name + "). Does \"" + name + "\" Exists?",{ fileName : "source/PlayState.hx", lineNumber : 7315, className : "PlayState", methodName : "remCamera"});
 		}
 	}
 	,set_privateData: function(value) {
@@ -130695,7 +130740,7 @@ var lime_utils_AssetCache = function() {
 	this.audio = new haxe_ds_StringMap();
 	this.font = new haxe_ds_StringMap();
 	this.image = new haxe_ds_StringMap();
-	this.version = 819030;
+	this.version = 325295;
 };
 $hxClasses["lime.utils.AssetCache"] = lime_utils_AssetCache;
 lime_utils_AssetCache.__name__ = "lime.utils.AssetCache";
